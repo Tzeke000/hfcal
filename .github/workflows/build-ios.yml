@@ -1,0 +1,78 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods --no-document
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Add iOS platform
+        run: npx cap add ios || echo "ios platform already added"
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Install pods
+        working-directory: ./ios/App
+        run: pod install --repo-update
+
+      # Build unsigned .app — works without an Apple Developer account
+      # but cannot be installed on a real device without signing.
+      # To install on your phone, you have three options (see README):
+      #   1. Open ios/App/App.xcworkspace in Xcode locally and build/sign there
+      #   2. Add APPLE_ID + APP_STORE_CONNECT secrets and let this workflow sign
+      #   3. Use AltStore or Sideloadly to sign the unsigned .app on your phone
+      - name: Build unsigned archive
+        working-directory: ./ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -derivedDataPath build \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            ONLY_ACTIVE_ARCH=NO \
+            -archivePath build/App.xcarchive \
+            archive
+
+      - name: Package unsigned .ipa
+        working-directory: ./ios/App
+        run: |
+          mkdir -p build/Payload
+          cp -r build/App.xcarchive/Products/Applications/App.app build/Payload/
+          cd build
+          zip -r HF-Field-Antenna-unsigned.ipa Payload
+          ls -la
+
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hf-field-antenna-ios-unsigned-ipa
+          path: ios/App/build/HF-Field-Antenna-unsigned.ipa
+          retention-days: 30
