@@ -1,0 +1,20 @@
+[package]
+name = "hf-field-antenna"
+version = "1.0.0"
+description = "USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC."
+authors = ["Cpl Angeles-Gonzalez, Ezekiel S. — USMC"]
+license = "CC-BY-NC-ND-4.0"
+edition = "2021"
+rust-version = "1.70"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.6", features = ["shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

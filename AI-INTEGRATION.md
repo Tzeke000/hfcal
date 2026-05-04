@@ -25,7 +25,7 @@ The simplest channel. The AI just opens a URL with query parameters and the app 
 ### Endpoint
 
 ```
-https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={copper|steel}&auto={0|1}
+https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={copper|steel}&core={CORE_KEY}&gauge={AWG}&auto={0|1}
 ```
 
 ### Parameters
@@ -35,7 +35,9 @@ https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={c
 | `from` | `lat,lon` decimal degrees | No | Your station location |
 | `to` | `lat,lon` decimal degrees | No | Target station location |
 | `freq` | number 1–30 | No | Operating frequency in MHz |
-| `wire` | `copper` or `steel` | No | Wire type for velocity factor (default copper) |
+| `wire` | `copper` or `steel` | No | Legacy wire type for velocity factor |
+| `core` | wire core key (see "Wire cores") | No | Detailed wire core selection — overrides `wire` |
+| `gauge` | AWG number e.g. `14`, `18`, `22` | No | Wire gauge in AWG; custom values accepted |
 | `auto` | `0` or `1` | No | If all of `from`/`to`/`freq` are present, calculation auto-runs unless `auto=0` |
 
 > The calculator also accepts MGRS grids and DMS — but for AI use we recommend decimal lat/lon since it's unambiguous.
@@ -97,12 +99,34 @@ const result = await window.HFCalc.calculate({
   from: '32.4316,-80.6698',     // string: 'lat,lon' or MGRS or DMS
   to:   '6.4541,3.3947',
   freq: 14.2,                    // number, MHz
-  wireType: 'copper',            // optional, default 'copper'
+  wireType: 'copper',            // optional legacy: 'copper' or 'steel'
+  wireCore: 'copper_bare',       // optional NEW: see "Wire cores" below
+  wireGauge: '14',               // optional NEW: AWG, see "Wire gauges" below
 });
 console.log(result.distance.km);  // 9068.4
 console.log(result.directive.antenna_type);  // "Sloper or longwire aimed toward target"
 console.log(result.recommended_antennas);    // [{key,name,height}, ...]
+console.log(result.velocity_factor);         // computed VF based on core+gauge
 ```
+
+### Wire cores
+
+The `wireCore` parameter accepts these values for selecting the conductor type:
+
+| Key | Material | Base VF | Quality |
+|---|---|---|---|
+| `copper_bare` | Bare solid copper | 0.95 | excellent (default) |
+| `copper_stranded` | Stranded copper | 0.94 | excellent |
+| `copper_insulated` | Insulated copper (PVC) | 0.93 | good |
+| `copper_clad_steel` | Copper-clad steel (CCS) | 0.95 | excellent |
+| `galvanized_steel` | Galvanized steel | 0.90 | fair |
+| `stainless_steel` | Stainless steel | 0.89 | fair |
+| `iron` | Plain iron / mystery wire | 0.85 | poor (field-expedient only) |
+| `speaker_wire` | Speaker wire / lamp cord | 0.92 | fair |
+
+### Wire gauges
+
+The `wireGauge` parameter accepts AWG values as strings: `'10'`, `'12'`, `'14'`, `'16'`, `'18'`, `'20'`, `'22'`, `'24'`. Custom AWG values (e.g. `'17'`) are also accepted — the math will interpolate. Thinner wire (higher AWG) has slightly higher VF; thicker wire has slightly lower VF.
 
 #### `setFromLocation(value)` / `setToLocation(value)` / `setFrequency(value)` / `setWireType(value)`
 
@@ -134,7 +158,11 @@ Clear all inputs and results.
   distance: { km: 9068.4, mi: 5635.6 },
   bearing: { deg: 92.7, cardinal: 'E' },
   frequency_mhz: 14.2,
-  wire_type: 'copper',
+  wire_type: 'copper',                // legacy
+  wire_core: 'copper_bare',           // NEW: detailed core key
+  wire_core_label: 'Bare Copper',     // NEW: human-readable label
+  wire_gauge_awg: '14',               // NEW: AWG used for calculation
+  velocity_factor: 0.95,              // NEW: actual VF used (core × gauge)
   zone: 'long_dx',                    // 'nvis' | 'mid_skip' | 'long_dx' | 'ground_wave'
   zone_label: 'LONG DX (4000+ km)',
   propagation_note: 'Use 14-28 MHz day, 7-14 MHz night',
@@ -151,9 +179,10 @@ Clear all inputs and results.
   },
 
   recommended_antennas: [
-    { key: 'longwire', name: 'Longwire (random wire)', height: '6-30 ft' },
-    { key: 'vertical', name: '1/4-wave vertical with radials', height: 'ground' },
-    { key: 'efhw',     name: 'End-Fed Half-Wave (EFHW)', height: '15-30 ft' }
+    { key: 'longwire',   name: 'Longwire (random wire)', height: '6-30 ft' },
+    { key: 'vertical',   name: '1/4-wave vertical with radials', height: 'ground' },
+    { key: 'efhw',       name: 'End-Fed Half-Wave (EFHW)', height: '15-30 ft' },
+    { key: 'delta_loop', name: 'Delta Loop (Full Wave)', height: 'apex 25-40 ft' }
   ],
 
   terrain: {

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "HF Field Antenna",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "Utility",
+      "copyright": "Copyright (c) 2026 Cpl Angeles-Gonzalez, Ezekiel S. — USMC",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.tzeke000.hffieldantenna",
+      "longDescription": "USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC. Calculates antenna dimensions, takeoff angles, terrain analysis, and propagation modeling for HF radio operations. Works completely offline.",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "Offline HF antenna calculator for field operations",
+      "targets": ["nsis", "msi"],
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": "",
+        "wix": {
+          "language": "en-US"
+        },
+        "nsis": {
+          "displayLanguageSelector": false,
+          "installMode": "currentUser",
+          "languages": ["English"]
+        }
+      },
+      "publisher": "Cpl Angeles-Gonzalez, Ezekiel S. — USMC"
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 900,
+        "resizable": true,
+        "title": "HF Field Antenna Calc — by Cpl Angeles-Gonzalez",
+        "width": 540,
+        "minWidth": 380,
+        "minHeight": 600,
+        "decorations": true,
+        "transparent": false,
+        "url": "index.html"
+      }
+    ]
+  }
+}

@@ -4,7 +4,7 @@
 > Original work · Project signature: `HFCALC-AG-EZK-USMC-v1`
 > Released under [CC BY-NC-ND 4.0](LICENSE)
 
-A USMC-themed offline HF antenna calculator. Plug in your grid + target grid + frequency, get back wire lengths, takeoff angle, propagation analysis, and step-by-step deployment guides for 8 antenna types.
+A USMC-themed offline HF antenna calculator. Plug in your grid + target grid + frequency, get back wire lengths, takeoff angle, propagation analysis, and step-by-step deployment guides for 9 antenna types.
 
 **Works completely offline once installed.**
 
@@ -12,38 +12,49 @@ A USMC-themed offline HF antenna calculator. Plug in your grid + target grid + f
 
 ## 📥 Install
 
-### 🌐 **→ https://tzeke000.github.io/hfcal/ ←**
+### 🌐 **Web App (one link, every platform)**
 
-One link, three platforms.
+### → https://tzeke000.github.io/hfcal/ ←
 
-#### 📲 Phone (Android or iPhone)
-- **Android (Chrome):** Open the link → tap menu → **"Install app"** or **"Add to Home Screen"**
-- **iPhone (Safari only):** Open the link → tap **Share** ⬆️ → **"Add to Home Screen"**
+Open the link in your browser and tap **INSTALL** at the top of the page. Works on:
 
-#### 💻 Desktop (Windows, Mac, Linux)
-Open the link in **Chrome** or **Edge**. You'll see a big **"INSTALL ON DESKTOP"** button at the top of the page. Click it.
+- **Phone (Android or iPhone)** — installs as a real app icon on your home screen
+- **Desktop (Windows / Mac / Linux Chrome / Edge)** — installs as a standalone app with its own window and Start menu / Dock icon
 
-The app installs as a **real desktop application** with:
-- Its own icon in your Start menu / Dock / Applications
-- Its own window (no browser tab or address bar)
-- Works fully offline after first open
-- Auto-updates in the background
+After installing it works **fully offline** — perfect for the field with no signal.
 
-You can also use the install icon that appears in Chrome/Edge's address bar.
-
-#### Once installed — works offline
-Open it once with internet on (caches everything). After that it works in the field with no signal, no cell service, nothing. Perfect for deployment.
+✅ Free · ✅ Never expires · ✅ Auto-updates · ✅ No app store
 
 ---
 
-### Alternative install paths
+### 💻 **Windows .exe Installer (alternative for desktop)**
 
-If you'd rather have a real `.apk` or `.ipa` file (more involved):
+If you'd rather have a real `.exe` installer instead of a PWA install:
 
-- 📲 **Android APK** — [latest build](https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml) → most recent green run → Artifacts → `hf-field-antenna-debug-apk`
-- 🍎 **iPhone IPA** — [latest build](https://github.com/Tzeke000/hfcal/actions/workflows/build-ios.yml) → unsigned, requires [Sideloadly](https://sideloadly.io/) (re-sign every 7 days with free Apple ID)
+1. Go to [the latest release](https://github.com/Tzeke000/hfcal/releases/latest) — or, if no release is published yet, the [Windows build artifacts](https://github.com/Tzeke000/hfcal/actions/workflows/build-windows.yml)
+2. Download `HFCalc-Setup-1.0.0-x64.exe` (or similar filename)
+3. Double-click to install
 
-📖 [Detailed install instructions for all paths](INSTALL.md)
+⚠️ **Heads up:** the installer is **unsigned**. Windows will show *"Windows protected your PC"* the first time you run it. Click **"More info" → "Run anyway"**. (To avoid this we'd need a $200/year code-signing certificate.)
+
+The `.exe` installs HF Field Antenna as a standalone Windows program. Same calculator, same offline support, same AI integration — just a more traditional Windows install experience.
+
+---
+
+### 📲 Android APK (alternative)
+
+If you'd rather install a real `.apk` file:
+
+1. Go to the [latest Android build](https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml)
+2. Click the most recent successful run
+3. Scroll to the bottom → download `hf-field-antenna-debug-apk` from Artifacts
+4. Unzip → transfer the APK to your phone → tap to install (allow "unknown sources" when asked)
+
+📖 [Detailed Android instructions](INSTALL.md#android-apk)
+
+### 🍎 iPhone IPA
+
+The PWA install (above) is much easier on iPhone. The IPA route requires re-signing every 7 days with a free Apple ID. [Detailed iPhone instructions](INSTALL.md#iphone-ipa).
 
 ---
 
@@ -79,7 +90,8 @@ This guide is written so any AI can read it and learn how to drive the calculato
 - **Coordinate input** — accepts MGRS grid (DAGR-style), DMS, or decimal degrees
 - **Path analysis** — distance, bearing, terrain along the great-circle path (ocean / land / mountain / desert)
 - **Propagation modeling** — F2-layer multi-hop, ionosphere takeoff angle adjusted for terrain, NVIS / single-hop / DX zone detection
-- **Antenna selection** — recommends 1–3 antennas appropriate for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire
+- **Antenna selection** — recommends antennas appropriate for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire, **delta loop (full-wave)**
+- **Wire physics** — 8 wire core types (bare/stranded/insulated copper, CCS, galv steel, stainless, plain iron, speaker wire) × 8 AWG gauges (10–24 AWG) plus custom AWG input. Effective velocity factor computed per-combination.
 - **Field-deployable specs** — wire lengths in feet & meters, support heights, leg angles, build steps, deployment diagrams
 
 ## Verified against published HF benchmarks
@@ -114,7 +126,7 @@ For commercial licensing, derivative works, or other inquiries, [open an issue](
 
 ## For developers
 
-- Built with React 18 + Vite 5 + Capacitor 6 + vite-plugin-pwa
+- Built with React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows desktop) + vite-plugin-pwa
 - Single `src/HFCalc.jsx` component, fully self-contained
 - All 24 antenna deployment images embedded as base64 (no external requests)
 - Production builds use Terser with aggressive minification + variable mangling
@@ -122,11 +134,15 @@ For commercial licensing, derivative works, or other inquiries, [open an issue](
 
 ```bash
 npm install
-npm run dev      # local dev server at http://localhost:5173
-npm run build    # production build to dist/
+npm run dev          # local dev server at http://localhost:5173
+npm run build        # production web build to dist/
+npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 
-To build the Capacitor mobile apps, push to this repo — the GitHub Actions workflows in `.github/workflows/` build APK and unsigned IPA automatically.
+To build the mobile apps and Windows .exe automatically, push to this repo — the GitHub Actions workflows in `.github/workflows/` build:
+- `.apk` (Android, debug-signed)
+- `.ipa` (iOS, unsigned — needs Sideloadly to install)
+- `.exe` (Windows, NSIS installer, unsigned)
 
 ---
 

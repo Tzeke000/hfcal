@@ -1,0 +1,80 @@
+name: Build Windows .exe Installer
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - '.github/workflows/build-windows.yml'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Tauri CLI
+        run: npm install --save-dev @tauri-apps/cli@^1.6
+
+      - name: Build the Windows installer
+        run: npx tauri build
+        env:
+          # Tauri inherits the build's PWA_BASE; for the .exe we want assets
+          # to load from the local bundle, not the GitHub Pages subpath.
+          PWA_BASE: '/'
+
+      - name: Locate built installers
+        id: locate
+        shell: pwsh
+        run: |
+          $nsisPath = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis/*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($nsisPath) {
+            echo "nsis_path=$($nsisPath.FullName)" >> $env:GITHUB_OUTPUT
+            echo "Found NSIS installer: $($nsisPath.Name)"
+          }
+          if ($msiPath) {
+            echo "msi_path=$($msiPath.FullName)" >> $env:GITHUB_OUTPUT
+            echo "Found MSI installer: $($msiPath.Name)"
+          }
+
+      - name: Upload NSIS installer (.exe)
+        if: steps.locate.outputs.nsis_path
+        uses: actions/upload-artifact@v4
+        with:
+          name: hf-field-antenna-windows-installer-exe
+          path: ${{ steps.locate.outputs.nsis_path }}
+          retention-days: 90
+
+      - name: Upload MSI installer
+        if: steps.locate.outputs.msi_path
+        uses: actions/upload-artifact@v4
+        with:
+          name: hf-field-antenna-windows-installer-msi
+          path: ${{ steps.locate.outputs.msi_path }}
+          retention-days: 90
