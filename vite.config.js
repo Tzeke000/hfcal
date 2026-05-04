@@ -15,9 +15,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png'],
       manifest: {
-        name: 'HF Field Antenna Calc',
+        name: 'HF Field Antenna Calc — by Cpl Angeles-Gonzalez',
         short_name: 'HF Antenna',
-        description: 'USMC Field Expedient HF Antenna Calculator — works fully offline',
+        description: 'USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC. Works fully offline.',
         theme_color: '#080c07',
         background_color: '#080c07',
         display: 'standalone',
@@ -54,5 +54,26 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 2500,
+    // Use terser for aggressive minification + variable mangling.
+    // This makes the deployed JS much harder to read than the source,
+    // while keeping the attribution banner intact via the `format.preamble`.
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // keep our authorship console banner
+        passes: 2,
+      },
+      mangle: {
+        // Preserve attribution-related identifiers so they remain recognizable
+        // in stack traces and console output.
+        reserved: ['AUTHOR_NAME', 'AUTHOR_BRANCH', 'AUTHOR_LINE', 'APP_SIGNATURE'],
+        toplevel: true,
+      },
+      format: {
+        // Banner injected at the top of the bundled JS — survives minification.
+        preamble: '/*! HF Field Antenna Calculator — Original work of Cpl Angeles-Gonzalez, Ezekiel S. — USMC. Project signature: HFCALC-AG-EZK-USMC-v1. Released under CC BY-NC-ND 4.0. Unauthorized redistribution or claim of authorship is prohibited. */',
+        comments: /^!/,
+      },
+    },
   },
 });

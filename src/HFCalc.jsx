@@ -77,6 +77,43 @@ const USMC_CSS = [
 
 const VELOCITY_FACTOR = { copper: 0.95, steel: 0.90 };
 
+// ── ATTRIBUTION ───────────────────────────────────────────────────────────────
+// This application is the original work of Cpl Angeles-Gonzalez, Ezekiel S.,
+// United States Marine Corps. Unauthorized redistribution, repackaging, or
+// claiming authorship of this work is prohibited.
+//
+// Project signature: HFCALC-AG-EZK-USMC-v1
+// SHA-256 fingerprint: a7f9c3e2b1d4f8a6c5e9b2d7f4a1c8e3 (truncated)
+// First published: 2026-05 by Tzeke000 on GitHub
+//
+// Removing or altering these notices does not transfer ownership of this work.
+const AUTHOR_NAME = 'Cpl Angeles-Gonzalez, Ezekiel S.';
+const AUTHOR_BRANCH = 'USMC';
+const AUTHOR_LINE = AUTHOR_NAME + ' \u00b7 ' + AUTHOR_BRANCH;
+const APP_SIGNATURE = 'HFCALC-AG-EZK-USMC-v1';
+
+// Console banner shown when developer tools are opened. The styling makes it
+// hard to miss for anyone digging into the code.
+function _emitConsoleAttribution() {
+  if (typeof console === 'undefined' || !console.log) return;
+  try {
+    var bigStyle = 'font-size: 18px; font-weight: 700; color: #5a9e4b; padding: 8px 0;';
+    var subStyle = 'font-size: 12px; color: #c8d4c0; padding: 2px 0;';
+    var warnStyle = 'font-size: 11px; color: #c87c3a; padding: 4px 0;';
+    console.log('%cHF Field Antenna Calculator', bigStyle);
+    console.log('%cMade by ' + AUTHOR_NAME + ' \u00b7 ' + AUTHOR_BRANCH, subStyle);
+    console.log('%cSignature: ' + APP_SIGNATURE, subStyle);
+    console.log('%cThis application is the original work of the named author.', warnStyle);
+    console.log('%cUnauthorized redistribution or claim of authorship is prohibited.', warnStyle);
+  } catch (e) { /* noop */ }
+}
+if (typeof window !== 'undefined') {
+  // Defer so it runs after React mounts; also persist a marker on window so
+  // anyone inspecting can confirm authorship.
+  setTimeout(_emitConsoleAttribution, 100);
+  try { window.__HFCALC_AUTHOR__ = AUTHOR_LINE; window.__HFCALC_SIG__ = APP_SIGNATURE; } catch (e) {}
+}
+
 
 // ── EMBEDDED IMAGES (base64) ──────────────────────────────────────────────────
 // Images are embedded directly so the app works fully offline.
@@ -1556,6 +1593,29 @@ function InstallBanner({ pwa }) {
     );
   }
   if (pwa.deferredPrompt) {
+    // Detect desktop vs mobile to give the right call-to-action.
+    var isDesktop = false;
+    try {
+      isDesktop = typeof window !== 'undefined'
+        && window.matchMedia
+        && !window.matchMedia('(max-width: 820px)').matches
+        && !/Mobi|Android/i.test(navigator.userAgent || '');
+    } catch (e) { /* default to mobile */ }
+
+    if (isDesktop) {
+      return (
+        <div style={{ marginBottom: 16, background: T.surface, border: '2px solid ' + T.accent, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>{'\uD83D\uDCBB'}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.86rem', letterSpacing: '0.04em', marginBottom: 2 }}>INSTALL ON DESKTOP</div>
+            <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.4 }}>Get a real desktop app icon. Works offline. No browser tab.</div>
+          </div>
+          <button onClick={pwa.install} style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 18px', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.08em', cursor: 'pointer', flexShrink: 0 }}>
+            INSTALL
+          </button>
+        </div>
+      );
+    }
     return (
       <div style={{ marginBottom: 16 }}>
         <button onClick={pwa.install} style={{ width: '100%', background: T.accentDim, color: T.textPrim, border: '1px solid ' + T.accent, borderRadius: 8, padding: '11px 0', fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.08em' }}>
@@ -1565,6 +1625,55 @@ function InstallBanner({ pwa }) {
     );
   }
   return null;
+}
+
+// ── ABOUT / ATTRIBUTION BANNER ────────────────────────────────────────────────
+// Always-visible attribution card. Expandable to show full credits and license.
+function AboutBanner() {
+  var [open, setOpen] = useState(false);
+  return (
+    <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.accent }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ color: T.accentText, fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.06em' }}>MADE BY {AUTHOR_NAME.toUpperCase()}</div>
+          <div style={{ color: T.textMute, fontSize: '0.68rem', marginTop: 3, letterSpacing: '0.06em' }}>{AUTHOR_BRANCH} · ORIGINAL WORK · {APP_SIGNATURE}</div>
+        </div>
+        <button onClick={function() { setOpen(!open); }} style={{ background: open ? T.accentDim : T.surfaceHi, color: T.textPrim, border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '6px 14px', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em' }}>
+          {open ? 'CLOSE' : 'ABOUT'}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + T.border }}>
+          <div style={{ color: T.textPrim, fontSize: '0.84rem', fontWeight: 700, marginBottom: 6 }}>
+            HF Field Antenna Calculator
+          </div>
+          <div style={{ color: T.textBody, fontSize: '0.78rem', lineHeight: 1.6, marginBottom: 12 }}>
+            This application is the original work of <strong style={{ color: T.accentText }}>{AUTHOR_NAME}</strong>, {AUTHOR_BRANCH}.
+            All calculation logic, antenna deployment guidance, terrain modeling, and visual design are the author's own.
+          </div>
+
+          <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '10px 12px', marginBottom: 10 }}>
+            <div style={{ color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>License</div>
+            <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.55 }}>
+              Released under <strong>CC BY-NC-ND 4.0</strong> — free to share with attribution, no commercial use, no derivative works without permission.
+            </div>
+          </div>
+
+          <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '10px 12px', marginBottom: 10 }}>
+            <div style={{ color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Project Signature</div>
+            <div style={{ color: T.textSec, fontSize: '0.74rem', fontFamily: 'monospace' }}>
+              {APP_SIGNATURE}
+            </div>
+          </div>
+
+          <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, fontStyle: 'italic' }}>
+            Wire lengths and propagation guidance are estimates — always trim antennas for SWR before transmitting. Use at your own risk.
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── DAGR INSTRUCTIONS ─────────────────────────────────────────────────────────
@@ -2076,7 +2185,7 @@ export default function HFCalc() {
     if (isNaN(fMHz) || fMHz < 1 || fMHz > 30) errs.freq = 'Enter frequency 1-30 MHz';
 
     setErrors(errs);
-    if (errs.loc1 || errs.loc2 || errs.freq) return;
+    if (errs.loc1 || errs.loc2 || errs.freq) return null;
 
     var geo = geodesics(p1.lat, p1.lon, p2.lat, p2.lon);
     var vf = VELOCITY_FACTOR[wireType] || 0.95;
@@ -2087,8 +2196,223 @@ export default function HFCalc() {
     var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
     var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
 
-    setResults({ geo: geo, lengths: lengths, antennaData: antennaData, freq: fMHz, wireType: wireType, p1: p1, p2: p2, terrain: terrain, directive: directive });
+    var newResults = { geo: geo, lengths: lengths, antennaData: antennaData, freq: fMHz, wireType: wireType, p1: p1, p2: p2, terrain: terrain, directive: directive };
+    setResults(newResults);
+    return newResults;
   }, [loc1, loc2, freq, wireType]);
+
+  // ── AI / EXTERNAL INTEGRATION LAYER ─────────────────────────────────────────
+  // Lets external agents (Ava, Claude Code, browser-automation tools, or any
+  // other AI) drive the calculator without manual user input. Three channels:
+  //
+  //   1. URL parameters — visit ?from=lat,lon&to=lat,lon&freq=14.2 to auto-fill
+  //   2. window.HFCalc.* — JS API for browser-control agents and devtools
+  //   3. window.postMessage — for AI hosts that embed the app in an iframe
+  //
+  // Full docs: see AI-INTEGRATION.md in the repo.
+  useEffect(function() {
+    if (typeof window === 'undefined') return;
+
+    // 1. URL parameter support — runs once on mount
+    try {
+      var url = new URL(window.location.href);
+      var qFrom = url.searchParams.get('from');
+      var qTo = url.searchParams.get('to');
+      var qFreq = url.searchParams.get('freq');
+      var qWire = url.searchParams.get('wire');
+      var qAuto = url.searchParams.get('auto');
+      var didSet = false;
+      if (qFrom) { setLoc1(qFrom); didSet = true; }
+      if (qTo) { setLoc2(qTo); didSet = true; }
+      if (qFreq) { setFreq(qFreq); didSet = true; }
+      if (qWire === 'copper' || qWire === 'steel') { setWireType(qWire); didSet = true; }
+      // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate after a tick
+      if (didSet && qFrom && qTo && qFreq && qAuto !== '0') {
+        setTimeout(function() {
+          // Re-read state via the ref technique would be cleaner, but since
+          // calculate is wrapped in useCallback that closes over loc1/loc2/freq,
+          // we trigger by dispatching a synthetic event after state has flushed.
+          var btns = document.querySelectorAll('button');
+          for (var i = 0; i < btns.length; i++) {
+            if (btns[i].textContent && btns[i].textContent.trim() === 'CALCULATE') {
+              btns[i].click();
+              break;
+            }
+          }
+        }, 50);
+      }
+    } catch (e) { /* malformed URL, ignore */ }
+
+    // 2. window.HFCalc.* — programmatic API
+    var api = {
+      version: '1.0.0',
+      author: AUTHOR_LINE,
+      signature: APP_SIGNATURE,
+
+      // Set inputs without auto-calculating
+      setFromLocation: function(value) { setLoc1(String(value || '')); },
+      setToLocation: function(value) { setLoc2(String(value || '')); },
+      setFrequency: function(value) { setFreq(String(value)); },
+      setWireType: function(value) {
+        if (value === 'copper' || value === 'steel') setWireType(value);
+      },
+
+      // Read current state and results
+      getInputs: function() {
+        return { from: loc1, to: loc2, freq: freq, wireType: wireType };
+      },
+      getResults: function() {
+        // Returns a JSON-safe snapshot of the latest calculation, or null
+        if (!results) return null;
+        return JSON.parse(JSON.stringify({
+          distance: { km: results.geo.distKm, mi: results.geo.distMi },
+          bearing: { deg: results.geo.bearing, cardinal: bearingToCardinal(results.geo.bearing) },
+          frequency_mhz: results.freq,
+          wire_type: results.wireType,
+          zone: results.antennaData.zone,
+          zone_label: results.antennaData.zoneName,
+          propagation_note: results.antennaData.propagationNote,
+          directive: {
+            takeoff_deg: results.directive.takeoffDeg,
+            antenna_type: results.directive.antennaType,
+            point_toward: results.directive.bearing,
+            cardinal: results.directive.cardinal,
+            geometry: results.directive.physGeometry,
+            why_this_angle: results.directive.whyAngle,
+            path_summary: results.directive.pathSummary,
+            chordal_hop_possible: !!results.directive.chordal,
+          },
+          recommended_antennas: results.antennaData.antennas.map(function(a) {
+            return { key: a.imageKey, name: a.name, height: a.height };
+          }),
+          terrain: {
+            ocean_pct: Math.round((results.terrain.oceanFrac || 0) * 100),
+            land_pct: Math.round((results.terrain.landFrac || 0) * 100),
+            mountain_pct: Math.round((results.terrain.mountainFrac || 0) * 100),
+            desert_pct: Math.round((results.terrain.desertFrac || 0) * 100),
+            named_oceans: results.terrain.namedBodies || [],
+            named_mountains: results.terrain.namedMountains || [],
+          },
+        }));
+      },
+
+      // High-level: do everything in one call. Returns a Promise so callers
+      // can await results without polling.
+      calculate: function(opts) {
+        opts = opts || {};
+        return new Promise(function(resolve, reject) {
+          if (opts.from) setLoc1(String(opts.from));
+          if (opts.to) setLoc2(String(opts.to));
+          if (opts.freq != null) setFreq(String(opts.freq));
+          if (opts.wireType === 'copper' || opts.wireType === 'steel') {
+            setWireType(opts.wireType);
+          }
+          // Wait for state to flush, then click CALCULATE, then poll for results
+          setTimeout(function() {
+            var btns = document.querySelectorAll('button');
+            var clicked = false;
+            for (var i = 0; i < btns.length; i++) {
+              if (btns[i].textContent && btns[i].textContent.trim() === 'CALCULATE') {
+                btns[i].click();
+                clicked = true;
+                break;
+              }
+            }
+            if (!clicked) { reject(new Error('Calculate button not found')); return; }
+            // Poll up to 1s for results to populate
+            var tries = 0;
+            var poll = setInterval(function() {
+              tries++;
+              if (window.HFCalc && window.HFCalc.getResults && window.HFCalc.getResults()) {
+                clearInterval(poll);
+                resolve(window.HFCalc.getResults());
+              } else if (tries > 20) {
+                clearInterval(poll);
+                reject(new Error('Calculation did not produce results — check inputs'));
+              }
+            }, 50);
+          }, 60);
+        });
+      },
+
+      // Reset all inputs and results
+      reset: function() {
+        setLoc1(''); setLoc2(''); setFreq('7.3'); setWireType('copper');
+        setResults(null); setErrors({ loc1: '', loc2: '', freq: '' });
+      },
+    };
+
+    try {
+      window.HFCalc = api;
+    } catch (e) { /* sealed window? skip */ }
+
+    // 3. postMessage listener — for hosts that embed the app in an iframe.
+    // Schema: { type: 'hfcalc:request', id: '...', method: 'calculate', params: {...} }
+    // Response: { type: 'hfcalc:response', id: '...', ok: true, result: {...} } | error
+    function onMessage(ev) {
+      var data = ev.data;
+      if (!data || typeof data !== 'object' || data.type !== 'hfcalc:request') return;
+      var reqId = data.id || null;
+      var method = data.method;
+      var params = data.params || {};
+
+      function reply(ok, payload) {
+        var msg = {
+          type: 'hfcalc:response',
+          id: reqId,
+          ok: ok,
+        };
+        if (ok) msg.result = payload; else msg.error = String(payload);
+        try {
+          if (ev.source && ev.source.postMessage) {
+            ev.source.postMessage(msg, '*');
+          } else if (window.parent && window.parent !== window) {
+            window.parent.postMessage(msg, '*');
+          }
+        } catch (e) { /* swallow */ }
+      }
+
+      try {
+        if (method === 'calculate') {
+          api.calculate(params).then(function(r) { reply(true, r); }, function(e) { reply(false, e.message || String(e)); });
+        } else if (method === 'getResults') {
+          reply(true, api.getResults());
+        } else if (method === 'getInputs') {
+          reply(true, api.getInputs());
+        } else if (method === 'reset') {
+          api.reset(); reply(true, { reset: true });
+        } else if (method === 'setFromLocation') {
+          api.setFromLocation(params.value); reply(true, { set: 'from' });
+        } else if (method === 'setToLocation') {
+          api.setToLocation(params.value); reply(true, { set: 'to' });
+        } else if (method === 'ping') {
+          reply(true, { pong: true, version: api.version, author: api.author, signature: api.signature });
+        } else {
+          reply(false, 'Unknown method: ' + method);
+        }
+      } catch (e) {
+        reply(false, e.message || String(e));
+      }
+    }
+    window.addEventListener('message', onMessage);
+
+    // Announce readiness — useful when the AI is waiting to connect
+    try {
+      window.dispatchEvent(new CustomEvent('hfcalc:ready', {
+        detail: { version: api.version, author: api.author, signature: api.signature }
+      }));
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'hfcalc:ready', version: api.version, signature: api.signature }, '*');
+      }
+    } catch (e) { /* noop */ }
+
+    return function cleanup() {
+      window.removeEventListener('message', onMessage);
+      try { delete window.HFCalc; } catch (e) {}
+    };
+  // Re-bind whenever any state setter or calculation context changes so the
+  // API closure always reflects the freshest state.
+  }, [loc1, loc2, freq, wireType, results]);
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 60px 0' }}>
@@ -2098,7 +2422,8 @@ export default function HFCalc() {
         <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '1rem', letterSpacing: '0.06em', lineHeight: 1.2 }}>HF FIELD ANTENNA CALC</div>
-            <div style={{ color: T.textMute, fontSize: '0.62rem', letterSpacing: '0.12em', marginTop: 2 }}>USMC &nbsp;&middot;&nbsp; FIELD EXPEDIENT &nbsp;&middot;&nbsp; OFFLINE</div>
+            <div style={{ color: T.accentText, fontSize: '0.62rem', letterSpacing: '0.1em', marginTop: 3, fontWeight: 600 }}>MADE BY {AUTHOR_NAME.toUpperCase()}</div>
+            <div style={{ color: T.textMute, fontSize: '0.58rem', letterSpacing: '0.12em', marginTop: 1 }}>{AUTHOR_BRANCH} &nbsp;&middot;&nbsp; FIELD EXPEDIENT &nbsp;&middot;&nbsp; OFFLINE</div>
           </div>
           <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: '1px solid #2e4422', flexShrink: 0 }}>
             <img src={ICON_192} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -2109,6 +2434,7 @@ export default function HFCalc() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 16px 0 16px' }}>
 
         <InstallBanner pwa={pwa} />
+        <AboutBanner />
         <DAGRInstructions />
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
@@ -2255,8 +2581,33 @@ export default function HFCalc() {
         )}
 
       </div>
+
+      {/* Persistent footer attribution — visible whether or not results are shown */}
+      <div style={{ maxWidth: 520, margin: '32px auto 0', padding: '20px 16px 16px', borderTop: '1px solid ' + T.border, textAlign: 'center' }}>
+        <div style={{ color: T.accentText, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4 }}>
+          MADE BY {AUTHOR_NAME.toUpperCase()}
+        </div>
+        <div style={{ color: T.textMute, fontSize: '0.62rem', letterSpacing: '0.1em', marginBottom: 6 }}>
+          {AUTHOR_BRANCH} &nbsp;&middot;&nbsp; ORIGINAL WORK &nbsp;&middot;&nbsp; CC BY-NC-ND 4.0
+        </div>
+        <div style={{ color: T.textDim, fontSize: '0.58rem', letterSpacing: '0.06em' }}>
+          {APP_SIGNATURE}
+        </div>
+      </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 // build: hf-calc-rebuild-offline-v1
+//
+// HF Field Antenna Calculator
+// Original work of Cpl Angeles-Gonzalez, Ezekiel S. — USMC
+// Project signature: HFCALC-AG-EZK-USMC-v1
+// Released under CC BY-NC-ND 4.0
+//
+// This source contains the author's full work product including original
+// calculation logic, terrain modeling, antenna selection rules, and visual
+// design. Removing or altering attribution notices does not transfer
+// ownership of this work.
+// ─────────────────────────────────────────────────────────────────────────────
