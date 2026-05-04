@@ -1579,52 +1579,124 @@ function USMCStyleInjector() {
 }
 
 // ── INSTALL BANNER ─────────────────────────────────────────────────────────────
+// Always-visible install card (unless app is already installed). Tries the
+// native browser install prompt first, falls back to clear instructions when
+// the browser won't auto-prompt (already-dismissed prompts, Firefox, etc.)
 function InstallBanner({ pwa }) {
-  if (pwa.isInstalled) return null;
-  if (pwa.isIOS) {
-    return (
-      <div style={{ background: T.surface, border: '1px solid ' + T.borderHi, borderRadius: 8, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 3, height: 36, background: T.accent, borderRadius: 2, flexShrink: 0 }} />
-        <div>
-          <div style={{ color: T.textPrim, fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.05em' }}>INSTALL FOR OFFLINE USE</div>
-          <div style={{ color: T.textSec, fontSize: '0.76rem', marginTop: 2 }}>Tap the Share button then "Add to Home Screen"</div>
-        </div>
-      </div>
-    );
-  }
-  if (pwa.deferredPrompt) {
-    // Detect desktop vs mobile to give the right call-to-action.
-    var isDesktop = false;
-    try {
-      isDesktop = typeof window !== 'undefined'
-        && window.matchMedia
-        && !window.matchMedia('(max-width: 820px)').matches
-        && !/Mobi|Android/i.test(navigator.userAgent || '');
-    } catch (e) { /* default to mobile */ }
+  var [showInstructions, setShowInstructions] = useState(false);
 
-    if (isDesktop) {
-      return (
-        <div style={{ marginBottom: 16, background: T.surface, border: '2px solid ' + T.accent, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>{'\uD83D\uDCBB'}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.86rem', letterSpacing: '0.04em', marginBottom: 2 }}>INSTALL ON DESKTOP</div>
-            <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.4 }}>Get a real desktop app icon. Works offline. No browser tab.</div>
-          </div>
-          <button onClick={pwa.install} style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 18px', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.08em', cursor: 'pointer', flexShrink: 0 }}>
-            INSTALL
-          </button>
-        </div>
-      );
+  if (pwa.isInstalled) return null;
+
+  // Detect platform / browser to give the right instructions
+  var ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  var isAndroid = /android/i.test(ua);
+  var isMobile = isIOS || isAndroid || /Mobi/i.test(ua);
+  var isFirefox = /firefox/i.test(ua);
+  var isSafari = /safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua);
+  var isChromeOrEdge = /chrome|chromium|edg/i.test(ua) && !isFirefox;
+  var isDesktop = !isMobile;
+
+  // Click handler: try native prompt, fall back to instructions
+  function handleInstallClick() {
+    if (pwa.deferredPrompt) {
+      pwa.install();
+    } else {
+      setShowInstructions(true);
     }
-    return (
-      <div style={{ marginBottom: 16 }}>
-        <button onClick={pwa.install} style={{ width: '100%', background: T.accentDim, color: T.textPrim, border: '1px solid ' + T.accent, borderRadius: 8, padding: '11px 0', fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.08em' }}>
-          INSTALL FOR OFFLINE USE
+  }
+
+  // Build the right "how to install" text for this user's situation
+  function instructionsFor() {
+    if (isIOS) {
+      return [
+        'Tap the Share button at the bottom of Safari (square with up arrow)',
+        'Scroll down in the share menu',
+        'Tap "Add to Home Screen"',
+        'Tap "Add" in the top right'
+      ];
+    }
+    if (isAndroid && isChromeOrEdge) {
+      return [
+        'Tap the three-dot menu in the top right of Chrome',
+        'Tap "Install app" or "Add to Home Screen"',
+        'Confirm install'
+      ];
+    }
+    if (isAndroid && isFirefox) {
+      return [
+        'Tap the three-dot menu in Firefox',
+        'Tap "Install" or "Add to Home Screen"'
+      ];
+    }
+    if (isDesktop && isChromeOrEdge) {
+      return [
+        'Look at the right end of your address bar (next to the bookmark star)',
+        'Click the install icon — it looks like a small monitor with a down arrow',
+        'Click "Install" in the popup',
+        'OR: click the three-dot menu (top right) → "Install HF Field Antenna..."'
+      ];
+    }
+    if (isDesktop && isFirefox) {
+      return [
+        'Firefox does not support PWA install on desktop',
+        'Open this page in Chrome or Edge instead',
+        'Or use the bookmark — Firefox can still run the app, just not install it'
+      ];
+    }
+    if (isDesktop && isSafari) {
+      return [
+        'On Safari for Mac: File menu → "Add to Dock"',
+        'The app installs as a real Mac app',
+        'Or use Chrome/Edge for a more standard install'
+      ];
+    }
+    return [
+      'Use your browser menu to find "Install app" or "Add to Home Screen"',
+      'If your browser does not support this, try Chrome or Edge'
+    ];
+  }
+
+  var instructions = instructionsFor();
+  var icon = isMobile ? '\uD83D\uDCF1' : '\uD83D\uDCBB'; // phone or laptop emoji
+  var titleText = isMobile ? 'INSTALL ON YOUR PHONE' : 'INSTALL ON DESKTOP';
+  var subText = isMobile
+    ? 'Get a real app icon. Works offline in the field. No app store needed.'
+    : 'Get a real desktop app icon. Works offline. Opens in its own window.';
+
+  return (
+    <div style={{ marginBottom: 16, background: T.surface, border: '2px solid ' + T.accent, borderRadius: 10, padding: '14px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.86rem', letterSpacing: '0.04em', marginBottom: 2 }}>{titleText}</div>
+          <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.4 }}>{subText}</div>
+        </div>
+        <button onClick={handleInstallClick} style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 18px', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.08em', cursor: 'pointer', flexShrink: 0 }}>
+          INSTALL
         </button>
       </div>
-    );
-  }
-  return null;
+
+      {showInstructions && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + T.border }}>
+          <div style={{ color: T.accentText, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
+            HOW TO INSTALL
+          </div>
+          <ol style={{ margin: 0, paddingLeft: 20, color: T.textBody, fontSize: '0.78rem', lineHeight: 1.6 }}>
+            {instructions.map(function(step, i) {
+              return <li key={i} style={{ marginBottom: 4 }}>{step}</li>;
+            })}
+          </ol>
+          <div style={{ marginTop: 10, color: T.textMute, fontSize: '0.68rem', fontStyle: 'italic' }}>
+            Already installed? You can close this and just launch the app from your {isMobile ? 'home screen' : 'Start menu / Dock'}.
+          </div>
+          <button onClick={function() { setShowInstructions(false); }} style={{ marginTop: 10, background: 'transparent', color: T.textMute, border: '1px solid ' + T.border, borderRadius: 4, padding: '4px 10px', fontSize: '0.68rem', cursor: 'pointer' }}>
+            HIDE
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── ABOUT / ATTRIBUTION BANNER ────────────────────────────────────────────────
