@@ -2518,6 +2518,30 @@ export default function HFCalc() {
   var parsed1 = loc1.trim() ? parseCoords(loc1) : null;
   var parsed2 = loc2.trim() ? parseCoords(loc2) : null;
 
+  // Tracks whether the user has run a calculation at least once. After that,
+  // results recompute live (debounced) as inputs change — see the effect below.
+  var hasCalculatedRef = useRef(false);
+
+  // Build the full results object from already-validated inputs. Shared by the
+  // CALCULATE button and the live auto-recompute effect so both stay in sync.
+  function buildResults(p1, p2, fMHz) {
+    var geo = geodesics(p1.lat, p1.lon, p2.lat, p2.lon);
+    // Compute VF from selected core + gauge using new physics
+    var vf = computeVF(wireCore, effectiveGauge);
+    var wl = wavelength(fMHz, vf);
+    var lengths = { qw: toLengths(wl / 4), hw: toLengths(wl / 2), full: toLengths(wl) };
+    var antennaData = getAntennaRecommendations(geo.distKm, fMHz);
+    var terrain = pathTerrainAnalysis(p1.lat, p1.lon, p2.lat, p2.lon, 32);
+    var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
+    var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
+    return {
+      geo: geo, lengths: lengths, antennaData: antennaData,
+      freq: fMHz, wireType: wireType,
+      wireCore: wireCore, wireGauge: effectiveGauge, vf: vf,
+      p1: p1, p2: p2, terrain: terrain, directive: directive
+    };
+  }
+
   var calculate = useCallback(function() {
     var errs = { loc1: '', loc2: '', freq: '' };
     var p1 = parseCoords(loc1);
@@ -2531,24 +2555,29 @@ export default function HFCalc() {
     setErrors(errs);
     if (errs.loc1 || errs.loc2 || errs.freq) return null;
 
-    var geo = geodesics(p1.lat, p1.lon, p2.lat, p2.lon);
-    // Compute VF from selected core + gauge using new physics
-    var vf = computeVF(wireCore, effectiveGauge);
-    var wl = wavelength(fMHz, vf);
-    var lengths = { qw: toLengths(wl / 4), hw: toLengths(wl / 2), full: toLengths(wl) };
-    var antennaData = getAntennaRecommendations(geo.distKm, fMHz);
-    var terrain = pathTerrainAnalysis(p1.lat, p1.lon, p2.lat, p2.lon, 32);
-    var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
-    var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
-
-    var newResults = {
-      geo: geo, lengths: lengths, antennaData: antennaData,
-      freq: fMHz, wireType: wireType,
-      wireCore: wireCore, wireGauge: effectiveGauge, vf: vf,
-      p1: p1, p2: p2, terrain: terrain, directive: directive
-    };
+    var newResults = buildResults(p1, p2, fMHz);
+    hasCalculatedRef.current = true;
     setResults(newResults);
     return newResults;
+  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge]);
+
+  // Live auto-recompute: once the user has calculated once, any change to the
+  // locations, frequency, or wire selection re-runs the analysis (debounced)
+  // so the path, antenna picks, and optimal apex height always reflect the
+  // current target — no need to press CALCULATE again. Invalid input is left
+  // alone (no error flashing) and simply keeps the last good result.
+  useEffect(function() {
+    if (!hasCalculatedRef.current) return;
+    var p1 = parseCoords(loc1);
+    var p2 = parseCoords(loc2);
+    var fMHz = parseFloat(freq);
+    if (!loc1.trim() || isNaN(p1.lat)) return;
+    if (!loc2.trim() || isNaN(p2.lat)) return;
+    if (isNaN(fMHz) || fMHz < 1 || fMHz > 30) return;
+    var t = setTimeout(function() {
+      setResults(buildResults(p1, p2, fMHz));
+    }, 250);
+    return function() { clearTimeout(t); };
   }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge]);
 
   // ── AI / EXTERNAL INTEGRATION LAYER ─────────────────────────────────────────
