@@ -2375,7 +2375,7 @@ function InvVGeoCalc({ legMeters, isNVIS }) {
 }
 
 // ── ANTENNA CARD ───────────────────────────────────────────────────────────────
-function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary }) {
+function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, legEndHeight }) {
   var [stepsOpen, setStepsOpen] = useState(false);
   // vf and wireLabel are the new "core × gauge" values; fall back to legacy
   // wireType-based VF if a caller hasn't been updated yet.
@@ -2384,6 +2384,32 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary }) {
   var wl = wavelength(freq, actualVF);
   var qw = wl / 4;
   var hw = wl / 2;
+
+  // ── Auto-computed optimal apex / support height ───────────────────────────
+  // For dipole-family antennas we derive the height that puts the first
+  // elevation lobe at the takeoff angle needed for a single F2 hop to the
+  // target distance, instead of showing a generic "30-40 ft" range.
+  //   takeoff angle  α = 90° − atan(distance / (2·h_F2))   (h_F2 ≈ 300 km)
+  //   required height H = λ / (4·sin α)                     (first-lobe peak)
+  // λ here is the velocity-factor-adjusted wavelength already used for the
+  // wire-length table above, so apex and leg figures stay self-consistent.
+  var isInvV = antenna.imageKey === 'invertedv' || antenna.imageKey === 'nvis_invertedv';
+  var isFlatDipole = antenna.imageKey === 'dipole' || antenna.imageKey === 'nvis_dipole';
+  var apexInfo = null;
+  if ((isInvV || isFlatDipole) && typeof distKm === 'number' && isFinite(distKm) && distKm > 0) {
+    var H_F2_KM = 300; // F2 layer height, typical daytime
+    var takeoffDeg = 90 - Math.atan(distKm / (2 * H_F2_KM)) * 180 / Math.PI;
+    var apexM = wl / (4 * Math.sin(takeoffDeg * Math.PI / 180));
+    var endM = (typeof legEndHeight === 'number' && legEndHeight >= 0) ? legEndHeight : 0.0762;
+    apexInfo = {
+      label: isInvV ? 'Apex height' : 'Support height',
+      title: isInvV ? 'Optimal Apex Height' : 'Optimal Support Height',
+      apexFt: apexM * 3.28084, apexM: apexM,
+      legFt: qw * 3.28084, legM: qw,
+      endIn: endM / 0.0254, endM: endM,
+      takeoffDeg: takeoffDeg,
+    };
+  }
 
   return (
     <div style={{ background: T.surface, border: '1px solid ' + (primary ? T.borderHi : T.border), borderRadius: 10, marginBottom: 14, overflow: 'hidden' }}>
@@ -2412,6 +2438,20 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary }) {
         <LengthTable label={"1/4-WAVE LEG · " + freq + " MHz · " + actualLabel} meters={qw} />
         <LengthTable label={"1/2-WAVE TOTAL · " + freq + " MHz · " + actualLabel} meters={hw} />
         <LengthTable label={"FULL WAVE · " + freq + " MHz · " + actualLabel} meters={wl} />
+
+        {apexInfo && (
+          <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px' }}>
+            <div style={{ color: T.accentText, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8, textTransform: 'uppercase' }}>
+              {apexInfo.title}
+            </div>
+            <div style={{ color: T.textBody, fontSize: '0.82rem', lineHeight: 1.7 }}>
+              <div>{apexInfo.label + ': '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.apexFt.toFixed(0) + ' ft (' + apexInfo.apexM.toFixed(1) + ' m)'}</span></div>
+              <div>{'Each leg: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.legFt.toFixed(1) + ' ft (' + apexInfo.legM.toFixed(1) + ' m)'}</span></div>
+              <div>{'Leg end height: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.endIn.toFixed(1) + ' in / ' + apexInfo.endM.toFixed(3) + ' m'}</span></div>
+              <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>{'Optimized for: ' + Math.round(distKm) + ' km path, F2 single-hop (≈' + apexInfo.takeoffDeg.toFixed(0) + '° takeoff)'}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {(antenna.imageKey === 'invertedv' || antenna.imageKey === 'nvis_invertedv') && (
@@ -2456,11 +2496,24 @@ export default function HFCalc() {
   var [wireCore, setWireCore] = useState('copper_bare');
   var [wireGauge, setWireGauge] = useState('14');
   var [customGauge, setCustomGauge] = useState(''); // user-typed AWG value
+  // Leg-end height: how high the inverted-V / dipole leg ends sit above ground.
+  // Stored as a raw input string + unit; the canonical value (legEndHeight, in
+  // meters) is derived below and fed into the per-antenna apex-height optimizer.
+  // Default 3 inches (0.0762 m).
+  var [legEndStr, setLegEndStr] = useState('3');
+  var [legEndUnit, setLegEndUnit] = useState('in'); // 'in' | 'ft'
   var [results, setResults] = useState(null);
   var [errors, setErrors] = useState({ loc1: '', loc2: '', freq: '' });
 
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
   var effectiveGauge = customGauge.trim() !== '' ? customGauge.trim() : wireGauge;
+
+  // Canonical leg-end height in meters (default 0.0762 m = 3 in).
+  var legEndHeight = (function() {
+    var v = parseFloat(legEndStr);
+    if (isNaN(v) || v < 0) return 0;
+    return legEndUnit === 'ft' ? v / 3.28084 : v * 0.0254;
+  })();
 
   var parsed1 = loc1.trim() ? parseCoords(loc1) : null;
   var parsed2 = loc2.trim() ? parseCoords(loc2) : null;
@@ -2894,6 +2947,35 @@ export default function HFCalc() {
               Effective Velocity Factor: {computeVF(wireCore, effectiveGauge).toFixed(3)}
             </div>
           </div>
+
+          <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid ' + T.border }}>
+            <label style={{ color: T.textSec, fontWeight: 600, fontSize: '0.72rem', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Leg End Height</label>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                className="usmc-input"
+                type="number"
+                min="0"
+                step="0.5"
+                value={legEndStr}
+                onChange={function(e) { setLegEndStr(e.target.value); }}
+                placeholder="3"
+                style={{ flex: 1 }}
+              />
+              <div style={{ display: 'flex', gap: 4 }}>
+                {['in', 'ft'].map(function(u) {
+                  var active = legEndUnit === u;
+                  return (
+                    <button key={u} onClick={function() { setLegEndUnit(u); }} style={{ padding: '8px 12px', background: active ? T.accentDim : T.bg, color: active ? T.textPrim : T.textMute, border: active ? '1.5px solid ' + T.accent : '1.5px solid ' + T.border, borderRadius: 5, fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', cursor: 'pointer' }}>
+                      {u}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{ fontSize: '0.65rem', color: T.textMute, marginTop: 6, lineHeight: 1.45 }}>
+              {'= ' + legEndHeight.toFixed(3) + ' m · height of inverted-V / dipole leg ends above ground. Used to compute the optimal apex height for each antenna below.'}
+            </div>
+          </div>
         </div>
 
         <button
@@ -2975,6 +3057,8 @@ export default function HFCalc() {
                   wireLabel={(WIRE_CORES[results.wireCore] ? WIRE_CORES[results.wireCore].short : results.wireType) + ' ' + results.wireGauge + ' AWG'}
                   vf={results.vf}
                   primary={i === 0}
+                  distKm={results.geo.distKm}
+                  legEndHeight={legEndHeight}
                 />
               );
             })}
