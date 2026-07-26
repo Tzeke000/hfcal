@@ -84,7 +84,7 @@ if (window.HFCalc) { /* go */ }
 ### Properties
 
 ```javascript
-window.HFCalc.version     // '1.0.0'
+window.HFCalc.version     // e.g. '1.3.0' — always matches package.json
 window.HFCalc.author      // 'Cpl Angeles-Gonzalez, Ezekiel S. · USMC'
 window.HFCalc.signature   // 'HFCALC-AG-EZK-USMC-v1'
 ```
@@ -263,7 +263,7 @@ For AI hosts that embed the calculator in an `<iframe>` or webview — the host 
 ```javascript
 {
   type: 'hfcalc:ready',
-  version: '1.0.0',
+  version: '1.3.0',
   signature: 'HFCALC-AG-EZK-USMC-v1'
 }
 ```
