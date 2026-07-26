@@ -13,7 +13,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png'],
+      includeAssets: ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'HF Field Antenna Calc — by Cpl Angeles-Gonzalez',
         short_name: 'HF Antenna',
