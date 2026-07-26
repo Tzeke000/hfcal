@@ -38,6 +38,7 @@ https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={c
 | `wire` | `copper` or `steel` | No | Legacy wire type for velocity factor |
 | `core` | wire core key (see "Wire cores") | No | Detailed wire core selection — overrides `wire` |
 | `gauge` | AWG number e.g. `14`, `18`, `22` | No | Wire gauge in AWG; custom values accepted |
+| `legend` | number + optional unit, e.g. `3`, `3in`, `0.5ft`, `0.08m` | No | Leg end height (inverted-V/dipole leg ends above ground). Bare number = inches. Default 3 in |
 | `auto` | `0` or `1` | No | If all of `from`/`to`/`freq` are present, calculation auto-runs unless `auto=0` |
 
 > The calculator also accepts MGRS grids and DMS — but for AI use we recommend decimal lat/lon since it's unambiguous.
@@ -139,9 +140,20 @@ window.HFCalc.setFrequency('7.3');
 window.HFCalc.setWireType('steel');
 ```
 
-#### `getInputs() → {from, to, freq, wireType}`
+#### `setLegEndHeight(value, unit)`
 
-Read whatever's currently in the input fields.
+Set the inverted-V / dipole leg end height above ground (feeds the apex-height
+optimizer). `unit` is `'in'` (default), `'ft'`, or `'m'`.
+
+```javascript
+window.HFCalc.setLegEndHeight(3);          // 3 inches (the default)
+window.HFCalc.setLegEndHeight(6, 'ft');    // elevated inverted-V
+```
+
+#### `getInputs() → {from, to, freq, wireType, wireCore, wireGauge, velocityFactor, legEndHeightM}`
+
+Read whatever's currently in the input fields. `legEndHeightM` is the leg end
+height converted to meters.
 
 #### `getResults() → Result | null`
 
@@ -178,11 +190,19 @@ Clear all inputs and results.
     chordal_hop_possible: false,
   },
 
+  leg_end_height_m: 0.0762,           // NEW: leg end height used by the apex optimizer
+
   recommended_antennas: [
-    { key: 'longwire',   name: 'Longwire (random wire)', height: '6-30 ft' },
-    { key: 'vertical',   name: '1/4-wave vertical with radials', height: 'ground' },
-    { key: 'efhw',       name: 'End-Fed Half-Wave (EFHW)', height: '15-30 ft' },
-    { key: 'delta_loop', name: 'Delta Loop (Full Wave)', height: 'apex 25-40 ft' }
+    // height_plan is non-null for inverted-V / dipole / NVIS types on
+    // skywave paths — the same numbers the antenna cards display.
+    // kind 'apex':  { apexFt, apexM, optFt, feasible, practical,
+    //                 actualTakeoffDeg, endNeededFt, legFt, legM,
+    //                 endIn, endM, takeoffDeg, hops }
+    // kind 'nvis':  { tenthWlFt, tenthWlM }  — keep center 8-10 ft, under 0.1 λ
+    { key: 'invertedv',  name: 'INVERTED-V DIPOLE', height: '…',
+      height_plan: { kind: 'apex', apexFt: 16.4, optFt: 30.3, feasible: false, /* … */ } },
+    { key: 'longwire',   name: 'Longwire (random wire)', height: '6-30 ft', height_plan: null },
+    { key: 'efhw',       name: 'End-Fed Half-Wave (EFHW)', height: '15-30 ft', height_plan: null },
   ],
 
   terrain: {
@@ -217,7 +237,7 @@ For AI hosts that embed the calculator in an `<iframe>` or webview — the host 
 {
   type: 'hfcalc:request',
   id: 'unique-id-for-correlation',
-  method: 'calculate' | 'getResults' | 'getInputs' | 'reset' | 'setFromLocation' | 'setToLocation' | 'ping',
+  method: 'calculate' | 'getResults' | 'getInputs' | 'reset' | 'setFromLocation' | 'setToLocation' | 'setLegEndHeight' | 'ping',
   params: { /* method-specific */ }
 }
 ```
@@ -294,9 +314,10 @@ console.log(result.distance.km);  // 9068.4
 All methods from Channel 2 are supported:
 - `calculate` — same params and response as `window.HFCalc.calculate`
 - `getResults` — returns latest result or null
-- `getInputs` — returns `{from, to, freq, wireType}`
+- `getInputs` — returns `{from, to, freq, wireType, wireCore, wireGauge, velocityFactor, legEndHeightM}`
 - `reset` — clears state
 - `setFromLocation`, `setToLocation` — pass `{value: '...'}` in params
+- `setLegEndHeight` — pass `{value: 3, unit: 'in'|'ft'|'m'}` in params
 - `ping` — health check, returns `{pong: true, version, author, signature}`
 
 ### When to use this channel

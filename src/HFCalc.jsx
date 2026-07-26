@@ -1,4 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  WIRE_GAUGES, WIRE_CORES, computeVF,
+  wavelength, toLengths, apexHeightPlan,
+} from "./antennaMath.js";
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -93,108 +97,8 @@ const USMC_CSS = [
 // because d/λ is bigger → more end effect). The gauge-correction term is
 // small but real (~1-2% over the AWG range we care about).
 
-// AWG (American Wire Gauge) → diameter in inches and mm.
-// Common HF antenna gauges plus a few extremes for completeness.
-const WIRE_GAUGES = {
-  '10': { dia_in: 0.1019, dia_mm: 2.588, label: '10 AWG (heavy)', strength: 'very strong, hard to handle' },
-  '12': { dia_in: 0.0808, dia_mm: 2.053, label: '12 AWG', strength: 'strong, good for permanent installs' },
-  '14': { dia_in: 0.0641, dia_mm: 1.628, label: '14 AWG (common)', strength: 'standard ham antenna wire' },
-  '16': { dia_in: 0.0508, dia_mm: 1.291, label: '16 AWG', strength: 'lighter, easier to deploy' },
-  '18': { dia_in: 0.0403, dia_mm: 1.024, label: '18 AWG', strength: 'lightweight, OK for portable' },
-  '20': { dia_in: 0.0320, dia_mm: 0.8128, label: '20 AWG (light)', strength: 'fragile but lightweight' },
-  '22': { dia_in: 0.0253, dia_mm: 0.6438, label: '22 AWG (speaker wire)', strength: 'breaks easily, field-expedient only' },
-  '24': { dia_in: 0.0201, dia_mm: 0.5106, label: '24 AWG (very light)', strength: 'last-resort, will break' },
-};
-
-// Core material → base velocity factor (assuming average HF gauge of 14 AWG)
-// and field operational notes.
-const WIRE_CORES = {
-  copper_bare: {
-    label: 'Bare Copper',
-    short: 'COPPER',
-    vf_base: 0.95,
-    quality: 'excellent',
-    note: 'Standard. Best RF conductor. Use this if you have it.',
-  },
-  copper_stranded: {
-    label: 'Stranded Copper',
-    short: 'STRANDED CU',
-    vf_base: 0.94,
-    quality: 'excellent',
-    note: 'Slightly more flexible. RF performance nearly identical to solid.',
-  },
-  copper_insulated: {
-    label: 'Insulated Copper (PVC)',
-    short: 'INSUL CU',
-    vf_base: 0.93,
-    quality: 'good',
-    note: 'PVC slightly slows the wave. Cut ~2% shorter than bare copper.',
-  },
-  copper_clad_steel: {
-    label: 'Copper-Clad Steel (CCS)',
-    short: 'CCS',
-    vf_base: 0.95,
-    quality: 'excellent',
-    note: 'Acts like copper at HF (skin effect). Common in commercial antennas.',
-  },
-  galvanized_steel: {
-    label: 'Galvanized Steel',
-    short: 'GALV STEEL',
-    vf_base: 0.90,
-    quality: 'fair',
-    note: 'Cheap, strong, common in field-expedient antennas. ~1 dB extra loss vs copper.',
-  },
-  stainless_steel: {
-    label: 'Stainless Steel',
-    short: 'STAINLESS',
-    vf_base: 0.89,
-    quality: 'fair',
-    note: 'Higher loss than galv steel. Use if corrosion-resistant wire is needed.',
-  },
-  iron: {
-    label: 'Plain Iron / Mystery Wire',
-    short: 'IRON',
-    vf_base: 0.85,
-    quality: 'poor',
-    note: 'Field-expedient only — barbed wire, fence wire, baling wire, unknown salvage. Significant RF loss (~3-5 dB). Will radiate but inefficiently. USE WHAT YOU GOT.',
-  },
-  speaker_wire: {
-    label: 'Speaker Wire / Lamp Cord',
-    short: 'SPEAKER WIRE',
-    vf_base: 0.92,
-    quality: 'fair',
-    note: 'Insulated copper, usually 18-22 AWG. Works fine for low-power HF. Cut both conductors and run them as parallel halves of a dipole, or just use one strand.',
-  },
-};
-
-// Gauge-correction factor: thicker wire has slightly lower K-factor because
-// the diameter/wavelength ratio is bigger → more end capacitance → wire must
-// be slightly shorter than ideal. Thinner wire = closer to ideal-thin
-// conductor = K closer to 1.0.
-//
-// Reference: ARRL Antenna Book empirical K-factor table for HF dipoles.
-// 14 AWG is the baseline. We use ~0.3-0.5% per AWG step from there.
-function gaugeCorrection(awg) {
-  var awgNum = parseFloat(awg);
-  if (isNaN(awgNum)) return 1.0;
-  // delta = (this gauge) - (baseline 14 AWG). Positive = thinner than 14.
-  var delta = awgNum - 14;
-  if (delta > 0) return 1.0 + (delta * 0.003); // thinner: VF goes UP slightly
-  return 1.0 + (delta * 0.005);                // thicker: VF goes DOWN slightly
-}
-
-// Compute effective velocity factor given core type and gauge.
-function computeVF(coreKey, gaugeAwg) {
-  var core = WIRE_CORES[coreKey];
-  if (!core) return 0.95;
-  var baseVF = core.vf_base;
-  var corr = gaugeCorrection(gaugeAwg);
-  var effective = baseVF * corr;
-  // Clamp to physically reasonable range
-  if (effective < 0.80) effective = 0.80;
-  if (effective > 0.99) effective = 0.99;
-  return Math.round(effective * 1000) / 1000; // 3 decimal places
-}
+// WIRE_GAUGES, WIRE_CORES, gaugeCorrection, and computeVF now live in
+// antennaMath.js (imported above) so they can be unit-tested with npm test.
 
 // Backward-compat shim — old code that still references VELOCITY_FACTOR[wireType].
 // Maps the legacy 'copper'/'steel' keys to the new core system at 14 AWG.
@@ -591,18 +495,7 @@ function geodesics(lat1, lon1, lat2, lon2) {
   return { distKm: distKm, distMi: distMi, bearing: bearing };
 }
 
-function wavelength(freqMHz, vf) {
-  vf = vf === undefined ? 1 : vf;
-  return (299.792458 / freqMHz) * vf;
-}
-
-function toLengths(meters) {
-  var totalInches = meters * 39.3701;
-  var ft = Math.floor(totalInches / 12);
-  var inches = Math.round(totalInches % 12);
-  if (inches === 12) { ft++; inches = 0; }
-  return { ftIn: ft + ' ft ' + inches + ' in', m: meters.toFixed(2) };
-}
+// wavelength() and toLengths() now live in antennaMath.js (imported above).
 
 function propagationZone(distKm) {
   if (distKm < 80) return 'groundwave';
@@ -2383,7 +2276,7 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
 }
 
 // ── ANTENNA CARD ───────────────────────────────────────────────────────────────
-function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, legEndHeight }) {
+function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, legEndHeight, takeoffDeg, zone }) {
   var [stepsOpen, setStepsOpen] = useState(false);
   // vf and wireLabel are the new "core × gauge" values; fall back to legacy
   // wireType-based VF if a caller hasn't been updated yet.
@@ -2394,62 +2287,31 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
   var hw = wl / 2;
 
   // ── Auto-computed optimal apex / support height ───────────────────────────
-  // For the skywave dipole-family antennas we derive the height that puts the
-  // first elevation lobe at the takeoff angle needed for a single F2 hop to
-  // the target distance, instead of showing a generic "30-40 ft" range.
-  //   takeoff angle  α = 90° − atan(distance / (2·h_F2))   (h_F2 = HOP.F2.hKm)
-  //   required height H = λ / (4·sin α)                     (first-lobe peak)
-  // For an inverted-V the mast height is also geometry-limited: with ¼-wave
-  // legs staked near the ground, the apex physically cannot exceed
-  //   maxApex = legEndHeight + leg × sin(55°)
-  // (55° is the steepest recommended leg slope — apex angle 70°, the same
-  // threshold the geometry planner warns at). If the radiation-optimal height
-  // exceeds that, we recommend the buildable maximum and say so.
-  // NVIS variants skip this entirely: NVIS radiation must go nearly straight
-  // up, so "optimize for distance" doesn't apply — they get an NVIS note.
+  // The physics lives in apexHeightPlan (antennaMath.js): first-lobe height
+  // for the path's takeoff angle, checked against inverted-V leg geometry.
+  // The takeoff angle comes from the terrain-aware directive (per-hop,
+  // obstacle-adjusted) so this box and the Antenna Directive card agree.
+  // NVIS variants get an NVIS height note instead; on ground-wave paths the
+  // optimizer is suppressed (height is irrelevant — keep the wire low).
   var isInvV = antenna.imageKey === 'invertedv';
   var isFlatDipole = antenna.imageKey === 'dipole';
   var isNVISType = antenna.imageKey === 'nvis_invertedv' || antenna.imageKey === 'nvis_dipole';
-  var MAX_LEG_SLOPE_RAD = 55 * Math.PI / 180;
-  var apexInfo = null;
-  var nvisInfo = null;
-  if (typeof distKm === 'number' && isFinite(distKm) && distKm > 0) {
-    var endM = (typeof legEndHeight === 'number' && legEndHeight >= 0) ? legEndHeight : 0.0762;
-    if (isNVISType) {
-      nvisInfo = { tenthWlFt: 0.1 * wl * 3.28084 };
-    } else if (isInvV || isFlatDipole) {
-      var takeoffDeg = 90 - Math.atan(distKm / (2 * HOP.F2.hKm)) * 180 / Math.PI;
-      var optM = wl / (4 * Math.sin(takeoffDeg * Math.PI / 180));
-      var recM = optM;
-      var feasible = true;
-      var actualTakeoffDeg = takeoffDeg;
-      var endNeededM = null;
-      if (isInvV) {
-        var maxApexM = endM + qw * Math.sin(MAX_LEG_SLOPE_RAD);
-        if (optM > maxApexM) {
-          feasible = false;
-          recM = maxApexM;
-          // Lobe angle actually achieved at the buildable height
-          var sinArg = wl / (4 * recM);
-          actualTakeoffDeg = sinArg >= 1 ? 90 : Math.asin(sinArg) * 180 / Math.PI;
-          // End height that would make the optimal apex reachable
-          endNeededM = optM - qw * Math.sin(MAX_LEG_SLOPE_RAD);
-        }
-      }
-      apexInfo = {
-        label: isInvV ? 'Apex height' : 'Support height',
-        title: isInvV ? 'Optimal Apex Height' : 'Optimal Support Height',
-        apexFt: recM * 3.28084, apexM: recM,
-        optFt: optM * 3.28084,
-        feasible: feasible,
-        actualTakeoffDeg: actualTakeoffDeg,
-        endNeededFt: endNeededM === null ? null : endNeededM * 3.28084,
-        legFt: qw * 3.28084, legM: qw,
-        endIn: endM / 0.0254, endM: endM,
-        takeoffDeg: takeoffDeg,
-      };
-    }
+  var isGroundwavePath = zone === 'groundwave';
+  var plan = null;
+  if (typeof distKm === 'number' && isFinite(distKm) && distKm > 0 && !isGroundwavePath) {
+    plan = apexHeightPlan({
+      kind: isNVISType ? 'nvis' : (isInvV ? 'invertedv' : (isFlatDipole ? 'dipole' : null)),
+      wlMeters: wl,
+      distKm: distKm,
+      legEndM: legEndHeight,
+      takeoffDeg: takeoffDeg,
+    });
   }
+  var apexInfo = plan && plan.kind === 'apex' ? plan : null;
+  var nvisInfo = plan && plan.kind === 'nvis' ? plan : null;
+  var showGroundwaveNote = isGroundwavePath && (isInvV || isFlatDipole || isNVISType);
+  var apexLabel = isInvV ? 'Apex height' : 'Support height';
+  var apexTitle = isInvV ? 'Optimal Apex Height' : 'Optimal Support Height';
 
   return (
     <div style={{ background: T.surface, border: '1px solid ' + (primary ? T.borderHi : T.border), borderRadius: 10, marginBottom: 14, overflow: 'hidden' }}>
@@ -2482,14 +2344,16 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
         {apexInfo && (
           <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + (apexInfo.feasible ? T.accent : T.warn), borderRadius: 6, padding: '11px 13px' }}>
             <div style={{ color: T.accentText, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8, textTransform: 'uppercase' }}>
-              {apexInfo.title}
+              {apexTitle}
             </div>
             <div style={{ color: T.textBody, fontSize: '0.82rem', lineHeight: 1.7 }}>
-              <div>{apexInfo.label + ': '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.apexFt.toFixed(0) + ' ft (' + apexInfo.apexM.toFixed(1) + ' m)'}</span></div>
+              <div>{apexLabel + ': '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.apexFt.toFixed(0) + ' ft (' + apexInfo.apexM.toFixed(1) + ' m)'}</span></div>
               <div>{'Each leg: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.legFt.toFixed(1) + ' ft (' + apexInfo.legM.toFixed(1) + ' m)'}</span></div>
               <div>{'Leg end height: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.endIn.toFixed(1) + ' in / ' + apexInfo.endM.toFixed(3) + ' m'}</span></div>
               <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>
-                {'Optimized for: ' + Math.round(distKm) + ' km path, F2 single-hop (≈' + apexInfo.takeoffDeg.toFixed(0) + '° takeoff)'}
+                {'Optimized for: ' + Math.round(distKm) + ' km path, F2 '
+                  + (apexInfo.hops > 1 ? apexInfo.hops + '-hop' : 'single-hop')
+                  + ' (≈' + apexInfo.takeoffDeg.toFixed(0) + '° takeoff, terrain-adjusted)'}
               </div>
               {!apexInfo.feasible && (
                 <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 6, lineHeight: 1.55 }}>
@@ -2499,6 +2363,26 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
                     + 'To reach ' + apexInfo.optFt.toFixed(0) + ' ft, raise the leg ends to ≈' + apexInfo.endNeededFt.toFixed(0) + ' ft (elevated inverted-V) or use a flat dipole between two supports.'}
                 </div>
               )}
+              {apexInfo.feasible && !apexInfo.practical && (
+                <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 6, lineHeight: 1.55 }}>
+                  {apexInfo.apexFt.toFixed(0) + ' ft is beyond typical field mast/tree reach. '
+                    + 'If you can’t get this high, mount as high as you can — or use a sloper or EFHW from the list below, which reach low takeoff angles from lower supports.'}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showGroundwaveNote && (
+          <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px' }}>
+            <div style={{ color: T.accentText, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8, textTransform: 'uppercase' }}>
+              Ground-Wave Height
+            </div>
+            <div style={{ color: T.textBody, fontSize: '0.82rem', lineHeight: 1.7 }}>
+              <div>{'Keep the wire '}<span style={{ color: T.textPrim, fontWeight: 700 }}>3–6 ft</span>{' above ground.'}</div>
+              <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>
+                {Math.round(distKm) + ' km path is ground-wave range: the signal follows the surface, so takeoff-angle height optimization does not apply. Maximize wire length, minimize height.'}
+              </div>
             </div>
           </div>
         )}
@@ -2586,6 +2470,10 @@ export default function HFCalc() {
   // Tracks whether the user has run a calculation at least once. After that,
   // results recompute live (debounced) as inputs change — see the effect below.
   var hasCalculatedRef = useRef(false);
+  // The AI-integration effect re-binds on every state change; this guard keeps
+  // the URL-parameter import to a single application per page load so it
+  // can't clobber user edits on re-binds.
+  var urlAppliedRef = useRef(false);
 
   // Build the full results object from already-validated inputs. Shared by the
   // CALCULATE button and the live auto-recompute effect so both stay in sync.
@@ -2657,8 +2545,9 @@ export default function HFCalc() {
   useEffect(function() {
     if (typeof window === 'undefined') return;
 
-    // 1. URL parameter support — runs once on mount
-    try {
+    // 1. URL parameter support — applied once per page load (see urlAppliedRef)
+    if (!urlAppliedRef.current) try {
+      urlAppliedRef.current = true;
       var url = new URL(window.location.href);
       var qFrom = url.searchParams.get('from');
       var qTo = url.searchParams.get('to');
@@ -2681,6 +2570,17 @@ export default function HFCalc() {
       if (qGauge) {
         if (WIRE_GAUGES[qGauge]) { setWireGauge(qGauge); setCustomGauge(''); didSet = true; }
         else if (!isNaN(parseFloat(qGauge))) { setCustomGauge(qGauge); didSet = true; }
+      }
+      // ?legend=3 | 3in | 0.5ft | 0.08m — leg end height (bare number = inches)
+      var qLegEnd = url.searchParams.get('legend');
+      if (qLegEnd) {
+        var lm = String(qLegEnd).trim().match(/^([\d.]+)\s*(in|ft|m)?$/i);
+        if (lm && !isNaN(parseFloat(lm[1]))) {
+          var lu = (lm[2] || 'in').toLowerCase();
+          if (lu === 'm') { setLegEndStr(String(parseFloat(lm[1]) * 3.28084)); setLegEndUnit('ft'); }
+          else { setLegEndStr(lm[1]); setLegEndUnit(lu); }
+          didSet = true;
+        }
       }
       // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate:
       // marking the session as "has calculated" lets the live-recompute effect
@@ -2720,6 +2620,15 @@ export default function HFCalc() {
           setCustomGauge(String(value));
         }
       },
+      setLegEndHeight: function(value, unit) {
+        // unit: 'in' (default) | 'ft' | 'm'
+        var v = parseFloat(value);
+        if (isNaN(v) || v < 0) return;
+        var u = String(unit || 'in').toLowerCase();
+        if (u === 'm') { setLegEndStr(String(v * 3.28084)); setLegEndUnit('ft'); }
+        else if (u === 'ft') { setLegEndStr(String(v)); setLegEndUnit('ft'); }
+        else { setLegEndStr(String(v)); setLegEndUnit('in'); }
+      },
 
       // Read current state and results
       getInputs: function() {
@@ -2729,6 +2638,7 @@ export default function HFCalc() {
           wireCore: wireCore,
           wireGauge: effectiveGauge,
           velocityFactor: computeVF(wireCore, effectiveGauge),
+          legEndHeightM: legEndHeight,
         };
       },
       getResults: function() {
@@ -2756,8 +2666,22 @@ export default function HFCalc() {
             path_summary: results.directive.pathSummary,
             chordal_hop_possible: !!results.directive.chordal,
           },
+          leg_end_height_m: legEndHeight,
           recommended_antennas: results.antennaData.antennas.map(function(a) {
-            return { key: a.imageKey, name: a.name, height: a.height };
+            // Same computation the antenna cards display (see apexHeightPlan)
+            var kind = (a.imageKey === 'nvis_invertedv' || a.imageKey === 'nvis_dipole') ? 'nvis'
+                     : a.imageKey === 'invertedv' ? 'invertedv'
+                     : a.imageKey === 'dipole' ? 'dipole' : null;
+            var plan = (kind && results.directive.zone !== 'groundwave')
+              ? apexHeightPlan({
+                  kind: kind,
+                  wlMeters: wavelength(results.freq, results.vf),
+                  distKm: results.geo.distKm,
+                  legEndM: legEndHeight,
+                  takeoffDeg: results.directive.takeoffDeg,
+                })
+              : null;
+            return { key: a.imageKey, name: a.name, height: a.height, height_plan: plan };
           }),
           terrain: {
             ocean_pct: Math.round((results.terrain.oceanFrac || 0) * 100),
@@ -2827,7 +2751,9 @@ export default function HFCalc() {
       reset: function() {
         setLoc1(''); setLoc2(''); setFreq('7.3'); setWireType('copper');
         setWireCore('copper_bare'); setWireGauge('14'); setCustomGauge('');
+        setLegEndStr('3'); setLegEndUnit('in');
         setResults(null); setErrors({ loc1: '', loc2: '', freq: '' });
+        hasCalculatedRef.current = false;
       },
     };
 
@@ -2874,6 +2800,8 @@ export default function HFCalc() {
           api.setFromLocation(params.value); reply(true, { set: 'from' });
         } else if (method === 'setToLocation') {
           api.setToLocation(params.value); reply(true, { set: 'to' });
+        } else if (method === 'setLegEndHeight') {
+          api.setLegEndHeight(params.value, params.unit); reply(true, { set: 'legEndHeight' });
         } else if (method === 'ping') {
           reply(true, { pong: true, version: api.version, author: api.author, signature: api.signature });
         } else {
@@ -2901,7 +2829,7 @@ export default function HFCalc() {
     };
   // Re-bind whenever any state setter or calculation context changes so the
   // API closure always reflects the freshest state.
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results]);
+  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, legEndHeight]);
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 60px 0' }}>
@@ -3144,6 +3072,8 @@ export default function HFCalc() {
                   primary={i === 0}
                   distKm={results.geo.distKm}
                   legEndHeight={legEndHeight}
+                  takeoffDeg={results.directive.takeoffDeg}
+                  zone={results.directive.zone}
                 />
               );
             })}
