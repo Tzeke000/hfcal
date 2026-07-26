@@ -1,6 +1,25 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync } from 'node:fs';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+
+// Emit version.json alongside the build so a running (possibly stale) app can
+// ask the server "what's the latest version?" — drives the in-app update
+// banner. Not precached by the SW (json is excluded from globPatterns) and
+// fetched with cache:'no-store', so it always reflects the live deployment.
+const emitVersionJson = {
+  name: 'emit-version-json',
+  apply: 'build',
+  generateBundle() {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'version.json',
+      source: JSON.stringify({ version: pkg.version }),
+    });
+  },
+};
 
 // When deployed to GitHub Pages the app lives at /hfcal/.
 // When running locally (npm run dev) or in a Capacitor wrapper, it's at /.
@@ -11,6 +30,7 @@ export default defineConfig({
   base: isPagesBuild ? '/hfcal/' : '/',
   plugins: [
     react(),
+    emitVersionJson,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png'],

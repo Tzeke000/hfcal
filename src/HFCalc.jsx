@@ -1656,6 +1656,111 @@ function InstallBanner({ pwa }) {
 
 // ── ABOUT / ATTRIBUTION BANNER ────────────────────────────────────────────────
 // Always-visible attribution card. Expandable to show full credits and license.
+// True when semver string `remote` is newer than `local` (major.minor.patch).
+function isNewerVersion(remote, local) {
+  var r = String(remote).split('.').map(function(x) { return parseInt(x, 10) || 0; });
+  var l = String(local).split('.').map(function(x) { return parseInt(x, 10) || 0; });
+  for (var i = 0; i < 3; i++) {
+    if ((r[i] || 0) > (l[i] || 0)) return true;
+    if ((r[i] || 0) < (l[i] || 0)) return false;
+  }
+  return false;
+}
+
+// ── UPDATE BANNER ─────────────────────────────────────────────────────────────
+// Checks the server's version.json (emitted at build time) against the
+// version baked into this bundle. If the server is ahead, shows an alert at
+// the top with a one-tap update plus DAGR-style manual steps. Offline or
+// same-version → renders nothing; never interferes with field use.
+function UpdateBanner() {
+  var [remoteVer, setRemoteVer] = useState(null);
+  var [stepsOpen, setStepsOpen] = useState(false);
+  var [busy, setBusy] = useState(false);
+
+  useEffect(function() {
+    var cancelled = false;
+    function check() {
+      try {
+        fetch(import.meta.env.BASE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(j) { if (!cancelled && j && j.version) setRemoteVer(String(j.version)); })
+          .catch(function() { /* offline — stay quiet */ });
+      } catch (e) { /* no fetch available — stay quiet */ }
+    }
+    check();
+    function onVis() { if (document.visibilityState === 'visible') check(); }
+    document.addEventListener('visibilitychange', onVis);
+    return function() { cancelled = true; document.removeEventListener('visibilitychange', onVis); };
+  }, []);
+
+  if (!remoteVer || !isNewerVersion(remoteVer, APP_VERSION)) return null;
+
+  function doUpdate() {
+    if (busy) return;
+    setBusy(true);
+    var reload = function() { try { window.location.reload(); } catch (e) {} };
+    try {
+      var jobs = [];
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        jobs.push(navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r) { return r.unregister(); }));
+        }));
+      }
+      if (window.caches && caches.keys) {
+        jobs.push(caches.keys().then(function(keys) {
+          return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+        }));
+      }
+      Promise.all(jobs).then(reload, reload);
+      setTimeout(reload, 4000); // safety net if a promise hangs
+    } catch (e) { reload(); }
+  }
+
+  var stepRow = function(n, bold, desc, key) {
+    return (
+      <div key={key} style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
+        <div style={{ minWidth: 22, height: 22, background: T.accentDim, border: '1px solid ' + T.borderHi, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.accentText, fontWeight: 700, fontSize: '0.68rem', flexShrink: 0 }}>{n}</div>
+        <div style={{ paddingTop: 2 }}>
+          <span style={{ color: T.textPrim, fontWeight: 600, fontSize: '0.82rem' }}>{bold}</span>
+          <span style={{ color: T.textBody, fontSize: '0.82rem' }}>{' — ' + desc}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.warn }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ color: T.warn, fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.12em' }}>UPDATE AVAILABLE</div>
+          <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.9rem', marginTop: 3 }}>
+            {'v' + APP_VERSION + ' → v' + remoteVer}
+          </div>
+          <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 2 }}>You are running an older version of this app.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={doUpdate} disabled={busy} style={{ background: T.accent, color: '#0e1409', border: 'none', borderRadius: 6, padding: '9px 16px', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
+            {busy ? 'UPDATING…' : 'UPDATE NOW'}
+          </button>
+          <button onClick={function() { setStepsOpen(!stepsOpen); }} style={{ background: stepsOpen ? T.accentDim : T.surfaceHi, color: T.textPrim, border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '9px 12px', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer' }}>
+            {stepsOpen ? 'HIDE STEPS' : 'STEPS'}
+          </button>
+        </div>
+      </div>
+
+      {stepsOpen && (
+        <div style={{ marginTop: 14 }}>
+          {stepRow(1, 'Tap UPDATE NOW', 'the app clears its stored copy and reloads with the new version. Usually this is all you need.', 'u1')}
+          {stepRow(2, 'Verify', 'this banner disappears and the footer shows v' + remoteVer + '. If so — done.', 'u2')}
+          {stepRow(3, 'Still old? Refresh the actual website', 'open https://tzeke000.github.io/hfcal/ in your phone browser (Safari / Chrome) and pull down to refresh the page.', 'u3')}
+          {stepRow(4, 'Remove the old app icon', 'press and hold the HF Antenna icon on your home screen → Remove App / Uninstall. Your data is not affected.', 'u4')}
+          {stepRow(5, 'Save the refreshed page as the app', 'in the browser: iPhone — Share → Add to Home Screen. Android — menu ⋮ → Install app / Add to Home screen. The refreshed page becomes the new app, new icon included.', 'u5')}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AboutBanner() {
   var [open, setOpen] = useState(false);
   return (
@@ -2701,6 +2806,7 @@ export default function HFCalc() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 16px 0 16px' }}>
 
+        <UpdateBanner />
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
@@ -2947,6 +3053,9 @@ export default function HFCalc() {
         </div>
         <div style={{ color: T.textDim, fontSize: '0.58rem', letterSpacing: '0.06em' }}>
           {APP_SIGNATURE}
+        </div>
+        <div style={{ color: T.textMute, fontSize: '0.62rem', letterSpacing: '0.1em', marginTop: 6, fontWeight: 600 }}>
+          {'v' + APP_VERSION}
         </div>
       </div>
     </div>
