@@ -1442,9 +1442,11 @@ function LongwireGeoCalc({ wireLenMeters }) {
 
 // ── ANTENNA RECOMMENDATIONS ────────────────────────────────────────────────────
 
-function getAntennaRecommendations(distKm, freqMHz) {
+function getAntennaRecommendations(distKm, freqMHz, vf) {
   var zone = propagationZone(distKm);
-  var wl = wavelength(freqMHz, 1);
+  // Use the caller's effective velocity factor so the cut lengths quoted in
+  // build steps match the wire-length tables shown on the same card.
+  var wl = wavelength(freqMHz, vf === undefined ? 1 : vf);
   var qwFt = (wl / 4) * 3.28084;
   var qwM = wl / 4;
   var hwFt = (wl / 2) * 3.28084;
@@ -1471,14 +1473,14 @@ function getAntennaRecommendations(distKm, freqMHz) {
       imageKey: 'invertedv',
       description: 'Center-fed dipole with legs sloping down at ~45 deg from a single center support. Compact, easy to erect with one mast or tree.',
       pros: 'Easy single-support setup. Good all-around radiation. Works well for skywave.',
-      cons: 'Requires center support at ~25 ft. Reduced bandwidth vs flat dipole.',
+      cons: 'Requires a center support (height computed below for your path). Reduced bandwidth vs flat dipole.',
       angleNote: 'Legs slope ~45 deg from apex. Signal radiates upward and outward from both sides.',
-      height: qwFt.toFixed(1) + ' ft (' + qwM.toFixed(2) + ' m) per leg — center support at 25 ft',
+      height: qwFt.toFixed(1) + ' ft (' + qwM.toFixed(2) + ' m) per leg — center support height computed per path',
       buildSteps: [
         'Cut two wire legs each ' + qwFt.toFixed(1) + ' ft long. Use copper or steel wire.',
         'Connect both legs to center SO-239 feed point. Attach balun if available.',
         'Run coax from feed point down mast to Harris radio.',
-        'Raise center support (tree, mast, or pole) to ~25 ft.',
+        'Raise center support (tree, mast, or pole) to the apex height shown in the Optimal Apex Height box above.',
         'Stake both leg ends to ground using insulators. Aim legs away from each other.',
         'Trim legs for best SWR. Check with radio before transmitting.',
       ],
@@ -1505,12 +1507,12 @@ function getAntennaRecommendations(distKm, freqMHz) {
       imageKey: 'sloper',
       description: '1/2-wave wire fed at top of a high support, sloping down at 30-45 deg toward target. Low takeoff angle favors DX.',
       pros: 'Low radiation angle for DX. One high support only. Directional toward low end.',
-      cons: 'Needs tall support (40+ ft). Directional — aim low end at target.',
+      cons: 'Needs tall support (≥¼ λ = ' + qwFt.toFixed(0) + ' ft). Directional — aim low end at target.',
       angleNote: 'Wire slopes 30-45 deg. Low end points toward target. Low-angle radiation pattern.',
-      height: hwFt.toFixed(1) + ' ft (' + (wl / 2).toFixed(2) + ' m) wire — high end at ~40 ft, aim toward target',
+      height: hwFt.toFixed(1) + ' ft (' + (wl / 2).toFixed(2) + ' m) wire — high end ≥¼ λ ≈ ' + qwFt.toFixed(0) + ' ft (higher is better), aim toward target',
       buildSteps: [
         'Cut wire to ' + hwFt.toFixed(1) + ' ft total.',
-        'Attach SO-239 feed point at top of tree or mast (~40 ft).',
+        'Attach SO-239 feed point at top of tree or mast — at least ¼ λ up (' + qwFt.toFixed(0) + ' ft); higher gives a lower takeoff angle.',
         'Run coax down the mast to Harris radio at base.',
         'Slope wire at 30-45 deg toward target bearing.',
         'Stake low end with end insulator.',
@@ -1612,12 +1614,13 @@ function getAntennaRecommendations(distKm, freqMHz) {
       pros: 'Very low noise (closed loop rejects local interference). Wide bandwidth. Bidirectional. Good for both DX and NVIS depending on orientation. Forgiving of geometry.',
       cons: 'Three support points needed. Total wire is more than dipole. Slightly tricky to feed (75-ohm match or 4:1 balun + 50 ohm coax).',
       angleNote: 'Apex up + corner-fed = horizontal polarization, low takeoff for DX. Apex up + side-fed = vertical pol. Apex down = strong NVIS performance. Each side = 1/3 of full wavelength × 1.005 loop factor.',
-      height: 'Apex 25-40 ft, base ' + (wl * 1.005 / 3 * 3.28084).toFixed(0) + ' ft per side · total wire ' + (wl * 1.005 * 3.28084).toFixed(0) + ' ft',
+      // Equilateral triangle: apex sits side × sin(60°) above the bottom corners
+      height: 'Apex ≈ ' + (wl * 1.005 / 3 * Math.sin(Math.PI / 3) * 3.28084 + 5).toFixed(0) + '–' + (wl * 1.005 / 3 * Math.sin(Math.PI / 3) * 3.28084 + 10).toFixed(0) + ' ft (corners at 5–10 ft), base ' + (wl * 1.005 / 3 * 3.28084).toFixed(0) + ' ft per side · total wire ' + (wl * 1.005 * 3.28084).toFixed(0) + ' ft',
       buildSteps: [
         'Cut total wire = perimeter of full-wave loop: ' + (wl * 1.005 * 3.28084).toFixed(1) + ' ft (' + (wl * 1.005).toFixed(2) + ' m). This is the full wavelength × 1.005 loop correction.',
         'Each side of the equilateral triangle = ' + (wl * 1.005 / 3 * 3.28084).toFixed(1) + ' ft (' + (wl * 1.005 / 3).toFixed(2) + ' m).',
         'Choose orientation: APEX UP (most common) for DX with horizontal polarization, or APEX DOWN for NVIS.',
-        'Hoist apex point to 25–40 ft using a single tall support (tree, mast).',
+        'Hoist apex point to ≈' + (wl * 1.005 / 3 * Math.sin(Math.PI / 3) * 3.28084 + 5).toFixed(0) + '–' + (wl * 1.005 / 3 * Math.sin(Math.PI / 3) * 3.28084 + 10).toFixed(0) + ' ft (side length × sin 60° above the bottom corners) using a single tall support (tree, mast).',
         'Anchor the two bottom corners to ground stakes spaced ' + (wl * 1.005 / 3 * 3.28084).toFixed(1) + ' ft apart, each ~5–10 ft above ground.',
         'Form the triangle. Use insulators at all 3 corners.',
         'Feed point options: at a bottom corner = horizontal polarization (good DX); at middle of bottom side = vertical polarization (good NVIS for apex-down config).',
@@ -2261,7 +2264,7 @@ function ImageCarousel({ imageKey }) {
 
 
 // ── INVERTED-V GEOMETRY CALCULATOR ────────────────────────────────────────────
-function InvVGeoCalc({ legMeters, isNVIS }) {
+function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
   // Apex height drives everything.
   // leg angle from horizontal = asin(apexH / legLen)
   // stake distance from pole base = cos(legAngle) * legLen
@@ -2270,6 +2273,11 @@ function InvVGeoCalc({ legMeters, isNVIS }) {
 
   var legFt = legMeters * 3.28084;
   var defaultApexFt = isNVIS ? 9 : 25;
+  // Seed with the path-optimized apex when the card computed one, clamped
+  // below the leg length so the planner starts in its valid range.
+  if (typeof suggestedApexFt === 'number' && isFinite(suggestedApexFt) && suggestedApexFt > 0) {
+    defaultApexFt = Math.min(Math.round(suggestedApexFt), Math.floor(legFt - 1));
+  }
   var [apexFtStr, setApexFtStr] = useState(String(defaultApexFt));
 
   var apexFt = parseFloat(apexFtStr);
@@ -2386,29 +2394,61 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
   var hw = wl / 2;
 
   // ── Auto-computed optimal apex / support height ───────────────────────────
-  // For dipole-family antennas we derive the height that puts the first
-  // elevation lobe at the takeoff angle needed for a single F2 hop to the
-  // target distance, instead of showing a generic "30-40 ft" range.
-  //   takeoff angle  α = 90° − atan(distance / (2·h_F2))   (h_F2 ≈ 300 km)
+  // For the skywave dipole-family antennas we derive the height that puts the
+  // first elevation lobe at the takeoff angle needed for a single F2 hop to
+  // the target distance, instead of showing a generic "30-40 ft" range.
+  //   takeoff angle  α = 90° − atan(distance / (2·h_F2))   (h_F2 = HOP.F2.hKm)
   //   required height H = λ / (4·sin α)                     (first-lobe peak)
-  // λ here is the velocity-factor-adjusted wavelength already used for the
-  // wire-length table above, so apex and leg figures stay self-consistent.
-  var isInvV = antenna.imageKey === 'invertedv' || antenna.imageKey === 'nvis_invertedv';
-  var isFlatDipole = antenna.imageKey === 'dipole' || antenna.imageKey === 'nvis_dipole';
+  // For an inverted-V the mast height is also geometry-limited: with ¼-wave
+  // legs staked near the ground, the apex physically cannot exceed
+  //   maxApex = legEndHeight + leg × sin(55°)
+  // (55° is the steepest recommended leg slope — apex angle 70°, the same
+  // threshold the geometry planner warns at). If the radiation-optimal height
+  // exceeds that, we recommend the buildable maximum and say so.
+  // NVIS variants skip this entirely: NVIS radiation must go nearly straight
+  // up, so "optimize for distance" doesn't apply — they get an NVIS note.
+  var isInvV = antenna.imageKey === 'invertedv';
+  var isFlatDipole = antenna.imageKey === 'dipole';
+  var isNVISType = antenna.imageKey === 'nvis_invertedv' || antenna.imageKey === 'nvis_dipole';
+  var MAX_LEG_SLOPE_RAD = 55 * Math.PI / 180;
   var apexInfo = null;
-  if ((isInvV || isFlatDipole) && typeof distKm === 'number' && isFinite(distKm) && distKm > 0) {
-    var H_F2_KM = 300; // F2 layer height, typical daytime
-    var takeoffDeg = 90 - Math.atan(distKm / (2 * H_F2_KM)) * 180 / Math.PI;
-    var apexM = wl / (4 * Math.sin(takeoffDeg * Math.PI / 180));
+  var nvisInfo = null;
+  if (typeof distKm === 'number' && isFinite(distKm) && distKm > 0) {
     var endM = (typeof legEndHeight === 'number' && legEndHeight >= 0) ? legEndHeight : 0.0762;
-    apexInfo = {
-      label: isInvV ? 'Apex height' : 'Support height',
-      title: isInvV ? 'Optimal Apex Height' : 'Optimal Support Height',
-      apexFt: apexM * 3.28084, apexM: apexM,
-      legFt: qw * 3.28084, legM: qw,
-      endIn: endM / 0.0254, endM: endM,
-      takeoffDeg: takeoffDeg,
-    };
+    if (isNVISType) {
+      nvisInfo = { tenthWlFt: 0.1 * wl * 3.28084 };
+    } else if (isInvV || isFlatDipole) {
+      var takeoffDeg = 90 - Math.atan(distKm / (2 * HOP.F2.hKm)) * 180 / Math.PI;
+      var optM = wl / (4 * Math.sin(takeoffDeg * Math.PI / 180));
+      var recM = optM;
+      var feasible = true;
+      var actualTakeoffDeg = takeoffDeg;
+      var endNeededM = null;
+      if (isInvV) {
+        var maxApexM = endM + qw * Math.sin(MAX_LEG_SLOPE_RAD);
+        if (optM > maxApexM) {
+          feasible = false;
+          recM = maxApexM;
+          // Lobe angle actually achieved at the buildable height
+          var sinArg = wl / (4 * recM);
+          actualTakeoffDeg = sinArg >= 1 ? 90 : Math.asin(sinArg) * 180 / Math.PI;
+          // End height that would make the optimal apex reachable
+          endNeededM = optM - qw * Math.sin(MAX_LEG_SLOPE_RAD);
+        }
+      }
+      apexInfo = {
+        label: isInvV ? 'Apex height' : 'Support height',
+        title: isInvV ? 'Optimal Apex Height' : 'Optimal Support Height',
+        apexFt: recM * 3.28084, apexM: recM,
+        optFt: optM * 3.28084,
+        feasible: feasible,
+        actualTakeoffDeg: actualTakeoffDeg,
+        endNeededFt: endNeededM === null ? null : endNeededM * 3.28084,
+        legFt: qw * 3.28084, legM: qw,
+        endIn: endM / 0.0254, endM: endM,
+        takeoffDeg: takeoffDeg,
+      };
+    }
   }
 
   return (
@@ -2440,7 +2480,7 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
         <LengthTable label={"FULL WAVE · " + freq + " MHz · " + actualLabel} meters={wl} />
 
         {apexInfo && (
-          <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px' }}>
+          <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + (apexInfo.feasible ? T.accent : T.warn), borderRadius: 6, padding: '11px 13px' }}>
             <div style={{ color: T.accentText, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8, textTransform: 'uppercase' }}>
               {apexInfo.title}
             </div>
@@ -2448,14 +2488,39 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
               <div>{apexInfo.label + ': '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.apexFt.toFixed(0) + ' ft (' + apexInfo.apexM.toFixed(1) + ' m)'}</span></div>
               <div>{'Each leg: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.legFt.toFixed(1) + ' ft (' + apexInfo.legM.toFixed(1) + ' m)'}</span></div>
               <div>{'Leg end height: '}<span style={{ color: T.textPrim, fontWeight: 700 }}>{apexInfo.endIn.toFixed(1) + ' in / ' + apexInfo.endM.toFixed(3) + ' m'}</span></div>
-              <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>{'Optimized for: ' + Math.round(distKm) + ' km path, F2 single-hop (≈' + apexInfo.takeoffDeg.toFixed(0) + '° takeoff)'}</div>
+              <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>
+                {'Optimized for: ' + Math.round(distKm) + ' km path, F2 single-hop (≈' + apexInfo.takeoffDeg.toFixed(0) + '° takeoff)'}
+              </div>
+              {!apexInfo.feasible && (
+                <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 6, lineHeight: 1.55 }}>
+                  {'Radiation-optimal height is ' + apexInfo.optFt.toFixed(0) + ' ft, but ¼-wave legs with ends at '
+                    + apexInfo.endIn.toFixed(1) + ' in max out at ' + apexInfo.apexFt.toFixed(0) + ' ft (legs ≤55° slope). '
+                    + 'At ' + apexInfo.apexFt.toFixed(0) + ' ft the takeoff is ≈' + apexInfo.actualTakeoffDeg.toFixed(0) + '° — still usable, just higher-angle than ideal. '
+                    + 'To reach ' + apexInfo.optFt.toFixed(0) + ' ft, raise the leg ends to ≈' + apexInfo.endNeededFt.toFixed(0) + ' ft (elevated inverted-V) or use a flat dipole between two supports.'}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {nvisInfo && (
+          <div style={{ marginTop: 12, background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px' }}>
+            <div style={{ color: T.accentText, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8, textTransform: 'uppercase' }}>
+              NVIS Height
+            </div>
+            <div style={{ color: T.textBody, fontSize: '0.82rem', lineHeight: 1.7 }}>
+              <div>{'Keep center at '}<span style={{ color: T.textPrim, fontWeight: 700 }}>8–10 ft</span>{' — do not raise higher.'}</div>
+              <div style={{ color: T.textMute, fontSize: '0.74rem', marginTop: 3 }}>
+                {Math.round(distKm) + ' km path is NVIS range: the signal must go nearly straight up. '
+                  + 'Distance-based height optimization does not apply — stay well under 0.1 λ (≈' + nvisInfo.tenthWlFt.toFixed(0) + ' ft) so vertical radiation dominates.'}
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {(antenna.imageKey === 'invertedv' || antenna.imageKey === 'nvis_invertedv') && (
-        <InvVGeoCalc legMeters={qw} isNVIS={antenna.imageKey === 'nvis_invertedv'} />
+        <InvVGeoCalc legMeters={qw} isNVIS={antenna.imageKey === 'nvis_invertedv'} suggestedApexFt={apexInfo ? apexInfo.apexFt : null} />
       )}
 
       {antenna.imageKey === 'longwire' && (
@@ -2530,7 +2595,7 @@ export default function HFCalc() {
     var vf = computeVF(wireCore, effectiveGauge);
     var wl = wavelength(fMHz, vf);
     var lengths = { qw: toLengths(wl / 4), hw: toLengths(wl / 2), full: toLengths(wl) };
-    var antennaData = getAntennaRecommendations(geo.distKm, fMHz);
+    var antennaData = getAntennaRecommendations(geo.distKm, fMHz, vf);
     var terrain = pathTerrainAnalysis(p1.lat, p1.lon, p2.lat, p2.lon, 32);
     var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
     var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
@@ -2617,20 +2682,11 @@ export default function HFCalc() {
         if (WIRE_GAUGES[qGauge]) { setWireGauge(qGauge); setCustomGauge(''); didSet = true; }
         else if (!isNaN(parseFloat(qGauge))) { setCustomGauge(qGauge); didSet = true; }
       }
-      // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate after a tick
+      // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate:
+      // marking the session as "has calculated" lets the live-recompute effect
+      // produce results as soon as the state set above flushes — no DOM poking.
       if (didSet && qFrom && qTo && qFreq && qAuto !== '0') {
-        setTimeout(function() {
-          // Re-read state via the ref technique would be cleaner, but since
-          // calculate is wrapped in useCallback that closes over loc1/loc2/freq,
-          // we trigger by dispatching a synthetic event after state has flushed.
-          var btns = document.querySelectorAll('button');
-          for (var i = 0; i < btns.length; i++) {
-            if (btns[i].textContent && btns[i].textContent.trim() === 'CALCULATE') {
-              btns[i].click();
-              break;
-            }
-          }
-        }, 50);
+        hasCalculatedRef.current = true;
       }
     } catch (e) { /* malformed URL, ignore */ }
 
