@@ -764,7 +764,7 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
       antennaType = terrain.chordal ? 'Low horizontal dipole or vertical' : 'Sloper or longwire aimed toward target';
     }
 
-    whichWay = 'Point antenna (or sloper low end) toward ' + bearing.toFixed(0) + '\u00b0 (' + cardinal + ')';
+    whichWay = 'From your station, point antenna (or sloper low end) toward ' + bearing.toFixed(0) + '\u00b0 (' + cardinal + ') \u2014 the bearing to the target';
 
     // Physical angle geometry: for a sloper the wire angle from horizontal = 90 - takeoff_angle
     var wireAngleFromHoriz = 90 - finalAngle;
@@ -1021,7 +1021,7 @@ function AntennaDirectiveCard({ directive }) {
       {/* Big bearing + angle */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
         <div style={{ background: T.bg, border: '1px solid ' + T.borderHi, borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
-          <div style={{ color: T.textMute, fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>Point Toward</div>
+          <div style={{ color: T.textMute, fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>Point Toward Target</div>
           <div style={{ color: T.accentText, fontWeight: 900, fontSize: '1.6rem', lineHeight: 1 }}>{d.bearing.toFixed(0) + '\u00b0'}</div>
           <div style={{ color: T.textSec, fontWeight: 700, fontSize: '0.85rem', marginTop: 3 }}>{d.cardinal}</div>
         </div>
@@ -2449,6 +2449,26 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
 // of them later as a plain-text comm card (copy to clipboard, or download as
 // a .txt when the clipboard API is unavailable). All local storage — nothing
 // leaves the device.
+// Last-used station locations. Prefilled on next launch so a Marine working
+// the same link (or the same OP) does not retype grids every time — the same
+// idea as the 7.3 MHz and 3-inch leg-end defaults. Written only after a
+// calculation succeeds, so the cache always holds a known-good pair.
+// Cleared via "CLEAR SAVED DATA" in Saved Shots or window.HFCalc.reset().
+var LOCS_KEY = 'hfcalc_locs_v1';
+function loadCachedLocs() {
+  try {
+    var raw = localStorage.getItem(LOCS_KEY);
+    var v = raw ? JSON.parse(raw) : null;
+    return (v && typeof v.loc1 === 'string' && typeof v.loc2 === 'string') ? v : { loc1: '', loc2: '' };
+  } catch (e) { return { loc1: '', loc2: '' }; }
+}
+function saveCachedLocs(loc1, loc2) {
+  try { localStorage.setItem(LOCS_KEY, JSON.stringify({ loc1: loc1, loc2: loc2 })); } catch (e) {}
+}
+function clearCachedLocs() {
+  try { localStorage.removeItem(LOCS_KEY); } catch (e) {}
+}
+
 var SHOTS_KEY = 'hfcalc_shots_v1';
 var SHOTS_MAX = 25;
 
@@ -2486,7 +2506,7 @@ function exportText(text, filename, onDone) {
   download();
 }
 
-function SavedShots({ currentShot }) {
+function SavedShots({ currentShot, onClearStored }) {
   var [shots, setShots] = useState(loadShots);
   var [open, setOpen] = useState(false);
   var [flash, setFlash] = useState(null);
@@ -2568,6 +2588,16 @@ function SavedShots({ currentShot }) {
           <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
             Stored on this device only. Export copies the comm card to the clipboard (or downloads a .txt if the clipboard is unavailable).
           </div>
+          <button
+            onClick={function() {
+              setShots([]); persistShots([]);
+              clearCachedLocs();
+              if (onClearStored) onClearStored();
+              note('CLEARED');
+            }}
+            style={{ ...btn, background: 'transparent', color: T.warn, borderColor: T.border, marginTop: 10, width: '100%', padding: '8px 0' }}>
+            CLEAR SAVED DATA (SHOTS + REMEMBERED LOCATIONS)
+          </button>
         </div>
       )}
     </div>
@@ -2735,8 +2765,9 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
 // ── MAIN APP ───────────────────────────────────────────────────────────────────
 export default function HFCalc() {
   var pwa = usePWA();
-  var [loc1, setLoc1] = useState('');
-  var [loc2, setLoc2] = useState('');
+  var _cachedLocs = loadCachedLocs();
+  var [loc1, setLoc1] = useState(_cachedLocs.loc1);
+  var [loc2, setLoc2] = useState(_cachedLocs.loc2);
   var [freq, setFreq] = useState('7.3');
   // wireType is kept for legacy state shape compatibility, but the source of
   // truth for the new physics is (wireCore, wireGauge).
@@ -2793,6 +2824,7 @@ export default function HFCalc() {
       p2: { lat: results.p2.lat, lon: results.p2.lon },
       distKm: results.geo.distKm, distMi: results.geo.distMi,
       bearing: results.geo.bearing, cardinal: bearingToCardinal(results.geo.bearing),
+      backBearing: results.geo.backBearing, backCardinal: bearingToCardinal(results.geo.backBearing),
       freqMHz: results.freq,
       zoneName: results.antennaData.zoneName,
       takeoffDeg: results.directive.takeoffDeg,
@@ -2859,6 +2891,11 @@ export default function HFCalc() {
     setResults(newResults);
     return newResults;
   }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge]);
+
+  // Remember the last known-good station pair (see LOCS_KEY above).
+  useEffect(function() {
+    if (results) saveCachedLocs(loc1, loc2);
+  }, [results]);
 
   // Live auto-recompute: once the user has calculated once, any change to the
   // locations, frequency, or wire selection re-runs the analysis (debounced)
@@ -3100,6 +3137,7 @@ export default function HFCalc() {
         setLegEndStr('3'); setLegEndUnit('in');
         setResults(null); setErrors({ loc1: '', loc2: '', freq: '' });
         hasCalculatedRef.current = false;
+        clearCachedLocs();
       },
     };
 
@@ -3200,7 +3238,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
-        <SavedShots currentShot={currentShot} />
+        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(''); setLoc2(''); }} />
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">YOUR STATION</div>
@@ -3359,9 +3397,12 @@ export default function HFCalc() {
                   <div className="usmc-stat-sub">{results.geo.distMi.toFixed(1) + ' mi'}</div>
                 </div>
                 <div className="usmc-stat">
-                  <div className="usmc-stat-label">Bearing</div>
+                  <div className="usmc-stat-label">Bearing To Target</div>
                   <div className="usmc-stat-val">{results.geo.bearing.toFixed(1) + '°'}</div>
-                  <div className="usmc-stat-sub">{bearingToCardinal(results.geo.bearing)}</div>
+                  <div className="usmc-stat-sub">{bearingToCardinal(results.geo.bearing) + ' · from your station'}</div>
+                  <div style={{ color: T.textMute, fontSize: '0.62rem', marginTop: 4, borderTop: '1px solid ' + T.border, paddingTop: 4 }}>
+                    {'Back az ' + results.geo.backBearing.toFixed(1) + '° ' + bearingToCardinal(results.geo.backBearing) + ' (target aims here)'}
+                  </div>
                 </div>
               </div>
               <hr className="usmc-divider" style={{ margin: '0 0 14px 0' }} />

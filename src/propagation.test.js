@@ -10,7 +10,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  EARTH_RADIUS_KM, geodesics, propagationZone, bearingToCardinal,
+  EARTH_RADIUS_KM, geodesics, initialBearing, propagationZone, bearingToCardinal,
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
 } from './propagation.js';
 
@@ -36,6 +36,32 @@ test('geodesics: bearing basics on the equator and meridian', function() {
   approx(geodesics(0, 0, 10, 0).bearing, 0, 0.01, 'due north');
   approx(geodesics(0, 0, -10, 0).bearing, 180, 0.01, 'due south');
   approx(geodesics(0, 10, 0, 0).bearing, 270, 0.01, 'due west');
+});
+
+test('geodesics: bearing runs FROM your station TO the target', function() {
+  // Direction convention guard. 29 Palms CA -> San Diego CA is south-west;
+  // if the arguments were ever swapped this would read north-east instead.
+  var g = geodesics(34.23, -116.05, 32.72, -117.16);
+  approx(g.bearing, 211.8, 0.5, '29 Palms -> San Diego');
+  assert.equal(bearingToCardinal(g.bearing), 'SSW');
+  // Real-world check both ways: LA -> NYC is ENE, NYC -> LA is W-ish.
+  approx(geodesics(34.0522, -118.2437, 40.7128, -74.0060).bearing, 65.9, 0.5);
+  approx(geodesics(40.7128, -74.0060, 34.0522, -118.2437).bearing, 273.7, 0.5);
+});
+
+test('geodesics: backBearing is what the far station aims at', function() {
+  var g = geodesics(34.0522, -118.2437, 40.7128, -74.0060);
+  // Equals the initial bearing computed in the opposite direction
+  approx(g.backBearing, initialBearing(40.7128, -74.0060, 34.0522, -118.2437), 1e-9);
+  approx(g.backBearing, 273.7, 0.5);
+  // On a long great circle it is NOT simply bearing + 180
+  var naive = (g.bearing + 180) % 360;
+  assert.ok(Math.abs(g.backBearing - naive) > 5,
+    'back azimuth should differ from bearing+180 on this path');
+  // ...but on a meridian it is exactly the reciprocal
+  var m = geodesics(0, 0, 10, 0);
+  approx(m.bearing, 0, 1e-9);
+  approx(m.backBearing, 180, 1e-9);
 });
 
 test('geodesics: zero distance and symmetry', function() {

@@ -18,7 +18,22 @@
 
 export const EARTH_RADIUS_KM = 6371;
 
-// Great-circle distance (haversine) + initial bearing on a spherical Earth.
+// Initial great-circle bearing FROM point 1 TO point 2, degrees true (0-360).
+// Direction convention for the whole app: point 1 is always YOUR station,
+// point 2 is always the TARGET. Pinned by tests in propagation.test.js.
+export function initialBearing(lat1, lon1, lat2, lon2) {
+  var y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+  var x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+    Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+// Great-circle distance (haversine) + bearings on a spherical Earth.
+//   bearing     — from YOUR station toward the TARGET (aim your antenna here)
+//   backBearing — from the TARGET back toward YOU (what the distant station
+//                 aims at). On a great circle this is NOT simply bearing+180
+//                 except on meridians and the equator, so it is computed
+//                 properly rather than assumed.
 export function geodesics(lat1, lon1, lat2, lon2) {
   var R = EARTH_RADIUS_KM;
   var dLat = (lat2 - lat1) * Math.PI / 180;
@@ -29,11 +44,12 @@ export function geodesics(lat1, lon1, lat2, lon2) {
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   var distKm = R * c;
   var distMi = distKm * 0.621371;
-  var y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
-  var x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
-    Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
-  var bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-  return { distKm: distKm, distMi: distMi, bearing: bearing };
+  return {
+    distKm: distKm,
+    distMi: distMi,
+    bearing: initialBearing(lat1, lon1, lat2, lon2),
+    backBearing: initialBearing(lat2, lon2, lat1, lon1),
+  };
 }
 
 export function propagationZone(distKm) {

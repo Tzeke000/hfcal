@@ -8,6 +8,7 @@ var SHOT = {
   p1: { lat: 34.23, lon: -116.05 },
   p2: { lat: 33.95, lon: -107.69 },
   distKm: 770.4, distMi: 478.7, bearing: 90.4, cardinal: 'E',
+  backBearing: 274.9, backCardinal: 'W',
   freqMHz: 11.104, zoneName: 'SINGLE-HOP SKYWAVE (500-2000 km)', takeoffDeg: 40.5,
   wireLabel: 'STAINLESS 14 AWG', vf: 0.89,
   legEndM: 0.0762,
@@ -34,6 +35,7 @@ test('formatCommCard: contains every operationally required field', function() {
   var t = formatCommCard(SHOT);
   ['HF ANTENNA PLAN', '271430Z JUL 26', '34.2300N 116.0500W', '33.9500N 107.6900W',
    '770.4 km', '90.4 deg E', '11.104 MHz', 'SINGLE-HOP', '~41 deg',
+   '(you -> target)', 'BACK AZ', '274.9 deg W', '(target -> you)',
    'STAINLESS 14 AWG', 'VF 0.890', 'INVERTED-V DIPOLE', '19 ft 8 in',
    '39 ft 5 in', '5.5 - 15.7 MHz', '13.4 MHz', 'HFCALC-AG-EZK-USMC-v1',
   ].forEach(function(frag) {
@@ -76,6 +78,14 @@ test('formatCommCard: fixed-width label column stays aligned', function() {
       assert.ok(line.length <= 78, 'line too wide for a comm card: ' + line);
     }
   });
+});
+
+test('formatCommCard: back azimuth omitted when not supplied', function() {
+  var noBack = JSON.parse(JSON.stringify(SHOT));
+  delete noBack.backBearing; delete noBack.backCardinal;
+  var t = formatCommCard(noBack);
+  assert.ok(t.indexOf('BACK AZ') === -1);
+  assert.ok(t.indexOf('(you -> target)') !== -1, 'primary bearing still labelled');
 });
 
 test('shotLabel and filename', function() {

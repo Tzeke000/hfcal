@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.7.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.7.1 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -60,7 +60,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
   hourly samples: 14.6% mean error, 73% within 20%.
-- **Engineered, not improvised:** automated physics test suite (62 tests
+- **Engineered, not improvised:** automated physics test suite (65 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

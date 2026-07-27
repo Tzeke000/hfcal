@@ -36,7 +36,10 @@ export function formatCommCard(shot) {
   row('FROM', fmtLatLon(shot.p1.lat, shot.p1.lon));
   row('TO', fmtLatLon(shot.p2.lat, shot.p2.lon));
   row('DIST', shot.distKm.toFixed(1) + ' km / ' + shot.distMi.toFixed(1) + ' mi');
-  row('BEARING', shot.bearing.toFixed(1) + ' deg ' + (shot.cardinal || ''));
+  row('BEARING', shot.bearing.toFixed(1) + ' deg ' + (shot.cardinal || '') + '  (you -> target)');
+  if (typeof shot.backBearing === 'number') {
+    row('BACK AZ', shot.backBearing.toFixed(1) + ' deg ' + (shot.backCardinal || '') + '  (target -> you)');
+  }
   row('FREQ', shot.freqMHz + ' MHz');
   row('MODE', shot.zoneName || '');
   if (typeof shot.takeoffDeg === 'number') row('TAKEOFF', '~' + shot.takeoffDeg.toFixed(0) + ' deg');
