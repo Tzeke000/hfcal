@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.6.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.7.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -35,6 +35,11 @@ coordinates and a frequency into a complete, buildable antenna solution:
 - **Nine antenna types** with step-by-step field construction instructions,
   written for issued equipment (DAGR button sequences, tactical radio
   references).
+- **Frequency check** — given the path and time of day, estimates MUF / FOT /
+  LUF offline and rules on whether the assigned frequency will close the
+  link, with an alternate to request if it will not.
+- **Saved shots and comm-card export** — keep the day's link plans on the
+  device and export any of them as a plain-text comm card.
 
 ## Differentiators
 
@@ -47,13 +52,15 @@ coordinates and a frequency into a complete, buildable antenna solution:
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —
   usable as a schoolhouse training aid for the 06xx pipeline.
-- **Validated.** Takeoff-angle and hop predictions compared against VOACAP
+- **Validated twice.** Takeoff-angle and hop predictions compared against VOACAP
   (the government-standard HF prediction engine) across 10 path distances ×
   24 hours × 2 seasons × 2 solar conditions: agreement within 1.2° of the
   VOACAP median (mean ≈ 0.4°) across the entire 250–6000 km envelope,
   inside VOACAP's own environmental spread at every distance. Full
-  methodology and reproduction scripts: `docs/VALIDATION.md`.
-- **Engineered, not improvised:** automated physics test suite (42 tests
+  methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
+  model was validated the same way against VOACAP's MUF output over 288
+  hourly samples: 14.6% mean error, 73% within 20%.
+- **Engineered, not improvised:** automated physics test suite (62 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

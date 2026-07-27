@@ -11,7 +11,6 @@ Reads the version from package.json (single source of truth), composites a
                                 background so every essential pixel (badge,
                                 corner text) fits the W3C maskable safe zone
                                 (central circle, radius 40% of icon width)
-  src/HFCalc.jsx                embedded ICON_192 base64 updated in place
 
 Usage: python3 scripts/generate-icons.py   (run from the repo root)
 Requires: pillow  (pip install pillow)
@@ -19,7 +18,7 @@ Requires: pillow  (pip install pillow)
 Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S. — USMC.
 Project signature: HFCALC-AG-EZK-USMC-v1
 """
-import base64, json, os, re, sys
+import json, os, sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -74,16 +73,6 @@ def main():
     off = (512 - safe) // 2
     maskable.paste(art_small, (off, off), mask_small)
     maskable.save(os.path.join(ROOT, 'public', 'icon-512-maskable.png'))
-
-    # Update the embedded ICON_192 data URI in the app source
-    jsx_path = os.path.join(ROOT, 'src', 'HFCalc.jsx')
-    b64 = base64.b64encode(open(os.path.join(ROOT, 'public', 'icon-192.png'), 'rb').read()).decode()
-    jsx = open(jsx_path).read()
-    new_line = 'const ICON_192 = "data:image/png;base64,' + b64 + '";'
-    jsx, n = re.subn(r'const ICON_192 = "data:image/png;base64,[^"]*";', new_line, jsx, count=1)
-    if n != 1:
-        sys.exit('ERROR: ICON_192 constant not found in src/HFCalc.jsx')
-    open(jsx_path, 'w').write(jsx)
 
     print(f'Icons regenerated with badge "{badge_text}" '
           f'(corner radius {corner_r_512}px, maskable bg {bg})')

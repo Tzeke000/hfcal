@@ -2,7 +2,8 @@
 
 **Original work of Cpl Angeles-Gonzalez, Ezekiel S. — USMC**
 Project signature: HFCALC-AG-EZK-USMC-v1
-Initial study: July 2026 (app v1.4.1) · Model correction and re-validation: July 2026 (app v1.5.0)
+Takeoff-angle study: July 2026 (app v1.4.1) · Model correction and re-validation: v1.5.0
+Frequency (MUF) study: July 2026 (app v1.7.0)
 
 ---
 
@@ -114,8 +115,56 @@ where VOACAP prefers `2F2` while the app's geometric single-hop limit
 (4500 km) still permits one hop; the app's 1-hop angle (3.0°) nonetheless
 falls inside the 2F2 envelope.
 
+## Part 2 — Frequency advisor (MUF) vs VOACAP
+
+v1.7 added an offline frequency check (`src/freqAdvisor.js`): given the path
+and the time of day it estimates MUF / FOT / LUF and rules on whether an
+assigned frequency will close the link. VOACAP reports path MUF directly, so
+the same validation approach applies.
+
+**Method.** Three path lengths (500 / 1500 / 3000 km) x 24 UTC hours x two
+months (June, December) x two solar levels (SSN 30, 100) = 288 hourly
+samples. The app's estimate is `foF2(SSN, local solar time)` times the
+curved-earth secant factor at the takeoff angle validated in Part 1.
+Reproduce with `python3 scripts/validation/run_muf_study.py`.
+
+**Calibration.** The foF2 diurnal coefficients (peak at 12.8 local solar
+time, night ratio 0.45, `6.8 + 0.036 x SSN` MHz at peak, decay exponent 1.6)
+were fitted to this VOACAP data set. The resulting foF2 values — 7.2 MHz at
+solar minimum noon to 12.2 at solar maximum, 3.2-5.5 MHz at night — sit
+inside published mid-latitude ionosonde ranges, so the fit stays physical
+rather than merely numerical.
+
+**Results.**
+
+| Path | Samples | Mean Δ | Median abs Δ | Mean abs error | Within 20% |
+|---|---|---|---|---|---|
+| 500 km | 96 | +0.36 MHz | 0.76 MHz | 15.1% | 70% |
+| 1500 km | 96 | -0.23 MHz | 1.31 MHz | 12.7% | 82% |
+| 3000 km | 96 | -0.83 MHz | 3.04 MHz | 15.8% | 67% |
+| **All** | **288** | — | — | **14.6%** | **73%** |
+
+![MUF comparison](validation/muf-comparison.png)
+
+Mean absolute error **14.6%**, median **11.9%**, with **73%** of samples
+within 20% and **90%** within 30%. Residual bias is small and changes sign
+with distance (+0.36 MHz at 500 km, -0.83 MHz at 3000 km), i.e. there is no
+systematic over- or under-estimate to correct.
+
+**Interpretation.** This is a materially looser fit than the takeoff-angle
+result, and deliberately reported as such. The dominant error source is the
+absent seasonal term: the app returns one number where VOACAP separates June
+from December. For the tool's actual job — ruling an assigned frequency
+GOOD / MARGINAL / ABOVE MUF / BELOW LUF — a ~15% MUF error moves the verdict
+only for frequencies already near a boundary, and the FOT convention
+(0.85 x MUF) absorbs part of it. The UI states the tolerance and defers to
+the unit's SOI/JCEOI assignment.
+
 ## Limitations
 
+- The frequency advisor has no seasonal or latitude term and takes a single
+  solar-activity number; offline it uses a documented default (SSN 70) until
+  the app has been online once. Expect ~15% MUF accuracy, not VOACAP parity.
 - VOACAP itself is a statistical monthly-median model, not ground truth;
   agreement with VOACAP demonstrates consistency with the planning standard,
   not with any specific day's ionosphere.
