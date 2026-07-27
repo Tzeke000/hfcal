@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.7.2 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.7.3 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -45,9 +45,13 @@ coordinates and a frequency into a complete, buildable antenna solution:
 
 - **Fully offline.** Installs as a PWA / Windows executable / Android APK;
   every calculation runs on-device. No account, no cloud, no telemetry —
-  EMCON-compatible by construction. When online, an optional NOAA SWPC
-  space-weather feed (solar flux + Kp) adds live band-condition advisories;
-  offline it silently falls back to cached or no data.
+  EMCON-compatible by construction: no account, no telemetry, no server side.
+  Two optional conveniences reach the network when it exists and degrade
+  honestly when it does not — NOAA SWPC space-weather advisories (falls back
+  to cached or default solar activity) and photo OCR of a DAGR screen (the
+  text reader is fetched on first use rather than bundled, so it reports that
+  it needs a connection instead of failing silently). Neither is required for
+  any calculation.
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —
@@ -60,7 +64,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
   hourly samples: 14.6% mean error, 73% within 20%.
-- **Engineered, not improvised:** automated physics test suite (65 tests
+- **Engineered, not improvised:** automated physics test suite (80 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 
@@ -70,7 +74,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
 |---|---|
 | Core physics | Validated vs VOACAP; unit-tested against ARRL/ITU references |
 | Platforms | Web/PWA (live), Windows .exe (CI-built), Android/iOS (Capacitor buildable) |
-| Offline operation | Complete — service-worker cached, zero network calls in use |
+| Offline operation | All calculation, antenna and frequency guidance runs with no network. Two features degrade gracefully when offline: NOAA space-weather advisories (falls back to cached/default) and DAGR photo OCR (reader is CDN-loaded on first use; reports plainly that it needs a connection) |
 | Integration | JS API + URL parameters + postMessage for external tooling |
 | Known limits | VOACAP-class monthly-median accuracy; live NOAA SWPC feed (SFI/Kp) is advisory, fetched only when online |
 

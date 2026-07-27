@@ -20,11 +20,15 @@ planning tool outputs — cut lengths for the wire in hand and buildable mast
 heights with construction steps.
 
 **"What about security / can it go on a government device?"**
-The core app makes zero network calls, has no account, no telemetry, and no
-server side — it's static files running entirely on-device. The one optional
-online feature (NOAA space-weather advisories) reads a public U.S.
-government feed and fails silent offline. The review surface is unusually
-small, and the source is fully inspectable.
+No account, no telemetry, no server side — static files running on-device,
+and every calculation works with the radio off. Two optional conveniences
+touch the network when it is available: NOAA space-weather advisories (a
+public U.S. government feed) and photo OCR of a DAGR screen, whose text
+reader is fetched from a public CDN on first use rather than bundled. Both
+state plainly when they cannot reach the network, and neither is needed for
+any antenna or frequency result. If a hardened build is required, both can
+be compiled out or the OCR engine vendored locally. The review surface is
+small and the source is fully inspectable.
 
 **"What happens when there's no signal?"**
 Everything works. Offline-first is the design center, not a degraded mode.
