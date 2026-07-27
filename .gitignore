@@ -39,3 +39,4 @@ pnpm-debug.log*
 .cache/
 .parcel-cache/
 *.tsbuildinfo
+__pycache__/
