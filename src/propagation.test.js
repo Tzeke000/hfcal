@@ -1,8 +1,8 @@
 // Unit tests for propagation.js — run with `npm test` (node --test).
 //
 // Expected values are pinned against published radio propagation theory:
-//  - Flat-earth skip geometry α = atan(2h/d), the standard approximation
-//    (within a few percent of curved-earth for hops ≤ 3000 km, α > 5°).
+//  - Curved-earth skip geometry α = atan[(cosθ − R/(R+h))/sinθ], θ = d/2R,
+//    at the F2 effective virtual reflection height (360 km).
 //  - Ionospheric layer heights: E 90–130 km, F1 ≈ 200 km, F2 250–400 km.
 //  - Geometric max single-hop for a 0° launch: d_max = 2·√(2·R·h).
 //    Practice values: E ≈ 2000 km, F2 ≈ 4000–4500 km per hop.
@@ -68,45 +68,56 @@ test('bearingToCardinal quadrants and wraparound', function() {
 
 // ── takeoff angle ────────────────────────────────────────────────────────────
 
-test('calcTakeoffAngle: flat-earth baseline matches theory (F2 at 330 km)', function() {
-  // α = atan(2h/d) — canonical single-hop values from the skip-distance formula
-  var t500 = calcTakeoffAngle(500, 7, 330, null);
-  approx(t500.baseDeg, 52.9, 0.2, '500 km');
-  var t1500 = calcTakeoffAngle(1500, 7, 330, null);
-  approx(t1500.baseDeg, 23.7, 0.2, '1500 km');
-  var t3000 = calcTakeoffAngle(3000, 14, 330, null);
-  approx(t3000.baseDeg, 12.4, 0.2, '3000 km');
+test('calcTakeoffAngle: curved-earth baseline matches theory (F2 virtual height)', function() {
+  // α = atan[(cosθ − R/(R+h)) / sinθ], θ = d/2R — curved-earth mirror
+  // geometry (Davies) at the calibrated F2 virtual height (360 km, the
+  // median of VOACAP's virtual-height output). Values cross-checked
+  // against VOACAP medians in docs/VALIDATION.md.
+  var h = HOP.F2.hKm;
+  approx(calcTakeoffAngle(250, 7, h, null).baseDeg, 69.8, 0.2, '250 km');
+  approx(calcTakeoffAngle(500, 7, h, null).baseDeg, 53.3, 0.2, '500 km');
+  var t1500 = calcTakeoffAngle(1500, 7, h, null);
+  approx(t1500.baseDeg, 21.6, 0.2, '1500 km');
+  approx(calcTakeoffAngle(3000, 14, h, null).baseDeg, 6.3, 0.2, '3000 km');
   // No terrain → no adjustments, final == base
   assert.equal(t1500.adjustments.length, 0);
   approx(t1500.finalDeg, t1500.baseDeg, 0.11);
 });
 
+test('calcTakeoffAngle: angle floors at 0 near the geometric hop limit', function() {
+  // At 4500 km the h=360 geometry has passed its limit — baseline floors
+  // at 0 and the operational clamp raises the final angle to 3°.
+  var t = calcTakeoffAngle(4500, 14, HOP.F2.hKm, null);
+  assert.equal(t.baseDeg, 0);
+  assert.equal(t.finalDeg, 3);
+});
+
 test('calcTakeoffAngle: clamps to the physical 3–85° window', function() {
   // Absurdly long single hop → tiny geometric angle → clamped up to 3°
-  assert.equal(calcTakeoffAngle(30000, 14, 330, null).finalDeg, 3);
+  assert.equal(calcTakeoffAngle(30000, 14, HOP.F2.hKm, null).finalDeg, 3);
   // Absurdly short skywave hop → near-vertical → clamped to 85°
-  assert.equal(calcTakeoffAngle(1, 7, 330, null).finalDeg, 85);
+  assert.equal(calcTakeoffAngle(1, 7, HOP.F2.hKm, null).finalDeg, 85);
 });
 
 test('calcTakeoffAngle: near-field mountain raises angle to clear ridgeline', function() {
   // 4000 m ridge 20 km out on a 3000 km path: clearance = atan(4/20)+2 ≈ 13.3°
   // exceeds the 12.4° baseline → angle raised, adjustment recorded.
   var terrain = { keyObstacle: { elev: 4000, frac: 20 / 3000, name: 'Test Ridge' }, mountainFrac: 0.1 };
-  var t = calcTakeoffAngle(3000, 14, 330, terrain);
+  var t = calcTakeoffAngle(3000, 14, HOP.F2.hKm, terrain);
   approx(t.finalDeg, 13.3, 0.2);
   assert.equal(t.adjustments[0].type, 'mountain_clearance');
 });
 
 test('calcTakeoffAngle: ocean path flattens, desert path raises', function() {
-  var ocean = calcTakeoffAngle(1500, 14, 330, { oceanFrac: 0.9 });
-  approx(ocean.finalDeg, 23.7 - 3, 0.2, 'heavy ocean −3°');
+  var ocean = calcTakeoffAngle(1500, 14, HOP.F2.hKm, { oceanFrac: 0.9 });
+  approx(ocean.finalDeg, 21.6 - 3, 0.2, 'heavy ocean −3°');
   assert.equal(ocean.adjustments[0].type, 'ocean');
-  var desert = calcTakeoffAngle(1500, 14, 330, { oceanFrac: 0, desertFrac: 0.5 });
-  approx(desert.finalDeg, 23.7 + 2, 0.2, 'desert +2°');
+  var desert = calcTakeoffAngle(1500, 14, HOP.F2.hKm, { oceanFrac: 0, desertFrac: 0.5 });
+  approx(desert.finalDeg, 21.6 + 2, 0.2, 'desert +2°');
 });
 
 test('calcTakeoffAngle: chordal hop reduces the angle ~30%', function() {
-  var t = calcTakeoffAngle(3500, 14, 330, { oceanFrac: 0.6 });
+  var t = calcTakeoffAngle(3200, 14, HOP.F2.hKm, { oceanFrac: 0.6 });
   assert.equal(t.chordal, true);
   assert.ok(t.finalDeg < t.baseDeg, 'chordal final below baseline');
   assert.ok(t.finalDeg >= 3, 'still above clamp floor');
@@ -164,8 +175,10 @@ test('calcHops: hop count and per-hop distance', function() {
   approx(f2.hopDistKm, 4500, 1e-9);
   assert.equal(f2.reflectFracs.length, 1);        // one ground bounce
   approx(f2.reflectFracs[0], 0.5, 1e-9);
-  // takeoff angle computed on the per-hop distance, not the full path
-  approx(f2.toa.baseDeg, Math.atan2(660, 4500) * 180 / Math.PI, 0.11);
+  // Per-hop distance sits at the geometric limit for h=330 — curved-earth
+  // baseline floors at 0, operational clamp lifts the final angle to 3°.
+  assert.equal(f2.toa.baseDeg, 0);
+  assert.equal(f2.toa.finalDeg, 3);
 });
 
 test('calcHops: single hop short path', function() {

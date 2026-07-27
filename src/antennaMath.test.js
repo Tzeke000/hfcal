@@ -65,11 +65,12 @@ test('apexHeightPlan: reference case — 11.104 MHz stainless, 770 km inverted-V
   var plan = apexHeightPlan({ kind: 'invertedv', wlMeters: wl, distKm: 770, legEndM: 0.0762 });
   assert.equal(plan.kind, 'apex');
   assert.equal(plan.feasible, false);          // optimal exceeds leg geometry
-  approx(plan.optFt, 30.3, 0.2);               // radiation-optimal (F2 at 330 km)
+  approx(plan.takeoffDeg, 40.5, 0.1);          // curved-earth, F2 virtual 360 km
+  approx(plan.optFt, 30.3, 0.2);               // radiation-optimal first lobe
   approx(plan.apexFt, 16.4, 0.2);              // buildable max: end + leg·sin55°
   approx(plan.legFt, 19.7, 0.1);
   assert.equal(plan.actualTakeoffDeg, 90);     // λ/(4·h) > 1 at buildable height
-  approx(plan.endNeededFt, 14.1, 0.2);
+  approx(plan.endNeededFt, 14.2, 0.2);
   assert.equal(plan.hops, 1);
 });
 
@@ -85,16 +86,21 @@ test('apexHeightPlan: supplied terrain-aware takeoff angle wins over fallback', 
   var plan = apexHeightPlan({ kind: 'dipole', wlMeters: wl, distKm: 770, takeoffDeg: 25 });
   approx(plan.takeoffDeg, 25, 1e-9);
   approx(plan.apexM, wl / (4 * Math.sin(25 * Math.PI / 180)), 1e-9);
-  // Invalid supplied angle falls back to internal geometry
+  // Invalid supplied angle falls back to internal curved-earth geometry
   var fb = apexHeightPlan({ kind: 'dipole', wlMeters: wl, distKm: 770, takeoffDeg: NaN });
-  approx(fb.takeoffDeg, Math.atan2(2 * F2_HEIGHT_KM, 770) * 180 / Math.PI, 0.01);
+  var R = 6371, theta = 770 / (2 * R);
+  var curved = Math.atan2(Math.cos(theta) - R / (R + F2_HEIGHT_KM), Math.sin(theta)) * 180 / Math.PI;
+  approx(fb.takeoffDeg, curved, 0.01);
 });
 
 test('apexHeightPlan: long paths split into hops for the fallback angle', function() {
   var wl = wavelength(14.2, 0.95);
   var plan = apexHeightPlan({ kind: 'dipole', wlMeters: wl, distKm: 9000 });
   assert.equal(plan.hops, 2);
-  approx(plan.takeoffDeg, Math.atan2(2 * F2_HEIGHT_KM, 4500) * 180 / Math.PI, 0.01);
+  // 4500 km per hop is at the geometric limit for h=360 — fallback clamps
+  // to the 3° floor so the first-lobe height stays finite (and impractical).
+  approx(plan.takeoffDeg, 3, 1e-9);
+  assert.equal(plan.practical, false);
 });
 
 test('apexHeightPlan: practical flag trips above 60 ft', function() {

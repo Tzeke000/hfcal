@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.4.1 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.5.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -47,11 +47,11 @@ coordinates and a frequency into a complete, buildable antenna solution:
   usable as a schoolhouse training aid for the 06xx pipeline.
 - **Validated.** Takeoff-angle and hop predictions compared against VOACAP
   (the government-standard HF prediction engine) across 10 path distances ×
-  24 hours × 2 seasons × 2 solar conditions: agreement within 0.3–3.8° of
-  the VOACAP median throughout the NVIS/single-hop regime the tool is
-  designed for, inside VOACAP's own environmental spread. Full methodology
-  and reproduction scripts: `docs/VALIDATION.md`.
-- **Engineered, not improvised:** automated physics test suite (31 tests
+  24 hours × 2 seasons × 2 solar conditions: agreement within 1.2° of the
+  VOACAP median (mean ≈ 0.4°) across the entire 250–6000 km envelope,
+  inside VOACAP's own environmental spread at every distance. Full
+  methodology and reproduction scripts: `docs/VALIDATION.md`.
+- **Engineered, not improvised:** automated physics test suite (32 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 
@@ -63,7 +63,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
 | Platforms | Web/PWA (live), Windows .exe (CI-built), Android/iOS (Capacitor buildable) |
 | Offline operation | Complete — service-worker cached, zero network calls in use |
 | Integration | JS API + URL parameters + postMessage for external tooling |
-| Known limits | Long-range (>2500 km) angle bias characterized, correction planned; statistical ionosphere only (no live space-weather input) |
+| Known limits | Statistical ionosphere only (no live space-weather input); VOACAP-class monthly-median accuracy, not day-specific |
 
 ## Potential adoption paths
 

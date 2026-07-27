@@ -140,7 +140,7 @@ export function toLengths(meters) {
 // (55° = steepest recommended leg slope — apex angle 70°, the same threshold
 // the geometry planner warns at.)
 
-export const F2_HEIGHT_KM = 330;   // matches HOP.F2.hKm
+export const F2_HEIGHT_KM = 360;   // effective F2 virtual reflection height — matches HOP.F2.hKm
 export const F2_MAX_HOP_KM = 4500; // matches HOP.F2.maxHopKm
 export const MAX_LEG_SLOPE_DEG = 55;
 export const PRACTICAL_MAST_FT = 60; // beyond typical field mast/tree reach
@@ -175,8 +175,14 @@ export function apexHeightPlan(params) {
   var hops = Math.max(1, Math.ceil(distKm / F2_MAX_HOP_KM));
   var takeoffDeg = params.takeoffDeg;
   if (typeof takeoffDeg !== 'number' || !isFinite(takeoffDeg) || takeoffDeg <= 0 || takeoffDeg > 90) {
-    // Flat-earth per-hop fallback (same form as calcTakeoffAngle's baseline)
-    takeoffDeg = Math.atan2(2 * F2_HEIGHT_KM, distKm / hops) / DEG;
+    // Curved-earth per-hop fallback (same geometry as calcTakeoffAngle's
+    // baseline in propagation.js): α = atan[(cosθ − R/(R+h)) / sinθ],
+    // θ = hopDist/2R. Clamped to the same 3–85° operational window so the
+    // first-lobe height H = λ/(4·sinα) stays finite near the hop limit.
+    var R = 6371; // matches EARTH_RADIUS_KM in propagation.js
+    var theta = (distKm / hops) / (2 * R);
+    takeoffDeg = Math.atan2(Math.cos(theta) - R / (R + F2_HEIGHT_KM), Math.sin(theta)) / DEG;
+    takeoffDeg = Math.max(3, Math.min(85, takeoffDeg));
   }
 
   var legM = wl / 4;

@@ -34,11 +34,11 @@
     28.5
   ],
   "voacap_version": "16.1207W (voacapl)",
-  "app_model": "atan(2*330/hopDist), hops=ceil(d/4500), clamp 3-85",
+  "app_model": "curved-earth atan[(cos t - R/(R+h))/sin t], t=hopDist/2R, h=330, hops=ceil(d/4500), clamp 3-85 (v1.5)",
   "results": [
     {
       "dist_km": 250,
-      "app_angle": 69.3,
+      "app_angle": 69.8,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 779,
@@ -46,12 +46,12 @@
       "voacap_median": 70.1,
       "voacap_min": 56.9,
       "voacap_max": 74.1,
-      "delta_vs_median": -0.8,
+      "delta_vs_median": -0.3,
       "in_envelope": true
     },
     {
       "dist_km": 500,
-      "app_angle": 52.9,
+      "app_angle": 53.3,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 837,
@@ -59,12 +59,12 @@
       "voacap_median": 53.4,
       "voacap_min": 22.5,
       "voacap_max": 59.4,
-      "delta_vs_median": -0.5,
+      "delta_vs_median": -0.1,
       "in_envelope": true
     },
     {
       "dist_km": 770,
-      "app_angle": 40.6,
+      "app_angle": 40.5,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 791,
@@ -72,12 +72,12 @@
       "voacap_median": 40.3,
       "voacap_min": 25.6,
       "voacap_max": 46.3,
-      "delta_vs_median": 0.3,
+      "delta_vs_median": 0.2,
       "in_envelope": true
     },
     {
       "dist_km": 1000,
-      "app_angle": 33.4,
+      "app_angle": 32.7,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 748,
@@ -85,12 +85,12 @@
       "voacap_median": 32.2,
       "voacap_min": 11.7,
       "voacap_max": 38.5,
-      "delta_vs_median": 1.1,
+      "delta_vs_median": 0.5,
       "in_envelope": true
     },
     {
       "dist_km": 1500,
-      "app_angle": 23.7,
+      "app_angle": 21.6,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 691,
@@ -98,12 +98,12 @@
       "voacap_median": 21.4,
       "voacap_min": 12.3,
       "voacap_max": 27.1,
-      "delta_vs_median": 2.3,
+      "delta_vs_median": 0.2,
       "in_envelope": true
     },
     {
       "dist_km": 2000,
-      "app_angle": 18.3,
+      "app_angle": 14.8,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 734,
@@ -111,12 +111,12 @@
       "voacap_median": 14.6,
       "voacap_min": 7.3,
       "voacap_max": 20.2,
-      "delta_vs_median": 3.8,
+      "delta_vs_median": 0.2,
       "in_envelope": true
     },
     {
       "dist_km": 2500,
-      "app_angle": 14.8,
+      "app_angle": 10.0,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 729,
@@ -124,12 +124,12 @@
       "voacap_median": 10.0,
       "voacap_min": 3.7,
       "voacap_max": 15.3,
-      "delta_vs_median": 4.8,
+      "delta_vs_median": 0.0,
       "in_envelope": true
     },
     {
       "dist_km": 3000,
-      "app_angle": 12.4,
+      "app_angle": 6.3,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 683,
@@ -137,12 +137,12 @@
       "voacap_median": 7.2,
       "voacap_min": 1.4,
       "voacap_max": 13.5,
-      "delta_vs_median": 5.2,
+      "delta_vs_median": -0.9,
       "in_envelope": true
     },
     {
       "dist_km": 4000,
-      "app_angle": 9.4,
+      "app_angle": 3.0,
       "app_hops": 1,
       "voacap_cells": 960,
       "voacap_f2_cells": 654,
@@ -150,12 +150,12 @@
       "voacap_median": 2.4,
       "voacap_min": 0.6,
       "voacap_max": 6.6,
-      "delta_vs_median": 7.0,
-      "in_envelope": false
+      "delta_vs_median": 0.6,
+      "in_envelope": true
     },
     {
       "dist_km": 6000,
-      "app_angle": 12.4,
+      "app_angle": 6.3,
       "app_hops": 2,
       "voacap_cells": 960,
       "voacap_f2_cells": 646,
@@ -163,8 +163,8 @@
       "voacap_median": 7.5,
       "voacap_min": 1.8,
       "voacap_max": 11.4,
-      "delta_vs_median": 4.9,
-      "in_envelope": false
+      "delta_vs_median": -1.2,
+      "in_envelope": true
     }
   ]
 }

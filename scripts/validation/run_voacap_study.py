@@ -55,16 +55,23 @@ FREQS = [3.50, 5.30, 7.20, 10.10, 14.20, 18.10, 21.30, 24.90, 28.50]
 CONDITIONS = [(6, 30), (6, 100), (12, 30), (12, 100)]   # (month, SSN)
 
 # App model constants — must mirror src/propagation.js (HOP.F2)
-F2_HEIGHT_KM = 330
+F2_HEIGHT_KM = 360   # effective virtual reflection height (v1.5 calibration)
 F2_MAX_HOP_KM = 4500
 EARTH_R = 6371.0
 
 
 def app_prediction(dist_km):
-    """Replicates calcHops/calcTakeoffAngle for the F2 layer, no terrain."""
+    """Replicates calcHops/calcTakeoffAngle for the F2 layer, no terrain.
+
+    Curved-earth mirror geometry (v1.5+): a = atan[(cos t - R/(R+h)) / sin t],
+    t = hopDist/2R, floored at 0 then clamped to the 3-85 deg window.
+    """
     hops = max(1, math.ceil(dist_km / F2_MAX_HOP_KM))
     hop_dist = dist_km / hops
-    angle = math.degrees(math.atan2(2 * F2_HEIGHT_KM, hop_dist))
+    theta = hop_dist / (2 * EARTH_R)
+    angle = math.degrees(math.atan2(
+        math.cos(theta) - EARTH_R / (EARTH_R + F2_HEIGHT_KM), math.sin(theta)))
+    angle = max(0.0, angle)
     angle = max(3.0, min(85.0, angle))
     return {'hops': hops, 'angle': round(angle, 1)}
 
@@ -203,7 +210,7 @@ def run_study():
             'conditions': [{'month': m, 'ssn': s} for m, s in CONDITIONS],
             'freqs_mhz': FREQS,
             'voacap_version': '16.1207W (voacapl)',
-            'app_model': 'atan(2*330/hopDist), hops=ceil(d/4500), clamp 3-85',
+            'app_model': 'curved-earth atan[(cos t - R/(R+h))/sin t], t=hopDist/2R, h=330, hops=ceil(d/4500), clamp 3-85 (v1.5)',
             'results': results,
         }, fh, indent=2)
 

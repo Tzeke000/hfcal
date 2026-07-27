@@ -51,11 +51,22 @@ export function bearingToCardinal(b) {
 
 // ── TERRAIN-ADJUSTED TAKEOFF ANGLE ────────────────────────────────────────────
 //
-// Baseline skywave takeoff angles (flat earth, F2 layer at 330 km):
+// Baseline skywave takeoff angle: curved-earth mirror-reflection geometry.
+// The ray travels in a straight line below the ionosphere; the Earth's
+// surface curves away beneath it, so for a hop of ground distance d over a
+// layer at virtual height h (Earth radius R, half-arc θ = d/2R):
+//
+//   α = atan[ (cos θ − R/(R+h)) / sin θ ]
+//
+// (Davies, "Ionospheric Radio"; equivalent to the ARRL curved-earth skip
+// geometry. Reduces to the flat-earth atan(2h/d) for short paths.)
+// Validated against VOACAP — see docs/VALIDATION.md.
+//
+// Reference values (F2 virtual height 360 km):
 //   Single hop 500 km   => ~53° (steep, short range)
-//   Single hop 1500 km  => ~24°
-//   Single hop 3000 km  => ~13°
-//   Multi-hop 8000+ km  => ~5-8°
+//   Single hop 1500 km  => ~22°
+//   Single hop 3000 km  => ~6°
+//   Near the geometric hop limit the angle approaches 0 (clamped below).
 //
 // Terrain adjustments:
 //   1. Mountain barrier near TX: add clearance degrees so signal clears ridgeline
@@ -66,10 +77,15 @@ export function bearingToCardinal(b) {
 //      => angle reduced by ~30% (signal stays in ionosphere between hops)
 //
 export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
-  // Baseline flat-earth: atan(2h / hop_distance)
   var hopDistKm = distKm; // single-hop baseline
-  var baseRad = Math.atan2(2 * layerKm, hopDistKm);
-  var baseDeg = baseRad * 180 / Math.PI;
+  var theta = hopDistKm / (2 * EARTH_RADIUS_KM); // half-arc angle
+  var baseRad = Math.atan2(
+    Math.cos(theta) - EARTH_RADIUS_KM / (EARTH_RADIUS_KM + layerKm),
+    Math.sin(theta)
+  );
+  // Beyond the geometric hop limit the expression goes negative — floor at 0
+  // (the 3° operational clamp below still applies to the final angle).
+  var baseDeg = Math.max(0, baseRad * 180 / Math.PI);
 
   var adjustments = [];
   var finalDeg = baseDeg;
@@ -143,7 +159,13 @@ export function chordalHopPossible(distKm, freqMHz, oceanFrac) {
 export var HOP = {
   E:  { hKm: 110,  maxHopKm: 2160, label: 'E Layer',  height: '90–130 km',  note: 'Day only. Sporadic E.' },
   F1: { hKm: 200,  maxHopKm: 3000, label: 'F1 Layer', height: '≈200 km',    note: 'Daytime, lower freq.' },
-  F2: { hKm: 330,  maxHopKm: 4500, label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
+  // F2 hKm is the effective VIRTUAL reflection height used for angle
+  // geometry — higher than the true layer height because ionospheric
+  // refraction is gradual, not a mirror bounce. 360 km is the median of
+  // VOACAP's own virtual-height output (295–466 km) across the validation
+  // matrix; see docs/VALIDATION.md. The `height` string still describes
+  // the true layer.
+  F2: { hKm: 360,  maxHopKm: 4500, label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
 };
 
 export function calcHops(distKm, freqMHz, terrain) {
