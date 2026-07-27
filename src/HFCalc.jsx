@@ -43,8 +43,17 @@ const T = {
   oliveDim:    '#192413',
 };
 
+const FONT_BASE = import.meta.env.BASE_URL + 'fonts/';
+
 const USMC_CSS = [
-  "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');",
+  // Inter is served from public/fonts/ rather than Google Fonts. The remote
+  // @import fired on every page load, which both leaked usage to a third
+  // party (an EMCON/telemetry concern for a field tool) and left the app
+  // dependent on a network it is designed to work without.
+  "@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('" + FONT_BASE + "inter-latin-400-normal.woff2') format('woff2');}",
+  "@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('" + FONT_BASE + "inter-latin-500-normal.woff2') format('woff2');}",
+  "@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('" + FONT_BASE + "inter-latin-600-normal.woff2') format('woff2');}",
+  "@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('" + FONT_BASE + "inter-latin-700-normal.woff2') format('woff2');}",
   "*, *::before, *::after { box-sizing: border-box; }",
   "html { -webkit-text-size-adjust: 100%; }",
   "body { background: #080c07 !important; margin: 0; color: #c8d4c0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }",
@@ -1876,14 +1885,33 @@ function LocationInput({ label, value, onChange, parsed, error }) {
     if (!file) return;
     setScanning(true);
     setScanMsg(null);
-    // NOTE: OCR is the one feature that needs a connection — the recogniser is
-    // pulled from a CDN on first use rather than bundled, because shipping a
-    // multi-megabyte OCR engine into an offline field app is a bad trade for a
-    // convenience feature. Everything else in this app works with no network.
-    import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js').then(function(mod) {
+    // The OCR engine, its WASM core and the English model are all vendored in
+    // public/ocr/ and precached by the service worker, so scanning works with
+    // no network — same as every other feature. (It used to be pulled from a
+    // CDN at first use, which meant the one thing you would reach for in the
+    // field was the one thing that did not work there.)
+    var ocrBase = new URL(import.meta.env.BASE_URL + 'ocr/', window.location.href).href;
+    var _worker = null;
+    import('tesseract.js').then(function(mod) {
       var Tesseract = mod.default || mod;
-      return Tesseract.recognize(file, 'eng', { logger: function() {} });
+      // createWorker (not the recognize() shorthand) is the API that honours
+      // local asset paths — the shorthand silently falls back to the CDN.
+      return Tesseract.createWorker('eng', 1, {
+        workerPath: ocrBase + 'worker.min.js',
+        // Pin the universal (non-SIMD) LSTM core explicitly. Left as a
+        // directory, tesseract probes for a relaxed-SIMD build we do not
+        // ship and 404s; one core keeps the offline payload to a single
+        // file that runs on any device.
+        corePath: ocrBase + 'tesseract-core-lstm.wasm.js',
+        langPath: ocrBase,
+        gzip: true,
+        logger: function() {},
+      });
+    }).then(function(worker) {
+      _worker = worker;
+      return worker.recognize(file);
     }).then(function(result) {
+      if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
       var text = result && result.data && result.data.text ? result.data.text : '';
       var coord = extractCoordFromOCR(text);
       if (coord) {
@@ -1894,10 +1922,8 @@ function LocationInput({ label, value, onChange, parsed, error }) {
       }
       setScanning(false);
     }).catch(function() {
-      var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
-      setScanMsg({ ok: false, text: offline
-        ? 'Scan needs a connection (the text reader downloads on first use). Type or paste the grid instead.'
-        : 'Could not load the text reader. Type or paste the grid instead.' });
+      if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
+      setScanMsg({ ok: false, text: 'Could not read that image. Type or paste the grid instead.' });
       setScanning(false);
     });
     e.target.value = '';

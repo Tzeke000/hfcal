@@ -66,8 +66,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,png,jpg,svg,ico,woff2}'],
+        // The vendored OCR core is ~3.7 MB; allow it into the precache so
+        // DAGR scanning works with no network.
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,png,jpg,svg,ico,woff2,wasm,gz,traineddata}'],
       },
     }),
   ],

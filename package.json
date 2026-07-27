@@ -1,6 +1,6 @@
 {
   "name": "hf-field-antenna-calc",
-  "version": "1.7.3",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "description": "USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.",
@@ -24,8 +24,10 @@
     "ios:dev": "vite build && cap sync ios && cap open ios"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@capacitor/android": "^6.1.2",

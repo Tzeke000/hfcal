@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.7.3 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.8.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -35,6 +35,8 @@ coordinates and a frequency into a complete, buildable antenna solution:
 - **Nine antenna types** with step-by-step field construction instructions,
   written for issued equipment (DAGR button sequences, tactical radio
   references).
+- **Photograph the DAGR** to fill in a grid — on-device OCR, no connection
+  required.
 - **Frequency check** — given the path and time of day, estimates MUF / FOT /
   LUF offline and rules on whether the assigned frequency will close the
   link, with an alternate to request if it will not.
@@ -45,13 +47,12 @@ coordinates and a frequency into a complete, buildable antenna solution:
 
 - **Fully offline.** Installs as a PWA / Windows executable / Android APK;
   every calculation runs on-device. No account, no cloud, no telemetry —
-  EMCON-compatible by construction: no account, no telemetry, no server side.
-  Two optional conveniences reach the network when it exists and degrade
-  honestly when it does not — NOAA SWPC space-weather advisories (falls back
-  to cached or default solar activity) and photo OCR of a DAGR screen (the
-  text reader is fetched on first use rather than bundled, so it reports that
-  it needs a connection instead of failing silently). Neither is required for
-  any calculation.
+  EMCON-compatible by construction: no account, no telemetry, no server side,
+  no third-party CDN — the OCR engine and webfonts are vendored, so nothing
+  is fetched from anyone else's infrastructure. Exactly one optional network
+  call exists in the whole app (NOAA SWPC space-weather advisories), and it
+  falls back to cached or default solar activity when unreachable. No
+  calculation depends on it.
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —
@@ -74,7 +75,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
 |---|---|
 | Core physics | Validated vs VOACAP; unit-tested against ARRL/ITU references |
 | Platforms | Web/PWA (live), Windows .exe (CI-built), Android/iOS (Capacitor buildable) |
-| Offline operation | All calculation, antenna and frequency guidance runs with no network. Two features degrade gracefully when offline: NOAA space-weather advisories (falls back to cached/default) and DAGR photo OCR (reader is CDN-loaded on first use; reports plainly that it needs a connection) |
+| Offline operation | Complete, including DAGR photo OCR and fonts — all engines and assets are vendored and service-worker precached (7.8 MB install). The only network call in the entire app is the optional NOAA space-weather advisory, which falls back to cached or default solar activity |
 | Integration | JS API + URL parameters + postMessage for external tooling |
 | Known limits | VOACAP-class monthly-median accuracy; live NOAA SWPC feed (SFI/Kp) is advisory, fetched only when online |
 
