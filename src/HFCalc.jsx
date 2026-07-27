@@ -2168,7 +2168,10 @@ function LocationInput({ label, value, onChange, parsed, error }) {
       {error && <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 5, letterSpacing: '0.02em' }}>{error}</div>}
       {!error && parsed && !isNaN(parsed.lat) && (
         <div style={{ color: T.textSec, fontSize: '0.72rem', marginTop: 6, fontFamily: 'monospace', letterSpacing: '0.02em' }}>
-          {parsed.lat.toFixed(5) + ' N, ' + parsed.lon.toFixed(5) + ' E'}
+          {/* Hemisphere from the sign — this line used to hardcode N/E, which
+              mislabelled every southern latitude and western longitude. */}
+          {Math.abs(parsed.lat).toFixed(5) + (parsed.lat >= 0 ? ' N, ' : ' S, ')
+            + Math.abs(parsed.lon).toFixed(5) + (parsed.lon >= 0 ? ' E' : ' W')}
         </div>
       )}
     </div>
@@ -2455,12 +2458,18 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
 // calculation succeeds, so the cache always holds a known-good pair.
 // Cleared via "CLEAR SAVED DATA" in Saved Shots or window.HFCalc.reset().
 var LOCS_KEY = 'hfcalc_locs_v1';
+// Home-station default for "Your Location", in the same spirit as the 7.3 MHz
+// and 3-inch leg-end defaults: MCAS Cherry Point, Havelock NC. Used until the
+// operator runs a calculation from somewhere else, after which the last
+// known-good pair is remembered instead.
+var DEFAULT_LOC1 = '34.9008,-76.8806';   // MCAS Cherry Point, NC
+function defaultLocs() { return { loc1: DEFAULT_LOC1, loc2: '' }; }
 function loadCachedLocs() {
   try {
     var raw = localStorage.getItem(LOCS_KEY);
     var v = raw ? JSON.parse(raw) : null;
-    return (v && typeof v.loc1 === 'string' && typeof v.loc2 === 'string') ? v : { loc1: '', loc2: '' };
-  } catch (e) { return { loc1: '', loc2: '' }; }
+    return (v && typeof v.loc1 === 'string' && typeof v.loc2 === 'string') ? v : defaultLocs();
+  } catch (e) { return defaultLocs(); }
 }
 function saveCachedLocs(loc1, loc2) {
   try { localStorage.setItem(LOCS_KEY, JSON.stringify({ loc1: loc1, loc2: loc2 })); } catch (e) {}
@@ -3132,7 +3141,7 @@ export default function HFCalc() {
 
       // Reset all inputs and results
       reset: function() {
-        setLoc1(''); setLoc2(''); setFreq('7.3'); setWireType('copper');
+        setLoc1(DEFAULT_LOC1); setLoc2(''); setFreq('7.3'); setWireType('copper');
         setWireCore('copper_bare'); setWireGauge('14'); setCustomGauge('');
         setLegEndStr('3'); setLegEndUnit('in');
         setResults(null); setErrors({ loc1: '', loc2: '', freq: '' });
@@ -3238,7 +3247,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
-        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(''); setLoc2(''); }} />
+        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(''); }} />
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">YOUR STATION</div>
