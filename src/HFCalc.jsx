@@ -2906,7 +2906,7 @@ export default function HFCalc() {
           <div>
             <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '1rem', letterSpacing: '0.06em', lineHeight: 1.2 }}>HF FIELD ANTENNA CALC</div>
             <div style={{ color: T.accentText, fontSize: '0.62rem', letterSpacing: '0.1em', marginTop: 3, fontWeight: 600 }}>MADE BY {AUTHOR_NAME.toUpperCase()}</div>
-            <div style={{ color: T.textMute, fontSize: '0.58rem', letterSpacing: '0.12em', marginTop: 1 }}>{AUTHOR_BRANCH} &nbsp;&middot;&nbsp; FIELD EXPEDIENT &nbsp;&middot;&nbsp; OFFLINE</div>
+            <div style={{ color: T.textMute, fontSize: '0.58rem', letterSpacing: '0.12em', marginTop: 1 }}>{AUTHOR_BRANCH} &nbsp;&middot;&nbsp; FIELD EXPEDIENT &nbsp;&middot;&nbsp; OFFLINE &nbsp;&middot;&nbsp; {'V' + APP_VERSION}</div>
           </div>
           <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: '1px solid #2e4422', flexShrink: 0 }}>
             <img src={ICON_192} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
