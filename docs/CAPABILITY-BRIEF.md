@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.5.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.6.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -40,7 +40,9 @@ coordinates and a frequency into a complete, buildable antenna solution:
 
 - **Fully offline.** Installs as a PWA / Windows executable / Android APK;
   every calculation runs on-device. No account, no cloud, no telemetry —
-  EMCON-compatible by construction.
+  EMCON-compatible by construction. When online, an optional NOAA SWPC
+  space-weather feed (solar flux + Kp) adds live band-condition advisories;
+  offline it silently falls back to cached or no data.
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —
@@ -51,7 +53,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   VOACAP median (mean ≈ 0.4°) across the entire 250–6000 km envelope,
   inside VOACAP's own environmental spread at every distance. Full
   methodology and reproduction scripts: `docs/VALIDATION.md`.
-- **Engineered, not improvised:** automated physics test suite (32 tests
+- **Engineered, not improvised:** automated physics test suite (42 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 
@@ -63,7 +65,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
 | Platforms | Web/PWA (live), Windows .exe (CI-built), Android/iOS (Capacitor buildable) |
 | Offline operation | Complete — service-worker cached, zero network calls in use |
 | Integration | JS API + URL parameters + postMessage for external tooling |
-| Known limits | Statistical ionosphere only (no live space-weather input); VOACAP-class monthly-median accuracy, not day-specific |
+| Known limits | VOACAP-class monthly-median accuracy; live NOAA SWPC feed (SFI/Kp) is advisory, fetched only when online |
 
 ## Potential adoption paths
 
