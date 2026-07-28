@@ -3021,10 +3021,17 @@ export default function HFCalc() {
   }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, legEndHeight]);
 
   return (
-    <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 60px 0' }}>
+    <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 calc(60px + env(safe-area-inset-bottom)) 0' }}>
       <USMCStyleInjector />
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,12,7,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: '1px solid #1f2e17', padding: '14px 20px' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,12,7,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: '1px solid #1f2e17',
+        // viewport-fit=cover + a black-translucent status bar let the page run
+        // under the iOS clock/battery, which printed them on top of the title.
+        // Reserve the notch inset (0 on devices that have none).
+        paddingTop: 'calc(14px + env(safe-area-inset-top))',
+        paddingBottom: 14,
+        paddingLeft: 'calc(20px + env(safe-area-inset-left))',
+        paddingRight: 'calc(20px + env(safe-area-inset-right))' }}>
         <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '1rem', letterSpacing: '0.06em', lineHeight: 1.2 }}>HF FIELD ANTENNA CALC</div>
@@ -3044,6 +3051,18 @@ export default function HFCalc() {
         <AboutBanner />
         <DAGRInstructions />
         <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
+
+        <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '4px solid #c4442e', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ color: '#ff9b86', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.12em', marginBottom: 5 }}>
+            ⚠ COMSEC WARNING
+          </div>
+          <div style={{ color: '#ffd9d0', fontSize: '0.82rem', fontWeight: 700, lineHeight: 1.5 }}>
+            NEVER photograph a DAGR with crypto loaded.
+          </div>
+          <div style={{ color: '#e0b5ab', fontSize: '0.76rem', lineHeight: 1.55, marginTop: 4 }}>
+            A photo of a keyed device is a reportable COMSEC incident. Zeroize first, use an unkeyed receiver, or read the grid off the screen and type it in by hand.
+          </div>
+        </div>
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">YOUR STATION</div>
