@@ -2256,8 +2256,10 @@ var LOCS_KEY = 'hfcalc_locs_v1';
 // and 3-inch leg-end defaults: MCAS Cherry Point, Havelock NC. Used until the
 // operator runs a calculation from somewhere else, after which the last
 // known-good pair is remembered instead.
-var DEFAULT_LOC1 = '34.9008,-76.8806';   // MCAS Cherry Point, NC
-function defaultLocs() { return { loc1: DEFAULT_LOC1, loc2: '' }; }
+var DEFAULT_STATION = '34.9008,-76.8806';   // MCAS Cherry Point, NC
+var DEFAULT_LOC1 = DEFAULT_STATION;
+var DEFAULT_LOC2 = DEFAULT_STATION;
+function defaultLocs() { return { loc1: DEFAULT_LOC1, loc2: DEFAULT_LOC2 }; }
 function loadCachedLocs() {
   try {
     var raw = localStorage.getItem(LOCS_KEY);
@@ -2935,7 +2937,7 @@ export default function HFCalc() {
 
       // Reset all inputs and results
       reset: function() {
-        setLoc1(DEFAULT_LOC1); setLoc2(''); setFreq('7.3'); setWireType('copper');
+        setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); setFreq('7.3'); setWireType('copper');
         setWireCore('copper_bare'); setWireGauge('14'); setCustomGauge('');
         setLegEndStr('3'); setLegEndUnit('in');
         setResults(null); setErrors({ loc1: '', loc2: '', freq: '' });
@@ -3041,7 +3043,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
-        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(''); }} />
+        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">YOUR STATION</div>
