@@ -45,10 +45,12 @@ coordinates and a frequency into a complete, buildable antenna solution:
   the dial and a turn-left/turn-right cue. Works with no calculation run, so it
   is usable as a standalone compass, and is labelled as an aid to a lensatic
   rather than a replacement.
-- **Transmit power aware** — the LUF moves with the radio you actually have
-  (5 W handheld to 400 W amp) and with hop count, on absorption physics
+- **Transmit power aware** — the LUF moves with the radio you actually have,
+  selected the way the radio labels it (LOW / MED / HIGH manpack, VRC with the
+  150 W amplifier, or a typed wattage), and with hop count. Absorption physics
   corroborated against VOACAP. The MUF correctly does not move: more power
-  never gets you above it.
+  never gets you above it. Warns outright when the LUF exceeds the MUF and no
+  frequency will close the path at the selected power.
 - **Frequency check** — given the path, time of day and month, estimates
   MUF / FOT / LUF offline and rules on whether the assigned frequency will
   close the link, with an alternate to request if it will not. The
@@ -96,7 +98,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (143 tests
+- **Engineered, not improvised:** automated physics test suite (144 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

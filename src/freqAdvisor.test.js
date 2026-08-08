@@ -575,3 +575,21 @@ test('assessFrequency: power moves the LUF and leaves the MUF alone', function()
   assert.ok(high.verdict.ok, 'the same frequency at 400 W should come back');
   assert.equal(assessFrequency(base).txWatts, DEFAULT_TX_WATTS, 'defaults to a manpack');
 });
+
+
+test('assessFrequency: flags a path that no frequency can close', function() {
+  // 1 W in full daylight over a multi-hop path: absorption exceeds what the
+  // ionosphere will still reflect, so the whole band is shut.
+  var shut = assessFrequency({ takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 35,
+    magLatDeg: 40, month: 6, utcHour: 12, sfi: null, freqMHz: 7, txWatts: 1, hops: 2 });
+  assert.ok(shut.pathClosed, 'LUF ' + shut.luf.toFixed(1) + ' vs MUF ' + shut.muf.toFixed(1));
+  assert.ok(shut.luf >= shut.muf);
+  // The same path at manpack power is open again.
+  var open_ = assessFrequency({ takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 35,
+    magLatDeg: 40, month: 6, utcHour: 12, sfi: null, freqMHz: 7, txWatts: 20, hops: 2 });
+  assert.ok(!open_.pathClosed, 'manpack power should reopen it');
+  // And a night path is open even at 1 W.
+  var night = assessFrequency({ takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 35,
+    magLatDeg: 40, month: 6, utcHour: 0, sfi: null, freqMHz: 7, txWatts: 1, hops: 2 });
+  assert.ok(!night.pathClosed, 'darkness removes the absorption limit');
+});

@@ -636,12 +636,35 @@ corroborated by VOACAP. The *absolute level* is still anchored to the app's
 own historical 20 W figure, not measured. The LUF remains the softest number
 the app reports, and the UI says so.
 
-**In the app.** A transmit-power selector (5 / 20 / 50 / 150 / 400 W, labelled
-by the radio rather than the round number) now sits beside the month wheel in
-both frequency panels, and hop count feeds the absorption term — the ray
-crosses the D layer once per hop, so a three-hop path absorbs three times as
-much. Selecting more power can flip a verdict from BELOW LUF to usable, and
-never changes the MUF.
+**In the app.** A transmit-power selector now sits beside the month wheel in
+both frequency panels, labelled the way the radio is rather than in round
+numbers:
+
+| Setting | Watts | Source |
+|---|---|---|
+| LOW | 1 | manpack low preset — approximate |
+| MED | 5 | manpack medium preset — approximate |
+| HIGH | 20 | AN/PRC-150(C) / AN/PRC-160(V) published HF max |
+| VRC | 150 | RF-5833H series power amplifier, published |
+
+HIGH and VRC come from published manufacturer figures. LOW and MED vary by
+radio, software load and configuration and are *not* pinned down by public
+datasheets, so they are marked approximate and the operator can type the actual
+wattage — which overrides the presets entirely. The UI also notes that Harris
+sets power globally or per preset/channel, so what is dialled in the menu may
+not be what a given channel transmits at.
+
+Hop count feeds the absorption term, since the ray crosses the D layer once per
+hop. Selecting more power can flip a verdict from BELOW LUF to usable and never
+changes the MUF.
+
+**Path closed.** Making power selectable made a previously rare case common:
+at low power in daylight the LUF can rise *above* the MUF, meaning absorption
+eats everything the ionosphere would still reflect and **no frequency works at
+all**. The advisor had always computed this (`pathClosed`) and never displayed
+it. It is now called out explicitly in the check panel, and closed blocks are
+flagged in red in the 24-hour forecast — on a 1200 km path in June daylight,
+1 W gives a LUF of 18.5 MHz against a MUF of 11.9.
 
 ## Limitations
 

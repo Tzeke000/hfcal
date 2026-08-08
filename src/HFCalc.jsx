@@ -1573,32 +1573,50 @@ function seasonNote(month, magLatDeg) {
 // Power moves the LUF and nothing else. It cannot raise the MUF — above the
 // MUF the signal leaves the ionosphere and more watts follow it into space —
 // but below the LUF the D layer is eating the signal, and there power is
-// exactly the right answer. The options are the radios a Marine is actually
-// handed rather than round numbers.
+// exactly the right answer.
+//
+// Labelled the way the radio is, not in round numbers, because that is what
+// the operator is actually selecting in the menu. Published figures:
+//   AN/PRC-150(C) and AN/PRC-160(V) manpack — 20 W PEP on HF (10 W VHF)
+//   RF-5833H series power amplifier         — 150 W, the usual VRC fit
+// LOW and MED are the radio's lower presets. Their exact wattage varies by
+// radio, software load and configuration, and is not something the public
+// datasheets pin down — so they are marked as approximate and the operator
+// can type the real number. Note also that Harris sets power either GLOBALLY
+// or per preset/channel, so what is dialled here may not be what a given
+// channel actually transmits at; check the radio.
 var TX_POWERS = [
-  { w: 5,   label: '5 W',   note: 'handheld / low' },
-  { w: 20,  label: '20 W',  note: 'manpack (PRC-150/160)' },
-  { w: 50,  label: '50 W',  note: 'manpack high' },
-  { w: 150, label: '150 W', note: 'vehicle amp' },
-  { w: 400, label: '400 W', note: 'base / heavy amp' },
+  { w: 1,   label: 'LOW',   note: 'manpack low preset (approx)' },
+  { w: 5,   label: 'MED',   note: 'manpack medium preset (approx)' },
+  { w: 20,  label: 'HIGH',  note: 'PRC-150/160 manpack max, 20 W HF' },
+  { w: 150, label: 'VRC',   note: 'RF-5833H vehicle amplifier, 150 W' },
 ];
 
 function PowerSelector({ watts, onWatts }) {
+  var [customStr, setCustomStr] = useState('');
+  var preset = TX_POWERS.find(function(p) { return p.w === watts; });
+
+  function applyCustom(v) {
+    setCustomStr(v);
+    var n = parseFloat(v);
+    if (!isNaN(n) && n > 0 && n <= 10000) onWatts(n);
+  }
+
   return (
     <div style={{ marginTop: 10 }}>
       <label style={{ color: T.textSec, fontWeight: 600, fontSize: '0.68rem', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
         Transmit Power (sets the LUF)
       </label>
-      <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 5 }}>
         {TX_POWERS.map(function(p) {
           var active = p.w === watts;
           return (
             <button
               key={p.w}
-              onClick={function() { onWatts(p.w); }}
+              onClick={function() { setCustomStr(''); onWatts(p.w); }}
               title={p.note}
               style={{
-                flex: '1 0 auto', minWidth: 54, padding: '7px 4px',
+                flex: '1 1 0', minWidth: 0, padding: '7px 2px',
                 background: active ? T.accentDim : T.bg,
                 color: active ? T.accentText : T.textMute,
                 border: '1px solid ' + (active ? T.accent : T.border),
@@ -1606,14 +1624,33 @@ function PowerSelector({ watts, onWatts }) {
                 letterSpacing: '0.04em', cursor: 'pointer',
               }}
             >
-              {p.label}
+              <div>{p.label}</div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 400, opacity: 0.85 }}>{p.w + ' W'}</div>
             </button>
           );
         })}
       </div>
-      <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 3, lineHeight: 1.4 }}>
-        {(TX_POWERS.find(function(p) { return p.w === watts; }) || {}).note}
-        {' · more power lowers the LUF, never raises the MUF'}
+
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 6 }}>
+        <input
+          type="number"
+          min="0.1"
+          max="10000"
+          step="1"
+          value={customStr}
+          onChange={function(e) { applyCustom(e.target.value); }}
+          placeholder="or type actual watts"
+          style={{ flex: 1, padding: '6px 8px', background: T.bg, color: T.textPrim, border: '1.5px solid ' + (preset ? T.border : T.accent), borderRadius: 5, fontSize: '0.72rem' }}
+        />
+        <div style={{ color: T.textDim, fontSize: '0.6rem', flexShrink: 0 }}>{'using ' + watts + ' W'}</div>
+      </div>
+
+      <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 4, lineHeight: 1.45 }}>
+        {preset ? preset.note : 'operator-entered power'}
+        {' · LOW/MED wattages vary by radio and load — type yours if you know it. Power is set globally or per preset on Harris sets, so confirm what the channel actually transmits.'}
+      </div>
+      <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 3, lineHeight: 1.45 }}>
+        More power lowers the LUF, never raises the MUF. Twenty times the power buys roughly forty percent off the LUF, not twenty times.
       </div>
     </div>
   );
@@ -1723,6 +1760,19 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                   <div style={{ color: T.textDim, fontSize: '0.55rem' }}>MHz max</div>
                 </div>
               </div>
+
+              {assess.pathClosed && (
+                <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '3px solid #c4442e', borderRadius: 6, padding: '10px 12px', marginBottom: 8 }}>
+                  <div style={{ color: '#ff9b86', fontWeight: 700, fontSize: '0.74rem', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    PATH CLOSED AT THIS POWER
+                  </div>
+                  <div style={{ color: '#ffd9d0', fontSize: '0.76rem', lineHeight: 1.55 }}>
+                    {'The LUF (' + assess.luf.toFixed(1) + ' MHz) is above the MUF (' + assess.muf.toFixed(1)
+                      + ' MHz) — absorption eats everything the ionosphere would still reflect. No frequency closes this path right now at '
+                      + assess.txWatts + ' W. Turn the power up, wait for the D layer to thin after dark, or shorten the path.'}
+                  </div>
+                </div>
+              )}
 
               {v && (
                 <div style={{ background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + statusColor, borderRadius: 6, padding: '10px 12px', marginBottom: 8 }}>
@@ -2031,7 +2081,7 @@ function AboutBanner() {
               {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
-              {feat('Transmit power', 'pick the radio you actually have. Power moves the LUF — the floor where the ionosphere absorbs you — and a 400 W amp buys about 40% off it, not 20 times. It does NOT move the MUF: above that, more watts just follow the signal into space.', 'f10c', 'offline')}
+              {feat('Transmit power', 'set it the way the radio is labelled — LOW/MED/HIGH on the manpack, VRC for the 150 W amp, or type your actual wattage. Power moves the LUF, the floor where the ionosphere absorbs you, and going from manpack to the amp buys roughly 40% off it, not eight times. It does NOT move the MUF: above that, more watts just follow the signal into space. Tells you outright when no frequency will close the path at the power you have.', 'f10c', 'offline')}
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
               {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
               {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
@@ -2069,7 +2119,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  143 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  144 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2954,7 +3004,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
                         {b.isNow ? 'NOW · ' : ''}{hh(localOf(b.startZ)) + '–' + hh(localOf(b.endZ)) + 'L'}
                       </div>
                     </div>
-                    <div style={{ ...cell, color: T.textMute }}>{b.luf.toFixed(1)}</div>
+                    <div style={{ ...cell, color: b.luf >= b.muf ? T.warn : T.textMute }}>{b.luf.toFixed(1)}</div>
                     <div style={{ ...cell, color: T.accentText }}>{b.fot.toFixed(1)}</div>
                     <div style={{ ...cell, color: T.textSec }}>{b.muf.toFixed(1)}</div>
                     <div style={{ textAlign: 'right' }}>
@@ -2965,6 +3015,12 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
                   </div>
                 );
               })}
+
+              {blocks.some(function(b) { return b.luf >= b.muf; }) && (
+                <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 8, lineHeight: 1.5 }}>
+                  {'Blocks with the LUF in red are CLOSED at ' + txWatts + ' W — absorption exceeds what the ionosphere will reflect, so no frequency works in them. More power or a shorter path.'}
+                </div>
+              )}
 
               {hasFreq && !best && (
                 <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 8, lineHeight: 1.5 }}>
