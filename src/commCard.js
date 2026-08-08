@@ -37,6 +37,14 @@ export function formatCommCard(shot) {
   row('TO', fmtLatLon(shot.p2.lat, shot.p2.lon));
   row('DIST', shot.distKm.toFixed(1) + ' km / ' + shot.distMi.toFixed(1) + ' mi');
   row('BEARING', shot.bearing.toFixed(1) + ' deg ' + (shot.cardinal || '') + '  (you -> target)');
+  if (typeof shot.magBearing === 'number') {
+    // The number to set on a lensatic compass — true bearing corrected for
+    // local magnetic declination.
+    row('SET MAG', shot.magBearing.toFixed(0) + ' deg on compass'
+      + (typeof shot.declination === 'number'
+        ? '  (var ' + Math.abs(shot.declination).toFixed(1) + ' ' + (shot.declination >= 0 ? 'E' : 'W') + ')'
+        : ''));
+  }
   if (typeof shot.backBearing === 'number') {
     row('BACK AZ', shot.backBearing.toFixed(1) + ' deg ' + (shot.backCardinal || '') + '  (target -> you)');
   }

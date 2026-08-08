@@ -9,6 +9,7 @@ var SHOT = {
   p2: { lat: 33.95, lon: -107.69 },
   distKm: 770.4, distMi: 478.7, bearing: 90.4, cardinal: 'E',
   backBearing: 274.9, backCardinal: 'W',
+  magBearing: 101, declination: -10.6,
   freqMHz: 11.104, zoneName: 'SINGLE-HOP SKYWAVE (500-2000 km)', takeoffDeg: 40.5,
   wireLabel: 'STAINLESS 14 AWG', vf: 0.89,
   legEndM: 0.0762,
@@ -36,6 +37,7 @@ test('formatCommCard: contains every operationally required field', function() {
   ['HF ANTENNA PLAN', '271430Z JUL 26', '34.2300N 116.0500W', '33.9500N 107.6900W',
    '770.4 km', '90.4 deg E', '11.104 MHz', 'SINGLE-HOP', '~41 deg',
    '(you -> target)', 'BACK AZ', '274.9 deg W', '(target -> you)',
+   'SET MAG', '101 deg on compass', '(var 10.6 W)',
    'STAINLESS 14 AWG', 'VF 0.890', 'INVERTED-V DIPOLE', '19 ft 8 in',
    '39 ft 5 in', '5.5 - 15.7 MHz', '13.4 MHz', 'HFCALC-AG-EZK-USMC-v1',
   ].forEach(function(frag) {
@@ -78,6 +80,20 @@ test('formatCommCard: fixed-width label column stays aligned', function() {
       assert.ok(line.length <= 78, 'line too wide for a comm card: ' + line);
     }
   });
+});
+
+test('formatCommCard: magnetic bearing omitted when declination is unknown', function() {
+  var noMag = JSON.parse(JSON.stringify(SHOT));
+  delete noMag.magBearing; delete noMag.declination;
+  var t = formatCommCard(noMag);
+  assert.ok(t.indexOf('SET MAG') === -1);
+  assert.ok(t.indexOf('BEARING') !== -1, 'true bearing still present');
+});
+
+test('formatCommCard: easterly declination is labelled E', function() {
+  var east = JSON.parse(JSON.stringify(SHOT));
+  east.magBearing = 80; east.declination = 10.9;
+  assert.ok(/SET MAG\s+80 deg on compass\s+\(var 10\.9 E\)/.test(formatCommCard(east)));
 });
 
 test('formatCommCard: back azimuth omitted when not supplied', function() {

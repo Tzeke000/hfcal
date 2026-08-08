@@ -15,6 +15,7 @@ import {
 import { assessFrequency, frequencyForecast, bestBlocks } from "./freqAdvisor.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
+import { declination, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
 // Single source of truth for the app version (also drives the icon badge —
 // regenerate icons with scripts/generate-icons.py after bumping it).
 import { version as APP_VERSION } from "../package.json";
@@ -776,7 +777,12 @@ function AntennaDirectiveCard({ directive }) {
         <div style={{ background: T.bg, border: '1px solid ' + T.borderHi, borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
           <div style={{ color: T.textMute, fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>Point Toward Target</div>
           <div style={{ color: T.accentText, fontWeight: 900, fontSize: '1.6rem', lineHeight: 1 }}>{d.bearing.toFixed(0) + '\u00b0'}</div>
-          <div style={{ color: T.textSec, fontWeight: 700, fontSize: '0.85rem', marginTop: 3 }}>{d.cardinal}</div>
+          <div style={{ color: T.textSec, fontWeight: 700, fontSize: '0.85rem', marginTop: 3 }}>{d.cardinal + ' \u00b7 TRUE'}</div>
+          {typeof d.magBearing === 'number' && (
+            <div style={{ color: T.accent, fontWeight: 800, fontSize: '0.76rem', marginTop: 4, borderTop: '1px solid ' + T.border, paddingTop: 4 }}>
+              {d.magBearing.toFixed(0) + '\u00b0 MAG'}
+            </div>
+          )}
         </div>
         <div style={{ background: T.bg, border: '1px solid ' + T.borderHi, borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
           <div style={{ color: T.textMute, fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>{d.zone === 'groundwave' || d.zone === 'nvis' ? 'Wire Height' : 'Takeoff Angle'}</div>
@@ -2406,6 +2412,205 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
   );
 }
 
+// ── COMPASS ───────────────────────────────────────────────────────────────────
+// Uses the phone's magnetometer (DeviceOrientation) — a sensor, not a network
+// service, so it works with the radio off like everything else here. Lives
+// under TARGET STATION and works with no calculation run, because if it is the
+// only compass a Marine has on them it should not be gated behind anything.
+//
+// Deliberately framed as an AID. Phone magnetometers are +/-5-15 deg at best
+// and degrade badly near vehicles, radios, weapons and body armour — which is
+// most of where this gets used. The lensatic compass remains the reference.
+function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
+  var [open, setOpen] = useState(false);
+  var [status, setStatus] = useState('idle');   // idle|active|denied|unsupported
+  var [headingMag, setHeadingMag] = useState(null);
+  var handlerRef = useRef(null);
+
+  var decl = (typeof selfLat === 'number' && typeof selfLon === 'number')
+    ? declination(selfLat, selfLon) : null;
+  var hasDecl = typeof decl === 'number';
+  var headingTrue = (headingMag !== null && hasDecl) ? norm360(headingMag + decl) : null;
+  // The bearing the operator must face, expressed the way their compass reads
+  var targetMag = (typeof targetBearingTrue === 'number' && hasDecl)
+    ? trueToMagnetic(targetBearingTrue, decl) : null;
+  var turn = (headingMag !== null && targetMag !== null) ? relativeTurn(headingMag, targetMag) : null;
+
+  function stop() {
+    if (handlerRef.current) {
+      window.removeEventListener('deviceorientationabsolute', handlerRef.current);
+      window.removeEventListener('deviceorientation', handlerRef.current);
+      handlerRef.current = null;
+    }
+  }
+  useEffect(function() { return stop; }, []);
+
+  function onOrientation(e) {
+    var h = null;
+    if (typeof e.webkitCompassHeading === 'number' && isFinite(e.webkitCompassHeading)) {
+      h = e.webkitCompassHeading;                  // iOS: already magnetic heading
+    } else if (typeof e.alpha === 'number' && isFinite(e.alpha) && (e.absolute || e.type === 'deviceorientationabsolute')) {
+      h = norm360(360 - e.alpha);                  // Android absolute: alpha is CCW from north
+    }
+    if (h !== null) { setHeadingMag(norm360(h)); setStatus('active'); }
+  }
+
+  function start() {
+    if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') {
+      setStatus('unsupported'); return;
+    }
+    function attach() {
+      stop();
+      handlerRef.current = onOrientation;
+      window.addEventListener('deviceorientationabsolute', onOrientation);
+      window.addEventListener('deviceorientation', onOrientation);
+      // If nothing arrives the device has no usable magnetometer
+      setTimeout(function() { setStatus(function(s) { return s === 'active' ? s : 'unsupported'; }); }, 2500);
+    }
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(function(res) {
+        if (res === 'granted') attach(); else setStatus('denied');
+      }).catch(function() { setStatus('denied'); });
+    } else {
+      attach();
+    }
+  }
+
+  function toggle() {
+    var next = !open;
+    setOpen(next);
+    if (next && status === 'idle') start();
+    if (!next) stop();
+  }
+
+  // ── dial ──
+  var R = 86, CX = 100, CY = 100;
+  var ticks = [];
+  for (var d = 0; d < 360; d += 15) {
+    var major = d % 90 === 0, mid = d % 45 === 0;
+    var len = major ? 14 : mid ? 10 : 6;
+    var rad = (d - 90) * Math.PI / 180;
+    ticks.push(
+      <line key={d}
+        x1={CX + (R - len) * Math.cos(rad)} y1={CY + (R - len) * Math.sin(rad)}
+        x2={CX + R * Math.cos(rad)} y2={CY + R * Math.sin(rad)}
+        stroke={major ? T.accentText : T.textMute} strokeWidth={major ? 2.5 : 1.2} />
+    );
+  }
+  var cards = [['N', 0], ['E', 90], ['S', 180], ['W', 270]].map(function(c) {
+    var rad = (c[1] - 90) * Math.PI / 180, rr = R - 30;
+    return (
+      <text key={c[0]} x={CX + rr * Math.cos(rad)} y={CY + rr * Math.sin(rad) + 6}
+        textAnchor="middle" fontSize="19" fontWeight="800"
+        fill={c[0] === 'N' ? '#e05a45' : T.textSec}>{c[0]}</text>
+    );
+  });
+  var targetMark = null;
+  if (targetMag !== null) {
+    var tr = (targetMag - 90) * Math.PI / 180;
+    targetMark = (
+      <g>
+        <line x1={CX} y1={CY} x2={CX + (R - 6) * Math.cos(tr)} y2={CY + (R - 6) * Math.sin(tr)}
+          stroke={T.accent} strokeWidth="3.5" strokeLinecap="round" />
+        <circle cx={CX + (R - 6) * Math.cos(tr)} cy={CY + (R - 6) * Math.sin(tr)} r="7" fill={T.accent} />
+      </g>
+    );
+  }
+
+  var msg = {
+    denied: 'Compass permission denied. Allow motion & orientation access in your browser settings, or use your lensatic compass.',
+    unsupported: 'No usable compass sensor on this device (or the browser is blocking it). Use your lensatic compass — the bearing numbers above are still good.',
+  }[status];
+
+  return (
+    <div className="usmc-card" style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div>
+          <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.84rem', letterSpacing: '0.04em' }}>Compass</div>
+          <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 2 }}>
+            {status === 'active' && headingMag !== null
+              ? Math.round(headingMag) + '° MAG' + (headingTrue !== null ? '  ·  ' + Math.round(headingTrue) + '° TRUE' : '')
+              : 'Aid for pointing the antenna — works offline'}
+          </div>
+        </div>
+        <button onClick={toggle} style={{ background: open ? T.accentDim : T.surfaceHi, color: T.textPrim, border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '6px 16px', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', flexShrink: 0 }}>
+          {open ? 'CLOSE' : 'OPEN'}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14 }}>
+          {msg && (
+            <div style={{ color: T.warn, fontSize: '0.76rem', lineHeight: 1.55, marginBottom: 12 }}>{msg}</div>
+          )}
+
+          {status !== 'denied' && status !== 'unsupported' && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+              <svg width="200" height="215" viewBox="0 0 200 215">
+                {/* fixed index — the direction the phone is pointing */}
+                <polygon points={(CX - 9) + ',6 ' + (CX + 9) + ',6 ' + CX + ',20'} fill={T.warn} />
+                <circle cx={CX} cy={CY} r={R} fill={T.bg} stroke={T.borderHi} strokeWidth="2" />
+                <g transform={'rotate(' + (headingMag === null ? 0 : -headingMag) + ' ' + CX + ' ' + CY + ')'}
+                   style={{ transition: 'transform 120ms linear' }}>
+                  {ticks}{cards}{targetMark}
+                </g>
+                <circle cx={CX} cy={CY} r="4" fill={T.textMute} />
+                <text x={CX} y="207" textAnchor="middle" fontSize="12" fontWeight="700" fill={T.textMute}>
+                  {headingMag === null ? 'ACQUIRING…' : Math.round(headingMag) + '° MAGNETIC'}
+                </text>
+              </svg>
+            </div>
+          )}
+
+          {turn !== null && (
+            <div style={{ background: T.bg, border: '1px solid ' + T.border, borderLeft: '3px solid ' + (Math.abs(turn) <= 5 ? T.accent : T.warn), borderRadius: 6, padding: '10px 12px', marginBottom: 10 }}>
+              <div style={{ color: Math.abs(turn) <= 5 ? T.accent : T.textPrim, fontWeight: 700, fontSize: '0.86rem' }}>
+                {Math.abs(turn) <= 5 ? 'ON BEARING — antenna points at the target'
+                  : 'Turn ' + Math.abs(Math.round(turn)) + '° ' + (turn > 0 ? 'RIGHT' : 'LEFT')}
+              </div>
+              <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 3 }}>
+                {'Target ' + Math.round(targetBearingTrue) + '° true = ' + Math.round(targetMag) + '° magnetic'}
+              </div>
+            </div>
+          )}
+
+          {targetMag === null && (
+            <div style={{ color: T.textMute, fontSize: '0.74rem', lineHeight: 1.5, marginBottom: 10 }}>
+              {hasDecl
+                ? 'Run a calculation and the bearing to your target is marked on the dial with a turn-left / turn-right cue.'
+                : 'Enter your location above to convert between true and magnetic north.'}
+            </div>
+          )}
+
+          {hasDecl && (
+            <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '9px 11px', marginBottom: 10 }}>
+              <div style={{ color: T.textMute, fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em' }}>DECLINATION AT YOUR POSITION</div>
+              <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.92rem', marginTop: 3 }}>{formatDeclination(decl)}</div>
+              <div style={{ color: T.textSec, fontSize: '0.72rem', marginTop: 3, lineHeight: 1.5 }}>
+                {decl >= 0
+                  ? 'Magnetic north is ' + Math.abs(decl).toFixed(1) + '° east of true north — subtract it from a true bearing to get the compass number.'
+                  : 'Magnetic north is ' + Math.abs(decl).toFixed(1) + '° west of true north — add it to a true bearing to get the compass number.'}
+              </div>
+              {!isDeclinationModelCurrent() && (
+                <div style={{ color: T.warn, fontSize: '0.7rem', marginTop: 5 }}>
+                  Magnetic model is past its epoch — declination may be off by a degree or more. Update the app.
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '3px solid #c4442e', borderRadius: 6, padding: '10px 12px' }}>
+            <div style={{ color: '#ff9b86', fontSize: '0.64rem', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>AID ONLY — NOT A LENSATIC</div>
+            <div style={{ color: '#e0b5ab', fontSize: '0.74rem', lineHeight: 1.55 }}>
+              A phone magnetometer is good to roughly ±5–15° and goes badly wrong near vehicles, radios, weapons, body armour and anything steel. Step well clear of metal, and confirm anything that matters with your lensatic compass.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── FREQUENCY FORECAST CARD ───────────────────────────────────────────────────
 // 24-hour MUF / FOT / LUF in 4-hour Zulu blocks, so an operator can plan comm
 // windows instead of only checking the current moment. Same collapsible
@@ -2914,6 +3119,8 @@ export default function HFCalc() {
       distKm: results.geo.distKm, distMi: results.geo.distMi,
       bearing: results.geo.bearing, cardinal: bearingToCardinal(results.geo.bearing),
       backBearing: results.geo.backBearing, backCardinal: bearingToCardinal(results.geo.backBearing),
+      magBearing: typeof results.directive.magBearing === 'number' ? results.directive.magBearing : null,
+      declination: typeof results.directive.declination === 'number' ? results.directive.declination : null,
       freqMHz: results.freq,
       zoneName: results.antennaData.zoneName,
       takeoffDeg: results.directive.takeoffDeg,
@@ -2954,6 +3161,13 @@ export default function HFCalc() {
     var terrain = pathTerrainAnalysis(p1.lat, p1.lon, p2.lat, p2.lon, 32);
     var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
     var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
+    // Magnetic equivalents so the operator can dial the bearing straight into a
+    // lensatic compass instead of applying declination by hand.
+    var declDeg = declination(p1.lat, p1.lon);
+    if (typeof declDeg === 'number') {
+      directive.declination = declDeg;
+      directive.magBearing = trueToMagnetic(geo.bearing, declDeg);
+    }
     return {
       geo: geo, lengths: lengths, antennaData: antennaData,
       freq: fMHz, wireType: wireType,
@@ -3371,6 +3585,12 @@ export default function HFCalc() {
           />
         </div>
 
+        <CompassCard
+          selfLat={parsed1 && !isNaN(parsed1.lat) ? parsed1.lat : null}
+          selfLon={parsed1 && !isNaN(parsed1.lon) ? parsed1.lon : null}
+          targetBearingTrue={results ? results.geo.bearing : null}
+        />
+
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">ANTENNA SETTINGS</div>
 
@@ -3509,7 +3729,17 @@ export default function HFCalc() {
                   <div className="usmc-stat-label">Bearing To Target</div>
                   <div className="usmc-stat-val">{results.geo.bearing.toFixed(1) + '°'}</div>
                   <div className="usmc-stat-sub">{bearingToCardinal(results.geo.bearing) + ' · from your station'}</div>
-                  <div style={{ color: T.textMute, fontSize: '0.62rem', marginTop: 4, borderTop: '1px solid ' + T.border, paddingTop: 4 }}>
+                  <div style={{ color: T.accentText, fontSize: '0.66rem', fontWeight: 700, marginTop: 4, borderTop: '1px solid ' + T.border, paddingTop: 4 }}>
+                    {(function() {
+                      // A lensatic compass reads MAGNETIC — hand the operator the
+                      // number they actually dial, not just the true bearing.
+                      var d = declination(results.p1.lat, results.p1.lon);
+                      return typeof d === 'number'
+                        ? 'SET ' + trueToMagnetic(results.geo.bearing, d).toFixed(0) + '° ON COMPASS (mag)'
+                        : '';
+                    })()}
+                  </div>
+                  <div style={{ color: T.textMute, fontSize: '0.62rem', marginTop: 3 }}>
                     {'Back az ' + results.geo.backBearing.toFixed(1) + '° ' + bearingToCardinal(results.geo.backBearing) + ' (target aims here)'}
                   </div>
                 </div>

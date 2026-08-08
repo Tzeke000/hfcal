@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.10.1 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.11.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -37,6 +37,14 @@ coordinates and a frequency into a complete, buildable antenna solution:
   references).
 - **Photograph the DAGR** to fill in a grid — on-device OCR, no connection
   required.
+- **True and magnetic bearing** — the app's great-circle bearing is true north;
+  it also gives the corrected number to dial into a lensatic compass, from an
+  on-device World Magnetic Model (declination runs 7–11° across CONUS and
+  reverses sign coast to coast).
+- **Built-in compass** — phone magnetometer with the target bearing marked on
+  the dial and a turn-left/turn-right cue. Works with no calculation run, so it
+  is usable as a standalone compass, and is labelled as an aid to a lensatic
+  rather than a replacement.
 - **Frequency check** — given the path and time of day, estimates MUF / FOT /
   LUF offline and rules on whether the assigned frequency will close the
   link, with an alternate to request if it will not.
@@ -67,7 +75,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
   hourly samples: 14.6% mean error, 73% within 20%.
-- **Engineered, not improvised:** automated physics test suite (85 tests
+- **Engineered, not improvised:** automated physics test suite (96 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 
