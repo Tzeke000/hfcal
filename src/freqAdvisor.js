@@ -79,7 +79,12 @@ export function localSolarTime(utcHour, lonDeg) {
 
 // Diurnal shape constants (VOACAP-calibrated — see module header).
 export const FOF2_PEAK_HOUR = 12.8;  // local solar time of maximum ionization
-export const FOF2_DECAY_EXP = 1.6;   // >1 sharpens the post-sunset falloff
+// >1 sharpens the post-sunset falloff. Retuned from 1.6 to 1.4 in v1.13.2:
+// the model was under-predicting evening MUF on every data set, and 1.4
+// improved all three simultaneously (mid-latitude, six-latitude seasonal, and
+// interhemispheric) with no trade-off between them. See docs/VALIDATION.md
+// Part 5 — a residual evening low bias remains and is documented there.
+export const FOF2_DECAY_EXP = 1.4;
 export const FOF2_NIGHT_RATIO = 0.45;
 export const FOF2_NOON_BASE = 6.8;   // MHz at SSN 0
 export const FOF2_NOON_PER_SSN = 0.036;

@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.13.1 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.13.2 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -79,14 +79,18 @@ coordinates and a frequency into a complete, buildable antenna solution:
   inside VOACAP's own environmental spread at every distance. Full
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
-  hourly samples: 12.4% mean error, 81% within 20%. A third study extended
+  hourly samples: 12.1% mean error, 79% within 20%. A third study extended
   that worldwide — six sites from 60 N to 44 S across all twelve months —
   to fit the season and magnetic-latitude terms, taking global MUF error
-  from 17.9% to 14.3% while improving the mid-latitude case as well. A fourth
+  from 18.4% to 14.2% while improving the mid-latitude case as well. A fourth
   study checked the ionospheric layer table itself against both closed-form
   geometry and VOACAP's own mode selection, and corrected a hop limit that
-  exceeded what its layer height can physically support.
-- **Engineered, not improvised:** automated physics test suite (120 tests
+  exceeded what its layer height can physically support. A fifth tested six
+  real hemisphere-to-hemisphere circuits — opposite seasons at either end,
+  crossing the geomagnetic equator — at 17.9% mean error, and is candid that
+  this is the model's weaker regime and that evening figures everywhere are
+  less reliable than daytime ones.
+- **Engineered, not improvised:** automated physics test suite (124 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

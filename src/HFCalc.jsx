@@ -1983,10 +1983,11 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 288 hourly samples at mid-latitude.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 288 hourly samples at mid-latitude, and about 18% on hemisphere-to-hemisphere paths that cross the equator.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  120 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Known weak spot, stated up front: after local sunset the frequency model runs low. Daytime numbers are the reliable ones.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  124 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

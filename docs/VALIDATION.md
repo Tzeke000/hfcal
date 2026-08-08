@@ -6,6 +6,7 @@ Takeoff-angle study: July 2026 (app v1.4.1) · Model correction and re-validatio
 Frequency (MUF) study: July 2026 (app v1.7.0)
 Season / magnetic-latitude study: August 2026 (app v1.13.0)
 Layer table study: August 2026 (app v1.13.1)
+Hemisphere-to-hemisphere study: August 2026 (app v1.13.2)
 
 ---
 
@@ -195,33 +196,33 @@ paths are unchanged.
 
 | Site | Magnetic lat | Before | After |
 |---|---|---|---|
-| 60 N (Finland) | 60.1 | 21.9% | **13.2%** |
-| 44 N (Michigan) | 51.3 | 12.8% | **11.7%** |
-| 34 N (Cherry Point) | 39.8 | 12.0% | 11.9% |
-| 10 N (tropics) | 10.0 | 26.1% | **22.7%** |
-| 34 S | -44.2 | 19.0% | **14.4%** |
-| 44 S (New Zealand) | -49.8 | 15.8% | **11.7%** |
-| **All sites** | — | **17.9%** | **14.3%** |
+| 60 N (Finland) | 60.1 | 23.4% | **14.1%** |
+| 44 N (Michigan) | 51.3 | 13.5% | **11.5%** |
+| 34 N (Cherry Point) | 39.8 | 11.8% | **11.4%** |
+| 10 N (tropics) | 10.0 | 25.2% | **21.9%** |
+| 34 S | -44.2 | 19.7% | **14.8%** |
+| 44 S (New Zealand) | -49.8 | 16.7% | **11.7%** |
+| **All sites** | — | **18.4%** | **14.2%** |
 
 **Regression check.** Re-running the Part 2 matrix — the mid-latitude paths
 the original coefficients were fitted to — with the season term active:
 
 | Path | Samples | Mean Δ | Median abs Δ | Mean abs error | Within 20% |
 |---|---|---|---|---|---|
-| 500 km | 96 | -0.10 MHz | 0.55 MHz | 10.9% | 85% |
-| 1500 km | 96 | -1.03 MHz | 1.24 MHz | 11.4% | 86% |
-| 3000 km | 96 | -1.95 MHz | 2.65 MHz | 14.9% | 70% |
-| **All** | **288** | — | — | **12.4%** | **81%** |
+| 500 km | 96 | -0.10 MHz | 0.52 MHz | 10.6% | 84% |
+| 1500 km | 96 | -0.87 MHz | 1.16 MHz | 11.5% | 85% |
+| 3000 km | 96 | -1.62 MHz | 2.31 MHz | 14.1% | 69% |
+| **All** | **288** | — | — | **12.1%** | **79%** |
 
 ![MUF comparison](validation/muf-comparison.png)
 
-So the correction improved the mid-latitude case as well: **14.6% → 12.4%**
-mean absolute error, **73% → 81%** of samples within 20%. It is an
+So the correction improved the mid-latitude case as well: **15.0% → 12.1%**
+mean absolute error, **72% → 79%** of samples within 20%. It is an
 improvement everywhere and a regression nowhere.
 
 **Interpretation.** This remains a materially looser fit than the
 takeoff-angle result, and is deliberately reported as such. The worst
-residual is the near-equatorial case (22.7%), where equatorial-anomaly
+residual is the near-equatorial case (21.9%), where equatorial-anomaly
 structure is genuinely not captured by a smooth global fit. For the tool's
 actual job — ruling an assigned frequency GOOD / MARGINAL / ABOVE MUF /
 BELOW LUF — a ~12% MUF error moves the verdict only for frequencies already
@@ -291,6 +292,89 @@ derived limits agree with those to the rounding the references themselves
 use — and the app's own 3° operational floor is why the E and F1 hops it
 reports in practice run shorter than the 0° ceiling.
 
+## Part 5 — Hemisphere-to-hemisphere paths (v1.13.2)
+
+Part 3 swept six latitudes, but **every path in it ran 1500 km due east**, so
+all six stayed inside one hemisphere and one season. That left the hardest
+case untested: a circuit whose two ends are in *opposite* seasons, crossing
+the geomagnetic equator in between.
+
+**Method.** Six real interhemispheric circuits × January and July (opposite
+seasons) × two solar levels × 24 hours = 576 samples. Magnetic latitudes come
+from the app's own WMM code via `node`, so the study tests what ships.
+Reproduce with `python3 scripts/validation/run_interhemi_study.py`.
+
+| Circuit | Distance | Midpoint | Magnetic lat |
+|---|---|---|---|
+| Cherry Point – Argentina | 7963 km | 0.2 N, 67.6 W | +8.0 |
+| Finland – South Africa | 10008 km | 15.0 N, 25.0 E | +6.7 |
+| Japan – Australia | 7831 km | 0.9 N, 145.5 E | −7.3 |
+| Hawaii – New Zealand | 7509 km | 10.3 S, 170.1 W | −11.8 |
+| Cherry Point – Brazil | 5879 km | 15.7 N, 56.6 W | +17.1 |
+| Panama – Peru | 2184 km | 0.5 S, 77.5 W | +9.9 |
+
+**Three things were tested, and two of them contradicted what seemed obvious.**
+
+**1. Does the season term break?** No — it neither helps nor hurts:
+**18.1%** without it, **17.9%** with it. Every midpoint lands near the
+magnetic equator, where the model already weights the hemisphere flip to
+nearly zero, so the seasonal correction quietly switches itself off. That is
+the physically right answer (the reflection region genuinely has little
+solstitial swing) and it means the term degrades gracefully rather than
+asserting a season that isn't there. A test now pins the continuity across
+magnetic latitude 0, since the hemisphere flip is a hard switch at that point
+and only survives because it is multiplied by |magLat|.
+
+**2. Would IONCAP-style control points do better?** VOACAP evaluates control
+points 2000 km inside each terminal on long circuits and takes the lowest MUF.
+Implementing that and comparing made the result **worse**, not better:
+**18.6%** versus 17.9%, and it pushed the signed bias from −7.1% to −12.0%.
+Taking the minimum of two points is too pessimistic for a model of this shape.
+The single-midpoint approach the app already uses is the better choice — a
+result worth having measured rather than assumed.
+
+**3. Would an equatorial-anomaly term help?** The real low-latitude ionosphere
+has the equatorial ionization anomaly: a trough at the dip equator with crests
+near ±15° magnetic. The app's latitude term is monotonic — highest *at* the
+equator — so it has the shape backwards there. Adding a properly shaped,
+daylight-weighted anomaly term was tested at several amplitudes and crest
+positions. It improved things marginally at best (14.3% → 14.2% seasonal,
+18.3% → 18.1% interhemispheric at the smallest amplitude) and got worse
+beyond that. **Not adopted** — an unearned term is overfitting, and this one
+did not earn its place.
+
+**What the residuals actually showed.** Splitting the error by local solar
+time at the midpoint moved the diagnosis somewhere else entirely:
+
+| Local solar time | Mid-latitude bias | Interhemispheric bias |
+|---|---|---|
+| 00–06 | −2.1% | +1.6% |
+| 06–12 | −5.1% | −4.1% |
+| 12–18 | −1.9% | −8.4% |
+| **18–24** | **−13.1%** | **−25.0%** |
+
+The problem is not hemispheres. It is the **evening**: the model's foF2 decays
+too fast after sunset, on *every* data set. Daytime agreement is already as
+good on transequatorial paths as it is at mid-latitude (7–10%).
+
+**Fix.** The diurnal decay exponent was retuned from 1.6 to **1.4** — a
+gentler post-sunset falloff. It was checked against all three data sets at
+once and improves every one of them with no trade-off:
+
+| Data set | Before | After |
+|---|---|---|
+| Mid-latitude (288 samples) | 12.4% | **12.1%** |
+| Six-latitude seasonal (6912 samples) | 14.3% | **14.2%** |
+| Interhemispheric (576 samples) | 18.3% | **17.9%** |
+| Evening bias, mid-latitude | −13.1% | −10.6% |
+| Evening bias, interhemispheric | −25.0% | −22.9% |
+
+**Result.** Hemisphere-to-hemisphere paths run at **17.9%** mean absolute
+error with a **−7.1%** signed bias, against 12.1% at mid-latitude. Worse, but
+usable, and now measured rather than assumed. The bias direction means the app
+tends to call a frequency *above MUF* slightly more often than VOACAP would on
+these paths — it errs toward telling you to come down in frequency.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -302,6 +386,20 @@ reports in practice run shorter than the 0° ceiling.
 - The season correction needs the month. The app defaults it to the device
   clock, but a device with a wrong date will bias the estimate — worst case
   by roughly 20% if it is half a year out at a high-latitude site.
+- **Evening MUF is the model's weakest point.** After local sunset it
+  under-predicts by roughly 10% at mid-latitude and 23% on interhemispheric
+  paths, even after the v1.13.2 retune. A simple cosine-power diurnal curve
+  cannot reproduce the post-sunset F2 height rise, and no single exponent
+  fixes it. Daytime figures are markedly more reliable than night figures.
+- **The equatorial ionization anomaly is not modelled.** The latitude term
+  peaks at the magnetic equator, whereas the real ionosphere has a trough
+  there and crests near ±15° magnetic. Adding an anomaly term did not improve
+  agreement with VOACAP and was therefore left out, but it is why the
+  near-equatorial cases (21.9% seasonal, 22.9% Panama–Peru) are the worst in
+  the whole validation set.
+- Hemisphere-to-hemisphere paths carry roughly 18% MUF error against 12% at
+  mid-latitude. Both are inside the tool's stated planning tolerance, but a
+  transequatorial shot deserves more margin than a regional one.
 - VOACAP itself is a statistical monthly-median model, not ground truth;
   agreement with VOACAP demonstrates consistency with the planning standard,
   not with any specific day's ionosphere.

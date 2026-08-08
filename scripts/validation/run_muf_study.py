@@ -55,7 +55,7 @@ def local_solar_time(utc_hour, lon_deg):
 
 def diurnal(local_hour):
     # Mirrors freqAdvisor.js (VOACAP-calibrated constants)
-    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.6
+    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.4
 
 
 # Season/latitude correction — mirrors seasonLatitudeFactor() in freqAdvisor.js.

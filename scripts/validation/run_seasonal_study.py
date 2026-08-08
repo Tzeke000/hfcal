@@ -124,7 +124,7 @@ def app_takeoff_deg(dist_km):
 
 
 def diurnal(local_hour):
-    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.6
+    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.4
 
 
 SEASON_LAT_SCALE, K_LAT = 60.0, 0.10

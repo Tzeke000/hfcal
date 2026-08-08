@@ -262,3 +262,66 @@ test('assessFrequency and frequencyForecast carry season through', function() {
   var fJul = frequencyForecast({ takeoffDeg: 8, layerKm: 360, midLon: 25, sfi: null, month: 7, magLatDeg: 55 });
   assert.ok(fJan.some(function(b, i) { return b.muf !== fJul[i].muf; }), 'forecast must respond to month');
 });
+
+
+// ── HEMISPHERE-TO-HEMISPHERE ─────────────────────────────────────────────────
+// A transequatorial path has its two ends in opposite seasons and its midpoint
+// near the magnetic equator. Measured against VOACAP over six real circuits in
+// scripts/validation/run_interhemi_study.py; these pin the behaviour that
+// study checked.
+
+test('seasonLatitudeFactor: continuous across the magnetic equator', function() {
+  // The hemisphere flip (summer = July north, January south) is a hard switch
+  // at magLat 0. It must not produce a step, because a transequatorial path's
+  // midpoint lands right there. The flip is weighted by |magLat|, which goes
+  // to zero at the same point — this test is what keeps that coupling.
+  [0, 6, 12, 18].forEach(function(hour) {
+    for (var m = 1; m <= 12; m++) {
+      var north = seasonLatitudeFactor(hour, m, 0.01);
+      var south = seasonLatitudeFactor(hour, m, -0.01);
+      assert.ok(Math.abs(north - south) < 0.001,
+        'step at the magnetic equator, month ' + m + ' hour ' + hour
+        + ': ' + north.toFixed(5) + ' vs ' + south.toFixed(5));
+    }
+  });
+});
+
+test('seasonLatitudeFactor: seasonal swing collapses toward the dip equator', function() {
+  // On a transequatorial path the model should stop asserting a strong season,
+  // because the reflection region genuinely has little solstitial swing. What
+  // is left near the equator is the semi-annual (equinox) term, not a
+  // hemisphere-dependent one.
+  function solstitialSwing(lat) {
+    return Math.abs(seasonLatitudeFactor(12, 1, lat) - seasonLatitudeFactor(12, 7, lat));
+  }
+  assert.ok(solstitialSwing(2) < solstitialSwing(30), 'swing should shrink at the equator');
+  assert.ok(solstitialSwing(30) < solstitialSwing(55), 'and grow toward the pole');
+});
+
+test('assessFrequency: a transequatorial path stays physical all day', function() {
+  // Cherry Point to Argentina: 7963 km, midpoint on the equator at 8 deg
+  // magnetic. Whatever the month, the numbers must stay in a usable HF range
+  // and keep MUF above FOT above nothing silly.
+  for (var m = 1; m <= 12; m += 1) {
+    for (var h = 0; h < 24; h += 2) {
+      var a = assessFrequency({
+        takeoffDeg: 3, layerKm: 360, midLon: -67.6, magLatDeg: 8.0,
+        month: m, utcHour: h, sfi: null, freqMHz: 14.2,
+      });
+      assert.ok(a.muf > 3 && a.muf < 60, 'MUF out of range, month ' + m + ' hour ' + h + ': ' + a.muf);
+      assert.ok(a.fot < a.muf, 'FOT must sit below MUF');
+      assert.ok(a.luf > 0 && a.luf < 12, 'LUF out of range: ' + a.luf);
+      assert.ok(a.verdict && typeof a.verdict.ok === 'boolean');
+    }
+  }
+});
+
+test('assessFrequency: opposite hemispheres, same month, differ near the poles', function() {
+  // The whole point of the latitude term. Two mid-latitude paths in January,
+  // one northern and one southern, must not get the same answer.
+  function muf(magLat) {
+    return assessFrequency({ takeoffDeg: 8, layerKm: 360, midLon: 0,
+      magLatDeg: magLat, month: 1, utcHour: 12, sfi: null }).muf;
+  }
+  assert.ok(muf(50) > muf(-50), 'January noon: northern winter should beat southern summer');
+});
