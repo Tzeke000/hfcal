@@ -164,10 +164,11 @@ So the defense is not purely legal. It is a combination:
    credibility. A program office comparing "validated against the government
    standard, here are the scripts" against "trust us" is not a close call.
 
-5. **Being the person, not just the code.** You are an 06xx Marine who
-   built the thing. A contractor cannot buy that, and it is the part of the
-   pitch that survives someone else writing similar software. The pitch
-   materials in `docs/pitch/` lean on this deliberately.
+5. **Being the person, not just the code.** You are an active-duty Marine
+   communications technician who built and validated the thing on your own
+   time. A contractor cannot buy that, and it is the part of the pitch that
+   survives someone else writing similar software. The pitch materials in
+   `docs/pitch/` lean on this deliberately.
 
 6. **Register before you brief.** The practical rule: do not walk this into a
    program office, a contractor, or an innovation cell until Steps 1–3 are

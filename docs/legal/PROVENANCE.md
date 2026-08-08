@@ -1,8 +1,9 @@
 # Statement of Independent Creation
 
 **Work:** HF Field Antenna Calculator (this repository)
-**Author:** Cpl Angeles-Gonzalez, Ezekiel S.
-**First commit:** 3 May 2026 · **Current version:** 1.13.0
+**Author:** Cpl Angeles-Gonzalez, Ezekiel S., USMC — MOS 5954, Air Traffic
+Control Communications Technician
+**First commit:** 3 May 2026 · **Current version:** 1.13.1
 **Repository:** https://github.com/Tzeke000/hfcal
 **Project signature:** HFCALC-AG-EZK-USMC-v1
 
@@ -49,6 +50,14 @@ The author states the following:
    Controlled Unclassified Information (CUI), no For Official Use Only
    material, no personally identifiable information, and no non-public
    government data of any kind.
+
+6. **Outside the author's assigned specialty.** The author's MOS is 5954, Air
+   Traffic Control Communications Technician — installation and maintenance of
+   air traffic control communications systems. Designing and validating HF
+   skywave antenna geometry is not within that MOS's duties, and no billet the
+   author has held has assigned it. This is a distinct point from item 1: not
+   only was the work never *directed*, it falls outside the field the author
+   is assigned to work in at all. It was undertaken out of personal interest.
 
 ## What the work is actually built from
 
@@ -116,5 +125,9 @@ original work, created entirely on my own time and my own equipment.
 Signature: ______________________________  Date: ____________
 
 ---
+
+**A print-ready one-page version to sign is in this folder:**
+[`Statement-of-Independent-Creation.docx`](Statement-of-Independent-Creation.docx)
+(regenerate with `node scripts/make-statement.cjs`).
 
 *Retain a signed copy outside this repository. See `COPYRIGHT-CHECKLIST.md`.*

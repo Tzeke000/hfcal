@@ -13,6 +13,7 @@ import {
   EARTH_RADIUS_KM, geodesics, initialBearing, propagationZone, bearingToCardinal,
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
   pathMidpoint,
+  maxHopKm,
 } from './propagation.js';
 
 function approx(actual, expected, tol, msg) {
@@ -196,16 +197,37 @@ test('calcHops: layer selection by frequency', function() {
 });
 
 test('calcHops: hop count and per-hop distance', function() {
-  var r = calcHops(9000, 14, null);
-  var f2 = r[1];
-  assert.equal(f2.hops, 2);                       // 9000 / 4500
-  approx(f2.hopDistKm, 4500, 1e-9);
+  // Exactly two F2 hops by construction, so the split is unambiguous.
+  var d = 2 * HOP.F2.maxHopKm - 200;
+  var f2 = calcHops(d, 14, null)[1];
+  assert.equal(f2.hops, 2);
+  approx(f2.hopDistKm, d / 2, 1e-9);
   assert.equal(f2.reflectFracs.length, 1);        // one ground bounce
   approx(f2.reflectFracs[0], 0.5, 1e-9);
-  // Per-hop distance sits at the geometric limit for h=330 — curved-earth
-  // baseline floors at 0, operational clamp lifts the final angle to 3°.
+});
+
+test('calcHops: a hop at the layer limit launches along the horizon', function() {
+  // At exactly maxHopKm the curved-earth baseline is 0° by definition. The
+  // app still reports its 3° operational floor, because no field antenna
+  // radiates at the horizon — the clamp is honest, not a fudge.
+  var f2 = calcHops(HOP.F2.maxHopKm, 14, null)[1];
+  assert.equal(f2.hops, 1);
   assert.equal(f2.toa.baseDeg, 0);
   assert.equal(f2.toa.finalDeg, 3);
+});
+
+test('calcHops: never asks a hop to exceed its own layer geometry', function() {
+  // The bug this pins: HOP.F2 once carried a hand-entered 4500 km max hop
+  // while its height (360 km) only supports 4186 km, so 4200-4500 km paths
+  // were reported as a single hop the geometry cannot produce.
+  [800, 2000, 3000, 4000, 4300, 6000, 9000, 15000].forEach(function(d) {
+    calcHops(d, 7, null).concat(calcHops(d, 14, null)).forEach(function(r) {
+      var layer = [HOP.E, HOP.F1, HOP.F2].find(function(l) { return l.label === r.layer; });
+      assert.ok(r.hopDistKm <= layer.maxHopKm + 1e-6,
+        r.layer + ' at ' + d + ' km: hop of ' + r.hopDistKm.toFixed(0)
+        + ' km exceeds its ' + layer.maxHopKm.toFixed(0) + ' km limit');
+    });
+  });
 });
 
 test('calcHops: single hop short path', function() {
@@ -260,4 +282,55 @@ test('pathMidpoint: lies on the great circle, not the average of endpoints', fun
   var m = pathMidpoint(60, -20, 60, 20);
   assert.ok(m.lat > 60.5, 'great-circle midpoint should sit north of 60, got ' + m.lat);
   approx(m.lon, 0, 1e-6);
+});
+
+
+// ── LAYER TABLE ──────────────────────────────────────────────────────────────
+// Reflection heights and per-hop limits. Published reference: Australian
+// Bureau of Meteorology Space Weather Services, "Introduction to HF Radio
+// Propagation" — with E and F heights of 100 and 300 km, maximum hop lengths
+// are 2000 km and 4000 km at 0° elevation. Measured against VOACAP in
+// scripts/validation/run_layer_study.py.
+
+test('maxHopKm: matches the closed-form 0-degree limit', function() {
+  var R = EARTH_RADIUS_KM;
+  [90, 110, 200, 300, 360, 450].forEach(function(h) {
+    approx(maxHopKm(h), 2 * R * Math.acos(R / (R + h)), 1e-9);
+  });
+  // Published spot values, to the rounding the references themselves use.
+  assert.ok(Math.abs(maxHopKm(100) - 2000) < 250, 'E at 100 km should land near 2000 km');
+  assert.ok(Math.abs(maxHopKm(300) - 4000) < 250, 'F at 300 km should land near 4000 km');
+});
+
+test('maxHopKm: rises with height and stays below the half-circumference', function() {
+  var prev = 0;
+  for (var h = 50; h <= 500; h += 25) {
+    var d = maxHopKm(h);
+    assert.ok(d > prev, 'should increase with height, broke at ' + h);
+    assert.ok(d < Math.PI * EARTH_RADIUS_KM, 'a single hop cannot span half the planet');
+    prev = d;
+  }
+});
+
+test('HOP: every layer is internally consistent with its own height', function() {
+  ['E', 'F1', 'F2'].forEach(function(k) {
+    var l = HOP[k];
+    approx(l.maxHopKm, maxHopKm(l.hKm), 1e-9);
+    // Round-trip: the limit must imply back the height it came from.
+    var R = EARTH_RADIUS_KM;
+    approx(R / Math.cos(l.maxHopKm / (2 * R)) - R, l.hKm, 1e-6);
+  });
+});
+
+test('HOP: layers are ordered and land in published ranges', function() {
+  assert.ok(HOP.E.hKm < HOP.F1.hKm && HOP.F1.hKm < HOP.F2.hKm);
+  assert.ok(HOP.E.maxHopKm < HOP.F1.maxHopKm && HOP.F1.maxHopKm < HOP.F2.maxHopKm);
+  // E 90-130 km, F1 ~200 km, F2 virtual height above the 250-400 true layer
+  assert.ok(HOP.E.hKm >= 90 && HOP.E.hKm <= 130);
+  assert.ok(HOP.F1.hKm >= 160 && HOP.F1.hKm <= 240);
+  assert.ok(HOP.F2.hKm >= 250 && HOP.F2.hKm <= 450);
+  // VOACAP served single-hop F2 out to ~4400 km in the layer study and stopped
+  // offering it entirely past that; the F2 limit must sit in that neighbourhood.
+  assert.ok(HOP.F2.maxHopKm > 3800 && HOP.F2.maxHopKm < 4600,
+    'F2 single-hop limit ' + HOP.F2.maxHopKm.toFixed(0) + ' km is outside what VOACAP offers');
 });

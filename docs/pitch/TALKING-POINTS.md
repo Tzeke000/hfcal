@@ -16,7 +16,7 @@
 Distributed operations doctrine assumes we lose SATCOM. The fallback is HF,
 and HF lives or dies on antenna geometry: the wrong height or cut on a wire
 antenna is the difference between comms and silence. That knowledge used to
-live in senior 06xx operators, and it has eroded for twenty years while we
+live in senior radio operators, and it has eroded for twenty years while we
 leaned on satellites. This app compresses it into a phone tool that works in
 airplane mode: two grids and a frequency in, a complete buildable antenna
 out — cut lengths for whatever wire you actually have, computed mast height
@@ -59,7 +59,8 @@ Lance Corporal.
    fix it (raise the ends, or switch to a flat dipole). Tools that assume
    ideal antennas skip this entirely.
 4. **It teaches.** Formulas are shown, not hidden. It doubles as a
-   schoolhouse aid for the 06xx pipeline — the same tool trains and fields.
+   schoolhouse aid for the communications pipeline — the same tool trains and
+   fields.
 5. **Terrain awareness built in.** Ridge-clearance angle adjustments, ocean
    and desert path corrections — automatically, from the same two grids.
 6. **EMCON-clean.** No account, no telemetry, no network requirement. The

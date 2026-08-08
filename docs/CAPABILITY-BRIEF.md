@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.13.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.13.1 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -13,7 +13,7 @@ is the fallback long-haul communications path. Effective HF depends on
 antenna geometry matched to the path: the difference between an antenna cut
 and raised correctly for a 300 km NVIS shot versus a 1500 km single-hop is
 the difference between comms and silence. That knowledge lives in
-experienced 06xx operators and scattered manual tables — and it erodes.
+experienced radio operators and scattered manual tables — and it erodes.
 Existing prediction tools (VOACAP and derivatives) assume a desktop, a
 trained analyst, and connectivity. The Marine at the antenna has none of
 those.
@@ -71,7 +71,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —
-  usable as a schoolhouse training aid for the 06xx pipeline.
+  usable as a schoolhouse training aid for the communications pipeline.
 - **Validated twice.** Takeoff-angle and hop predictions compared against VOACAP
   (the government-standard HF prediction engine) across 10 path distances ×
   24 hours × 2 seasons × 2 solar conditions: agreement within 1.2° of the
@@ -82,8 +82,11 @@ coordinates and a frequency into a complete, buildable antenna solution:
   hourly samples: 12.4% mean error, 81% within 20%. A third study extended
   that worldwide — six sites from 60 N to 44 S across all twelve months —
   to fit the season and magnetic-latitude terms, taking global MUF error
-  from 17.9% to 14.3% while improving the mid-latitude case as well.
-- **Engineered, not improvised:** automated physics test suite (114 tests
+  from 17.9% to 14.3% while improving the mid-latitude case as well. A fourth
+  study checked the ionospheric layer table itself against both closed-form
+  geometry and VOACAP's own mode selection, and corrected a hop limit that
+  exceeded what its layer height can physically support.
+- **Engineered, not improvised:** automated physics test suite (120 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 
@@ -99,8 +102,9 @@ coordinates and a frequency into a complete, buildable antenna solution:
 
 ## Potential adoption paths
 
-- **Training command evaluation** — Communication School / MOS 0621-0622
-  curriculum aid (zero-cost pilot; already deployable).
+- **Training command evaluation** — Communication School curriculum aid for
+  the radio-operator and communications-maintenance pipelines (zero-cost
+  pilot; already deployable).
 - **ATAK plugin** — port of the calculation engine into the tactical Android
   ecosystem units already field.
 - **Unit-level fielding** as a free capability with sustainment support, or

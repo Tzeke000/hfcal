@@ -1,0 +1,265 @@
+{
+  "app_table": {
+    "E": {
+      "hKm": 110,
+      "maxHopKm": 2160
+    },
+    "F1": {
+      "hKm": 200,
+      "maxHopKm": 3000
+    },
+    "F2": {
+      "hKm": 360,
+      "maxHopKm": 4500
+    }
+  },
+  "geometry": {
+    "E": {
+      "h_km": 110,
+      "app_max_hop_km": 2160,
+      "geometric_max_hop_km": 2351,
+      "implied_height_km": 92.6,
+      "consistent": true,
+      "hop_at_3deg_km": 1776
+    },
+    "F1": {
+      "h_km": 200,
+      "app_max_hop_km": 3000,
+      "geometric_max_hop_km": 3152,
+      "implied_height_km": 180.8,
+      "consistent": true,
+      "hop_at_3deg_km": 2553
+    },
+    "F2": {
+      "h_km": 360,
+      "app_max_hop_km": 4500,
+      "geometric_max_hop_km": 4186,
+      "implied_height_km": 419.1,
+      "consistent": false,
+      "hop_at_3deg_km": 3570
+    }
+  },
+  "empirical_last_single_hop_km": {
+    "E": null,
+    "F1": null,
+    "F2": 4200
+  },
+  "distances_km": [
+    1500,
+    1800,
+    2000,
+    2200,
+    2400,
+    2800,
+    3000,
+    3200,
+    3600,
+    3800,
+    4000,
+    4200,
+    4400,
+    4600,
+    5000
+  ],
+  "rows": [
+    {
+      "dist_km": 1500,
+      "total_cells": 470,
+      "modes": {
+        "1F2": 468,
+        "2F2": 2
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.996
+      }
+    },
+    {
+      "dist_km": 1800,
+      "total_cells": 550,
+      "modes": {
+        "1F2": 535,
+        "2F2": 15
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.973
+      }
+    },
+    {
+      "dist_km": 2000,
+      "total_cells": 530,
+      "modes": {
+        "1F2": 516,
+        "2F2": 14
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.974
+      }
+    },
+    {
+      "dist_km": 2200,
+      "total_cells": 520,
+      "modes": {
+        "1F2": 504,
+        "2F2": 16
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.969
+      }
+    },
+    {
+      "dist_km": 2400,
+      "total_cells": 520,
+      "modes": {
+        "1F2": 500,
+        "2F2": 20
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.962
+      }
+    },
+    {
+      "dist_km": 2800,
+      "total_cells": 480,
+      "modes": {
+        "1F2": 458,
+        "2F2": 22
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.954
+      }
+    },
+    {
+      "dist_km": 3000,
+      "total_cells": 480,
+      "modes": {
+        "1F2": 387,
+        "2F2": 93
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.806
+      }
+    },
+    {
+      "dist_km": 3200,
+      "total_cells": 480,
+      "modes": {
+        "1F2": 327,
+        "2F2": 153
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.681
+      }
+    },
+    {
+      "dist_km": 3600,
+      "total_cells": 480,
+      "modes": {
+        "1F2": 290,
+        "2F2": 190
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.604
+      }
+    },
+    {
+      "dist_km": 3800,
+      "total_cells": 480,
+      "modes": {
+        "1F2": 264,
+        "2F2": 214,
+        "3F2": 2
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.55
+      }
+    },
+    {
+      "dist_km": 4000,
+      "total_cells": 470,
+      "modes": {
+        "1F2": 209,
+        "2F2": 260,
+        "3F2": 1
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.445
+      }
+    },
+    {
+      "dist_km": 4200,
+      "total_cells": 480,
+      "modes": {
+        "2F2": 384,
+        "3F2": 3,
+        "1F2": 93
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.194
+      }
+    },
+    {
+      "dist_km": 4400,
+      "total_cells": 520,
+      "modes": {
+        "2F2": 493,
+        "3F2": 8,
+        "1F2": 19
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.037
+      }
+    },
+    {
+      "dist_km": 4600,
+      "total_cells": 520,
+      "modes": {
+        "2F2": 512,
+        "3F2": 8
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.0
+      }
+    },
+    {
+      "dist_km": 5000,
+      "total_cells": 510,
+      "modes": {
+        "2F2": 502,
+        "3F2": 8
+      },
+      "single_hop_share": {
+        "E": 0.0,
+        "F1": 0.0,
+        "F2": 0.0
+      }
+    }
+  ]
+}

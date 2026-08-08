@@ -56,8 +56,10 @@ CONDITIONS = [(6, 30), (6, 100), (12, 30), (12, 100)]   # (month, SSN)
 
 # App model constants — must mirror src/propagation.js (HOP.F2)
 F2_HEIGHT_KM = 360   # effective virtual reflection height (v1.5 calibration)
-F2_MAX_HOP_KM = 4500
 EARTH_R = 6371.0
+# Derived, not typed — the 0 deg launch limit for the height above. Mirrors
+# maxHopKm() in src/propagation.js; see run_layer_study.py.
+F2_MAX_HOP_KM = 2 * EARTH_R * math.acos(EARTH_R / (EARTH_R + F2_HEIGHT_KM))
 
 
 def app_prediction(dist_km):

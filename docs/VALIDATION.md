@@ -5,6 +5,7 @@ Project signature: HFCALC-AG-EZK-USMC-v1
 Takeoff-angle study: July 2026 (app v1.4.1) · Model correction and re-validation: v1.5.0
 Frequency (MUF) study: July 2026 (app v1.7.0)
 Season / magnetic-latitude study: August 2026 (app v1.13.0)
+Layer table study: August 2026 (app v1.13.1)
 
 ---
 
@@ -227,6 +228,69 @@ BELOW LUF — a ~12% MUF error moves the verdict only for frequencies already
 near a boundary, and the FOT convention (0.85 x MUF) absorbs part of it. The
 UI states the tolerance and defers to the unit's SOI/JCEOI assignment.
 
+## Part 4 — Ionospheric layer table (v1.13.1)
+
+Parts 1–3 validated the F2 geometry and the frequency model. They never
+touched the other half of `propagation.js`: the **layer table** — the
+reflection height and maximum single-hop ground distance for E, F1 and F2.
+Those numbers decide how many hops the app reports and which layer it names,
+so this part gives them the same treatment.
+
+**Check 1 — geometry.** For a ray leaving at 0° elevation (along the horizon,
+the limiting case) and reflecting at virtual height *h*, the ground range is
+fixed:
+
+> cos θ = R / (R + h),  d_max = 2 · R · θ
+
+A max-hop figure larger than this is not optimistic, it is impossible — the
+ray would have to be launched below the horizon.
+
+| Layer | Height | Old table | 0° geometric limit | Verdict |
+|---|---|---|---|---|
+| E | 110 km | 2160 km | 2351 km | consistent (conservative) |
+| F1 | 200 km | 3000 km | 3152 km | consistent (conservative) |
+| F2 | 360 km | **4500 km** | **4186 km** | **impossible — needs h = 419 km** |
+
+The F2 entry was a hand-typed folklore number that outran its own height.
+Paths between 4186 and 4500 km were reported as a single hop the geometry
+cannot produce.
+
+**Check 2 — VOACAP.** Fifteen ground distances from 1500 to 5000 km × two
+months × two solar levels, recording which propagation MODES VOACAP actually
+offers. Reproduce with `python3 scripts/validation/run_layer_study.py`.
+
+| Distance | 1F2 share of cells | Dominant mode |
+|---|---|---|
+| 3000 km | 81% | 1F2 |
+| 3600 km | 60% | 1F2 |
+| 4000 km | 44% | 2F2 |
+| 4200 km | 19% | 2F2 |
+| 4400 km | 4% | 2F2 |
+| 4600 km | 0% | 2F2 |
+
+VOACAP stops offering single-hop F2 entirely past ~4400 km and it stops being
+the majority mode around 3800–4000 km. The 4186 km geometric limit sits inside
+that transition; the old 4500 km did not.
+
+**Fix.** `maxHopKm(h)` is now derived from the closed form rather than typed,
+and every entry in `HOP` is computed from its own height, so the table cannot
+drift out of self-consistency again. Six tests pin it, including one that
+walks a range of path lengths and asserts no layer is ever asked to cover more
+than its own geometry allows.
+
+**Effect on earlier results.** None. Re-running Part 1 after the change gives
+the same takeoff angles (max Δ 1.2°, mean 0.4°) because the hop count is
+unchanged at every distance tested there; Part 2/3 re-run identically at
+12.4%. What changed is the 4186–4500 km band, which now correctly reports two
+hops.
+
+**Published cross-check.** The Australian Bureau of Meteorology Space Weather
+Services gives maximum hop lengths of 2000 km (E, h = 100 km) and 4000 km
+(F, h = 300 km) at 0° elevation, falling to 1800 km and 3200 km at 4°. The
+derived limits agree with those to the rounding the references themselves
+use — and the app's own 3° operational floor is why the E and F1 hops it
+reports in practice run shorter than the 0° ceiling.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -249,6 +313,16 @@ UI states the tolerance and defers to the unit's SOI/JCEOI assignment.
   order for this comparison.
 - The app's terrain adjustments (obstacle clearance, ocean/desert biases)
   were disabled (no-terrain baseline) since VOACAP models none of them.
+- The layer study found no E or F1 mode in VOACAP's output at any distance
+  from 1500 km out — VOACAP served F2 in every cell. So the E and F1 rows are
+  validated by geometry and published references, not by VOACAP agreement.
+  They remain useful as a "what else could carry this path" reference; the F2
+  row is the one the app's primary recommendation rests on.
+- Maximum hop distances are the 0° launch ceiling. A real antenna cannot
+  radiate at the horizon, so the app clamps takeoff angles to 3°, at which a
+  single hop reaches roughly 1780 km (E), 2550 km (F1) and 3570 km (F2).
+  Between those figures and the ceiling, a single hop is possible but needs
+  an unusually low, clean radiation angle.
 
 ## Conclusion
 

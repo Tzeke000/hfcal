@@ -190,16 +190,34 @@ export function chordalHopPossible(distKm, freqMHz, oceanFrac) {
 }
 
 // ── HOP ANALYSIS ──────────────────────────────────────────────────────────────
+
+// Longest ground distance one hop can cover off a layer at virtual height h.
+// The limiting ray leaves at 0° elevation — along the horizon — so the mirror
+// geometry reduces to a right triangle at the reflection point:
+//
+//     cos θ = R / (R + h),   d_max = 2·R·θ
+//
+// A max-hop figure larger than this is not "optimistic", it is impossible: it
+// would need the ray launched below the horizon. This is derived rather than
+// typed because the table previously carried a hand-entered 4500 km for F2,
+// which exceeds the limit for its own 360 km height (4186 km) and silently
+// produced single-hop solutions the geometry cannot support. Pinned by
+// propagation.test.js and measured against VOACAP in
+// scripts/validation/run_layer_study.py.
+export function maxHopKm(hKm) {
+  return 2 * EARTH_RADIUS_KM * Math.acos(EARTH_RADIUS_KM / (EARTH_RADIUS_KM + hKm));
+}
+
 export var HOP = {
-  E:  { hKm: 110,  maxHopKm: 2160, label: 'E Layer',  height: '90–130 km',  note: 'Day only. Sporadic E.' },
-  F1: { hKm: 200,  maxHopKm: 3000, label: 'F1 Layer', height: '≈200 km',    note: 'Daytime, lower freq.' },
+  E:  { hKm: 110,  maxHopKm: maxHopKm(110), label: 'E Layer',  height: '90–130 km', note: 'Day only. Sporadic E.' },
+  F1: { hKm: 200,  maxHopKm: maxHopKm(200), label: 'F1 Layer', height: '≈200 km',   note: 'Daytime, lower freq.' },
   // F2 hKm is the effective VIRTUAL reflection height used for angle
   // geometry — higher than the true layer height because ionospheric
   // refraction is gradual, not a mirror bounce. 360 km is the median of
   // VOACAP's own virtual-height output (295–466 km) across the validation
   // matrix; see docs/VALIDATION.md. The `height` string still describes
   // the true layer.
-  F2: { hKm: 360,  maxHopKm: 4500, label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
+  F2: { hKm: 360,  maxHopKm: maxHopKm(360), label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
 };
 
 export function calcHops(distKm, freqMHz, terrain) {
