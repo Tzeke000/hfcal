@@ -71,6 +71,7 @@ import {
   FOF2_MAP_ORDERS, FOF2_MAP_MODIP_SCALE, FOF2_MAP_SSN_SCALE,
   FOF2_MAP_COEFFS, FOF2_MAP_HELDOUT_PCT,
 } from './fof2Map.js';
+import { tableFoF2, foF2TableReady } from './fof2Table.js';
 
 var R_EARTH = 6371;
 var DEG = Math.PI / 180;
@@ -374,20 +375,44 @@ export function minOrderCorrection(k) {
   return 1 + FOF2_POINT_SIGMA * c;
 }
 
-// foF2 at ONE bounce: the coefficient map where it can be trusted, the
-// physical model otherwise. The map is more than twice as accurate (7.4%
-// against 16.9% on held-out sites) but it is a fitted polynomial, so the
-// physical model stays as a guard — if the two disagree by more than
-// MAP_SANITY_FACTOR the physics wins. A wrong frequency is worse than a
-// slightly less accurate one.
+// foF2 at ONE bounce, from the best source available, in order:
+//
+//   1. THE LOOKUP TABLE   our own generated grid (fof2Table.js). Most
+//      accurate, because it stores what the ionosphere does rather than
+//      approximating it. Only available once the asset has loaded.
+//   2. THE COEFFICIENT MAP   a 2111-term smooth fit (fof2Map.js). Always
+//      available, no asset needed.
+//   3. THE PHYSICAL MODEL   solar geometry and Chapman theory. Always
+//      available, fully explainable, and the thing that keeps the other two
+//      honest.
+//
+// Every source above the physical model is checked against it: if they
+// disagree by more than MAP_SANITY_FACTOR the physics wins. That is what
+// stops a corrupted asset or a botched regeneration from putting a Marine on
+// a frequency that cannot work. A wrong number is worse than a rougher one.
 export function bounceFoF2(ssn, utcHour, month, b) {
   var lst = localSolarTime(utcHour, b.lon);
   var phys = estimateFoF2(ssn, lst, month, b.magLatDeg, b.lat);
-  if (typeof b.modipDeg !== 'number' || !isFinite(b.modipDeg)) return phys;
-  var mapped = mapFoF2(b.modipDeg, lst, month, ssn, b.lon);
-  if (mapped === null || !isFinite(mapped)) return phys;
-  if (mapped > phys * MAP_SANITY_FACTOR || mapped * MAP_SANITY_FACTOR < phys) return phys;
-  return mapped;
+
+  function trusted(v) {
+    return v !== null && isFinite(v) && v > 0
+      && v <= phys * MAP_SANITY_FACTOR && v * MAP_SANITY_FACTOR >= phys;
+  }
+
+  var t = tableFoF2(b.lat, b.lon, month, utcHour, ssn);
+  if (trusted(t)) return t;
+
+  if (typeof b.modipDeg === 'number' && isFinite(b.modipDeg)) {
+    var mapped = mapFoF2(b.modipDeg, lst, month, ssn, b.lon);
+    if (trusted(mapped)) return mapped;
+  }
+  return phys;
+}
+
+// Which source the advisor is currently able to use — surfaced so the UI can
+// say so rather than quietly varying in accuracy.
+export function foF2Source() {
+  return foF2TableReady() ? 'table' : 'map';
 }
 
 // foF2 governing the whole path: the weakest bounce, de-biased.

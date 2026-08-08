@@ -249,17 +249,97 @@ def _map_eval(modip_deg, lst, month, ssn, lon):
 
 MAP_SANITY_FACTOR = 1.8
 
+_TABLE = None
+
+
+def _load_table():
+    """Read public/fof2-table.bin exactly as src/fof2Table.js does."""
+    global _TABLE
+    if _TABLE is not None:
+        return _TABLE
+    path = os.path.join(ROOT, 'public', 'fof2-table.bin')
+    if not os.path.exists(path):
+        _TABLE = False
+        return _TABLE
+    import struct
+    raw = open(path, 'rb').read()
+    if raw[:4] != b'HFT1':
+        _TABLE = False
+        return _TABLE
+    o = 4
+    nLat, nLon, nMon, nHour, nSsn = struct.unpack_from('<5H', raw, o); o += 10
+    lat0, latStep, lon0, lonStep = struct.unpack_from('<4h', raw, o); o += 8
+    ssns = list(struct.unpack_from('<%dH' % nSsn, raw, o)); o += 2 * nSsn
+    data = raw[o:]
+    _TABLE = {'n': (nLat, nLon, nMon, nHour, nSsn),
+              'lat0': lat0 / 10.0, 'latStep': latStep / 10.0,
+              'lon0': lon0 / 10.0, 'lonStep': lonStep / 10.0,
+              'ssns': ssns, 'd': data}
+    return _TABLE
+
+
+def table_fof2(lat, lon, month, utc_hour, ssn):
+    t = _load_table()
+    if not t:
+        return None
+    nLat, nLon, nMon, nHour, nSsn = t['n']
+    fa = (lat - t['lat0']) / t['latStep']
+    fa = max(0.0, min(float(nLat - 1), fa))
+    ia = int(fa); wa = fa - ia; ia2 = min(ia + 1, nLat - 1)
+    fb = ((lon - t['lon0']) / t['lonStep']) % nLon
+    ib = int(fb); wb = fb - ib; ib2 = (ib + 1) % nLon
+    fc = (month - 1) % nMon
+    ic = int(fc); wc = fc - ic; ic2 = (ic + 1) % nMon
+    fd = utc_hour % nHour
+    idx = int(fd); wd = fd - idx; id2 = (idx + 1) % nHour
+    s = max(t['ssns'][0], min(t['ssns'][-1], ssn))
+    ie = 0
+    while ie < nSsn - 2 and s > t['ssns'][ie + 1]:
+        ie += 1
+    span = t['ssns'][ie + 1] - t['ssns'][ie]
+    we = (s - t['ssns'][ie]) / span if span else 0.0
+
+    def at(a, b, c, d, e):
+        return t['d'][(((a * nLon + b) * nMon + c) * nHour + d) * nSsn + e] * 0.1
+
+    v = 0.0
+    for A, wA in ((ia, 1 - wa), (ia2, wa)):
+        if wA == 0:
+            continue
+        for B, wB in ((ib, 1 - wb), (ib2, wb)):
+            if wB == 0:
+                continue
+            for C, wC in ((ic, 1 - wc), (ic2, wc)):
+                if wC == 0:
+                    continue
+                for D, wD in ((idx, 1 - wd), (id2, wd)):
+                    if wD == 0:
+                        continue
+                    for E, wE in ((ie, 1 - we), (ie + 1, we)):
+                        if wE == 0:
+                            continue
+                        v += wA * wB * wC * wD * wE * at(A, B, C, D, E)
+    return v if v > 0 else None
+
 
 def bounce_fof2(ssn, utc_hour, month, b):
-    """b = (lat, lon, mag_lat, modip)."""
+    """b = (lat, lon, mag_lat, modip). Table, then map, then physics."""
     lst = local_solar_time(utc_hour, b[1])
     phys = est_fof2(ssn, lst, month, b[2], b[0])
-    if len(b) < 4 or b[3] is None:
-        return phys
-    m = _map_eval(b[3], lst, month, ssn, b[1])
-    if m > phys * MAP_SANITY_FACTOR or m * MAP_SANITY_FACTOR < phys:
-        return phys
-    return m
+
+    def trusted(v):
+        return (v is not None and v > 0
+                and v <= phys * MAP_SANITY_FACTOR
+                and v * MAP_SANITY_FACTOR >= phys)
+
+    tv = table_fof2(b[0], b[1], month, utc_hour, ssn)
+    if trusted(tv):
+        return tv
+    if len(b) >= 4 and b[3] is not None:
+        m = _map_eval(b[3], lst, month, ssn, b[1])
+        if trusted(m):
+            return m
+    return phys
 
 
 def path_fof2(ssn, utc_hour, month, bounces, mid_lon, mid_lat, mid_mag_lat):

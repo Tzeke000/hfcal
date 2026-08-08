@@ -15,6 +15,7 @@ import {
 } from "./spacewx.js";
 import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS,
          FOT_DAYS_IN_10, MUF_DAYS_IN_10 } from "./freqAdvisor.js";
+import { loadFoF2Table, foF2TableReady } from "./fof2Table.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
 import { declination, magneticLatitude, modip, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
@@ -2166,14 +2167,14 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 8-10% — measured against 271,000 VOACAP samples at 314 sites worldwide, a quarter of which the model was never fitted to.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  The ionosphere is carried as our own lookup table, built from 30,240 VOACAP runs — critical frequency accurate to about 1%, and MUF to about 5%, checked at 314 worldwide sites the table was never built from.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  175 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  183 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3476,6 +3477,21 @@ export default function HFCalc() {
   var [month, setMonth] = useState(new Date().getMonth() + 1);
   // Transmit power. Only affects the LUF — see PowerSelector.
   var [txWatts, setTxWatts] = useState(DEFAULT_TX_WATTS);
+
+  // The ionospheric lookup table is a precached asset rather than inlined
+  // JavaScript, so it costs nothing to parse and works offline through the
+  // service worker. Everything is fully functional before it arrives — the
+  // advisor simply falls back to the coefficient map and the physical model —
+  // so this only ever raises accuracy, never blocks the app.
+  var [tableReady, setTableReady] = useState(foF2TableReady());
+  useEffect(function() {
+    if (tableReady) return;
+    var alive = true;
+    loadFoF2Table(import.meta.env.BASE_URL).then(function(ok) {
+      if (alive && ok) setTableReady(true);
+    });
+    return function() { alive = false; };
+  }, [tableReady]);
 
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
   var effectiveGauge = customGauge.trim() !== '' ? customGauge.trim() : wireGauge;

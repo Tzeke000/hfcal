@@ -69,7 +69,10 @@ export default defineConfig({
         // The vendored OCR core is ~3.7 MB; allow it into the precache so
         // DAGR scanning works with no network.
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,png,jpg,svg,ico,woff2,wasm,gz,traineddata}'],
+        // .bin carries the foF2 lookup table — it must be precached, or the
+        // app silently falls back to the less accurate model when offline,
+        // which is exactly when it matters most.
+        globPatterns: ['**/*.{js,css,html,png,jpg,svg,ico,woff2,wasm,gz,traineddata,bin}'],
       },
     }),
   ],

@@ -14,6 +14,7 @@ Per-bounce multi-hop study: August 2026 (app v1.16.0)
 Takeoff-angle and FOT studies: August 2026 (app v1.17.0)
 Fine FOT re-measurement and uncertainty audit: August 2026 (app v1.18.0)
 Global grid and coefficient map: August 2026 (app v1.19.0)
+Own-built foF2 lookup table: August 2026 (app v1.20.0)
 
 ---
 
@@ -1108,15 +1109,125 @@ the last thing that makes this app explainable — every number traceable to a
 formula — for a lookup table. It is recorded here as the honest next step, not
 started.
 
+## Part 15 — Our own lookup table: 16.9% → 1.2% (v1.20.0)
+
+Part 14 ended by saying 3% was not reachable with a smooth fit, and that the
+only route to it was embedding someone else's CCIR coefficient files — which
+would trade away the provenance that makes this project defensible.
+
+There was a third option, and it is better than both: **build our own table.**
+
+### Why a table beats a fit
+
+A smooth basis forces one global shape onto an ionosphere that has genuine
+local structure. Every extra coefficient buys less than the one before — which
+is exactly the plateau Part 14 hit at 7.4%. A table has no such ceiling. It
+stores what the ionosphere actually *does* at each node and interpolates
+between, so accuracy is governed by grid spacing, and spacing is something we
+control.
+
+It also drops a complication: the table does not need modip, or any clever
+coordinate. It just stores the answer.
+
+### Provenance is the point
+
+Nothing here is copied out of anyone else's data set. Every value is produced
+by `scripts/validation/build_fof2_table.py` from VOACAP 16.1207W, by a
+documented process, and can be regenerated and re-checked by anyone with the
+repository. The physical model is retained in full and still guards every
+lookup. The app remains something whose numbers can be explained and audited
+end to end — which was the thing embedding CCIR would have cost.
+
+### Building it
+
+35 latitudes × 24 longitudes × 12 months × 3 solar levels = **30,240 VOACAP
+runs**, about six minutes, since each run yields all 24 hours free. foF2 is
+isolated from path geometry by a near-vertical 200 km circuit with the small
+secant factor divided out. **725,760 cells, zero gaps, 1.35–18.89 MHz.**
+
+Stored as uint8 at 0.1 MHz per count — a byte covers 0–25.5 MHz — costing
+0.05 MHz of quantisation on a typical 8 MHz value.
+
+### Accuracy against an independent test set
+
+The 314 scattered Fibonacci-sphere sites from Part 14 are the test set. They do
+not sit on the regular grid, so every one of them exercises interpolation,
+which is the error that matters:
+
+| Grid | Cells | Size | Mean error | Median |
+|---|---|---|---|---|
+| **lat 5° / lon 15°** | 725,760 | **709 KB** | **1.16%** | **0.82%** |
+| lat 5° / lon 30° | 362,880 | 355 KB | 2.31% | 1.36% |
+| lat 10° / lon 30° | 186,624 | 182 KB | 2.89% | 1.76% |
+| lat 10° / lon 60° | 93,312 | 91 KB | 6.20% | 3.58% |
+| lat 25° / lon 60° | 36,288 | 35 KB | 8.46% | 5.52% |
+
+Quantising to uint8 costs 0.06 points: **1.16% → 1.22%**. Shipped at the full
+5°/15° grid, 709 KB (473 KB gzipped) beside the 5.7 MB of OCR the app already
+carries. Note that even the 182 KB grid clears 3%.
+
+### foF2 accuracy, by source
+
+| Source | Held-out error |
+|---|---|
+| Physical model (solar geometry + Chapman) | 16.9% |
+| Coefficient map (2111 terms, Part 14) | 7.4% |
+| **Lookup table** | **1.2%** |
+
+### End-to-end MUF
+
+| Study | Physical | Map | **Table** |
+|---|---|---|---|
+| Mid-latitude (288) | 12.1% | 9.8% | **5.4%** — 99% within 20%, 100% within 30% |
+| Six-latitude seasonal (3456) | 12.3% | 9.3% | **6.5%** |
+| Interhemispheric (576) | 12.4% | 8.0% | **5.6%**, bias −0.2% |
+
+Every seasonal site now falls between 5.4% and 7.7%; the 10° N tropics site,
+which started this project at 25.2%, is **5.4%**.
+
+### Where the remaining error now lives
+
+This is the useful part. foF2 is down to **1.2%**, but end-to-end MUF is
+5–6.5%. The gap is no longer the ionosphere — it is the **geometry**: the
+curved-earth takeoff angle, the secant law, the fixed 360 km virtual reflection
+height, and the per-bounce minimum. Those now dominate, and they are where any
+further work should go. That is a genuinely different problem from the one the
+last fourteen parts were solving.
+
+### Three sources, in order, with the physics still in charge
+
+`bounceFoF2` tries the table, then the coefficient map, then the physical
+model — and **every source above the physical model is checked against it**. If
+they disagree by more than a factor of 1.8, the physics wins. That is what
+stops a corrupted asset or a botched regeneration from putting a Marine on a
+frequency that cannot work.
+
+The table is a precached asset, not inlined JavaScript, so it costs nothing to
+parse and works offline through the service worker. Until it loads the app is
+fully functional on the map and the model, so the table only ever raises
+accuracy — it can never make the app unavailable.
+
+A test caught one real defect while writing this: the interpolator wraps the
+month axis, but the input guard rejected any month above 12, so the
+December-to-January seam was unreachable. The domain is now the continuous
+year [1, 13).
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
   fitted geography.** The physical model's honest global held-out figure is
   16.9%, not the ~12% quoted in Parts 6-13. Part 14 onward reports held-out
   sites only.
-- The coefficient map is a fit to VOACAP, not to the ionosphere. It inherits
-  every limitation VOACAP has — monthly medians, no storms, no sporadic-E —
-  and adds its own smoothing on top.
+- The lookup table and the coefficient map are both built from VOACAP, not
+  from the ionosphere. They inherit every limitation VOACAP has — monthly
+  medians, no storms, no sporadic-E. A 1.2% agreement with VOACAP is not a
+  1.2% agreement with tomorrow's sky.
+- **The geometry is now the dominant error.** foF2 is accurate to 1.2% but
+  end-to-end MUF is 5-6.5%; the difference is the takeoff-angle model, the
+  secant law and the fixed 360 km virtual height. Further accuracy work
+  belongs there, not in the ionospheric model.
+- The table is sampled at three solar levels (SSN 10 / 70 / 150) and
+  interpolated linearly between. Solar activity above 150 is clamped.
 - The map is clamped to |modip| <= 72 deg and SSN <= 165. Beyond those it
   returns its edge value rather than extrapolating, so extreme polar paths and
   exceptional solar maxima are served the nearest trained condition.
