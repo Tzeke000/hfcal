@@ -19,6 +19,7 @@ Geometry / M-factor rebuild: August 2026 (app v1.21.0)
 Transequatorial fix and uncertainty audit: August 2026 (app v1.22.0)
 Browser tests for the state the operator touches: August 2026 (app v1.23.0)
 High-latitude / polar measurement: August 2026 (app v1.24.0)
+LUF calibrated against VOACAP loss curves: August 2026 (app v1.25.0)
 
 ---
 
@@ -1527,6 +1528,119 @@ table wins when it disagrees violently with the model in either direction,
 that a value outside the physical band is still rejected, and that the map
 kept its chaperone. They live in their own file because they install a
 synthetic table, and module state is per-file under `node --test`.
+
+## Part 20 — The LUF stops being a guess (v1.25.0)
+
+Part 8 built the LUF's power dependence and said plainly that it could fit the
+*shape* but not the *level*. Part 13 tried again and closed the question: the
+LUF could not be calibrated against VOACAP. Every accuracy claim since has
+carried the same caveat, and the app itself says so on screen.
+
+Both attempts read VOACAP's **reliability** output. That output is censored.
+When no frequency in the grid meets the required reliability the condition
+simply disappears, and at low power most daylight hours disappear with it —
+only 4 of 318 conditions in Part 8 survived at every power. You cannot
+calibrate a level from a sample that deletes itself exactly where the level
+matters most.
+
+VOACAP prints another row that this project had never read: **LOSS** — total
+path loss in dB, at every frequency and every hour, whether or not the link
+closes. It is not censored, and absorption is the only strongly
+frequency-dependent term in it. Over one hop, below the MUF:
+
+> LOSS(f) = 20·log₁₀(f) + C + A/(f + f_H)²
+
+`C` collects everything frequency-independent — spreading, system losses,
+ground reflections — and is left free precisely so that no assumption about
+VOACAP's internal bookkeeping is needed. Only the *frequency shape* is used,
+and the shape is what carries `A`. Fitting that to 1,085 hourly loss curves
+(4 distances × 4 months × 3 solar levels × 24 hours) recovers the app's own
+absorption constant directly. `run_luf_absorption_study.py`.
+
+### Finding 1 — the law itself is right
+
+The residual of `A/(f+f_H)²` against VOACAP's loss curve is **0.91 dB median**
+over 8 frequencies per curve, against a 0.3 dB floor set by VOACAP printing
+LOSS to the nearest dB. 692 of 1,085 curves fit within 2 dB. The
+non-deviative absorption form the app has used since Part 8 is sound.
+
+The illumination exponent measured between 0.72 and 0.97 depending on how the
+fit is conditioned. The app's 0.75 — the Chapman value — sits inside that
+range and was **kept rather than tuned** to a noisier number.
+
+### Finding 2 — there was no obliquity term, and that was the big one
+
+Absorption depends on how long the ray spends inside the D layer. A ray does
+not reflect off the D layer; it *passes through* it on the way up to F2. An
+NVIS shot crosses it almost vertically. A 2,500 km hop leaves at 10° and
+crosses it at a shallow angle, travelling **4.4× further** through the
+absorbing region.
+
+**The app had no such term.** It charged a 2,500 km hop exactly what it
+charged a 300 km one. Measured against VOACAP:
+
+| hop | sec φ at D layer | A measured (noon) | A the app assumed |
+|---|---|---|---|
+| 300 km | 1.09 | 370 | 449 |
+| 800 km | 1.55 | 443 | 449 |
+| 1500 km | 2.53 | 455 | 449 |
+| 2500 km | 4.37 | 800 | 449 |
+
+The error ran the wrong way for an operator: the app **under-stated** the
+floor on exactly the long paths where there is least margin to spare.
+
+### Finding 3 — absorption does not vanish at night
+
+Measured night-time `A`: 19 at 300 km, 43 at 800, 104 at 1500, 215 at 2500.
+The app modelled night absorption as exactly zero and relied on a 2 MHz noise
+floor. At NVIS range that is right — 19 puts the LUF below 0.3 MHz, so the
+floor governs and nothing changes. At 2,500 km it is not: the residual alone
+puts the LUF at 3.4 MHz, well above the floor the app was quoting.
+
+### The model now shipping
+
+> A = sec(φ_D) · (A₀ + K · I^0.75) · hops,  A₀ = 48.0, K = 373.1
+
+fitted with the obliquity exponent constrained to 1 (the textbook result for
+non-deviative absorption) and the illumination exponent held at 0.75. Median
+error on A is 35%, which is ~16% on the LUF itself since it enters under a
+square root.
+
+| 20 W, one hop | app before | now |
+|---|---|---|
+| 300 km, noon | 5.50 | **5.58** |
+| 800 km, noon | 5.50 | **6.88** |
+| 1500 km, noon | 5.50 | **9.13** |
+| 2500 km, noon | 5.50 | **12.36** |
+| 300 km, night | 2.00 | **2.00** |
+| 2500 km, night | 2.00 | **3.38** |
+
+The historical 5.5 MHz anchor survives *where it was originally valid* — NVIS
+range, which is what the app implicitly assumed everywhere. Nothing changes
+for a short-path shot at manpack power. Everything changes for a long one.
+
+### What is still NOT measured
+
+- **The absolute level still rests on the margin anchor.** `A` is now
+  measured; converting `A` into a frequency requires the available power
+  margin, and the app's "10 dB at 20 W" is an anchor, not a measurement. So
+  the LUF's *structure* — frequency law, illumination, obliquity, hop count,
+  night residual — is measured, and its *scale* is not. That is a real
+  improvement on "never validated against anything", and it is not the same
+  as "validated".
+- **Low power is where that seam shows.** At 2 W the modelled margin falls to
+  zero and the formula divides by its own floor, so the LUF runs away. That is
+  pre-existing — the old model returned 20.0 MHz for 2 W at noon and the new
+  one returns 20.2 — but the night residual now exposes it at night too. It is
+  asserted in the tests as it behaves rather than tuned to look better.
+- **Still no auroral or polar-cap absorption**, as Part 19 said.
+- **Ground-reflection loss on multi-hop paths** was excluded from the
+  calibration by using one-hop paths only, so `hops` remains a linear
+  multiplier that has not been separately measured.
+
+Four tests in `src/freqAdvisor.test.js` pin the new behaviour: the short-path
+anchor, monotonic growth with hop length, the per-hop nature of the obliquity,
+and the night residual appearing on long paths but not short ones.
 
 ## Limitations
 

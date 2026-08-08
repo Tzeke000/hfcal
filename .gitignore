@@ -40,3 +40,12 @@ pnpm-debug.log*
 .parcel-cache/
 *.tsbuildinfo
 __pycache__/
+
+# Validation INTERMEDIATES — regenerable, and large enough to dominate the repo.
+# fof2-grid.json (47 MB) is the raw VOACAP sweep that build_fof2_table.py turns
+# into src/fof2Table's binary; mfactor-rows.json (39 MB) is the raw sweep behind
+# src/mfactorTable.js. Both are rebuilt by the scripts in scripts/validation/,
+# and the FITTED products they produce are committed. Every RESULT file — the
+# numbers this project's claims rest on — stays in the repo.
+docs/validation/fof2-grid.json
+docs/validation/mfactor-rows.json

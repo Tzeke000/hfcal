@@ -483,6 +483,45 @@ def mag_latitudes(points):
     return json.loads(out.stdout.strip())
 
 
+# ── LUF ──────────────────────────────────────────────────────────────────────
+# Mirrors estimateLUF in src/freqAdvisor.js. Kept here so the absorption study
+# can compare the app's A = K * I^0.75 * hops against VOACAP's own loss curve.
+LUF_K = 373.1
+LUF_A_NIGHT = 48.0
+LUF_D_HEIGHT_KM = 75.0
+LUF_F2_HEIGHT_KM = 360.0
+LUF_GYRO_MHZ = 1.2
+LUF_MARGIN_20W_DB = 10.0
+LUF_REF_WATTS = 20.0
+LUF_FLOOR_MHZ = 2.0
+
+
+def d_layer_obliquity(hop_dist_km):
+    """How much longer the ray's path through the D layer is than vertical."""
+    if not hop_dist_km or hop_dist_km <= 0:
+        return 1.0
+    theta = hop_dist_km / (2 * EARTH_R)
+    toa = math.atan2(math.cos(theta) - EARTH_R / (EARTH_R + LUF_F2_HEIGHT_KM),
+                     math.sin(theta))
+    if toa < 0:
+        toa = 0.0
+    c = EARTH_R * math.cos(toa) / (EARTH_R + LUF_D_HEIGHT_KM)
+    s = 1.0 - c * c
+    return 1.0 / math.sqrt(s) if s > 1e-9 else 1.0
+
+
+def estimate_luf(illum, watts, hops, dist_km=None):
+    i = max(0.0, min(1.0, illum))
+    p = watts if (watts and watts > 0) else LUF_REF_WATTS
+    n = hops if (hops and hops >= 1) else 1
+    margin = LUF_MARGIN_20W_DB + 10.0 * math.log10(p / LUF_REF_WATTS)
+    if margin < 1:
+        margin = 1.0
+    sec = d_layer_obliquity(dist_km / n) if (dist_km and dist_km > 0) else 1.0
+    a = sec * (LUF_A_NIGHT + LUF_K * (i ** 0.75)) * n
+    return max(LUF_FLOOR_MHZ, math.sqrt(a / margin) - LUF_GYRO_MHZ)
+
+
 # ── mirror check ─────────────────────────────────────────────────────────────
 def check():
     """Compare this mirror against src/freqAdvisor.js over a spread of inputs."""
@@ -500,9 +539,25 @@ def check():
     for c, v in zip(cases, js):
         mine = est_fof2(*c)
         worst = max(worst, abs(mine - v))
-    print('checked %d cases against src/freqAdvisor.js, max difference %.9f MHz'
+    lufc = []
+    for illum in (0.0, 0.1, 0.35, 0.7, 1.0):
+        for watts in (2, 5, 10, 20, 150):
+            for hops in (1, 2, 3):
+                for dist in (0, 300, 1500, 4000, 9000):
+                    lufc.append([illum, watts, hops, dist])
+    src2 = ("import('%s/src/freqAdvisor.js').then(f=>{const c=%s;"
+            "console.log(JSON.stringify(c.map(a=>f.estimateLUF(a[0],a[1],a[2],a[3]||undefined))))})"
+            % (ROOT, json.dumps(lufc)))
+    js2 = json.loads(subprocess.run(['node', '-e', src2], capture_output=True,
+                                    text=True, cwd=ROOT).stdout.strip())
+    worst_luf = max(abs(estimate_luf(c[0], c[1], c[2], c[3] or None) - v)
+                    for c, v in zip(lufc, js2))
+
+    print('checked %d foF2 cases against src/freqAdvisor.js, max difference %.9f MHz'
           % (len(cases), worst))
-    if worst > 1e-9:
+    print('checked %d LUF cases against src/freqAdvisor.js, max difference %.9f MHz'
+          % (len(lufc), worst_luf))
+    if worst > 1e-9 or worst_luf > 1e-9:
         print('MIRROR IS OUT OF DATE')
         return 1
     print('mirror matches')

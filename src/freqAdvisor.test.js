@@ -12,6 +12,7 @@ import {
   estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
   pathFoF2, minOrderCorrection, FOF2_POINT_SIGMA,
   FOT_RATIO, MUF_DAYS_IN_10, FOT_DAYS_IN_10,
+  dLayerObliquity,
   mapFoF2, bounceFoF2, MAP_FOF2_MIN, MAP_FOF2_MAX, MAP_MODIP_LIMIT,
   MAP_SANITY_FACTOR, MAP_HELDOUT_PCT,
   mFactorLookup, MFACTOR_MIN, MFACTOR_MAX, MFACTOR_ACCURACY_PCT,
@@ -525,12 +526,42 @@ test('assessFrequency: reports local solar time at both stations', function() {
 // Absorption physics: L = K*I^0.75/(f+fH)^2 per hop, closing while L stays
 // under a margin that grows as 10*log10(P). See docs/VALIDATION.md Part 8.
 
-test('estimateLUF: matches the historical 20 W calibration', function() {
-  // The pre-v1.15 model was LUF = 2.0 + 3.5*illumination at manpack power.
-  // 20 W is also the AN/PRC-160 GLOBAL setting. The new form must reproduce
-  // both anchors of the old curve exactly.
-  assert.ok(Math.abs(estimateLUF(1, 20, 1) - 5.5) < 0.02, 'full sun 20 W should be 5.5 MHz');
-  assert.equal(estimateLUF(0, 20, 1), LUF_FLOOR_MHZ, 'darkness should sit on the noise floor');
+test('estimateLUF: still matches the historical 20 W anchor on a short path', function() {
+  // The pre-v1.15 model was LUF = 2.0 + 3.5*illumination at manpack power, and
+  // that 5.5 MHz figure was always a SHORT-path number — the app had no
+  // obliquity term, so every path was implicitly treated as near-vertical.
+  // Part 20 added the obliquity that was missing; the anchor has to survive
+  // where it was originally valid, which is NVIS range.
+  assert.ok(Math.abs(estimateLUF(1, 20, 1, 300) - 5.5) < 0.15,
+    'full sun 20 W over 300 km should still be about 5.5 MHz, got ' + estimateLUF(1, 20, 1, 300));
+  assert.equal(estimateLUF(0, 20, 1, 300), LUF_FLOOR_MHZ,
+    'a dark NVIS path should sit on the noise floor');
+});
+
+test('estimateLUF: absorption grows with path length (Part 20 obliquity)', function() {
+  // The measurement that mattered: a ray to a distant target crosses the D
+  // layer at a shallow angle and spends far longer inside it. Before Part 20
+  // the app charged a 2500 km hop exactly what it charged an NVIS shot.
+  var prev = 0;
+  [300, 800, 1500, 2500, 3000].forEach(function(d) {
+    var v = estimateLUF(1, 20, 1, d);
+    assert.ok(v > prev, 'LUF must rise with hop length, broke at ' + d + ' km');
+    prev = v;
+  });
+  assert.ok(estimateLUF(1, 20, 1, 2500) > 2 * estimateLUF(1, 20, 1, 300),
+    'a 2500 km hop absorbs far more than an NVIS shot');
+  // And the obliquity is per HOP, not per path: splitting the same distance
+  // into more hops makes each crossing steeper.
+  assert.ok(dLayerObliquity(1250) < dLayerObliquity(2500));
+});
+
+test('estimateLUF: night absorption is real but small at NVIS range', function() {
+  // Part 20 measured a night residual — absorption does not vanish after dark.
+  // At NVIS range it is small enough that the 2 MHz noise floor still governs;
+  // on a long path it is not.
+  assert.equal(estimateLUF(0, 20, 1, 300), LUF_FLOOR_MHZ);
+  assert.ok(estimateLUF(0, 20, 1, 2500) > LUF_FLOOR_MHZ,
+    'a dark 2500 km path should NOT sit on the noise floor');
 });
 
 test('estimateLUF: more power lowers the LUF, and never raises it', function() {
@@ -561,15 +592,26 @@ test('estimateLUF: the PRC-160 preset ladder is monotonic and sane', function() 
   var ladder = [2, 5, 10, 20, 150];
   var prev = Infinity;
   ladder.forEach(function(w) {
-    var v = estimateLUF(1, w, 1);
+    var v = estimateLUF(1, w, 1, 300);
     assert.ok(v < prev, 'each step up the ladder must lower the LUF, broke at ' + w + ' W');
     assert.ok(isFinite(v) && v >= LUF_FLOOR_MHZ, 'bad LUF at ' + w + ' W: ' + v);
     prev = v;
   });
-  // At night the whole ladder collapses onto the noise floor — absorption is
-  // not what limits you in the dark, so power stops mattering.
+  // At night on a short path the ladder collapses onto the noise floor from
+  // 10 W up: the residual absorption Part 20 measured is too small to matter
+  // there. It does NOT collapse at 2 W, and that is the model showing its one
+  // uncalibrated seam rather than a physical claim — the 10 dB margin at 20 W
+  // is an anchor, so at 2 W the margin falls to zero and the formula divides
+  // by its own floor. Asserted as it behaves, and documented as a limit.
+  [10, 20, 150].forEach(function(w) {
+    assert.equal(estimateLUF(0, w, 1, 300), LUF_FLOOR_MHZ,
+      'a dark NVIS path at ' + w + ' W should sit on the noise floor');
+  });
+  var nightPrev = Infinity;
   ladder.forEach(function(w) {
-    assert.equal(estimateLUF(0, w, 1), LUF_FLOOR_MHZ, 'night LUF should not depend on power');
+    var v = estimateLUF(0, w, 1, 300);
+    assert.ok(v <= nightPrev, 'night LUF must not rise with power, broke at ' + w + ' W');
+    nightPrev = v;
   });
 });
 

@@ -35,17 +35,22 @@
 // 4. LUF (Lowest Usable Frequency) is set by D-layer absorption, which tracks
 //    daylight AND transmit power — unlike the MUF, which no amount of power
 //    will move. Non-deviative absorption per hop goes as
-//       L = K * I^0.75 / (f + fH)^2   dB
+//       L = sec(phi_D) * (A0 + K * I^0.75) / (f + fH)^2   dB
 //    and the link closes while L stays under the available power margin M,
 //    which grows as 10*log10(P). Solving L = M for f:
-//       LUF = sqrt( K * I^0.75 * hops / M(P) ) - fH
+//       LUF = sqrt( sec(phi_D) * (A0 + K*I^0.75) * hops / M(P) ) - fH
 //    So the LUF falls as the SQUARE ROOT of the margin: 20x the power buys
-//    roughly 40% off the LUF, not 20x. See estimateLUF below.
+//    roughly 40% off the LUF, not 20x.
+//    sec(phi_D) is the obliquity where the ray CROSSES the D layer on its way
+//    up to F2 — a 2500 km hop leaves at 10 degrees and spends 4.4x as long in
+//    the absorbing region as an NVIS shot does. Measured against VOACAP's own
+//    loss curves in Part 20; before that the app had no obliquity term at all
+//    and under-stated the floor on long paths.
 //    Note the different geometry from the MUF: the ray crosses the absorbing
 //    D layer (60-90 km) close to EACH STATION, not at the reflection point, so
 //    daylight here is averaged over the two endpoints rather than taken at the
 //    midpoint. On a path with one end in sun and one in darkness those are
-//    very different numbers. See docs/VALIDATION.md Parts 7 and 8.
+//    very different numbers. See docs/VALIDATION.md Parts 7, 8 and 20.
 //
 // 5. Season and latitude scale foF2 (see seasonLatitudeFactor below), taken
 //    where the signal REFLECTS. On a single hop that is the path midpoint. On
@@ -60,8 +65,10 @@
 // CCIR coefficient maps; there is no sporadic-E, no storm or absorption
 // events, no auroral-zone term, and no equatorial-anomaly structure, so low
 // latitudes remain the weakest case; the solar input is a single number; and
-// the LUF side has never been validated against anything. Treat the output as
-// "which way to lean", not as a guarantee. docs/VALIDATION.md.
+// the LUF's absorption law, illumination exponent and obliquity are now
+// measured (Part 20) but its absolute LEVEL still rests on the 10 dB margin
+// anchor at 20 W rather than on a measurement. Treat the output as "which way
+// to lean", not as a guarantee. docs/VALIDATION.md.
 //
 // This module is part of the original work of Cpl Angeles-Gonzalez,
 // Ezekiel S., USMC. Project signature: HFCALC-AG-EZK-USMC-v1
@@ -332,7 +339,33 @@ export function estimateFoF2(ssn, localHour, month, magLatDeg, latDeg) {
 // measured one. 20 W is both the historical anchor and the AN/PRC-160's
 // GLOBAL setting, so the reference case is a real radio on its top manpack
 // power rather than an arbitrary round number.
-export const LUF_K = 449;              // absorption constant, MHz^2 * dB
+// MEASURED IN PART 20. Parts 8 and 13 both concluded the LUF could not be
+// calibrated, because both were reading VOACAP's RELIABILITY output — which is
+// censored: when nothing in the frequency grid closes the link the condition
+// disappears entirely, and at low power most daylight hours disappear with it.
+// VOACAP also prints LOSS, at every frequency and every hour, closed link or
+// not. Fitting LOSS(f) = 20log10(f) + C + A/(f+fH)^2 across the band recovers
+// the absorption term A directly and uncensored. See run_luf_absorption_study.
+//
+// What that measurement found, in order of consequence:
+//
+//   1. THE LAW HOLDS. A/(f+fH)^2 fits VOACAP's loss curve to a median 0.9 dB.
+//   2. NO OBLIQUITY TERM. The app charged a 2500 km hop the same absorption as
+//      a 300 km one. A ray to a distant target crosses the D layer at a
+//      shallow angle and spends far longer inside it — absorption scales with
+//      the secant of that crossing angle, which reaches 4.4x at 2500 km. This
+//      was the single largest error in the LUF and it ran the wrong way: the
+//      app under-stated the floor on exactly the long paths where a Marine has
+//      least margin to spare.
+//   3. NO NIGHT RESIDUAL. Absorption does not go to zero after dark, and on a
+//      long path what is left is enough to matter.
+//
+// The exponent on illumination measured between 0.72 and 0.97 depending on how
+// the fit is conditioned; 0.75 (the Chapman value the app already used) sits
+// inside that range and is kept rather than tuned to a noisier number.
+export const LUF_K = 373.1;            // solar absorption constant, MHz^2 * dB
+export const LUF_A_NIGHT = 48.0;       // residual absorption with no sun at all
+export const LUF_D_HEIGHT_KM = 75;     // D layer — where the absorbing happens
 export const LUF_GYRO_MHZ = 1.2;       // electron gyrofrequency
 export const LUF_MARGIN_20W_DB = 10;   // link margin at the 20 W reference
 export const LUF_REF_WATTS = 20;       // reference transmit power
@@ -340,17 +373,41 @@ export const LUF_FLOOR_MHZ = 2.0;      // noise-limited floor; absorption is not
                                        // what stops you at 2 MHz on a dark path
 export const DEFAULT_TX_WATTS = 20;    // AN/PRC-160 GLOBAL — the manpack maximum
 
+// How much longer the ray's path through the D layer is than a vertical one.
+// The ray does not reflect off the D layer, it PASSES THROUGH it on the way up
+// to F2, so this is the obliquity where it crosses 75 km — not a secant taken
+// at the D layer as if it bounced there.
+export const LUF_F2_HEIGHT_KM = 360;    // where the ray is headed
+export function dLayerObliquity(hopDistKm) {
+  if (typeof hopDistKm !== 'number' || !isFinite(hopDistKm) || hopDistKm <= 0) return 1;
+  // Elevation angle at the ground for a hop of this length off F2 — the same
+  // closed-form geometry the MUF uses, without the 3° operational clamp.
+  var theta = hopDistKm / (2 * R_EARTH);
+  var toa = Math.atan2(Math.cos(theta) - R_EARTH / (R_EARTH + LUF_F2_HEIGHT_KM),
+                       Math.sin(theta));
+  if (!(toa > 0)) toa = 0;
+  var c = R_EARTH * Math.cos(toa) / (R_EARTH + LUF_D_HEIGHT_KM);
+  var s = 1 - c * c;
+  return s > 1e-9 ? 1 / Math.sqrt(s) : 1;
+}
+
 // Lowest usable frequency, MHz.
 //   illum    0-1 solar illumination where the ray crosses the D layer
 //   watts    transmit power; defaults to a 20 W manpack
 //   hops     number of hops — the ray crosses the absorbing layer once per hop
-export function estimateLUF(illum, watts, hops) {
+//   distKm   total path length, used for the obliquity of each crossing.
+//            Omitted, it falls back to a vertical crossing, which is only
+//            right for NVIS.
+export function estimateLUF(illum, watts, hops, distKm) {
   var i = (typeof illum === 'number' && isFinite(illum)) ? Math.max(0, Math.min(1, illum)) : 0;
   var p = (typeof watts === 'number' && isFinite(watts) && watts > 0) ? watts : DEFAULT_TX_WATTS;
   var n = (typeof hops === 'number' && isFinite(hops) && hops >= 1) ? hops : 1;
   var margin = LUF_MARGIN_20W_DB + 10 * (Math.log(p / LUF_REF_WATTS) / Math.LN10);
   if (margin < 1) margin = 1;
-  var absorbed = Math.sqrt(LUF_K * Math.pow(i, 0.75) * n / margin) - LUF_GYRO_MHZ;
+  var sec = (typeof distKm === 'number' && isFinite(distKm) && distKm > 0)
+    ? dLayerObliquity(distKm / n) : 1;
+  var A = sec * (LUF_A_NIGHT + LUF_K * Math.pow(i, 0.75)) * n;
+  var absorbed = Math.sqrt(A / margin) - LUF_GYRO_MHZ;
   return Math.max(LUF_FLOOR_MHZ, absorbed);
 }
 
@@ -642,7 +699,7 @@ export function assessFrequency(params) {
   }
   var muf = foF2 * m;
   var fot = FOT_RATIO * muf;
-  var luf = estimateLUF(daylight, params.txWatts, params.hops);
+  var luf = estimateLUF(daylight, params.txWatts, params.hops, params.distKm);
 
   var verdict = null;
   if (typeof params.freqMHz === 'number' && isFinite(params.freqMHz) && params.freqMHz > 0) {
