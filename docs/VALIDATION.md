@@ -12,6 +12,7 @@ Terminator and path-sampling study: August 2026 (app v1.14.1)
 LUF and transmit-power study: August 2026 (app v1.15.0)
 Per-bounce multi-hop study: August 2026 (app v1.16.0)
 Takeoff-angle and FOT studies: August 2026 (app v1.17.0)
+Fine FOT re-measurement and uncertainty audit: August 2026 (app v1.18.0)
 
 ---
 
@@ -856,6 +857,131 @@ shipped is the two directly-measured anchors: the UI now labels the MUF
 "only 5 days in 10" and the FOT "works 9 days in 10", because both of those are
 measured rather than modelled.
 
+## Part 12 — Re-measuring the FOT on a fine grid (v1.18.0)
+
+Part 11 changed the app's most operator-facing number on the strength of a
+coarse measurement. The grid ran 3, 5, 7, 9, 12, 15, 18, 21, 24, 27, 30 MHz —
+steps of 2–3 MHz — with the 90% crossing found by interpolating between two
+widely spaced points. On a 12 MHz MUF one grid interval is a quarter of the
+whole answer. That is not good enough for a number that decides what an
+operator transmits on, so it was measured again properly.
+
+**Method.** Two passes: a coarse pass finds each hour's MUF, then a second run
+places all eleven frequencies at fixed *fractions* of that hour's own MUF
+(0.55–1.00, 4.5% steps), one hour per deck. Resolution improves from ~20–25%
+of the MUF to 4.5%, and 173 of 176 samples give a clean crossing.
+
+| | Coarse (Part 11) | **Fine (Part 12)** |
+|---|---|---|
+| FOT ratio, median | 0.740 | **0.769** |
+| Reliability at 0.85 × MUF | 0.76 | **0.82** |
+
+**Convergence check.** Halving the step again — 2.0% fractions — moves the
+median from 0.7688 to 0.7700, a change of 0.001. It has converged.
+
+So the coarse figure was **biased low**, and **0.74 shipped briefly in
+v1.17.0**. The corrected value is **0.77**. The direction of Part 11's
+conclusion holds — the textbook 0.85 does aim too high — but the magnitude was
+overstated: it delivers about 82% of days, not 76%, so a plan built on it
+fails nearer one day in five than one in four.
+
+The ratio is strikingly flat with distance — 0.774 / 0.769 / 0.769 / 0.769 at
+500 / 1500 / 3000 / 6000 km — which is what makes a single constant
+defensible. It does vary with illumination (0.684 daylight, 0.780 night); that
+is not modelled and is stated in Limitations.
+
+## Part 13 — Auditing four remaining uncertainties (v1.18.0)
+
+Four things the model rested on that had never been checked.
+
+### The LUF cannot be calibrated from VOACAP — and here is why
+
+Part 8 shipped an explicitly uncalibrated LUF because its measurement was
+censored. Two further attempts were made.
+
+**Attempt 1: RPWRG.** VOACAP's required-power-gain row is defined at every
+frequency whether the link closes or not, so it should sidestep the censoring
+entirely. It does not: on long paths with isotropic antennas the curve never
+reaches the threshold either, and only 12% of samples were usable.
+
+**Attempt 2: fit the absorption law directly.** RPWRG's *shape* should be the
+absorption law, so fitting it against 1/(f+f_H)² should give the constant with
+nothing censored. Residual: **11.9 dB**. Repeating on the `LOSS` row with
+free-space spreading removed and restricted to frequencies VOACAP says
+propagate: **12.7 dB**. If the law held these would be 1–2 dB.
+
+Inspecting the rows shows why. Over 2 → 8 MHz on an 800 km July path, VOACAP's
+`LOSS` falls 225 → 131 dB, but its `N DBW` (atmospheric noise) falls
+−140 → −156 dB over the same span, and above the MUF `LOSS` turns around and
+climbs again as the mode stops existing. RPWRG bundles all three. **Neither
+row isolates absorption**, and the implied constant is not stable: 1295 for
+one hop against 2856 for two, when dividing out hop count should have made it
+flat.
+
+**Conclusion, stated precisely.** Of the LUF's three parts:
+
+- **The power dependence is measured and confirmed** — √margin, 42% predicted
+  against 43% measured going 20 W → 400 W (Part 8).
+- **The frequency, illumination and hop-count shape is assumed, not
+  confirmed.** It is the standard textbook form; VOACAP's loss structure does
+  not decompose cleanly enough to test it.
+- **The absolute level is anchored to the app's own historical 20 W figure**,
+  not measured.
+
+That is a sharper statement than "not validated", and it is now what the docs
+and the UI say.
+
+### The 3° takeoff clamp does not bias the MUF
+
+The MUF is computed from an angle floored at 3°, while VOACAP's own TANGLE
+runs down to 0.6°. Sweeping the floor:
+
+| Floor | 0° | 1° | 2° | **3°** | 4° |
+|---|---|---|---|---|---|
+| Weighted error | 13.19% | 13.19% | 13.19% | **13.20%** | 13.21% |
+
+Immaterial — 0.01 points. Left alone.
+
+### The 360 km F2 virtual height is essentially optimal
+
+| Height | 300 | 330 | **360** | 390 | 420 |
+|---|---|---|---|---|---|
+| Weighted error | 15.39% | 13.19% | **13.20%** | 14.54% | 16.54% |
+
+330 and 360 tie; either side degrades sharply. The Part 1 calibration holds.
+
+### The coefficients were stale, and refitting them was worth 0.9 points
+
+Every foF2 coefficient was fitted in Part 6, against a model that evaluated the
+path *midpoint* and used the *terrain-adjusted* takeoff angle. Per-bounce
+evaluation (Part 9) and the geometric-angle fix (Part 10) both changed what the
+fit sees. Refitting — with Part 6's seasonal-ordering constraint still held, so
+the winter anomaly cannot come out backwards:
+
+| | Old | **Refit** |
+|---|---|---|
+| Lag (h) | 1.20 | **1.05** |
+| Illumination exponent | 0.18 | **0.16** |
+| Night floor | 0.37 | **0.34** |
+| Amplitude base (MHz) | 6.7 | **7.1** |
+| Per SSN | 0.0245 | **0.023** |
+| Magnetic-latitude gradient | 0.095 | **0.13** |
+
+**All three data sets improve at once**, and the seasonal-ordering error
+improves too (4.13 → 3.85):
+
+| Data set | Before | **After** |
+|---|---|---|
+| Mid-latitude (288) | 12.4% | **12.1%** |
+| Six-latitude seasonal (3456) | 13.3% | **12.3%** |
+| Interhemispheric (576) | 12.8% | **12.4%** |
+| **Weighted** | **13.2%** | **12.3%** |
+| Interhemispheric signed bias | −2.4% | **−0.1%** |
+
+The 10 N tropics site — the worst in the whole suite — goes 18.9% → 16.2%. The
+model is now uniform to within 0.3 points across three very different regimes,
+and effectively unbiased on transequatorial paths.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -870,13 +996,14 @@ measured rather than modelled.
 - The evening bias that dominated v1.13.2 is largely resolved by the
   v1.14.0 solar-geometry rebuild (interhemispheric signed bias −7.1% → −0.8%),
   but night figures still carry more scatter than daytime ones.
-- **The LUF's absolute level is still not calibrated.** Part 8 measured and
-  adopted the *shape* of its power dependence, but the VOACAP data was too
-  censored to pin the level, which stays anchored to the app's own historical
-  20 W figure. Antenna gain and required SNR are folded into that anchor
-  rather than modelled — a better antenna or a less demanding mode both
-  effectively lower your real LUF below what is shown. It remains the softest
-  number the app reports.
+- **The LUF's absolute level is not calibrated, and Part 13 establishes it
+  cannot be from VOACAP.** Its power dependence is measured and confirmed; its
+  frequency/illumination/hop shape is the textbook form and remains *assumed*,
+  because VOACAP's loss rows bundle atmospheric noise and the MUF cliff with
+  absorption and do not decompose (11.9–12.7 dB residual). The level stays
+  anchored to the app's own historical 20 W figure, with antenna gain and
+  required SNR folded into that anchor rather than modelled. It is the softest
+  number the app reports and the UI now says so.
 - The LUF assumes SSB voice. CW and digital modes close at markedly lower
   SNR, so their real LUF is lower than displayed — the figure is conservative
   for them, not wrong.
@@ -892,7 +1019,7 @@ measured rather than modelled.
   are not entirely: neighbouring bounces share solar conditions, so the true
   correction is somewhat smaller than applied.
 - The FOT ratio is a single constant. It genuinely varies with illumination
-  (0.665 in daylight against 0.744 at night) and that variation is NOT
+  (0.684 in daylight against 0.780 at night) and that variation is NOT
   modelled, so the FOT is slightly optimistic in strong daylight.
 - The app reports no continuous reliability figure. A log-normal curve was
   fitted and rejected (Part 11) because it cannot match both the bulk and the

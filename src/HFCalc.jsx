@@ -1755,6 +1755,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                   <div style={cellLbl}>LUF</div>
                   <div style={cellVal}>{assess.luf.toFixed(1)}</div>
                   <div style={{ color: T.textDim, fontSize: '0.55rem' }}>{'MHz floor · ' + assess.txWatts + ' W'}</div>
+                  <div style={{ color: '#8a7a4a', fontSize: '0.5rem', marginTop: 1 }}>least certain</div>
                 </div>
                 <div style={{ ...cell, borderColor: T.accent }}>
                   <div style={{ ...cellLbl, color: T.accentText }}>FOT</div>
@@ -1868,7 +1869,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                 );
               })()}
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 6, lineHeight: 1.45 }}>
-                {'Aim at the FOT, not the MUF. The MUF is a MEDIAN — at it the path works only ' + MUF_DAYS_IN_10 + ' days in 10. Planning aid, \u00b113% vs VOACAP; your SOI/JCEOI assignment governs.'}
+                {'Aim at the FOT, not the MUF. The MUF is a MEDIAN — at it the path works only ' + MUF_DAYS_IN_10 + ' days in 10. MUF and FOT are measured against VOACAP (\u00b112%); the LUF is the one number here that is NOT — its power dependence is measured but its absolute level is an estimate, so treat it as a soft floor. Your SOI/JCEOI assignment governs.'}
               </div>
             </div>
           )}
@@ -2130,7 +2131,7 @@ function AboutBanner() {
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
               {feat('Transmit power', 'set it the way the radio is labelled — LOW/MED/HIGH/GLOBAL on a PRC-160, VRC for the 150 W amp, or type your actual wattage for the USER level. Power moves the LUF, the floor where the ionosphere absorbs you, and going from manpack GLOBAL to the 150 W amp buys roughly a third off it, not seven and a half times. It does NOT move the MUF: above that, more watts just follow the signal into space. Tells you outright when no frequency will close the path at the power you have.', 'f10c', 'offline')}
-              {feat('Aims at the right frequency', 'the FOT is defined as the frequency that works 9 days in 10, and the textbook shortcut for it \u2014 85% of the MUF \u2014 is simply wrong: measured against VOACAP it delivers 76%, so a link built on it fails one day in four instead of one in ten. This app uses the measured figure.', 'f10e', 'offline')}
+              {feat('Aims at the right frequency', 'the FOT is defined as the frequency that works 9 days in 10, and the textbook shortcut for it \u2014 85% of the MUF \u2014 aims too high: measured against VOACAP it delivers about 82%, so a link built on it fails nearer one day in five than one in ten. This app uses the measured figure, 77%.', 'f10e', 'offline')}
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
               {feat('Every bounce checked', 'a long shot does not touch the ionosphere once. The app works out where each hop reflects, what time of day and what season it is at each of those places, and caps the path at the weakest one — then shows you which bounce is the problem.', 'f10d', 'offline')}
               {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
@@ -2164,14 +2165,14 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 13% across 4320 samples — and about the same whether the path is regional, polar or crosses the equator.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 4320 samples — and uniform to within a third of a point whether the path is regional, polar or crosses the equator.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works only 76% of days.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  163 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  166 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

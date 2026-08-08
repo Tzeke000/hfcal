@@ -215,39 +215,39 @@
   "summary": {
     "CherryPt-Argentina": {
       "no_season": 14.4,
-      "bounces": 11.3,
-      "control_points": 12.1
+      "bounces": 11.8,
+      "control_points": 11.5
     },
     "Finland-SouthAfrica": {
       "no_season": 18.1,
-      "bounces": 15.1,
-      "control_points": 13.6
+      "bounces": 14.1,
+      "control_points": 12.0
     },
     "Japan-Australia": {
       "no_season": 19.1,
-      "bounces": 12.0,
-      "control_points": 15.5
+      "bounces": 11.8,
+      "control_points": 13.9
     },
     "Hawaii-NewZealand": {
       "no_season": 16.3,
-      "bounces": 10.2,
-      "control_points": 13.0
+      "bounces": 9.1,
+      "control_points": 11.3
     },
     "CherryPt-Brazil": {
       "no_season": 16.9,
-      "bounces": 13.3,
-      "control_points": 14.2
+      "bounces": 12.8,
+      "control_points": 12.6
     },
     "Panama-Peru": {
       "no_season": 23.9,
-      "bounces": 14.9,
-      "control_points": 14.9
+      "bounces": 14.8,
+      "control_points": 14.8
     }
   },
   "overall": {
     "no_season": 18.1,
-    "bounces": 12.8,
-    "control_points": 13.9
+    "bounces": 12.4,
+    "control_points": 12.7
   },
   "rows": [
     {
@@ -257,9 +257,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 13.9,
-      "app_mid": 18.38,
+      "app_mid": 19.01,
       "app_plain": 13.16,
-      "app_cp": 17.13
+      "app_cp": 17.72
     },
     {
       "path": "CherryPt-Argentina",
@@ -268,9 +268,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 13.4,
-      "app_mid": 17.16,
+      "app_mid": 17.64,
       "app_plain": 12.03,
-      "app_cp": 15.99
+      "app_cp": 16.44
     },
     {
       "path": "CherryPt-Argentina",
@@ -279,9 +279,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 13.4,
-      "app_mid": 16.11,
+      "app_mid": 16.46,
       "app_plain": 11.31,
-      "app_cp": 15.02
+      "app_cp": 15.35
     },
     {
       "path": "CherryPt-Argentina",
@@ -290,9 +290,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 13.6,
-      "app_mid": 15.23,
+      "app_mid": 15.48,
       "app_plain": 10.96,
-      "app_cp": 14.2
+      "app_cp": 14.43
     },
     {
       "path": "CherryPt-Argentina",
@@ -301,9 +301,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.3,
-      "app_mid": 14.47,
+      "app_mid": 14.63,
       "app_plain": 10.86,
-      "app_cp": 13.48
+      "app_cp": 13.63
     },
     {
       "path": "CherryPt-Argentina",
@@ -312,9 +312,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 15.2,
-      "app_mid": 13.8,
+      "app_mid": 13.88,
       "app_plain": 10.88,
-      "app_cp": 12.86
+      "app_cp": 12.94
     },
     {
       "path": "CherryPt-Argentina",
@@ -323,9 +323,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.7,
-      "app_mid": 13.24,
+      "app_mid": 13.26,
       "app_plain": 11.05,
-      "app_cp": 12.34
+      "app_cp": 12.36
     },
     {
       "path": "CherryPt-Argentina",
@@ -334,9 +334,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 11.7,
-      "app_mid": 12.75,
+      "app_mid": 12.72,
       "app_plain": 11.54,
-      "app_cp": 11.89
+      "app_cp": 11.86
     },
     {
       "path": "CherryPt-Argentina",
@@ -345,9 +345,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.5,
-      "app_mid": 12.33,
+      "app_mid": 12.25,
       "app_plain": 12.42,
-      "app_cp": 11.49
+      "app_cp": 11.42
     },
     {
       "path": "CherryPt-Argentina",
@@ -356,9 +356,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.7,
-      "app_mid": 11.97,
+      "app_mid": 11.86,
       "app_plain": 13.7,
-      "app_cp": 11.15
+      "app_cp": 11.05
     },
     {
       "path": "CherryPt-Argentina",
@@ -367,9 +367,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 14.3,
-      "app_mid": 11.65,
+      "app_mid": 11.51,
       "app_plain": 15.34,
-      "app_cp": 10.86
+      "app_cp": 10.73
     },
     {
       "path": "CherryPt-Argentina",
@@ -378,9 +378,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 19.9,
-      "app_mid": 19.18,
+      "app_mid": 20.72,
       "app_plain": 17.21,
-      "app_cp": 17.89
+      "app_cp": 19.33
     },
     {
       "path": "CherryPt-Argentina",
@@ -389,9 +389,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 25.0,
-      "app_mid": 22.17,
+      "app_mid": 23.81,
       "app_plain": 19.15,
-      "app_cp": 20.67
+      "app_cp": 22.2
     },
     {
       "path": "CherryPt-Argentina",
@@ -400,9 +400,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 22.7,
-      "app_mid": 23.95,
+      "app_mid": 25.61,
       "app_plain": 20.99,
-      "app_cp": 22.33
+      "app_cp": 23.87
     },
     {
       "path": "CherryPt-Argentina",
@@ -411,9 +411,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 21.4,
-      "app_mid": 25.16,
+      "app_mid": 26.79,
       "app_plain": 22.52,
-      "app_cp": 23.45
+      "app_cp": 24.97
     },
     {
       "path": "CherryPt-Argentina",
@@ -422,9 +422,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 24.9,
-      "app_mid": 25.96,
+      "app_mid": 27.57,
       "app_plain": 23.6,
-      "app_cp": 24.19
+      "app_cp": 25.69
     },
     {
       "path": "CherryPt-Argentina",
@@ -433,9 +433,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 24.1,
-      "app_mid": 26.41,
+      "app_mid": 27.99,
       "app_plain": 24.11,
-      "app_cp": 24.62
+      "app_cp": 26.09
     },
     {
       "path": "CherryPt-Argentina",
@@ -444,9 +444,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 23.6,
-      "app_mid": 26.55,
+      "app_mid": 28.09,
       "app_plain": 23.99,
-      "app_cp": 24.75
+      "app_cp": 26.18
     },
     {
       "path": "CherryPt-Argentina",
@@ -455,9 +455,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 23.5,
-      "app_mid": 26.38,
+      "app_mid": 27.87,
       "app_plain": 23.25,
-      "app_cp": 24.58
+      "app_cp": 25.97
     },
     {
       "path": "CherryPt-Argentina",
@@ -466,9 +466,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 23.6,
-      "app_mid": 25.87,
+      "app_mid": 27.31,
       "app_plain": 21.98,
-      "app_cp": 24.11
+      "app_cp": 25.45
     },
     {
       "path": "CherryPt-Argentina",
@@ -477,9 +477,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.8,
-      "app_mid": 24.99,
+      "app_mid": 26.36,
       "app_plain": 20.31,
-      "app_cp": 23.29
+      "app_cp": 24.57
     },
     {
       "path": "CherryPt-Argentina",
@@ -488,9 +488,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.3,
-      "app_mid": 23.57,
+      "app_mid": 24.82,
       "app_plain": 18.41,
-      "app_cp": 21.97
+      "app_cp": 23.14
     },
     {
       "path": "CherryPt-Argentina",
@@ -499,9 +499,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 18.5,
-      "app_mid": 21.53,
+      "app_mid": 22.54,
       "app_plain": 16.47,
-      "app_cp": 20.07
+      "app_cp": 21.01
     },
     {
       "path": "CherryPt-Argentina",
@@ -510,9 +510,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 14.4,
-      "app_mid": 19.79,
+      "app_mid": 20.58,
       "app_plain": 14.67,
-      "app_cp": 18.44
+      "app_cp": 19.19
     },
     {
       "path": "CherryPt-Argentina",
@@ -521,9 +521,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 19.4,
-      "app_mid": 22.62,
+      "app_mid": 22.93,
       "app_plain": 17.37,
-      "app_cp": 21.08
+      "app_cp": 21.38
     },
     {
       "path": "CherryPt-Argentina",
@@ -532,9 +532,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 17.0,
-      "app_mid": 21.12,
+      "app_mid": 21.29,
       "app_plain": 15.88,
-      "app_cp": 19.68
+      "app_cp": 19.84
     },
     {
       "path": "CherryPt-Argentina",
@@ -543,9 +543,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 16.1,
-      "app_mid": 19.83,
+      "app_mid": 19.87,
       "app_plain": 14.92,
-      "app_cp": 18.48
+      "app_cp": 18.52
     },
     {
       "path": "CherryPt-Argentina",
@@ -554,9 +554,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 16.4,
-      "app_mid": 18.75,
+      "app_mid": 18.68,
       "app_plain": 14.46,
-      "app_cp": 17.47
+      "app_cp": 17.41
     },
     {
       "path": "CherryPt-Argentina",
@@ -565,9 +565,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 16.7,
-      "app_mid": 17.8,
+      "app_mid": 17.65,
       "app_plain": 14.34,
-      "app_cp": 16.59
+      "app_cp": 16.45
     },
     {
       "path": "CherryPt-Argentina",
@@ -576,9 +576,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 16.3,
-      "app_mid": 16.98,
+      "app_mid": 16.75,
       "app_plain": 14.36,
-      "app_cp": 15.83
+      "app_cp": 15.61
     },
     {
       "path": "CherryPt-Argentina",
@@ -587,9 +587,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 15.3,
-      "app_mid": 16.3,
+      "app_mid": 16.01,
       "app_plain": 14.59,
-      "app_cp": 15.19
+      "app_cp": 14.92
     },
     {
       "path": "CherryPt-Argentina",
@@ -598,9 +598,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 14.0,
-      "app_mid": 15.7,
+      "app_mid": 15.35,
       "app_plain": 15.23,
-      "app_cp": 14.63
+      "app_cp": 14.31
     },
     {
       "path": "CherryPt-Argentina",
@@ -609,9 +609,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 12.6,
-      "app_mid": 15.17,
+      "app_mid": 14.78,
       "app_plain": 16.39,
-      "app_cp": 14.14
+      "app_cp": 13.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -620,9 +620,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 13.0,
-      "app_mid": 14.73,
+      "app_mid": 14.31,
       "app_plain": 18.08,
-      "app_cp": 13.73
+      "app_cp": 13.33
     },
     {
       "path": "CherryPt-Argentina",
@@ -631,9 +631,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 18.3,
-      "app_mid": 14.34,
+      "app_mid": 13.89,
       "app_plain": 20.24,
-      "app_cp": 13.36
+      "app_cp": 12.94
     },
     {
       "path": "CherryPt-Argentina",
@@ -642,9 +642,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.6,
-      "app_mid": 23.6,
+      "app_mid": 25.0,
       "app_plain": 22.71,
-      "app_cp": 22.01
+      "app_cp": 23.32
     },
     {
       "path": "CherryPt-Argentina",
@@ -653,9 +653,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 32.5,
-      "app_mid": 27.28,
+      "app_mid": 28.73,
       "app_plain": 25.28,
-      "app_cp": 25.43
+      "app_cp": 26.79
     },
     {
       "path": "CherryPt-Argentina",
@@ -664,9 +664,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 27.0,
-      "app_mid": 29.48,
+      "app_mid": 30.9,
       "app_plain": 27.7,
-      "app_cp": 27.48
+      "app_cp": 28.8
     },
     {
       "path": "CherryPt-Argentina",
@@ -675,9 +675,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.1,
-      "app_mid": 30.96,
+      "app_mid": 32.33,
       "app_plain": 29.73,
-      "app_cp": 28.86
+      "app_cp": 30.14
     },
     {
       "path": "CherryPt-Argentina",
@@ -686,9 +686,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 26.8,
-      "app_mid": 31.94,
+      "app_mid": 33.26,
       "app_plain": 31.15,
-      "app_cp": 29.77
+      "app_cp": 31.0
     },
     {
       "path": "CherryPt-Argentina",
@@ -697,9 +697,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 34.1,
-      "app_mid": 32.51,
+      "app_mid": 33.78,
       "app_plain": 31.82,
-      "app_cp": 30.3
+      "app_cp": 31.48
     },
     {
       "path": "CherryPt-Argentina",
@@ -708,9 +708,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 33.1,
-      "app_mid": 32.68,
+      "app_mid": 33.9,
       "app_plain": 31.66,
-      "app_cp": 30.45
+      "app_cp": 31.59
     },
     {
       "path": "CherryPt-Argentina",
@@ -719,9 +719,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 32.5,
-      "app_mid": 32.46,
+      "app_mid": 33.63,
       "app_plain": 30.69,
-      "app_cp": 30.25
+      "app_cp": 31.34
     },
     {
       "path": "CherryPt-Argentina",
@@ -730,9 +730,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 32.7,
-      "app_mid": 31.84,
+      "app_mid": 32.96,
       "app_plain": 29.01,
-      "app_cp": 29.67
+      "app_cp": 30.72
     },
     {
       "path": "CherryPt-Argentina",
@@ -741,9 +741,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 33.1,
-      "app_mid": 30.75,
+      "app_mid": 31.81,
       "app_plain": 26.8,
-      "app_cp": 28.66
+      "app_cp": 29.64
     },
     {
       "path": "CherryPt-Argentina",
@@ -752,9 +752,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 31.3,
-      "app_mid": 29.01,
+      "app_mid": 29.95,
       "app_plain": 24.3,
-      "app_cp": 27.04
+      "app_cp": 27.92
     },
     {
       "path": "CherryPt-Argentina",
@@ -763,9 +763,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 27.3,
-      "app_mid": 26.5,
+      "app_mid": 27.19,
       "app_plain": 21.74,
-      "app_cp": 24.7
+      "app_cp": 25.35
     },
     {
       "path": "CherryPt-Argentina",
@@ -774,9 +774,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 22.9,
-      "app_mid": 24.36,
+      "app_mid": 24.84,
       "app_plain": 19.36,
-      "app_cp": 22.7
+      "app_cp": 23.15
     },
     {
       "path": "CherryPt-Argentina",
@@ -785,9 +785,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 19.2,
-      "app_mid": 16.44,
+      "app_mid": 17.23,
       "app_plain": 13.16,
-      "app_cp": 15.32
+      "app_cp": 16.06
     },
     {
       "path": "CherryPt-Argentina",
@@ -796,9 +796,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 16.4,
-      "app_mid": 15.41,
+      "app_mid": 16.06,
       "app_plain": 12.03,
-      "app_cp": 14.37
+      "app_cp": 14.97
     },
     {
       "path": "CherryPt-Argentina",
@@ -807,9 +807,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 15.6,
-      "app_mid": 14.53,
+      "app_mid": 15.06,
       "app_plain": 11.31,
-      "app_cp": 13.54
+      "app_cp": 14.04
     },
     {
       "path": "CherryPt-Argentina",
@@ -818,9 +818,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 14.6,
-      "app_mid": 13.76,
+      "app_mid": 14.18,
       "app_plain": 10.96,
-      "app_cp": 12.83
+      "app_cp": 13.22
     },
     {
       "path": "CherryPt-Argentina",
@@ -829,9 +829,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.9,
-      "app_mid": 13.11,
+      "app_mid": 13.44,
       "app_plain": 10.86,
-      "app_cp": 12.22
+      "app_cp": 12.53
     },
     {
       "path": "CherryPt-Argentina",
@@ -840,9 +840,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.1,
-      "app_mid": 12.55,
+      "app_mid": 12.81,
       "app_plain": 10.88,
-      "app_cp": 11.7
+      "app_cp": 11.94
     },
     {
       "path": "CherryPt-Argentina",
@@ -851,9 +851,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.0,
-      "app_mid": 12.06,
+      "app_mid": 12.25,
       "app_plain": 11.05,
-      "app_cp": 11.24
+      "app_cp": 11.42
     },
     {
       "path": "CherryPt-Argentina",
@@ -862,9 +862,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 10.2,
-      "app_mid": 11.64,
+      "app_mid": 11.77,
       "app_plain": 11.54,
-      "app_cp": 10.85
+      "app_cp": 10.97
     },
     {
       "path": "CherryPt-Argentina",
@@ -873,7 +873,7 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 8.6,
-      "app_mid": 11.28,
+      "app_mid": 11.29,
       "app_plain": 12.42,
       "app_cp": 10.52
     },
@@ -884,9 +884,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 9.2,
-      "app_mid": 10.95,
+      "app_mid": 10.87,
       "app_plain": 13.7,
-      "app_cp": 10.2
+      "app_cp": 10.13
     },
     {
       "path": "CherryPt-Argentina",
@@ -895,9 +895,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 15.0,
-      "app_mid": 15.4,
+      "app_mid": 16.92,
       "app_plain": 15.34,
-      "app_cp": 14.36
+      "app_cp": 15.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -906,9 +906,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 17.3,
-      "app_mid": 19.23,
+      "app_mid": 20.62,
       "app_plain": 17.21,
-      "app_cp": 17.92
+      "app_cp": 19.22
     },
     {
       "path": "CherryPt-Argentina",
@@ -917,9 +917,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 18.3,
-      "app_mid": 20.47,
+      "app_mid": 21.82,
       "app_plain": 19.15,
-      "app_cp": 19.07
+      "app_cp": 20.34
     },
     {
       "path": "CherryPt-Argentina",
@@ -928,9 +928,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 20.4,
-      "app_mid": 21.16,
+      "app_mid": 22.47,
       "app_plain": 20.99,
-      "app_cp": 19.72
+      "app_cp": 20.94
     },
     {
       "path": "CherryPt-Argentina",
@@ -939,9 +939,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 20.2,
-      "app_mid": 21.57,
+      "app_mid": 22.83,
       "app_plain": 22.52,
-      "app_cp": 20.1
+      "app_cp": 21.28
     },
     {
       "path": "CherryPt-Argentina",
@@ -950,9 +950,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 21.7,
-      "app_mid": 21.8,
+      "app_mid": 23.03,
       "app_plain": 23.6,
-      "app_cp": 20.32
+      "app_cp": 21.47
     },
     {
       "path": "CherryPt-Argentina",
@@ -961,9 +961,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 23.9,
-      "app_mid": 21.91,
+      "app_mid": 23.13,
       "app_plain": 24.11,
-      "app_cp": 20.42
+      "app_cp": 21.56
     },
     {
       "path": "CherryPt-Argentina",
@@ -972,9 +972,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 23.8,
-      "app_mid": 21.95,
+      "app_mid": 23.15,
       "app_plain": 23.99,
-      "app_cp": 20.46
+      "app_cp": 21.58
     },
     {
       "path": "CherryPt-Argentina",
@@ -983,9 +983,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 24.6,
-      "app_mid": 21.91,
+      "app_mid": 23.1,
       "app_plain": 23.25,
-      "app_cp": 20.42
+      "app_cp": 21.53
     },
     {
       "path": "CherryPt-Argentina",
@@ -994,9 +994,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 25.0,
-      "app_mid": 21.78,
+      "app_mid": 22.97,
       "app_plain": 21.98,
-      "app_cp": 20.3
+      "app_cp": 21.41
     },
     {
       "path": "CherryPt-Argentina",
@@ -1005,9 +1005,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 24.6,
-      "app_mid": 21.53,
+      "app_mid": 22.72,
       "app_plain": 20.31,
-      "app_cp": 20.07
+      "app_cp": 21.18
     },
     {
       "path": "CherryPt-Argentina",
@@ -1016,9 +1016,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.8,
-      "app_mid": 20.7,
+      "app_mid": 22.11,
       "app_plain": 18.41,
-      "app_cp": 19.3
+      "app_cp": 20.62
     },
     {
       "path": "CherryPt-Argentina",
@@ -1027,9 +1027,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 20.8,
-      "app_mid": 19.05,
+      "app_mid": 20.22,
       "app_plain": 16.47,
-      "app_cp": 17.76
+      "app_cp": 18.85
     },
     {
       "path": "CherryPt-Argentina",
@@ -1038,9 +1038,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 19.7,
-      "app_mid": 17.65,
+      "app_mid": 18.62,
       "app_plain": 14.67,
-      "app_cp": 16.45
+      "app_cp": 17.36
     },
     {
       "path": "CherryPt-Argentina",
@@ -1049,9 +1049,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 26.2,
-      "app_mid": 20.23,
+      "app_mid": 20.79,
       "app_plain": 17.37,
-      "app_cp": 18.85
+      "app_cp": 19.38
     },
     {
       "path": "CherryPt-Argentina",
@@ -1060,9 +1060,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 26.0,
-      "app_mid": 18.97,
+      "app_mid": 19.38,
       "app_plain": 15.88,
-      "app_cp": 17.68
+      "app_cp": 18.07
     },
     {
       "path": "CherryPt-Argentina",
@@ -1071,9 +1071,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 25.2,
-      "app_mid": 17.88,
+      "app_mid": 18.17,
       "app_plain": 14.92,
-      "app_cp": 16.67
+      "app_cp": 16.94
     },
     {
       "path": "CherryPt-Argentina",
@@ -1082,9 +1082,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 24.2,
-      "app_mid": 16.94,
+      "app_mid": 17.11,
       "app_plain": 14.46,
-      "app_cp": 15.79
+      "app_cp": 15.95
     },
     {
       "path": "CherryPt-Argentina",
@@ -1093,9 +1093,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 23.1,
-      "app_mid": 16.13,
+      "app_mid": 16.22,
       "app_plain": 14.34,
-      "app_cp": 15.04
+      "app_cp": 15.12
     },
     {
       "path": "CherryPt-Argentina",
@@ -1104,9 +1104,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 21.6,
-      "app_mid": 15.44,
+      "app_mid": 15.46,
       "app_plain": 14.36,
-      "app_cp": 14.4
+      "app_cp": 14.41
     },
     {
       "path": "CherryPt-Argentina",
@@ -1115,9 +1115,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 19.5,
-      "app_mid": 14.84,
+      "app_mid": 14.79,
       "app_plain": 14.59,
-      "app_cp": 13.83
+      "app_cp": 13.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -1126,9 +1126,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 16.8,
-      "app_mid": 14.33,
+      "app_mid": 14.2,
       "app_plain": 15.23,
-      "app_cp": 13.36
+      "app_cp": 13.23
     },
     {
       "path": "CherryPt-Argentina",
@@ -1137,9 +1137,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 14.3,
-      "app_mid": 13.89,
+      "app_mid": 13.62,
       "app_plain": 16.39,
-      "app_cp": 12.94
+      "app_cp": 12.69
     },
     {
       "path": "CherryPt-Argentina",
@@ -1148,9 +1148,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 14.5,
-      "app_mid": 13.47,
+      "app_mid": 13.12,
       "app_plain": 18.08,
-      "app_cp": 12.55
+      "app_cp": 12.23
     },
     {
       "path": "CherryPt-Argentina",
@@ -1159,9 +1159,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 19.7,
-      "app_mid": 18.95,
+      "app_mid": 20.42,
       "app_plain": 20.24,
-      "app_cp": 17.67
+      "app_cp": 19.04
     },
     {
       "path": "CherryPt-Argentina",
@@ -1170,9 +1170,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 23.4,
-      "app_mid": 23.66,
+      "app_mid": 24.89,
       "app_plain": 22.71,
-      "app_cp": 22.05
+      "app_cp": 23.19
     },
     {
       "path": "CherryPt-Argentina",
@@ -1181,9 +1181,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 25.1,
-      "app_mid": 25.19,
+      "app_mid": 26.33,
       "app_plain": 25.28,
-      "app_cp": 23.47
+      "app_cp": 24.54
     },
     {
       "path": "CherryPt-Argentina",
@@ -1192,9 +1192,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 25.1,
-      "app_mid": 26.04,
+      "app_mid": 27.11,
       "app_plain": 27.7,
-      "app_cp": 24.27
+      "app_cp": 25.27
     },
     {
       "path": "CherryPt-Argentina",
@@ -1203,9 +1203,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.0,
-      "app_mid": 26.54,
+      "app_mid": 27.55,
       "app_plain": 29.73,
-      "app_cp": 24.74
+      "app_cp": 25.68
     },
     {
       "path": "CherryPt-Argentina",
@@ -1214,9 +1214,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 28.1,
-      "app_mid": 26.83,
+      "app_mid": 27.79,
       "app_plain": 31.15,
-      "app_cp": 25.0
+      "app_cp": 25.91
     },
     {
       "path": "CherryPt-Argentina",
@@ -1225,9 +1225,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 30.0,
-      "app_mid": 26.97,
+      "app_mid": 27.91,
       "app_plain": 31.82,
-      "app_cp": 25.14
+      "app_cp": 26.01
     },
     {
       "path": "CherryPt-Argentina",
@@ -1236,9 +1236,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 29.1,
-      "app_mid": 27.01,
+      "app_mid": 27.93,
       "app_plain": 31.66,
-      "app_cp": 25.17
+      "app_cp": 26.03
     },
     {
       "path": "CherryPt-Argentina",
@@ -1247,9 +1247,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 29.5,
-      "app_mid": 26.96,
+      "app_mid": 27.88,
       "app_plain": 30.69,
-      "app_cp": 25.13
+      "app_cp": 25.98
     },
     {
       "path": "CherryPt-Argentina",
@@ -1258,9 +1258,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 29.6,
-      "app_mid": 26.8,
+      "app_mid": 27.72,
       "app_plain": 29.01,
-      "app_cp": 24.98
+      "app_cp": 25.84
     },
     {
       "path": "CherryPt-Argentina",
@@ -1269,9 +1269,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 28.8,
-      "app_mid": 26.5,
+      "app_mid": 27.42,
       "app_plain": 26.8,
-      "app_cp": 24.7
+      "app_cp": 25.55
     },
     {
       "path": "CherryPt-Argentina",
@@ -1280,9 +1280,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.1,
-      "app_mid": 25.48,
+      "app_mid": 26.68,
       "app_plain": 24.3,
-      "app_cp": 23.75
+      "app_cp": 24.88
     },
     {
       "path": "CherryPt-Argentina",
@@ -1291,9 +1291,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 25.8,
-      "app_mid": 23.44,
+      "app_mid": 24.4,
       "app_plain": 21.74,
-      "app_cp": 21.85
+      "app_cp": 22.75
     },
     {
       "path": "CherryPt-Argentina",
@@ -1302,9 +1302,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 25.8,
-      "app_mid": 21.72,
+      "app_mid": 22.46,
       "app_plain": 19.36,
-      "app_cp": 20.25
+      "app_cp": 20.94
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1313,9 +1313,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 12.9,
-      "app_mid": 11.83,
+      "app_mid": 11.52,
       "app_plain": 10.98,
-      "app_cp": 10.87
+      "app_cp": 10.64
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1324,9 +1324,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 11.0,
-      "app_mid": 11.49,
+      "app_mid": 11.14,
       "app_plain": 11.52,
-      "app_cp": 10.54
+      "app_cp": 10.28
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1335,9 +1335,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 10.3,
-      "app_mid": 11.18,
+      "app_mid": 10.81,
       "app_plain": 12.46,
-      "app_cp": 10.26
+      "app_cp": 9.97
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1346,9 +1346,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 10.9,
-      "app_mid": 10.93,
+      "app_mid": 10.54,
       "app_plain": 13.8,
-      "app_cp": 10.01
+      "app_cp": 9.7
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1357,9 +1357,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.1,
-      "app_mid": 10.69,
+      "app_mid": 10.29,
       "app_plain": 15.47,
-      "app_cp": 9.79
+      "app_cp": 9.47
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1368,9 +1368,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 17.7,
-      "app_mid": 10.47,
+      "app_mid": 10.06,
       "app_plain": 17.34,
-      "app_cp": 14.21
+      "app_cp": 15.07
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1379,9 +1379,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 23.2,
-      "app_mid": 19.12,
+      "app_mid": 20.16,
       "app_plain": 19.26,
-      "app_cp": 17.89
+      "app_cp": 18.94
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1390,9 +1390,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 26.9,
-      "app_mid": 21.17,
+      "app_mid": 22.22,
       "app_plain": 21.03,
-      "app_cp": 19.67
+      "app_cp": 20.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1401,9 +1401,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 27.9,
-      "app_mid": 22.44,
+      "app_mid": 23.46,
       "app_plain": 22.48,
-      "app_cp": 20.77
+      "app_cp": 21.79
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1412,9 +1412,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 28.0,
-      "app_mid": 23.21,
+      "app_mid": 24.19,
       "app_plain": 23.46,
-      "app_cp": 21.45
+      "app_cp": 22.44
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1423,9 +1423,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 27.0,
-      "app_mid": 23.57,
+      "app_mid": 24.51,
       "app_plain": 23.85,
-      "app_cp": 21.77
+      "app_cp": 22.72
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1434,9 +1434,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 25.8,
-      "app_mid": 23.56,
+      "app_mid": 24.45,
       "app_plain": 23.62,
-      "app_cp": 21.76
+      "app_cp": 22.67
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1445,9 +1445,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 25.2,
-      "app_mid": 23.16,
+      "app_mid": 24.0,
       "app_plain": 22.79,
-      "app_cp": 21.41
+      "app_cp": 22.27
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1456,9 +1456,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 24.1,
-      "app_mid": 22.29,
+      "app_mid": 23.06,
       "app_plain": 21.46,
-      "app_cp": 20.66
+      "app_cp": 21.46
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1467,9 +1467,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 21.7,
-      "app_mid": 20.66,
+      "app_mid": 21.27,
       "app_plain": 19.75,
-      "app_cp": 19.29
+      "app_cp": 19.97
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1478,9 +1478,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 18.2,
-      "app_mid": 18.99,
+      "app_mid": 19.42,
       "app_plain": 17.85,
-      "app_cp": 17.65
+      "app_cp": 18.15
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1489,9 +1489,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 15.0,
-      "app_mid": 17.6,
+      "app_mid": 17.88,
       "app_plain": 15.95,
-      "app_cp": 16.32
+      "app_cp": 16.67
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1500,9 +1500,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 13.1,
-      "app_mid": 16.41,
+      "app_mid": 16.57,
       "app_plain": 14.21,
-      "app_cp": 15.23
+      "app_cp": 15.46
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1511,9 +1511,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 12.5,
-      "app_mid": 15.44,
+      "app_mid": 15.5,
       "app_plain": 12.78,
-      "app_cp": 14.28
+      "app_cp": 14.41
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1522,9 +1522,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.2,
-      "app_mid": 14.59,
+      "app_mid": 14.56,
       "app_plain": 11.73,
-      "app_cp": 13.47
+      "app_cp": 13.51
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1533,9 +1533,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 11.9,
-      "app_mid": 13.85,
+      "app_mid": 13.74,
       "app_plain": 11.09,
-      "app_cp": 12.79
+      "app_cp": 12.76
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1544,9 +1544,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 11.9,
-      "app_mid": 13.23,
+      "app_mid": 13.06,
       "app_plain": 10.8,
-      "app_cp": 12.2
+      "app_cp": 12.1
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1555,9 +1555,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 12.5,
-      "app_mid": 12.69,
+      "app_mid": 12.47,
       "app_plain": 10.73,
-      "app_cp": 11.68
+      "app_cp": 11.53
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1566,9 +1566,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 13.0,
-      "app_mid": 12.22,
+      "app_mid": 11.95,
       "app_plain": 10.76,
-      "app_cp": 11.25
+      "app_cp": 11.05
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1577,9 +1577,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 12.9,
-      "app_mid": 14.56,
+      "app_mid": 13.9,
       "app_plain": 14.49,
-      "app_cp": 13.38
+      "app_cp": 12.83
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1588,9 +1588,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 11.8,
-      "app_mid": 14.14,
+      "app_mid": 13.45,
       "app_plain": 15.21,
-      "app_cp": 12.97
+      "app_cp": 12.4
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1599,9 +1599,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 10.7,
-      "app_mid": 13.76,
+      "app_mid": 13.05,
       "app_plain": 16.45,
-      "app_cp": 12.63
+      "app_cp": 12.03
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1610,9 +1610,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 11.0,
-      "app_mid": 13.45,
+      "app_mid": 12.72,
       "app_plain": 18.21,
-      "app_cp": 12.32
+      "app_cp": 11.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1621,9 +1621,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 14.3,
-      "app_mid": 13.16,
+      "app_mid": 12.42,
       "app_plain": 20.41,
-      "app_cp": 12.05
+      "app_cp": 11.43
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1632,9 +1632,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 21.0,
-      "app_mid": 12.89,
+      "app_mid": 12.14,
       "app_plain": 22.88,
-      "app_cp": 17.49
+      "app_cp": 18.18
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1643,9 +1643,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 28.8,
-      "app_mid": 23.53,
+      "app_mid": 24.32,
       "app_plain": 25.41,
-      "app_cp": 22.02
+      "app_cp": 22.85
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1654,9 +1654,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 24.4,
-      "app_mid": 26.06,
+      "app_mid": 26.82,
       "app_plain": 27.76,
-      "app_cp": 24.2
+      "app_cp": 24.99
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1665,9 +1665,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.0,
-      "app_mid": 27.61,
+      "app_mid": 28.31,
       "app_plain": 29.67,
-      "app_cp": 25.56
+      "app_cp": 26.3
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1676,9 +1676,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 33.4,
-      "app_mid": 28.56,
+      "app_mid": 29.19,
       "app_plain": 30.96,
-      "app_cp": 26.39
+      "app_cp": 27.07
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1687,9 +1687,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 32.2,
-      "app_mid": 29.01,
+      "app_mid": 29.58,
       "app_plain": 31.48,
-      "app_cp": 26.79
+      "app_cp": 27.42
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1698,9 +1698,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 31.5,
-      "app_mid": 28.99,
+      "app_mid": 29.51,
       "app_plain": 31.17,
-      "app_cp": 26.78
+      "app_cp": 27.36
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1709,9 +1709,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 30.9,
-      "app_mid": 28.5,
+      "app_mid": 28.96,
       "app_plain": 30.08,
-      "app_cp": 26.35
+      "app_cp": 26.88
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1720,9 +1720,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 29.5,
-      "app_mid": 27.43,
+      "app_mid": 27.83,
       "app_plain": 28.32,
-      "app_cp": 25.42
+      "app_cp": 25.9
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1731,9 +1731,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.8,
-      "app_mid": 25.42,
+      "app_mid": 25.67,
       "app_plain": 26.07,
-      "app_cp": 23.74
+      "app_cp": 24.1
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1742,9 +1742,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 22.9,
-      "app_mid": 23.37,
+      "app_mid": 23.44,
       "app_plain": 23.56,
-      "app_cp": 21.73
+      "app_cp": 21.9
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1753,9 +1753,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 18.9,
-      "app_mid": 21.65,
+      "app_mid": 21.58,
       "app_plain": 21.05,
-      "app_cp": 20.09
+      "app_cp": 20.12
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1764,9 +1764,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.0,
-      "app_mid": 20.2,
+      "app_mid": 20.0,
       "app_plain": 18.76,
-      "app_cp": 18.74
+      "app_cp": 18.66
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1775,9 +1775,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 14.5,
-      "app_mid": 19.0,
+      "app_mid": 18.7,
       "app_plain": 16.87,
-      "app_cp": 17.58
+      "app_cp": 17.39
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1786,9 +1786,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 13.4,
-      "app_mid": 17.95,
+      "app_mid": 17.56,
       "app_plain": 15.49,
-      "app_cp": 16.58
+      "app_cp": 16.31
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1797,9 +1797,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 12.5,
-      "app_mid": 17.04,
+      "app_mid": 16.58,
       "app_plain": 14.64,
-      "app_cp": 15.74
+      "app_cp": 15.39
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1808,9 +1808,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 12.2,
-      "app_mid": 16.29,
+      "app_mid": 15.76,
       "app_plain": 14.25,
-      "app_cp": 15.01
+      "app_cp": 14.6
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1819,9 +1819,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 12.7,
-      "app_mid": 15.62,
+      "app_mid": 15.04,
       "app_plain": 14.17,
-      "app_cp": 14.38
+      "app_cp": 13.91
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1830,9 +1830,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 13.2,
-      "app_mid": 15.04,
+      "app_mid": 14.42,
       "app_plain": 14.21,
-      "app_cp": 13.84
+      "app_cp": 13.34
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1841,9 +1841,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 9.0,
-      "app_mid": 11.51,
+      "app_mid": 11.39,
       "app_plain": 10.98,
-      "app_cp": 10.54
+      "app_cp": 10.49
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1852,9 +1852,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 7.8,
-      "app_mid": 11.1,
+      "app_mid": 10.94,
       "app_plain": 11.52,
-      "app_cp": 10.16
+      "app_cp": 10.07
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1863,9 +1863,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 6.6,
-      "app_mid": 10.74,
+      "app_mid": 10.55,
       "app_plain": 12.46,
-      "app_cp": 9.84
+      "app_cp": 9.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1874,9 +1874,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 8.5,
-      "app_mid": 10.44,
+      "app_mid": 10.22,
       "app_plain": 13.8,
-      "app_cp": 9.56
+      "app_cp": 9.41
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1885,9 +1885,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.2,
-      "app_mid": 14.18,
+      "app_mid": 15.16,
       "app_plain": 15.47,
-      "app_cp": 13.68
+      "app_cp": 14.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1896,9 +1896,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 20.2,
-      "app_mid": 18.54,
+      "app_mid": 19.77,
       "app_plain": 17.34,
-      "app_cp": 17.12
+      "app_cp": 18.34
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1907,9 +1907,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 20.4,
-      "app_mid": 19.73,
+      "app_mid": 20.46,
       "app_plain": 19.26,
-      "app_cp": 18.05
+      "app_cp": 18.81
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1918,9 +1918,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 20.4,
-      "app_mid": 19.96,
+      "app_mid": 20.64,
       "app_plain": 21.03,
-      "app_cp": 18.29
+      "app_cp": 19.01
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1929,9 +1929,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 20.7,
-      "app_mid": 20.07,
+      "app_mid": 20.72,
       "app_plain": 22.48,
-      "app_cp": 18.42
+      "app_cp": 19.1
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1940,9 +1940,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 21.1,
-      "app_mid": 20.11,
+      "app_mid": 20.74,
       "app_plain": 23.46,
-      "app_cp": 18.47
+      "app_cp": 19.14
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1951,9 +1951,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 21.0,
-      "app_mid": 20.13,
+      "app_mid": 20.75,
       "app_plain": 23.85,
-      "app_cp": 18.49
+      "app_cp": 19.15
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1962,9 +1962,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 20.4,
-      "app_mid": 20.13,
+      "app_mid": 20.75,
       "app_plain": 23.62,
-      "app_cp": 18.49
+      "app_cp": 19.15
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1973,9 +1973,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 19.9,
-      "app_mid": 20.11,
+      "app_mid": 20.74,
       "app_plain": 22.79,
-      "app_cp": 18.47
+      "app_cp": 19.13
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1984,9 +1984,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 19.6,
-      "app_mid": 20.07,
+      "app_mid": 20.7,
       "app_plain": 21.46,
-      "app_cp": 18.42
+      "app_cp": 19.08
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1995,9 +1995,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 19.7,
-      "app_mid": 19.95,
+      "app_mid": 20.6,
       "app_plain": 19.75,
-      "app_cp": 18.29
+      "app_cp": 18.97
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2006,9 +2006,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 19.9,
-      "app_mid": 19.72,
+      "app_mid": 20.37,
       "app_plain": 17.85,
-      "app_cp": 18.05
+      "app_cp": 18.72
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2017,9 +2017,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 19.8,
-      "app_mid": 18.43,
+      "app_mid": 19.03,
       "app_plain": 15.95,
-      "app_cp": 16.95
+      "app_cp": 17.59
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2028,9 +2028,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 17.5,
-      "app_mid": 16.97,
+      "app_mid": 17.42,
       "app_plain": 14.21,
-      "app_cp": 15.62
+      "app_cp": 16.13
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2039,9 +2039,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 14.5,
-      "app_mid": 15.79,
+      "app_mid": 16.12,
       "app_plain": 12.78,
-      "app_cp": 14.52
+      "app_cp": 14.9
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2050,9 +2050,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.1,
-      "app_mid": 14.78,
+      "app_mid": 15.0,
       "app_plain": 11.73,
-      "app_cp": 13.57
+      "app_cp": 13.84
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2061,9 +2061,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 10.8,
-      "app_mid": 13.9,
+      "app_mid": 14.02,
       "app_plain": 11.09,
-      "app_cp": 12.77
+      "app_cp": 12.96
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2072,9 +2072,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 9.9,
-      "app_mid": 13.17,
+      "app_mid": 13.22,
       "app_plain": 10.8,
-      "app_cp": 12.09
+      "app_cp": 12.19
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2083,9 +2083,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 9.2,
-      "app_mid": 12.53,
+      "app_mid": 12.51,
       "app_plain": 10.73,
-      "app_cp": 11.49
+      "app_cp": 11.53
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2094,9 +2094,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 9.1,
-      "app_mid": 11.97,
+      "app_mid": 11.9,
       "app_plain": 10.76,
-      "app_cp": 10.98
+      "app_cp": 10.97
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2105,9 +2105,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 11.0,
-      "app_mid": 14.16,
+      "app_mid": 13.74,
       "app_plain": 14.49,
-      "app_cp": 12.98
+      "app_cp": 12.66
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2116,9 +2116,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 9.5,
-      "app_mid": 13.66,
+      "app_mid": 13.2,
       "app_plain": 15.21,
-      "app_cp": 12.51
+      "app_cp": 12.15
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2127,9 +2127,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 7.7,
-      "app_mid": 13.22,
+      "app_mid": 12.73,
       "app_plain": 16.45,
-      "app_cp": 12.11
+      "app_cp": 11.72
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2138,9 +2138,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 9.6,
-      "app_mid": 12.85,
+      "app_mid": 12.34,
       "app_plain": 18.21,
-      "app_cp": 11.76
+      "app_cp": 11.35
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2149,9 +2149,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 17.1,
-      "app_mid": 17.45,
+      "app_mid": 18.29,
       "app_plain": 20.41,
-      "app_cp": 16.84
+      "app_cp": 17.75
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2160,9 +2160,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 23.1,
-      "app_mid": 22.82,
+      "app_mid": 23.86,
       "app_plain": 22.88,
-      "app_cp": 21.07
+      "app_cp": 22.12
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2171,9 +2171,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 23.4,
-      "app_mid": 24.28,
+      "app_mid": 24.68,
       "app_plain": 25.41,
-      "app_cp": 22.22
+      "app_cp": 22.7
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2182,9 +2182,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 23.6,
-      "app_mid": 24.56,
+      "app_mid": 24.91,
       "app_plain": 27.76,
-      "app_cp": 22.51
+      "app_cp": 22.94
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2193,9 +2193,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 24.1,
-      "app_mid": 24.69,
+      "app_mid": 25.0,
       "app_plain": 29.67,
-      "app_cp": 22.67
+      "app_cp": 23.05
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2204,9 +2204,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 24.7,
-      "app_mid": 24.75,
+      "app_mid": 25.03,
       "app_plain": 30.96,
-      "app_cp": 22.73
+      "app_cp": 23.1
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2215,9 +2215,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 24.7,
-      "app_mid": 24.77,
+      "app_mid": 25.04,
       "app_plain": 31.48,
-      "app_cp": 22.76
+      "app_cp": 23.11
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2226,9 +2226,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.1,
-      "app_mid": 24.77,
+      "app_mid": 25.04,
       "app_plain": 31.17,
-      "app_cp": 22.76
+      "app_cp": 23.11
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2237,9 +2237,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 23.4,
-      "app_mid": 24.75,
+      "app_mid": 25.03,
       "app_plain": 30.08,
-      "app_cp": 22.74
+      "app_cp": 23.09
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2248,9 +2248,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 23.1,
-      "app_mid": 24.69,
+      "app_mid": 24.98,
       "app_plain": 28.32,
-      "app_cp": 22.67
+      "app_cp": 23.03
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2259,9 +2259,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 23.5,
-      "app_mid": 24.56,
+      "app_mid": 24.86,
       "app_plain": 26.07,
-      "app_cp": 22.51
+      "app_cp": 22.89
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2270,9 +2270,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 24.1,
-      "app_mid": 24.27,
+      "app_mid": 24.58,
       "app_plain": 23.56,
-      "app_cp": 22.21
+      "app_cp": 22.59
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2281,9 +2281,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 24.8,
-      "app_mid": 22.68,
+      "app_mid": 22.97,
       "app_plain": 21.05,
-      "app_cp": 20.86
+      "app_cp": 21.23
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2292,9 +2292,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 23.9,
-      "app_mid": 20.89,
+      "app_mid": 21.02,
       "app_plain": 18.76,
-      "app_cp": 19.23
+      "app_cp": 19.46
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2303,9 +2303,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 19.8,
-      "app_mid": 19.43,
+      "app_mid": 19.45,
       "app_plain": 16.87,
-      "app_cp": 17.87
+      "app_cp": 17.98
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2314,9 +2314,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 17.0,
-      "app_mid": 18.19,
+      "app_mid": 18.1,
       "app_plain": 15.49,
-      "app_cp": 16.7
+      "app_cp": 16.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2325,9 +2325,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 15.6,
-      "app_mid": 17.11,
+      "app_mid": 16.92,
       "app_plain": 14.64,
-      "app_cp": 15.72
+      "app_cp": 15.63
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2336,9 +2336,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 13.8,
-      "app_mid": 16.2,
+      "app_mid": 15.95,
       "app_plain": 14.25,
-      "app_cp": 14.87
+      "app_cp": 14.71
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2347,9 +2347,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 11.8,
-      "app_mid": 15.42,
+      "app_mid": 15.1,
       "app_plain": 14.17,
-      "app_cp": 14.14
+      "app_cp": 13.91
     },
     {
       "path": "Finland-SouthAfrica",
@@ -2358,9 +2358,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 11.0,
-      "app_mid": 14.73,
+      "app_mid": 14.36,
       "app_plain": 14.21,
-      "app_cp": 13.51
+      "app_cp": 13.24
     },
     {
       "path": "Japan-Australia",
@@ -2369,9 +2369,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 26.7,
-      "app_mid": 24.34,
+      "app_mid": 25.69,
       "app_plain": 22.79,
-      "app_cp": 22.73
+      "app_cp": 24.0
     },
     {
       "path": "Japan-Australia",
@@ -2380,9 +2380,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 28.0,
-      "app_mid": 24.5,
+      "app_mid": 25.83,
       "app_plain": 23.76,
-      "app_cp": 22.88
+      "app_cp": 24.13
     },
     {
       "path": "Japan-Australia",
@@ -2391,9 +2391,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 28.6,
-      "app_mid": 24.57,
+      "app_mid": 25.87,
       "app_plain": 24.14,
-      "app_cp": 22.94
+      "app_cp": 24.17
     },
     {
       "path": "Japan-Australia",
@@ -2402,9 +2402,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 30.5,
-      "app_mid": 24.55,
+      "app_mid": 25.85,
       "app_plain": 23.88,
-      "app_cp": 22.92
+      "app_cp": 24.15
     },
     {
       "path": "Japan-Australia",
@@ -2413,9 +2413,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 32.5,
-      "app_mid": 24.45,
+      "app_mid": 25.75,
       "app_plain": 23.03,
-      "app_cp": 22.83
+      "app_cp": 24.05
     },
     {
       "path": "Japan-Australia",
@@ -2424,9 +2424,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 32.8,
-      "app_mid": 24.23,
+      "app_mid": 25.53,
       "app_plain": 21.66,
-      "app_cp": 22.62
+      "app_cp": 23.84
     },
     {
       "path": "Japan-Australia",
@@ -2435,9 +2435,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 29.0,
-      "app_mid": 23.83,
+      "app_mid": 25.11,
       "app_plain": 19.92,
-      "app_cp": 22.24
+      "app_cp": 23.45
     },
     {
       "path": "Japan-Australia",
@@ -2446,9 +2446,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 25.7,
-      "app_mid": 23.07,
+      "app_mid": 24.31,
       "app_plain": 18.0,
-      "app_cp": 21.53
+      "app_cp": 22.7
     },
     {
       "path": "Japan-Australia",
@@ -2457,9 +2457,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 23.6,
-      "app_mid": 21.65,
+      "app_mid": 22.7,
       "app_plain": 16.08,
-      "app_cp": 20.19
+      "app_cp": 21.18
     },
     {
       "path": "Japan-Australia",
@@ -2468,9 +2468,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 23.9,
-      "app_mid": 20.08,
+      "app_mid": 20.93,
       "app_plain": 14.33,
-      "app_cp": 18.74
+      "app_cp": 19.53
     },
     {
       "path": "Japan-Australia",
@@ -2479,9 +2479,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 22.0,
-      "app_mid": 18.68,
+      "app_mid": 19.32,
       "app_plain": 12.89,
-      "app_cp": 17.42
+      "app_cp": 18.02
     },
     {
       "path": "Japan-Australia",
@@ -2490,9 +2490,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 20.6,
-      "app_mid": 17.46,
+      "app_mid": 17.95,
       "app_plain": 11.85,
-      "app_cp": 16.28
+      "app_cp": 16.74
     },
     {
       "path": "Japan-Australia",
@@ -2501,9 +2501,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 19.0,
-      "app_mid": 16.39,
+      "app_mid": 16.74,
       "app_plain": 11.21,
-      "app_cp": 15.28
+      "app_cp": 15.62
     },
     {
       "path": "Japan-Australia",
@@ -2512,9 +2512,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 17.1,
-      "app_mid": 15.45,
+      "app_mid": 15.69,
       "app_plain": 10.92,
-      "app_cp": 14.41
+      "app_cp": 14.64
     },
     {
       "path": "Japan-Australia",
@@ -2523,9 +2523,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 15.6,
-      "app_mid": 14.66,
+      "app_mid": 14.81,
       "app_plain": 10.86,
-      "app_cp": 13.67
+      "app_cp": 13.82
     },
     {
       "path": "Japan-Australia",
@@ -2534,9 +2534,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 14.8,
-      "app_mid": 13.97,
+      "app_mid": 14.04,
       "app_plain": 10.9,
-      "app_cp": 13.03
+      "app_cp": 13.1
     },
     {
       "path": "Japan-Australia",
@@ -2547,7 +2547,7 @@
       "voacap_muf": 13.5,
       "app_mid": 13.37,
       "app_plain": 11.13,
-      "app_cp": 12.47
+      "app_cp": 12.48
     },
     {
       "path": "Japan-Australia",
@@ -2556,9 +2556,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 9.6,
-      "app_mid": 12.86,
+      "app_mid": 12.82,
       "app_plain": 11.69,
-      "app_cp": 12.0
+      "app_cp": 11.96
     },
     {
       "path": "Japan-Australia",
@@ -2567,9 +2567,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 7.3,
-      "app_mid": 12.42,
+      "app_mid": 12.33,
       "app_plain": 12.65,
-      "app_cp": 11.59
+      "app_cp": 11.51
     },
     {
       "path": "Japan-Australia",
@@ -2578,9 +2578,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 9.2,
-      "app_mid": 12.37,
+      "app_mid": 12.42,
       "app_plain": 14.02,
-      "app_cp": 11.54
+      "app_cp": 11.59
     },
     {
       "path": "Japan-Australia",
@@ -2589,9 +2589,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 14.5,
-      "app_mid": 12.05,
+      "app_mid": 12.07,
       "app_plain": 15.71,
-      "app_cp": 11.24
+      "app_cp": 11.26
     },
     {
       "path": "Japan-Australia",
@@ -2600,9 +2600,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 21.6,
-      "app_mid": 21.07,
+      "app_mid": 23.06,
       "app_plain": 17.61,
-      "app_cp": 19.71
+      "app_cp": 21.58
     },
     {
       "path": "Japan-Australia",
@@ -2611,9 +2611,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 23.2,
-      "app_mid": 23.49,
+      "app_mid": 24.94,
       "app_plain": 19.55,
-      "app_cp": 21.92
+      "app_cp": 23.28
     },
     {
       "path": "Japan-Australia",
@@ -2622,9 +2622,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 24.1,
-      "app_mid": 24.03,
+      "app_mid": 25.43,
       "app_plain": 21.34,
-      "app_cp": 22.43
+      "app_cp": 23.75
     },
     {
       "path": "Japan-Australia",
@@ -2633,9 +2633,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 30.4,
-      "app_mid": 29.96,
+      "app_mid": 31.0,
       "app_plain": 30.08,
-      "app_cp": 27.97
+      "app_cp": 28.96
     },
     {
       "path": "Japan-Australia",
@@ -2644,9 +2644,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 33.8,
-      "app_mid": 30.15,
+      "app_mid": 31.17,
       "app_plain": 31.36,
-      "app_cp": 28.16
+      "app_cp": 29.11
     },
     {
       "path": "Japan-Australia",
@@ -2655,9 +2655,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.0,
-      "app_mid": 30.23,
+      "app_mid": 31.22,
       "app_plain": 31.86,
-      "app_cp": 28.23
+      "app_cp": 29.17
     },
     {
       "path": "Japan-Australia",
@@ -2666,9 +2666,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 35.0,
-      "app_mid": 30.21,
+      "app_mid": 31.19,
       "app_plain": 31.52,
-      "app_cp": 28.21
+      "app_cp": 29.14
     },
     {
       "path": "Japan-Australia",
@@ -2677,9 +2677,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 38.4,
-      "app_mid": 30.09,
+      "app_mid": 31.07,
       "app_plain": 30.39,
-      "app_cp": 28.09
+      "app_cp": 29.02
     },
     {
       "path": "Japan-Australia",
@@ -2688,9 +2688,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 36.2,
-      "app_mid": 29.82,
+      "app_mid": 30.81,
       "app_plain": 28.58,
-      "app_cp": 27.84
+      "app_cp": 28.77
     },
     {
       "path": "Japan-Australia",
@@ -2699,9 +2699,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 32.6,
-      "app_mid": 29.32,
+      "app_mid": 30.3,
       "app_plain": 26.29,
-      "app_cp": 27.37
+      "app_cp": 28.3
     },
     {
       "path": "Japan-Australia",
@@ -2710,9 +2710,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 29.3,
-      "app_mid": 28.4,
+      "app_mid": 29.34,
       "app_plain": 23.76,
-      "app_cp": 26.5
+      "app_cp": 27.39
     },
     {
       "path": "Japan-Australia",
@@ -2721,9 +2721,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 27.7,
-      "app_mid": 26.64,
+      "app_mid": 27.4,
       "app_plain": 21.22,
-      "app_cp": 24.85
+      "app_cp": 25.56
     },
     {
       "path": "Japan-Australia",
@@ -2732,9 +2732,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 27.3,
-      "app_mid": 24.71,
+      "app_mid": 25.25,
       "app_plain": 18.91,
-      "app_cp": 23.07
+      "app_cp": 23.56
     },
     {
       "path": "Japan-Australia",
@@ -2743,9 +2743,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 27.7,
-      "app_mid": 22.99,
+      "app_mid": 23.31,
       "app_plain": 17.01,
-      "app_cp": 21.44
+      "app_cp": 21.74
     },
     {
       "path": "Japan-Australia",
@@ -2754,9 +2754,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 28.8,
-      "app_mid": 21.49,
+      "app_mid": 21.65,
       "app_plain": 15.63,
-      "app_cp": 20.04
+      "app_cp": 20.2
     },
     {
       "path": "Japan-Australia",
@@ -2765,9 +2765,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 29.9,
-      "app_mid": 20.17,
+      "app_mid": 20.2,
       "app_plain": 14.79,
-      "app_cp": 18.81
+      "app_cp": 18.85
     },
     {
       "path": "Japan-Australia",
@@ -2776,9 +2776,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 29.2,
-      "app_mid": 19.01,
+      "app_mid": 18.93,
       "app_plain": 14.41,
-      "app_cp": 17.73
+      "app_cp": 17.66
     },
     {
       "path": "Japan-Australia",
@@ -2787,9 +2787,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 25.7,
-      "app_mid": 18.04,
+      "app_mid": 17.87,
       "app_plain": 14.34,
-      "app_cp": 16.83
+      "app_cp": 16.67
     },
     {
       "path": "Japan-Australia",
@@ -2798,9 +2798,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 22.6,
-      "app_mid": 17.19,
+      "app_mid": 16.94,
       "app_plain": 14.38,
-      "app_cp": 16.03
+      "app_cp": 15.81
     },
     {
       "path": "Japan-Australia",
@@ -2809,9 +2809,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 19.8,
-      "app_mid": 16.45,
+      "app_mid": 16.14,
       "app_plain": 14.68,
-      "app_cp": 15.34
+      "app_cp": 15.06
     },
     {
       "path": "Japan-Australia",
@@ -2820,9 +2820,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.0,
-      "app_mid": 15.83,
+      "app_mid": 15.47,
       "app_plain": 15.42,
-      "app_cp": 14.77
+      "app_cp": 14.43
     },
     {
       "path": "Japan-Australia",
@@ -2831,9 +2831,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 12.2,
-      "app_mid": 15.29,
+      "app_mid": 14.88,
       "app_plain": 16.7,
-      "app_cp": 14.26
+      "app_cp": 13.89
     },
     {
       "path": "Japan-Australia",
@@ -2842,9 +2842,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 12.2,
-      "app_mid": 15.22,
+      "app_mid": 14.99,
       "app_plain": 18.5,
-      "app_cp": 14.2
+      "app_cp": 13.99
     },
     {
       "path": "Japan-Australia",
@@ -2853,9 +2853,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 18.5,
-      "app_mid": 14.83,
+      "app_mid": 14.56,
       "app_plain": 20.74,
-      "app_cp": 13.83
+      "app_cp": 13.59
     },
     {
       "path": "Japan-Australia",
@@ -2864,9 +2864,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 26.3,
-      "app_mid": 25.93,
+      "app_mid": 27.83,
       "app_plain": 23.25,
-      "app_cp": 24.26
+      "app_cp": 26.04
     },
     {
       "path": "Japan-Australia",
@@ -2875,9 +2875,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 27.1,
-      "app_mid": 28.91,
+      "app_mid": 30.09,
       "app_plain": 25.8,
-      "app_cp": 26.98
+      "app_cp": 28.1
     },
     {
       "path": "Japan-Australia",
@@ -2886,9 +2886,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 27.8,
-      "app_mid": 29.58,
+      "app_mid": 30.68,
       "app_plain": 28.16,
-      "app_cp": 27.61
+      "app_cp": 28.66
     },
     {
       "path": "Japan-Australia",
@@ -2897,9 +2897,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 20.2,
-      "app_mid": 22.8,
+      "app_mid": 24.2,
       "app_plain": 22.79,
-      "app_cp": 21.27
+      "app_cp": 22.59
     },
     {
       "path": "Japan-Australia",
@@ -2908,9 +2908,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 24.0,
-      "app_mid": 23.31,
+      "app_mid": 24.68,
       "app_plain": 23.76,
-      "app_cp": 21.75
+      "app_cp": 23.04
     },
     {
       "path": "Japan-Australia",
@@ -2919,9 +2919,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 23.3,
-      "app_mid": 23.53,
+      "app_mid": 24.87,
       "app_plain": 24.14,
-      "app_cp": 21.96
+      "app_cp": 23.21
     },
     {
       "path": "Japan-Australia",
@@ -2930,9 +2930,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 23.1,
-      "app_mid": 23.47,
+      "app_mid": 24.77,
       "app_plain": 23.88,
-      "app_cp": 21.9
+      "app_cp": 23.12
     },
     {
       "path": "Japan-Australia",
@@ -2941,9 +2941,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 23.3,
-      "app_mid": 23.12,
+      "app_mid": 24.38,
       "app_plain": 23.03,
-      "app_cp": 21.58
+      "app_cp": 22.76
     },
     {
       "path": "Japan-Australia",
@@ -2952,9 +2952,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 22.6,
-      "app_mid": 22.46,
+      "app_mid": 23.66,
       "app_plain": 21.66,
-      "app_cp": 20.96
+      "app_cp": 22.09
     },
     {
       "path": "Japan-Australia",
@@ -2963,9 +2963,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 21.5,
-      "app_mid": 21.39,
+      "app_mid": 22.51,
       "app_plain": 19.92,
-      "app_cp": 19.97
+      "app_cp": 21.03
     },
     {
       "path": "Japan-Australia",
@@ -2974,9 +2974,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 19.4,
-      "app_mid": 19.68,
+      "app_mid": 20.61,
       "app_plain": 18.0,
-      "app_cp": 18.39
+      "app_cp": 19.27
     },
     {
       "path": "Japan-Australia",
@@ -2985,9 +2985,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 16.9,
-      "app_mid": 18.01,
+      "app_mid": 18.75,
       "app_plain": 16.08,
-      "app_cp": 16.83
+      "app_cp": 17.53
     },
     {
       "path": "Japan-Australia",
@@ -2996,9 +2996,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 14.8,
-      "app_mid": 16.68,
+      "app_mid": 17.26,
       "app_plain": 14.33,
-      "app_cp": 15.58
+      "app_cp": 16.13
     },
     {
       "path": "Japan-Australia",
@@ -3007,9 +3007,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 15.0,
-      "app_mid": 15.54,
+      "app_mid": 15.98,
       "app_plain": 12.89,
-      "app_cp": 14.51
+      "app_cp": 14.94
     },
     {
       "path": "Japan-Australia",
@@ -3018,9 +3018,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 14.3,
-      "app_mid": 14.55,
+      "app_mid": 14.88,
       "app_plain": 11.85,
-      "app_cp": 13.59
+      "app_cp": 13.91
     },
     {
       "path": "Japan-Australia",
@@ -3029,9 +3029,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 14.1,
-      "app_mid": 13.73,
+      "app_mid": 13.97,
       "app_plain": 11.21,
-      "app_cp": 12.83
+      "app_cp": 13.05
     },
     {
       "path": "Japan-Australia",
@@ -3040,9 +3040,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 14.1,
-      "app_mid": 13.02,
+      "app_mid": 13.17,
       "app_plain": 10.92,
-      "app_cp": 12.16
+      "app_cp": 12.3
     },
     {
       "path": "Japan-Australia",
@@ -3051,9 +3051,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 12.6,
-      "app_mid": 12.39,
+      "app_mid": 12.47,
       "app_plain": 10.86,
-      "app_cp": 11.57
+      "app_cp": 11.65
     },
     {
       "path": "Japan-Australia",
@@ -3062,9 +3062,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 12.6,
-      "app_mid": 11.87,
+      "app_mid": 11.89,
       "app_plain": 10.9,
-      "app_cp": 11.09
+      "app_cp": 11.11
     },
     {
       "path": "Japan-Australia",
@@ -3073,9 +3073,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 11.7,
-      "app_mid": 11.42,
+      "app_mid": 11.39,
       "app_plain": 11.13,
-      "app_cp": 10.66
+      "app_cp": 10.64
     },
     {
       "path": "Japan-Australia",
@@ -3084,9 +3084,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 10.2,
-      "app_mid": 11.02,
+      "app_mid": 10.95,
       "app_plain": 11.69,
-      "app_cp": 10.29
+      "app_cp": 10.23
     },
     {
       "path": "Japan-Australia",
@@ -3095,9 +3095,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 9.9,
-      "app_mid": 10.69,
+      "app_mid": 10.58,
       "app_plain": 12.65,
-      "app_cp": 9.97
+      "app_cp": 9.88
     },
     {
       "path": "Japan-Australia",
@@ -3106,9 +3106,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.6,
-      "app_mid": 10.39,
+      "app_mid": 10.26,
       "app_plain": 14.02,
-      "app_cp": 9.7
+      "app_cp": 9.58
     },
     {
       "path": "Japan-Australia",
@@ -3117,9 +3117,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 18.9,
-      "app_mid": 15.49,
+      "app_mid": 16.72,
       "app_plain": 15.71,
-      "app_cp": 14.48
+      "app_cp": 15.65
     },
     {
       "path": "Japan-Australia",
@@ -3128,9 +3128,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.2,
-      "app_mid": 18.93,
+      "app_mid": 20.34,
       "app_plain": 17.61,
-      "app_cp": 17.68
+      "app_cp": 19.0
     },
     {
       "path": "Japan-Australia",
@@ -3139,9 +3139,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.5,
-      "app_mid": 20.76,
+      "app_mid": 22.19,
       "app_plain": 19.55,
-      "app_cp": 19.37
+      "app_cp": 20.72
     },
     {
       "path": "Japan-Australia",
@@ -3150,9 +3150,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 20.8,
-      "app_mid": 21.97,
+      "app_mid": 23.4,
       "app_plain": 21.34,
-      "app_cp": 20.51
+      "app_cp": 21.84
     },
     {
       "path": "Japan-Australia",
@@ -3161,9 +3161,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 24.1,
-      "app_mid": 28.06,
+      "app_mid": 29.2,
       "app_plain": 30.08,
-      "app_cp": 26.18
+      "app_cp": 27.26
     },
     {
       "path": "Japan-Australia",
@@ -3172,9 +3172,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 25.9,
-      "app_mid": 28.69,
+      "app_mid": 29.78,
       "app_plain": 31.36,
-      "app_cp": 26.77
+      "app_cp": 27.8
     },
     {
       "path": "Japan-Australia",
@@ -3183,9 +3183,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.1,
-      "app_mid": 28.96,
+      "app_mid": 30.01,
       "app_plain": 31.86,
-      "app_cp": 27.02
+      "app_cp": 28.01
     },
     {
       "path": "Japan-Australia",
@@ -3194,9 +3194,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 32.6,
-      "app_mid": 28.89,
+      "app_mid": 29.89,
       "app_plain": 31.52,
-      "app_cp": 26.95
+      "app_cp": 27.9
     },
     {
       "path": "Japan-Australia",
@@ -3205,9 +3205,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 32.4,
-      "app_mid": 28.46,
+      "app_mid": 29.42,
       "app_plain": 30.39,
-      "app_cp": 26.56
+      "app_cp": 27.46
     },
     {
       "path": "Japan-Australia",
@@ -3216,9 +3216,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 31.9,
-      "app_mid": 27.64,
+      "app_mid": 28.55,
       "app_plain": 28.58,
-      "app_cp": 25.8
+      "app_cp": 26.66
     },
     {
       "path": "Japan-Australia",
@@ -3227,9 +3227,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 30.9,
-      "app_mid": 26.32,
+      "app_mid": 27.16,
       "app_plain": 26.29,
-      "app_cp": 24.58
+      "app_cp": 25.37
     },
     {
       "path": "Japan-Australia",
@@ -3238,9 +3238,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 28.6,
-      "app_mid": 24.22,
+      "app_mid": 24.87,
       "app_plain": 23.76,
-      "app_cp": 22.63
+      "app_cp": 23.25
     },
     {
       "path": "Japan-Australia",
@@ -3249,9 +3249,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.5,
-      "app_mid": 22.17,
+      "app_mid": 22.62,
       "app_plain": 21.22,
-      "app_cp": 20.71
+      "app_cp": 21.15
     },
     {
       "path": "Japan-Australia",
@@ -3260,9 +3260,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 22.7,
-      "app_mid": 20.53,
+      "app_mid": 20.83,
       "app_plain": 18.91,
-      "app_cp": 19.18
+      "app_cp": 19.47
     },
     {
       "path": "Japan-Australia",
@@ -3271,9 +3271,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.6,
-      "app_mid": 19.12,
+      "app_mid": 19.29,
       "app_plain": 17.01,
-      "app_cp": 17.86
+      "app_cp": 18.02
     },
     {
       "path": "Japan-Australia",
@@ -3282,9 +3282,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 18.8,
-      "app_mid": 17.91,
+      "app_mid": 17.96,
       "app_plain": 15.63,
-      "app_cp": 16.73
+      "app_cp": 16.78
     },
     {
       "path": "Japan-Australia",
@@ -3293,9 +3293,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 17.4,
-      "app_mid": 16.9,
+      "app_mid": 16.85,
       "app_plain": 14.79,
-      "app_cp": 15.78
+      "app_cp": 15.75
     },
     {
       "path": "Japan-Australia",
@@ -3304,9 +3304,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 16.7,
-      "app_mid": 16.02,
+      "app_mid": 15.89,
       "app_plain": 14.41,
-      "app_cp": 14.96
+      "app_cp": 14.84
     },
     {
       "path": "Japan-Australia",
@@ -3315,9 +3315,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 16.8,
-      "app_mid": 15.25,
+      "app_mid": 15.05,
       "app_plain": 14.34,
-      "app_cp": 14.24
+      "app_cp": 14.06
     },
     {
       "path": "Japan-Australia",
@@ -3326,9 +3326,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 16.8,
-      "app_mid": 14.61,
+      "app_mid": 14.35,
       "app_plain": 14.38,
-      "app_cp": 13.64
+      "app_cp": 13.41
     },
     {
       "path": "Japan-Australia",
@@ -3337,9 +3337,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 15.7,
-      "app_mid": 14.05,
+      "app_mid": 13.74,
       "app_plain": 14.68,
-      "app_cp": 13.12
+      "app_cp": 12.84
     },
     {
       "path": "Japan-Australia",
@@ -3348,9 +3348,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 14.1,
-      "app_mid": 13.56,
+      "app_mid": 13.21,
       "app_plain": 15.42,
-      "app_cp": 12.66
+      "app_cp": 12.34
     },
     {
       "path": "Japan-Australia",
@@ -3359,9 +3359,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 14.0,
-      "app_mid": 13.15,
+      "app_mid": 12.77,
       "app_plain": 16.7,
-      "app_cp": 12.28
+      "app_cp": 11.92
     },
     {
       "path": "Japan-Australia",
@@ -3370,9 +3370,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 17.8,
-      "app_mid": 12.79,
+      "app_mid": 12.38,
       "app_plain": 18.5,
-      "app_cp": 11.93
+      "app_cp": 11.56
     },
     {
       "path": "Japan-Australia",
@@ -3381,9 +3381,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 19.06,
+      "app_mid": 20.18,
       "app_plain": 20.74,
-      "app_cp": 17.82
+      "app_cp": 18.88
     },
     {
       "path": "Japan-Australia",
@@ -3392,9 +3392,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 25.9,
-      "app_mid": 23.3,
+      "app_mid": 24.55,
       "app_plain": 23.25,
-      "app_cp": 21.76
+      "app_cp": 22.93
     },
     {
       "path": "Japan-Australia",
@@ -3403,9 +3403,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.2,
-      "app_mid": 25.54,
+      "app_mid": 26.77,
       "app_plain": 25.8,
-      "app_cp": 23.84
+      "app_cp": 25.0
     },
     {
       "path": "Japan-Australia",
@@ -3414,9 +3414,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 24.5,
-      "app_mid": 27.04,
+      "app_mid": 28.23,
       "app_plain": 28.16,
-      "app_cp": 25.24
+      "app_cp": 26.36
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3425,9 +3425,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 26.1,
-      "app_mid": 24.0,
+      "app_mid": 25.15,
       "app_plain": 23.9,
-      "app_cp": 22.52
+      "app_cp": 23.63
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3436,9 +3436,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 28.9,
-      "app_mid": 23.97,
+      "app_mid": 25.12,
       "app_plain": 23.07,
-      "app_cp": 22.48
+      "app_cp": 23.59
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3447,9 +3447,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 30.2,
-      "app_mid": 23.87,
+      "app_mid": 25.02,
       "app_plain": 21.72,
-      "app_cp": 22.38
+      "app_cp": 23.49
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3458,9 +3458,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 28.3,
-      "app_mid": 23.66,
+      "app_mid": 24.82,
       "app_plain": 19.99,
-      "app_cp": 22.17
+      "app_cp": 23.28
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3469,9 +3469,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 26.2,
-      "app_mid": 23.27,
+      "app_mid": 24.41,
       "app_plain": 18.07,
-      "app_cp": 21.77
+      "app_cp": 22.88
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3480,9 +3480,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 24.5,
-      "app_mid": 21.9,
+      "app_mid": 23.32,
       "app_plain": 16.15,
-      "app_cp": 20.57
+      "app_cp": 21.93
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3491,9 +3491,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 22.9,
-      "app_mid": 20.28,
+      "app_mid": 21.45,
       "app_plain": 14.39,
-      "app_cp": 19.03
+      "app_cp": 20.16
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3502,9 +3502,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 21.7,
-      "app_mid": 18.87,
+      "app_mid": 19.84,
       "app_plain": 12.94,
-      "app_cp": 17.71
+      "app_cp": 18.65
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3513,9 +3513,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 21.3,
-      "app_mid": 17.69,
+      "app_mid": 18.49,
       "app_plain": 11.88,
-      "app_cp": 16.6
+      "app_cp": 17.37
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3524,9 +3524,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 21.5,
-      "app_mid": 16.66,
+      "app_mid": 17.32,
       "app_plain": 11.22,
-      "app_cp": 15.62
+      "app_cp": 16.26
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3535,9 +3535,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 18.9,
-      "app_mid": 15.77,
+      "app_mid": 16.3,
       "app_plain": 10.93,
-      "app_cp": 14.79
+      "app_cp": 15.21
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3546,9 +3546,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 16.4,
-      "app_mid": 15.02,
+      "app_mid": 15.29,
       "app_plain": 10.86,
-      "app_cp": 14.08
+      "app_cp": 14.28
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3557,9 +3557,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 14.8,
-      "app_mid": 14.37,
+      "app_mid": 14.44,
       "app_plain": 10.89,
-      "app_cp": 13.39
+      "app_cp": 13.47
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3570,7 +3570,7 @@
       "voacap_muf": 12.9,
       "app_mid": 13.7,
       "app_plain": 11.11,
-      "app_cp": 12.78
+      "app_cp": 12.8
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3579,9 +3579,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 10.0,
-      "app_mid": 13.12,
+      "app_mid": 13.06,
       "app_plain": 11.66,
-      "app_cp": 12.25
+      "app_cp": 12.21
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3590,9 +3590,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 8.7,
-      "app_mid": 12.63,
+      "app_mid": 12.52,
       "app_plain": 12.61,
-      "app_cp": 11.79
+      "app_cp": 11.7
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3601,9 +3601,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 12.6,
-      "app_mid": 12.21,
+      "app_mid": 12.06,
       "app_plain": 13.96,
-      "app_cp": 11.39
+      "app_cp": 11.27
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3612,9 +3612,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 19.5,
-      "app_mid": 19.37,
+      "app_mid": 20.76,
       "app_plain": 15.64,
-      "app_cp": 18.13
+      "app_cp": 19.45
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3623,9 +3623,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 23.2,
-      "app_mid": 21.59,
+      "app_mid": 22.97,
       "app_plain": 17.54,
-      "app_cp": 20.22
+      "app_cp": 21.54
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3634,9 +3634,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 25.3,
-      "app_mid": 22.72,
+      "app_mid": 24.04,
       "app_plain": 19.48,
-      "app_cp": 21.28
+      "app_cp": 22.55
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3645,9 +3645,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 25.4,
-      "app_mid": 23.34,
+      "app_mid": 24.61,
       "app_plain": 21.27,
-      "app_cp": 21.88
+      "app_cp": 23.1
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3656,9 +3656,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.6,
-      "app_mid": 23.7,
+      "app_mid": 24.91,
       "app_plain": 22.74,
-      "app_cp": 22.22
+      "app_cp": 23.39
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3667,9 +3667,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.6,
-      "app_mid": 23.89,
+      "app_mid": 25.07,
       "app_plain": 23.73,
-      "app_cp": 22.4
+      "app_cp": 23.55
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3678,9 +3678,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 23.7,
-      "app_mid": 23.98,
+      "app_mid": 25.14,
       "app_plain": 24.13,
-      "app_cp": 22.49
+      "app_cp": 23.62
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3689,9 +3689,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 29.4,
-      "app_mid": 29.54,
+      "app_mid": 30.35,
       "app_plain": 31.55,
-      "app_cp": 27.71
+      "app_cp": 28.51
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3700,9 +3700,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 31.5,
-      "app_mid": 29.5,
+      "app_mid": 30.31,
       "app_plain": 30.45,
-      "app_cp": 27.67
+      "app_cp": 28.47
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3711,9 +3711,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.2,
-      "app_mid": 29.38,
+      "app_mid": 30.19,
       "app_plain": 28.66,
-      "app_cp": 27.54
+      "app_cp": 28.35
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3722,9 +3722,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 31.4,
-      "app_mid": 29.12,
+      "app_mid": 29.94,
       "app_plain": 26.39,
-      "app_cp": 27.28
+      "app_cp": 28.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3733,9 +3733,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 30.0,
-      "app_mid": 28.63,
+      "app_mid": 29.46,
       "app_plain": 23.85,
-      "app_cp": 26.8
+      "app_cp": 27.6
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3744,9 +3744,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 28.6,
-      "app_mid": 26.95,
+      "app_mid": 28.14,
       "app_plain": 21.31,
-      "app_cp": 25.31
+      "app_cp": 26.46
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3755,9 +3755,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 27.2,
-      "app_mid": 24.95,
+      "app_mid": 25.89,
       "app_plain": 18.99,
-      "app_cp": 23.42
+      "app_cp": 24.32
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3766,9 +3766,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 26.0,
-      "app_mid": 23.22,
+      "app_mid": 23.94,
       "app_plain": 17.08,
-      "app_cp": 21.8
+      "app_cp": 22.5
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3777,9 +3777,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.7,
-      "app_mid": 21.77,
+      "app_mid": 22.31,
       "app_plain": 15.68,
-      "app_cp": 20.42
+      "app_cp": 20.96
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3788,9 +3788,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 26.4,
-      "app_mid": 20.51,
+      "app_mid": 20.9,
       "app_plain": 14.81,
-      "app_cp": 19.23
+      "app_cp": 19.62
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3799,9 +3799,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 26.9,
-      "app_mid": 19.41,
+      "app_mid": 19.67,
       "app_plain": 14.42,
-      "app_cp": 18.2
+      "app_cp": 18.36
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3810,9 +3810,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.6,
-      "app_mid": 18.48,
+      "app_mid": 18.46,
       "app_plain": 14.34,
-      "app_cp": 17.33
+      "app_cp": 17.23
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3821,9 +3821,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 22.4,
-      "app_mid": 17.68,
+      "app_mid": 17.42,
       "app_plain": 14.38,
-      "app_cp": 16.48
+      "app_cp": 16.26
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3832,9 +3832,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 19.8,
-      "app_mid": 16.86,
+      "app_mid": 16.54,
       "app_plain": 14.66,
-      "app_cp": 15.73
+      "app_cp": 15.44
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3843,9 +3843,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 16.0,
-      "app_mid": 16.15,
+      "app_mid": 15.76,
       "app_plain": 15.39,
-      "app_cp": 15.08
+      "app_cp": 14.73
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3854,9 +3854,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 13.9,
-      "app_mid": 15.54,
+      "app_mid": 15.11,
       "app_plain": 16.64,
-      "app_cp": 14.5
+      "app_cp": 14.11
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3865,9 +3865,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 17.3,
-      "app_mid": 15.02,
+      "app_mid": 14.55,
       "app_plain": 18.42,
-      "app_cp": 14.02
+      "app_cp": 13.6
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3876,9 +3876,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 24.0,
-      "app_mid": 23.84,
+      "app_mid": 25.05,
       "app_plain": 20.64,
-      "app_cp": 22.31
+      "app_cp": 23.47
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3887,9 +3887,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 27.2,
-      "app_mid": 26.57,
+      "app_mid": 27.72,
       "app_plain": 23.15,
-      "app_cp": 24.88
+      "app_cp": 26.0
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3898,9 +3898,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 29.2,
-      "app_mid": 27.96,
+      "app_mid": 29.01,
       "app_plain": 25.71,
-      "app_cp": 26.19
+      "app_cp": 27.21
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3909,9 +3909,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 29.6,
-      "app_mid": 28.73,
+      "app_mid": 29.69,
       "app_plain": 28.08,
-      "app_cp": 26.93
+      "app_cp": 27.87
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3920,9 +3920,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.3,
-      "app_mid": 29.16,
+      "app_mid": 30.06,
       "app_plain": 30.02,
-      "app_cp": 27.35
+      "app_cp": 28.23
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3931,9 +3931,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.9,
-      "app_mid": 29.4,
+      "app_mid": 30.25,
       "app_plain": 31.32,
-      "app_cp": 27.57
+      "app_cp": 28.41
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3942,9 +3942,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 27.7,
-      "app_mid": 29.51,
+      "app_mid": 30.33,
       "app_plain": 31.85,
-      "app_cp": 27.68
+      "app_cp": 28.5
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3953,9 +3953,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 23.8,
-      "app_mid": 22.82,
+      "app_mid": 24.02,
       "app_plain": 23.9,
-      "app_cp": 21.37
+      "app_cp": 22.52
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3964,9 +3964,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 23.6,
-      "app_mid": 22.65,
+      "app_mid": 23.81,
       "app_plain": 23.07,
-      "app_cp": 21.21
+      "app_cp": 22.31
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3975,9 +3975,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 23.1,
-      "app_mid": 22.17,
+      "app_mid": 23.27,
       "app_plain": 21.72,
-      "app_cp": 20.75
+      "app_cp": 21.81
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3986,9 +3986,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 22.8,
-      "app_mid": 21.32,
+      "app_mid": 22.36,
       "app_plain": 19.99,
-      "app_cp": 19.95
+      "app_cp": 20.96
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3997,9 +3997,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 20.9,
-      "app_mid": 19.9,
+      "app_mid": 20.81,
       "app_plain": 18.07,
-      "app_cp": 18.64
+      "app_cp": 19.51
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4008,9 +4008,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 17.8,
-      "app_mid": 18.15,
+      "app_mid": 18.85,
       "app_plain": 16.15,
-      "app_cp": 16.99
+      "app_cp": 17.68
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4019,9 +4019,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 14.9,
-      "app_mid": 16.76,
+      "app_mid": 17.31,
       "app_plain": 14.39,
-      "app_cp": 15.69
+      "app_cp": 16.23
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4030,9 +4030,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 13.1,
-      "app_mid": 15.59,
+      "app_mid": 16.0,
       "app_plain": 12.94,
-      "app_cp": 14.59
+      "app_cp": 15.0
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4041,9 +4041,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.4,
-      "app_mid": 14.58,
+      "app_mid": 14.87,
       "app_plain": 11.88,
-      "app_cp": 13.65
+      "app_cp": 13.94
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4052,9 +4052,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.4,
-      "app_mid": 13.73,
+      "app_mid": 13.93,
       "app_plain": 11.22,
-      "app_cp": 12.86
+      "app_cp": 13.06
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4063,9 +4063,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 12.5,
-      "app_mid": 13.0,
+      "app_mid": 13.12,
       "app_plain": 10.93,
-      "app_cp": 12.17
+      "app_cp": 12.3
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4074,9 +4074,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 12.8,
-      "app_mid": 12.37,
+      "app_mid": 12.41,
       "app_plain": 10.86,
-      "app_cp": 11.58
+      "app_cp": 11.63
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4085,9 +4085,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 13.0,
-      "app_mid": 11.83,
+      "app_mid": 11.82,
       "app_plain": 10.89,
-      "app_cp": 11.07
+      "app_cp": 11.08
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4096,9 +4096,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 12.9,
-      "app_mid": 11.37,
+      "app_mid": 11.3,
       "app_plain": 11.11,
-      "app_cp": 10.64
+      "app_cp": 10.59
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4107,9 +4107,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 11.9,
-      "app_mid": 10.96,
+      "app_mid": 10.85,
       "app_plain": 11.66,
-      "app_cp": 10.26
+      "app_cp": 10.17
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4118,9 +4118,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 10.5,
-      "app_mid": 10.62,
+      "app_mid": 10.48,
       "app_plain": 12.61,
-      "app_cp": 9.94
+      "app_cp": 9.82
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4129,9 +4129,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 10.7,
-      "app_mid": 10.32,
+      "app_mid": 10.15,
       "app_plain": 13.96,
-      "app_cp": 9.66
+      "app_cp": 9.51
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4140,9 +4140,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 13.6,
-      "app_mid": 10.05,
+      "app_mid": 9.86,
       "app_plain": 15.64,
-      "app_cp": 9.41
+      "app_cp": 9.24
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4151,9 +4151,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 18.5,
-      "app_mid": 15.48,
+      "app_mid": 16.64,
       "app_plain": 17.54,
-      "app_cp": 14.72
+      "app_cp": 15.85
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4162,9 +4162,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 20.2,
-      "app_mid": 18.68,
+      "app_mid": 19.97,
       "app_plain": 19.48,
-      "app_cp": 17.61
+      "app_cp": 18.85
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4173,9 +4173,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 20.39,
+      "app_mid": 21.69,
       "app_plain": 21.27,
-      "app_cp": 19.17
+      "app_cp": 20.41
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4184,9 +4184,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 23.0,
-      "app_mid": 21.52,
+      "app_mid": 22.81,
       "app_plain": 22.74,
-      "app_cp": 20.2
+      "app_cp": 21.43
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4195,9 +4195,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.1,
-      "app_mid": 22.27,
+      "app_mid": 23.54,
       "app_plain": 23.73,
-      "app_cp": 20.88
+      "app_cp": 22.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4206,9 +4206,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 24.5,
-      "app_mid": 22.7,
+      "app_mid": 23.93,
       "app_plain": 24.13,
-      "app_cp": 21.26
+      "app_cp": 22.44
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4217,9 +4217,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 29.6,
-      "app_mid": 28.09,
+      "app_mid": 28.98,
       "app_plain": 31.55,
-      "app_cp": 26.3
+      "app_cp": 27.17
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4228,9 +4228,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 29.4,
-      "app_mid": 27.88,
+      "app_mid": 28.73,
       "app_plain": 30.45,
-      "app_cp": 26.1
+      "app_cp": 26.93
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4239,9 +4239,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 29.2,
-      "app_mid": 27.28,
+      "app_mid": 28.08,
       "app_plain": 28.66,
-      "app_cp": 25.54
+      "app_cp": 26.32
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4250,9 +4250,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 28.7,
-      "app_mid": 26.23,
+      "app_mid": 26.98,
       "app_plain": 26.39,
-      "app_cp": 24.56
+      "app_cp": 25.29
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4261,9 +4261,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 26.4,
-      "app_mid": 24.49,
+      "app_mid": 25.12,
       "app_plain": 23.85,
-      "app_cp": 22.93
+      "app_cp": 23.55
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4272,9 +4272,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 23.0,
-      "app_mid": 22.33,
+      "app_mid": 22.75,
       "app_plain": 21.31,
-      "app_cp": 20.91
+      "app_cp": 21.33
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4283,9 +4283,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 19.8,
-      "app_mid": 20.62,
+      "app_mid": 20.88,
       "app_plain": 18.99,
-      "app_cp": 19.31
+      "app_cp": 19.58
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4294,9 +4294,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 17.3,
-      "app_mid": 19.18,
+      "app_mid": 19.3,
       "app_plain": 17.08,
-      "app_cp": 17.96
+      "app_cp": 18.1
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4307,7 +4307,7 @@
       "voacap_muf": 15.4,
       "app_mid": 17.94,
       "app_plain": 15.68,
-      "app_cp": 16.8
+      "app_cp": 16.82
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4316,9 +4316,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 14.4,
-      "app_mid": 16.9,
+      "app_mid": 16.81,
       "app_plain": 14.81,
-      "app_cp": 15.82
+      "app_cp": 15.76
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4327,9 +4327,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 14.3,
-      "app_mid": 16.0,
+      "app_mid": 15.83,
       "app_plain": 14.42,
-      "app_cp": 14.98
+      "app_cp": 14.84
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4338,9 +4338,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 14.6,
-      "app_mid": 15.22,
+      "app_mid": 14.97,
       "app_plain": 14.34,
-      "app_cp": 14.25
+      "app_cp": 14.04
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4349,9 +4349,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 14.7,
-      "app_mid": 14.56,
+      "app_mid": 14.26,
       "app_plain": 14.38,
-      "app_cp": 13.63
+      "app_cp": 13.37
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4360,9 +4360,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 14.3,
-      "app_mid": 13.99,
+      "app_mid": 13.64,
       "app_plain": 14.66,
-      "app_cp": 13.09
+      "app_cp": 12.78
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4371,9 +4371,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 13.2,
-      "app_mid": 13.49,
+      "app_mid": 13.1,
       "app_plain": 15.39,
-      "app_cp": 12.62
+      "app_cp": 12.27
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4382,9 +4382,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 11.8,
-      "app_mid": 13.07,
+      "app_mid": 12.64,
       "app_plain": 16.64,
-      "app_cp": 12.23
+      "app_cp": 11.85
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4393,9 +4393,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 12.1,
-      "app_mid": 12.7,
+      "app_mid": 12.25,
       "app_plain": 18.42,
-      "app_cp": 11.88
+      "app_cp": 11.48
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4404,9 +4404,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.2,
-      "app_mid": 12.37,
+      "app_mid": 11.9,
       "app_plain": 20.64,
-      "app_cp": 11.58
+      "app_cp": 11.15
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4415,9 +4415,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 23.9,
-      "app_mid": 19.05,
+      "app_mid": 20.07,
       "app_plain": 23.15,
-      "app_cp": 18.12
+      "app_cp": 19.12
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4426,9 +4426,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 31.4,
-      "app_mid": 22.98,
+      "app_mid": 24.1,
       "app_plain": 25.71,
-      "app_cp": 21.67
+      "app_cp": 22.74
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4437,9 +4437,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 24.6,
-      "app_mid": 25.09,
+      "app_mid": 26.18,
       "app_plain": 28.08,
-      "app_cp": 23.59
+      "app_cp": 24.63
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4448,9 +4448,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 34.6,
-      "app_mid": 26.49,
+      "app_mid": 27.53,
       "app_plain": 30.02,
-      "app_cp": 24.86
+      "app_cp": 25.86
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4459,9 +4459,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 32.5,
-      "app_mid": 27.41,
+      "app_mid": 28.4,
       "app_plain": 31.32,
-      "app_cp": 25.7
+      "app_cp": 26.66
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4470,9 +4470,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 30.6,
-      "app_mid": 27.93,
+      "app_mid": 28.87,
       "app_plain": 31.85,
-      "app_cp": 26.17
+      "app_cp": 27.08
     },
     {
       "path": "CherryPt-Brazil",
@@ -4481,9 +4481,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 12.3,
-      "app_mid": 16.43,
+      "app_mid": 16.83,
       "app_plain": 11.76,
-      "app_cp": 15.45
+      "app_cp": 15.9
     },
     {
       "path": "CherryPt-Brazil",
@@ -4492,9 +4492,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 11.7,
-      "app_mid": 15.4,
+      "app_mid": 15.68,
       "app_plain": 10.96,
-      "app_cp": 14.5
+      "app_cp": 14.83
     },
     {
       "path": "CherryPt-Brazil",
@@ -4503,9 +4503,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 11.6,
-      "app_mid": 14.54,
+      "app_mid": 14.72,
       "app_plain": 10.54,
-      "app_cp": 13.68
+      "app_cp": 13.91
     },
     {
       "path": "CherryPt-Brazil",
@@ -4514,9 +4514,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 11.9,
-      "app_mid": 13.79,
+      "app_mid": 13.89,
       "app_plain": 10.4,
-      "app_cp": 12.99
+      "app_cp": 13.14
     },
     {
       "path": "CherryPt-Brazil",
@@ -4525,9 +4525,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.1,
-      "app_mid": 13.14,
+      "app_mid": 13.16,
       "app_plain": 10.4,
-      "app_cp": 12.38
+      "app_cp": 12.47
     },
     {
       "path": "CherryPt-Brazil",
@@ -4536,9 +4536,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.1,
-      "app_mid": 12.59,
+      "app_mid": 12.56,
       "app_plain": 10.51,
-      "app_cp": 11.86
+      "app_cp": 11.88
     },
     {
       "path": "CherryPt-Brazil",
@@ -4547,9 +4547,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 10.8,
-      "app_mid": 12.11,
+      "app_mid": 12.03,
       "app_plain": 10.88,
-      "app_cp": 11.42
+      "app_cp": 11.39
     },
     {
       "path": "CherryPt-Brazil",
@@ -4558,9 +4558,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 8.8,
-      "app_mid": 11.7,
+      "app_mid": 11.57,
       "app_plain": 11.62,
-      "app_cp": 11.03
+      "app_cp": 10.97
     },
     {
       "path": "CherryPt-Brazil",
@@ -4569,9 +4569,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 10.4,
-      "app_mid": 11.35,
+      "app_mid": 11.19,
       "app_plain": 12.75,
-      "app_cp": 10.7
+      "app_cp": 10.6
     },
     {
       "path": "CherryPt-Brazil",
@@ -4580,9 +4580,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.7,
-      "app_mid": 11.04,
+      "app_mid": 10.85,
       "app_plain": 14.23,
-      "app_cp": 10.41
+      "app_cp": 10.29
     },
     {
       "path": "CherryPt-Brazil",
@@ -4591,9 +4591,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 17.4,
-      "app_mid": 10.76,
+      "app_mid": 10.55,
       "app_plain": 15.97,
-      "app_cp": 13.82
+      "app_cp": 14.89
     },
     {
       "path": "CherryPt-Brazil",
@@ -4602,9 +4602,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 23.2,
-      "app_mid": 18.46,
+      "app_mid": 19.81,
       "app_plain": 17.83,
-      "app_cp": 18.51
+      "app_cp": 19.93
     },
     {
       "path": "CherryPt-Brazil",
@@ -4613,9 +4613,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 27.0,
-      "app_mid": 21.02,
+      "app_mid": 22.43,
       "app_plain": 19.63,
-      "app_cp": 20.49
+      "app_cp": 21.94
     },
     {
       "path": "CherryPt-Brazil",
@@ -4624,9 +4624,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 28.1,
-      "app_mid": 22.58,
+      "app_mid": 23.99,
       "app_plain": 21.2,
-      "app_cp": 21.76
+      "app_cp": 23.21
     },
     {
       "path": "CherryPt-Brazil",
@@ -4635,9 +4635,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 26.5,
-      "app_mid": 23.63,
+      "app_mid": 25.02,
       "app_plain": 22.36,
-      "app_cp": 22.62
+      "app_cp": 24.04
     },
     {
       "path": "CherryPt-Brazil",
@@ -4646,9 +4646,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 25.3,
-      "app_mid": 24.29,
+      "app_mid": 25.65,
       "app_plain": 22.99,
-      "app_cp": 23.14
+      "app_cp": 24.54
     },
     {
       "path": "CherryPt-Brazil",
@@ -4657,9 +4657,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 25.1,
-      "app_mid": 24.63,
+      "app_mid": 25.95,
       "app_plain": 23.04,
-      "app_cp": 23.38
+      "app_cp": 24.74
     },
     {
       "path": "CherryPt-Brazil",
@@ -4668,9 +4668,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 25.1,
-      "app_mid": 24.64,
+      "app_mid": 25.92,
       "app_plain": 22.48,
-      "app_cp": 23.32
+      "app_cp": 24.65
     },
     {
       "path": "CherryPt-Brazil",
@@ -4679,9 +4679,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 24.6,
-      "app_mid": 24.34,
+      "app_mid": 25.57,
       "app_plain": 21.39,
-      "app_cp": 22.98
+      "app_cp": 24.26
     },
     {
       "path": "CherryPt-Brazil",
@@ -4690,9 +4690,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 23.5,
-      "app_mid": 23.68,
+      "app_mid": 24.85,
       "app_plain": 19.88,
-      "app_cp": 22.31
+      "app_cp": 23.53
     },
     {
       "path": "CherryPt-Brazil",
@@ -4701,9 +4701,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 22.58,
+      "app_mid": 23.67,
       "app_plain": 18.1,
-      "app_cp": 21.21
+      "app_cp": 22.35
     },
     {
       "path": "CherryPt-Brazil",
@@ -4712,9 +4712,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 21.2,
-      "app_mid": 20.78,
+      "app_mid": 21.68,
       "app_plain": 16.24,
-      "app_cp": 19.48
+      "app_cp": 20.41
     },
     {
       "path": "CherryPt-Brazil",
@@ -4723,9 +4723,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 17.8,
-      "app_mid": 19.03,
+      "app_mid": 19.72,
       "app_plain": 14.47,
-      "app_cp": 17.88
+      "app_cp": 18.62
     },
     {
       "path": "CherryPt-Brazil",
@@ -4734,9 +4734,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 14.3,
-      "app_mid": 17.63,
+      "app_mid": 18.16,
       "app_plain": 12.94,
-      "app_cp": 16.55
+      "app_cp": 17.13
     },
     {
       "path": "CherryPt-Brazil",
@@ -4745,9 +4745,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 16.0,
-      "app_mid": 20.22,
+      "app_mid": 20.31,
       "app_plain": 15.52,
-      "app_cp": 19.02
+      "app_cp": 19.19
     },
     {
       "path": "CherryPt-Brazil",
@@ -4756,9 +4756,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 13.9,
-      "app_mid": 18.95,
+      "app_mid": 18.92,
       "app_plain": 14.47,
-      "app_cp": 17.85
+      "app_cp": 17.9
     },
     {
       "path": "CherryPt-Brazil",
@@ -4767,9 +4767,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 13.2,
-      "app_mid": 17.89,
+      "app_mid": 17.76,
       "app_plain": 13.91,
-      "app_cp": 16.83
+      "app_cp": 16.78
     },
     {
       "path": "CherryPt-Brazil",
@@ -4778,9 +4778,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 13.6,
-      "app_mid": 16.97,
+      "app_mid": 16.76,
       "app_plain": 13.73,
-      "app_cp": 15.98
+      "app_cp": 15.85
     },
     {
       "path": "CherryPt-Brazil",
@@ -4789,9 +4789,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 14.4,
-      "app_mid": 16.17,
+      "app_mid": 15.88,
       "app_plain": 13.72,
-      "app_cp": 15.24
+      "app_cp": 15.04
     },
     {
       "path": "CherryPt-Brazil",
@@ -4800,9 +4800,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 14.7,
-      "app_mid": 15.49,
+      "app_mid": 15.15,
       "app_plain": 13.87,
-      "app_cp": 14.59
+      "app_cp": 14.34
     },
     {
       "path": "CherryPt-Brazil",
@@ -4811,9 +4811,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 13.4,
-      "app_mid": 14.91,
+      "app_mid": 14.51,
       "app_plain": 14.36,
-      "app_cp": 14.05
+      "app_cp": 13.75
     },
     {
       "path": "CherryPt-Brazil",
@@ -4822,9 +4822,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 10.7,
-      "app_mid": 14.39,
+      "app_mid": 13.96,
       "app_plain": 15.33,
-      "app_cp": 13.58
+      "app_cp": 13.23
     },
     {
       "path": "CherryPt-Brazil",
@@ -4833,9 +4833,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 11.0,
-      "app_mid": 13.96,
+      "app_mid": 13.5,
       "app_plain": 16.82,
-      "app_cp": 13.17
+      "app_cp": 12.79
     },
     {
       "path": "CherryPt-Brazil",
@@ -4844,9 +4844,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 13.5,
-      "app_mid": 13.58,
+      "app_mid": 13.09,
       "app_plain": 18.78,
-      "app_cp": 12.82
+      "app_cp": 12.41
     },
     {
       "path": "CherryPt-Brazil",
@@ -4855,9 +4855,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.8,
-      "app_mid": 13.25,
+      "app_mid": 12.73,
       "app_plain": 21.08,
-      "app_cp": 17.01
+      "app_cp": 17.97
     },
     {
       "path": "CherryPt-Brazil",
@@ -4866,9 +4866,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 30.1,
-      "app_mid": 22.72,
+      "app_mid": 23.91,
       "app_plain": 23.54,
-      "app_cp": 22.78
+      "app_cp": 24.04
     },
     {
       "path": "CherryPt-Brazil",
@@ -4877,9 +4877,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 35.6,
-      "app_mid": 25.87,
+      "app_mid": 27.07,
       "app_plain": 25.91,
-      "app_cp": 25.21
+      "app_cp": 26.47
     },
     {
       "path": "CherryPt-Brazil",
@@ -4888,9 +4888,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 35.8,
-      "app_mid": 27.79,
+      "app_mid": 28.95,
       "app_plain": 27.97,
-      "app_cp": 26.78
+      "app_cp": 28.0
     },
     {
       "path": "CherryPt-Brazil",
@@ -4899,9 +4899,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 33.0,
-      "app_mid": 29.08,
+      "app_mid": 30.19,
       "app_plain": 29.51,
-      "app_cp": 27.83
+      "app_cp": 29.01
     },
     {
       "path": "CherryPt-Brazil",
@@ -4910,9 +4910,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 31.2,
-      "app_mid": 29.9,
+      "app_mid": 30.95,
       "app_plain": 30.35,
-      "app_cp": 28.48
+      "app_cp": 29.61
     },
     {
       "path": "CherryPt-Brazil",
@@ -4921,9 +4921,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 30.5,
-      "app_mid": 30.31,
+      "app_mid": 31.31,
       "app_plain": 30.41,
-      "app_cp": 28.77
+      "app_cp": 29.85
     },
     {
       "path": "CherryPt-Brazil",
@@ -4932,9 +4932,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 29.9,
-      "app_mid": 30.33,
+      "app_mid": 31.28,
       "app_plain": 29.68,
-      "app_cp": 28.7
+      "app_cp": 29.74
     },
     {
       "path": "CherryPt-Brazil",
@@ -4943,9 +4943,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 28.8,
-      "app_mid": 29.95,
+      "app_mid": 30.85,
       "app_plain": 28.23,
-      "app_cp": 28.28
+      "app_cp": 29.27
     },
     {
       "path": "CherryPt-Brazil",
@@ -4954,9 +4954,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 28.5,
-      "app_mid": 29.14,
+      "app_mid": 29.99,
       "app_plain": 26.24,
-      "app_cp": 27.46
+      "app_cp": 28.4
     },
     {
       "path": "CherryPt-Brazil",
@@ -4965,9 +4965,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 28.3,
-      "app_mid": 27.78,
+      "app_mid": 28.56,
       "app_plain": 23.89,
-      "app_cp": 26.11
+      "app_cp": 26.96
     },
     {
       "path": "CherryPt-Brazil",
@@ -4976,9 +4976,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 26.7,
-      "app_mid": 25.57,
+      "app_mid": 26.16,
       "app_plain": 21.43,
-      "app_cp": 23.97
+      "app_cp": 24.63
     },
     {
       "path": "CherryPt-Brazil",
@@ -4987,9 +4987,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 23.3,
-      "app_mid": 23.41,
+      "app_mid": 23.8,
       "app_plain": 19.1,
-      "app_cp": 22.01
+      "app_cp": 22.47
     },
     {
       "path": "CherryPt-Brazil",
@@ -4998,9 +4998,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 19.3,
-      "app_mid": 21.69,
+      "app_mid": 21.92,
       "app_plain": 17.08,
-      "app_cp": 20.37
+      "app_cp": 20.67
     },
     {
       "path": "CherryPt-Brazil",
@@ -5009,9 +5009,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 18.4,
-      "app_mid": 15.7,
+      "app_mid": 16.51,
       "app_plain": 11.76,
-      "app_cp": 14.69
+      "app_cp": 15.39
     },
     {
       "path": "CherryPt-Brazil",
@@ -5020,9 +5020,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 17.8,
-      "app_mid": 14.74,
+      "app_mid": 15.41,
       "app_plain": 10.96,
-      "app_cp": 13.77
+      "app_cp": 14.34
     },
     {
       "path": "CherryPt-Brazil",
@@ -5031,9 +5031,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 16.5,
-      "app_mid": 13.92,
+      "app_mid": 14.43,
       "app_plain": 10.54,
-      "app_cp": 12.98
+      "app_cp": 13.42
     },
     {
       "path": "CherryPt-Brazil",
@@ -5042,9 +5042,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 15.2,
-      "app_mid": 13.21,
+      "app_mid": 13.51,
       "app_plain": 10.4,
-      "app_cp": 12.31
+      "app_cp": 12.58
     },
     {
       "path": "CherryPt-Brazil",
@@ -5053,9 +5053,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.2,
-      "app_mid": 12.59,
+      "app_mid": 12.7,
       "app_plain": 10.4,
-      "app_cp": 11.71
+      "app_cp": 11.84
     },
     {
       "path": "CherryPt-Brazil",
@@ -5064,9 +5064,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.6,
-      "app_mid": 11.97,
+      "app_mid": 12.01,
       "app_plain": 10.51,
-      "app_cp": 11.15
+      "app_cp": 11.23
     },
     {
       "path": "CherryPt-Brazil",
@@ -5075,9 +5075,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.8,
-      "app_mid": 11.44,
+      "app_mid": 11.42,
       "app_plain": 10.88,
-      "app_cp": 10.67
+      "app_cp": 10.69
     },
     {
       "path": "CherryPt-Brazil",
@@ -5086,9 +5086,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 12.0,
-      "app_mid": 10.98,
+      "app_mid": 10.91,
       "app_plain": 11.62,
-      "app_cp": 10.25
+      "app_cp": 10.23
     },
     {
       "path": "CherryPt-Brazil",
@@ -5097,9 +5097,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.5,
-      "app_mid": 10.58,
+      "app_mid": 10.47,
       "app_plain": 12.75,
-      "app_cp": 9.89
+      "app_cp": 9.83
     },
     {
       "path": "CherryPt-Brazil",
@@ -5108,9 +5108,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 14.8,
-      "app_mid": 13.97,
+      "app_mid": 15.0,
       "app_plain": 14.23,
-      "app_cp": 13.88
+      "app_cp": 15.0
     },
     {
       "path": "CherryPt-Brazil",
@@ -5119,9 +5119,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 17.7,
-      "app_mid": 17.34,
+      "app_mid": 18.53,
       "app_plain": 15.97,
-      "app_cp": 16.68
+      "app_cp": 17.91
     },
     {
       "path": "CherryPt-Brazil",
@@ -5130,9 +5130,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 19.5,
-      "app_mid": 18.76,
+      "app_mid": 19.93,
       "app_plain": 17.83,
-      "app_cp": 17.95
+      "app_cp": 19.15
     },
     {
       "path": "CherryPt-Brazil",
@@ -5141,9 +5141,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 18.7,
-      "app_mid": 19.53,
+      "app_mid": 20.64,
       "app_plain": 19.63,
-      "app_cp": 18.66
+      "app_cp": 19.81
     },
     {
       "path": "CherryPt-Brazil",
@@ -5152,9 +5152,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 18.1,
-      "app_mid": 19.96,
+      "app_mid": 21.02,
       "app_plain": 21.2,
-      "app_cp": 19.07
+      "app_cp": 20.19
     },
     {
       "path": "CherryPt-Brazil",
@@ -5163,9 +5163,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 18.8,
-      "app_mid": 20.2,
+      "app_mid": 21.23,
       "app_plain": 22.36,
-      "app_cp": 19.31
+      "app_cp": 20.39
     },
     {
       "path": "CherryPt-Brazil",
@@ -5174,9 +5174,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 20.2,
-      "app_mid": 20.33,
+      "app_mid": 21.33,
       "app_plain": 22.99,
-      "app_cp": 19.43
+      "app_cp": 20.5
     },
     {
       "path": "CherryPt-Brazil",
@@ -5185,9 +5185,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 21.0,
-      "app_mid": 20.38,
+      "app_mid": 21.37,
       "app_plain": 23.04,
-      "app_cp": 19.49
+      "app_cp": 20.54
     },
     {
       "path": "CherryPt-Brazil",
@@ -5196,9 +5196,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 21.3,
-      "app_mid": 20.39,
+      "app_mid": 21.37,
       "app_plain": 22.48,
-      "app_cp": 19.48
+      "app_cp": 20.52
     },
     {
       "path": "CherryPt-Brazil",
@@ -5207,9 +5207,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 21.7,
-      "app_mid": 20.34,
+      "app_mid": 21.32,
       "app_plain": 21.39,
-      "app_cp": 19.4
+      "app_cp": 20.44
     },
     {
       "path": "CherryPt-Brazil",
@@ -5218,9 +5218,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 22.5,
-      "app_mid": 20.22,
+      "app_mid": 21.21,
       "app_plain": 19.88,
-      "app_cp": 19.24
+      "app_cp": 20.28
     },
     {
       "path": "CherryPt-Brazil",
@@ -5229,9 +5229,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.4,
-      "app_mid": 19.99,
+      "app_mid": 20.98,
       "app_plain": 18.1,
-      "app_cp": 18.94
+      "app_cp": 19.97
     },
     {
       "path": "CherryPt-Brazil",
@@ -5240,9 +5240,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 24.2,
-      "app_mid": 19.57,
+      "app_mid": 20.53,
       "app_plain": 16.24,
-      "app_cp": 18.37
+      "app_cp": 19.4
     },
     {
       "path": "CherryPt-Brazil",
@@ -5251,9 +5251,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 23.6,
-      "app_mid": 18.09,
+      "app_mid": 19.26,
       "app_plain": 14.47,
-      "app_cp": 16.96
+      "app_cp": 18.0
     },
     {
       "path": "CherryPt-Brazil",
@@ -5262,9 +5262,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 20.0,
-      "app_mid": 16.82,
+      "app_mid": 17.79,
       "app_plain": 12.94,
-      "app_cp": 15.75
+      "app_cp": 16.6
     },
     {
       "path": "CherryPt-Brazil",
@@ -5273,9 +5273,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 24.6,
-      "app_mid": 19.32,
+      "app_mid": 19.92,
       "app_plain": 15.52,
-      "app_cp": 18.08
+      "app_cp": 18.58
     },
     {
       "path": "CherryPt-Brazil",
@@ -5284,9 +5284,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 23.7,
-      "app_mid": 18.14,
+      "app_mid": 18.59,
       "app_plain": 14.47,
-      "app_cp": 16.94
+      "app_cp": 17.3
     },
     {
       "path": "CherryPt-Brazil",
@@ -5295,9 +5295,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 23.0,
-      "app_mid": 17.14,
+      "app_mid": 17.41,
       "app_plain": 13.91,
-      "app_cp": 15.98
+      "app_cp": 16.19
     },
     {
       "path": "CherryPt-Brazil",
@@ -5306,9 +5306,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 21.9,
-      "app_mid": 16.26,
+      "app_mid": 16.3,
       "app_plain": 13.73,
-      "app_cp": 15.14
+      "app_cp": 15.18
     },
     {
       "path": "CherryPt-Brazil",
@@ -5317,9 +5317,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 20.5,
-      "app_mid": 15.5,
+      "app_mid": 15.32,
       "app_plain": 13.72,
-      "app_cp": 14.41
+      "app_cp": 14.29
     },
     {
       "path": "CherryPt-Brazil",
@@ -5328,9 +5328,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 19.1,
-      "app_mid": 14.73,
+      "app_mid": 14.49,
       "app_plain": 13.87,
-      "app_cp": 13.72
+      "app_cp": 13.55
     },
     {
       "path": "CherryPt-Brazil",
@@ -5339,9 +5339,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 18.0,
-      "app_mid": 14.08,
+      "app_mid": 13.78,
       "app_plain": 14.36,
-      "app_cp": 13.13
+      "app_cp": 12.9
     },
     {
       "path": "CherryPt-Brazil",
@@ -5350,9 +5350,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 17.9,
-      "app_mid": 13.51,
+      "app_mid": 13.17,
       "app_plain": 15.33,
-      "app_cp": 12.61
+      "app_cp": 12.34
     },
     {
       "path": "CherryPt-Brazil",
@@ -5361,9 +5361,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 17.1,
-      "app_mid": 13.02,
+      "app_mid": 12.64,
       "app_plain": 16.82,
-      "app_cp": 12.17
+      "app_cp": 11.87
     },
     {
       "path": "CherryPt-Brazil",
@@ -5372,9 +5372,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 18.6,
-      "app_mid": 17.19,
+      "app_mid": 18.1,
       "app_plain": 18.78,
-      "app_cp": 17.08
+      "app_cp": 18.1
     },
     {
       "path": "CherryPt-Brazil",
@@ -5383,9 +5383,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.8,
-      "app_mid": 21.33,
+      "app_mid": 22.36,
       "app_plain": 21.08,
-      "app_cp": 20.53
+      "app_cp": 21.61
     },
     {
       "path": "CherryPt-Brazil",
@@ -5394,9 +5394,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 22.5,
-      "app_mid": 23.09,
+      "app_mid": 24.04,
       "app_plain": 23.54,
-      "app_cp": 22.09
+      "app_cp": 23.1
     },
     {
       "path": "CherryPt-Brazil",
@@ -5405,9 +5405,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 22.4,
-      "app_mid": 24.03,
+      "app_mid": 24.9,
       "app_plain": 25.91,
-      "app_cp": 22.96
+      "app_cp": 23.91
     },
     {
       "path": "CherryPt-Brazil",
@@ -5416,9 +5416,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 22.4,
-      "app_mid": 24.57,
+      "app_mid": 25.37,
       "app_plain": 27.97,
-      "app_cp": 23.47
+      "app_cp": 24.36
     },
     {
       "path": "CherryPt-Brazil",
@@ -5427,9 +5427,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 23.5,
-      "app_mid": 24.86,
+      "app_mid": 25.62,
       "app_plain": 29.51,
-      "app_cp": 23.76
+      "app_cp": 24.61
     },
     {
       "path": "CherryPt-Brazil",
@@ -5438,9 +5438,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 25.2,
-      "app_mid": 25.02,
+      "app_mid": 25.74,
       "app_plain": 30.35,
-      "app_cp": 23.92
+      "app_cp": 24.74
     },
     {
       "path": "CherryPt-Brazil",
@@ -5449,9 +5449,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 26.1,
-      "app_mid": 25.08,
+      "app_mid": 25.79,
       "app_plain": 30.41,
-      "app_cp": 23.98
+      "app_cp": 24.78
     },
     {
       "path": "CherryPt-Brazil",
@@ -5460,9 +5460,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 26.2,
-      "app_mid": 25.09,
+      "app_mid": 25.78,
       "app_plain": 29.68,
-      "app_cp": 23.97
+      "app_cp": 24.76
     },
     {
       "path": "CherryPt-Brazil",
@@ -5471,9 +5471,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 26.2,
-      "app_mid": 25.03,
+      "app_mid": 25.72,
       "app_plain": 28.23,
-      "app_cp": 23.88
+      "app_cp": 24.67
     },
     {
       "path": "CherryPt-Brazil",
@@ -5482,9 +5482,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 26.6,
-      "app_mid": 24.89,
+      "app_mid": 25.59,
       "app_plain": 26.24,
-      "app_cp": 23.67
+      "app_cp": 24.47
     },
     {
       "path": "CherryPt-Brazil",
@@ -5493,9 +5493,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 26.9,
-      "app_mid": 24.6,
+      "app_mid": 25.31,
       "app_plain": 23.89,
-      "app_cp": 23.31
+      "app_cp": 24.1
     },
     {
       "path": "CherryPt-Brazil",
@@ -5504,9 +5504,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.1,
-      "app_mid": 24.08,
+      "app_mid": 24.78,
       "app_plain": 21.43,
-      "app_cp": 22.61
+      "app_cp": 23.42
     },
     {
       "path": "CherryPt-Brazil",
@@ -5515,9 +5515,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.6,
-      "app_mid": 22.26,
+      "app_mid": 23.24,
       "app_plain": 19.1,
-      "app_cp": 20.87
+      "app_cp": 21.72
     },
     {
       "path": "CherryPt-Brazil",
@@ -5526,9 +5526,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 25.7,
-      "app_mid": 20.69,
+      "app_mid": 21.47,
       "app_plain": 17.08,
-      "app_cp": 19.38
+      "app_cp": 20.04
     },
     {
       "path": "Panama-Peru",
@@ -5537,9 +5537,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 20.2,
-      "app_mid": 16.32,
+      "app_mid": 17.23,
       "app_plain": 11.97,
-      "app_cp": 16.32
+      "app_cp": 17.23
     },
     {
       "path": "Panama-Peru",
@@ -5548,9 +5548,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 17.8,
-      "app_mid": 15.14,
+      "app_mid": 15.89,
       "app_plain": 10.79,
-      "app_cp": 15.14
+      "app_cp": 15.89
     },
     {
       "path": "Panama-Peru",
@@ -5559,9 +5559,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 16.9,
-      "app_mid": 14.17,
+      "app_mid": 14.78,
       "app_plain": 9.95,
-      "app_cp": 14.17
+      "app_cp": 14.78
     },
     {
       "path": "Panama-Peru",
@@ -5570,9 +5570,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 16.8,
-      "app_mid": 13.31,
+      "app_mid": 13.81,
       "app_plain": 9.45,
-      "app_cp": 13.31
+      "app_cp": 13.81
     },
     {
       "path": "Panama-Peru",
@@ -5581,9 +5581,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 15.7,
-      "app_mid": 12.57,
+      "app_mid": 12.96,
       "app_plain": 9.24,
-      "app_cp": 12.57
+      "app_cp": 12.96
     },
     {
       "path": "Panama-Peru",
@@ -5592,9 +5592,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.6,
-      "app_mid": 11.95,
+      "app_mid": 12.26,
       "app_plain": 9.21,
-      "app_cp": 11.95
+      "app_cp": 12.26
     },
     {
       "path": "Panama-Peru",
@@ -5603,9 +5603,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 11.4,
-      "app_mid": 11.41,
+      "app_mid": 11.65,
       "app_plain": 9.25,
-      "app_cp": 11.41
+      "app_cp": 11.65
     },
     {
       "path": "Panama-Peru",
@@ -5614,9 +5614,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 9.5,
-      "app_mid": 10.93,
+      "app_mid": 11.12,
       "app_plain": 9.48,
-      "app_cp": 10.93
+      "app_cp": 11.12
     },
     {
       "path": "Panama-Peru",
@@ -5625,9 +5625,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 7.4,
-      "app_mid": 10.54,
+      "app_mid": 10.67,
       "app_plain": 10.0,
-      "app_cp": 10.54
+      "app_cp": 10.67
     },
     {
       "path": "Panama-Peru",
@@ -5636,9 +5636,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 6.8,
-      "app_mid": 10.19,
+      "app_mid": 10.28,
       "app_plain": 10.86,
-      "app_cp": 10.19
+      "app_cp": 10.28
     },
     {
       "path": "Panama-Peru",
@@ -5647,9 +5647,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 10.1,
-      "app_mid": 9.89,
+      "app_mid": 9.94,
       "app_plain": 12.06,
-      "app_cp": 9.89
+      "app_cp": 9.94
     },
     {
       "path": "Panama-Peru",
@@ -5658,9 +5658,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 16.5,
-      "app_mid": 16.26,
+      "app_mid": 17.83,
       "app_plain": 13.53,
-      "app_cp": 16.26
+      "app_cp": 17.83
     },
     {
       "path": "Panama-Peru",
@@ -5669,9 +5669,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 21.7,
-      "app_mid": 18.54,
+      "app_mid": 20.21,
       "app_plain": 15.15,
-      "app_cp": 18.54
+      "app_cp": 20.21
     },
     {
       "path": "Panama-Peru",
@@ -5680,9 +5680,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 23.7,
-      "app_mid": 19.89,
+      "app_mid": 21.57,
       "app_plain": 16.79,
-      "app_cp": 19.89
+      "app_cp": 21.57
     },
     {
       "path": "Panama-Peru",
@@ -5691,9 +5691,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 22.8,
-      "app_mid": 20.79,
+      "app_mid": 22.46,
       "app_plain": 18.27,
-      "app_cp": 20.79
+      "app_cp": 22.46
     },
     {
       "path": "Panama-Peru",
@@ -5702,9 +5702,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 22.1,
-      "app_mid": 21.39,
+      "app_mid": 23.05,
       "app_plain": 19.46,
-      "app_cp": 21.39
+      "app_cp": 23.05
     },
     {
       "path": "Panama-Peru",
@@ -5713,9 +5713,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 21.8,
-      "app_mid": 21.77,
+      "app_mid": 23.4,
       "app_plain": 20.22,
-      "app_cp": 21.77
+      "app_cp": 23.4
     },
     {
       "path": "Panama-Peru",
@@ -5724,9 +5724,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 21.8,
-      "app_mid": 21.93,
+      "app_mid": 23.54,
       "app_plain": 20.47,
-      "app_cp": 21.93
+      "app_cp": 23.54
     },
     {
       "path": "Panama-Peru",
@@ -5735,9 +5735,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 22.7,
-      "app_mid": 21.9,
+      "app_mid": 23.48,
       "app_plain": 20.18,
-      "app_cp": 21.9
+      "app_cp": 23.48
     },
     {
       "path": "Panama-Peru",
@@ -5746,9 +5746,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 24.7,
-      "app_mid": 21.66,
+      "app_mid": 23.21,
       "app_plain": 19.39,
-      "app_cp": 21.66
+      "app_cp": 23.21
     },
     {
       "path": "Panama-Peru",
@@ -5757,9 +5757,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 26.3,
-      "app_mid": 21.2,
+      "app_mid": 22.71,
       "app_plain": 18.18,
-      "app_cp": 21.2
+      "app_cp": 22.71
     },
     {
       "path": "Panama-Peru",
@@ -5768,9 +5768,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 26.6,
-      "app_mid": 20.47,
+      "app_mid": 21.92,
       "app_plain": 16.68,
-      "app_cp": 20.47
+      "app_cp": 21.92
     },
     {
       "path": "Panama-Peru",
@@ -5779,9 +5779,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 25.4,
-      "app_mid": 19.3,
+      "app_mid": 20.63,
       "app_plain": 15.04,
-      "app_cp": 19.3
+      "app_cp": 20.63
     },
     {
       "path": "Panama-Peru",
@@ -5790,9 +5790,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 23.1,
-      "app_mid": 17.69,
+      "app_mid": 18.79,
       "app_plain": 13.42,
-      "app_cp": 17.69
+      "app_cp": 18.79
     },
     {
       "path": "Panama-Peru",
@@ -5801,9 +5801,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 29.0,
-      "app_mid": 20.08,
+      "app_mid": 20.79,
       "app_plain": 15.8,
-      "app_cp": 20.08
+      "app_cp": 20.79
     },
     {
       "path": "Panama-Peru",
@@ -5812,9 +5812,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 27.8,
-      "app_mid": 18.64,
+      "app_mid": 19.17,
       "app_plain": 14.24,
-      "app_cp": 18.64
+      "app_cp": 19.17
     },
     {
       "path": "Panama-Peru",
@@ -5823,9 +5823,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 27.3,
-      "app_mid": 17.43,
+      "app_mid": 17.83,
       "app_plain": 13.13,
-      "app_cp": 17.43
+      "app_cp": 17.83
     },
     {
       "path": "Panama-Peru",
@@ -5834,9 +5834,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 26.9,
-      "app_mid": 16.38,
+      "app_mid": 16.66,
       "app_plain": 12.48,
-      "app_cp": 16.38
+      "app_cp": 16.66
     },
     {
       "path": "Panama-Peru",
@@ -5845,9 +5845,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 24.7,
-      "app_mid": 15.47,
+      "app_mid": 15.64,
       "app_plain": 12.2,
-      "app_cp": 15.47
+      "app_cp": 15.64
     },
     {
       "path": "Panama-Peru",
@@ -5856,9 +5856,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 20.6,
-      "app_mid": 14.71,
+      "app_mid": 14.8,
       "app_plain": 12.15,
-      "app_cp": 14.71
+      "app_cp": 14.8
     },
     {
       "path": "Panama-Peru",
@@ -5867,9 +5867,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 16.8,
-      "app_mid": 14.04,
+      "app_mid": 14.06,
       "app_plain": 12.21,
-      "app_cp": 14.04
+      "app_cp": 14.06
     },
     {
       "path": "Panama-Peru",
@@ -5878,9 +5878,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 14.2,
-      "app_mid": 13.46,
+      "app_mid": 13.41,
       "app_plain": 12.51,
-      "app_cp": 13.46
+      "app_cp": 13.41
     },
     {
       "path": "Panama-Peru",
@@ -5889,9 +5889,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 11.5,
-      "app_mid": 12.97,
+      "app_mid": 12.88,
       "app_plain": 13.19,
-      "app_cp": 12.97
+      "app_cp": 12.88
     },
     {
       "path": "Panama-Peru",
@@ -5900,9 +5900,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 10.0,
-      "app_mid": 12.54,
+      "app_mid": 12.41,
       "app_plain": 14.33,
-      "app_cp": 12.54
+      "app_cp": 12.41
     },
     {
       "path": "Panama-Peru",
@@ -5911,9 +5911,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 12.8,
-      "app_mid": 12.17,
+      "app_mid": 12.0,
       "app_plain": 15.91,
-      "app_cp": 12.17
+      "app_cp": 12.0
     },
     {
       "path": "Panama-Peru",
@@ -5922,9 +5922,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 20.1,
-      "app_mid": 20.01,
+      "app_mid": 21.52,
       "app_plain": 17.85,
-      "app_cp": 20.01
+      "app_cp": 21.52
     },
     {
       "path": "Panama-Peru",
@@ -5933,9 +5933,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 26.7,
-      "app_mid": 22.82,
+      "app_mid": 24.38,
       "app_plain": 20.0,
-      "app_cp": 22.82
+      "app_cp": 24.38
     },
     {
       "path": "Panama-Peru",
@@ -5944,9 +5944,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 28.6,
-      "app_mid": 24.47,
+      "app_mid": 26.02,
       "app_plain": 22.15,
-      "app_cp": 24.47
+      "app_cp": 26.02
     },
     {
       "path": "Panama-Peru",
@@ -5955,9 +5955,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 27.4,
-      "app_mid": 25.58,
+      "app_mid": 27.1,
       "app_plain": 24.12,
-      "app_cp": 25.58
+      "app_cp": 27.1
     },
     {
       "path": "Panama-Peru",
@@ -5966,9 +5966,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 26.1,
-      "app_mid": 26.33,
+      "app_mid": 27.81,
       "app_plain": 25.68,
-      "app_cp": 26.33
+      "app_cp": 27.81
     },
     {
       "path": "Panama-Peru",
@@ -5977,9 +5977,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 25.4,
-      "app_mid": 26.79,
+      "app_mid": 28.24,
       "app_plain": 26.68,
-      "app_cp": 26.79
+      "app_cp": 28.24
     },
     {
       "path": "Panama-Peru",
@@ -5988,9 +5988,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 25.3,
-      "app_mid": 26.99,
+      "app_mid": 28.41,
       "app_plain": 27.01,
-      "app_cp": 26.99
+      "app_cp": 28.41
     },
     {
       "path": "Panama-Peru",
@@ -5999,9 +5999,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 25.9,
-      "app_mid": 26.95,
+      "app_mid": 28.34,
       "app_plain": 26.63,
-      "app_cp": 26.95
+      "app_cp": 28.34
     },
     {
       "path": "Panama-Peru",
@@ -6010,9 +6010,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 27.4,
-      "app_mid": 26.66,
+      "app_mid": 28.01,
       "app_plain": 25.59,
-      "app_cp": 26.66
+      "app_cp": 28.01
     },
     {
       "path": "Panama-Peru",
@@ -6021,9 +6021,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 28.7,
-      "app_mid": 26.09,
+      "app_mid": 27.41,
       "app_plain": 24.0,
-      "app_cp": 26.09
+      "app_cp": 27.41
     },
     {
       "path": "Panama-Peru",
@@ -6032,9 +6032,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 29.3,
-      "app_mid": 25.19,
+      "app_mid": 26.45,
       "app_plain": 22.02,
-      "app_cp": 25.19
+      "app_cp": 26.45
     },
     {
       "path": "Panama-Peru",
@@ -6043,9 +6043,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 29.6,
-      "app_mid": 23.75,
+      "app_mid": 24.89,
       "app_plain": 19.85,
-      "app_cp": 23.75
+      "app_cp": 24.89
     },
     {
       "path": "Panama-Peru",
@@ -6054,9 +6054,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 29.7,
-      "app_mid": 21.77,
+      "app_mid": 22.67,
       "app_plain": 17.72,
-      "app_cp": 21.77
+      "app_cp": 22.67
     },
     {
       "path": "Panama-Peru",
@@ -6065,9 +6065,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 18.8,
-      "app_mid": 14.4,
+      "app_mid": 15.21,
       "app_plain": 11.97,
-      "app_cp": 14.4
+      "app_cp": 15.21
     },
     {
       "path": "Panama-Peru",
@@ -6076,9 +6076,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 16.0,
-      "app_mid": 13.39,
+      "app_mid": 14.05,
       "app_plain": 10.79,
-      "app_cp": 13.39
+      "app_cp": 14.05
     },
     {
       "path": "Panama-Peru",
@@ -6087,9 +6087,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 14.7,
-      "app_mid": 12.53,
+      "app_mid": 13.07,
       "app_plain": 9.95,
-      "app_cp": 12.53
+      "app_cp": 13.07
     },
     {
       "path": "Panama-Peru",
@@ -6098,9 +6098,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 14.4,
-      "app_mid": 11.78,
+      "app_mid": 12.22,
       "app_plain": 9.45,
-      "app_cp": 11.78
+      "app_cp": 12.22
     },
     {
       "path": "Panama-Peru",
@@ -6109,9 +6109,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.6,
-      "app_mid": 11.13,
+      "app_mid": 11.48,
       "app_plain": 9.24,
-      "app_cp": 11.13
+      "app_cp": 11.48
     },
     {
       "path": "Panama-Peru",
@@ -6120,9 +6120,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 12.5,
-      "app_mid": 10.58,
+      "app_mid": 10.85,
       "app_plain": 9.21,
-      "app_cp": 10.58
+      "app_cp": 10.85
     },
     {
       "path": "Panama-Peru",
@@ -6131,9 +6131,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.0,
-      "app_mid": 10.1,
+      "app_mid": 10.32,
       "app_plain": 9.25,
-      "app_cp": 10.1
+      "app_cp": 10.32
     },
     {
       "path": "Panama-Peru",
@@ -6142,9 +6142,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 11.5,
-      "app_mid": 9.69,
+      "app_mid": 9.85,
       "app_plain": 9.48,
-      "app_cp": 9.69
+      "app_cp": 9.85
     },
     {
       "path": "Panama-Peru",
@@ -6153,9 +6153,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 10.2,
-      "app_mid": 9.33,
+      "app_mid": 9.45,
       "app_plain": 10.0,
-      "app_cp": 9.33
+      "app_cp": 9.45
     },
     {
       "path": "Panama-Peru",
@@ -6164,9 +6164,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 9.1,
-      "app_mid": 9.03,
+      "app_mid": 9.11,
       "app_plain": 10.86,
-      "app_cp": 9.03
+      "app_cp": 9.11
     },
     {
       "path": "Panama-Peru",
@@ -6175,9 +6175,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 10.4,
-      "app_mid": 8.76,
+      "app_mid": 8.81,
       "app_plain": 12.06,
-      "app_cp": 8.76
+      "app_cp": 8.81
     },
     {
       "path": "Panama-Peru",
@@ -6186,9 +6186,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 13.3,
-      "app_mid": 14.31,
+      "app_mid": 15.69,
       "app_plain": 13.53,
-      "app_cp": 14.31
+      "app_cp": 15.69
     },
     {
       "path": "Panama-Peru",
@@ -6197,9 +6197,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 14.7,
-      "app_mid": 16.24,
+      "app_mid": 17.69,
       "app_plain": 15.15,
-      "app_cp": 16.24
+      "app_cp": 17.69
     },
     {
       "path": "Panama-Peru",
@@ -6208,9 +6208,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 15.8,
-      "app_mid": 17.28,
+      "app_mid": 18.73,
       "app_plain": 16.79,
-      "app_cp": 17.28
+      "app_cp": 18.73
     },
     {
       "path": "Panama-Peru",
@@ -6219,9 +6219,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 17.5,
-      "app_mid": 17.92,
+      "app_mid": 19.34,
       "app_plain": 18.27,
-      "app_cp": 17.92
+      "app_cp": 19.34
     },
     {
       "path": "Panama-Peru",
@@ -6230,9 +6230,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 18.7,
-      "app_mid": 18.32,
+      "app_mid": 19.72,
       "app_plain": 19.46,
-      "app_cp": 18.32
+      "app_cp": 19.72
     },
     {
       "path": "Panama-Peru",
@@ -6241,9 +6241,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 19.3,
-      "app_mid": 18.55,
+      "app_mid": 19.93,
       "app_plain": 20.22,
-      "app_cp": 18.55
+      "app_cp": 19.93
     },
     {
       "path": "Panama-Peru",
@@ -6252,9 +6252,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 19.2,
-      "app_mid": 18.65,
+      "app_mid": 20.01,
       "app_plain": 20.47,
-      "app_cp": 18.65
+      "app_cp": 20.01
     },
     {
       "path": "Panama-Peru",
@@ -6263,9 +6263,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 18.3,
-      "app_mid": 18.63,
+      "app_mid": 19.98,
       "app_plain": 20.18,
-      "app_cp": 18.63
+      "app_cp": 19.98
     },
     {
       "path": "Panama-Peru",
@@ -6274,9 +6274,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 19.4,
-      "app_mid": 18.49,
+      "app_mid": 19.82,
       "app_plain": 19.39,
-      "app_cp": 18.49
+      "app_cp": 19.82
     },
     {
       "path": "Panama-Peru",
@@ -6285,9 +6285,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 21.0,
-      "app_mid": 18.2,
+      "app_mid": 19.51,
       "app_plain": 18.18,
-      "app_cp": 18.2
+      "app_cp": 19.51
     },
     {
       "path": "Panama-Peru",
@@ -6296,9 +6296,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.4,
-      "app_mid": 17.7,
+      "app_mid": 18.98,
       "app_plain": 16.68,
-      "app_cp": 17.7
+      "app_cp": 18.98
     },
     {
       "path": "Panama-Peru",
@@ -6307,9 +6307,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 23.0,
-      "app_mid": 16.83,
+      "app_mid": 18.01,
       "app_plain": 15.04,
-      "app_cp": 16.83
+      "app_cp": 18.01
     },
     {
       "path": "Panama-Peru",
@@ -6318,9 +6318,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 21.7,
-      "app_mid": 15.55,
+      "app_mid": 16.53,
       "app_plain": 13.42,
-      "app_cp": 15.55
+      "app_cp": 16.53
     },
     {
       "path": "Panama-Peru",
@@ -6329,9 +6329,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 21.7,
-      "app_mid": 17.72,
+      "app_mid": 18.36,
       "app_plain": 15.8,
-      "app_cp": 17.72
+      "app_cp": 18.36
     },
     {
       "path": "Panama-Peru",
@@ -6340,9 +6340,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 20.9,
-      "app_mid": 16.48,
+      "app_mid": 16.96,
       "app_plain": 14.24,
-      "app_cp": 16.48
+      "app_cp": 16.96
     },
     {
       "path": "Panama-Peru",
@@ -6351,9 +6351,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 20.7,
-      "app_mid": 15.42,
+      "app_mid": 15.77,
       "app_plain": 13.13,
-      "app_cp": 15.42
+      "app_cp": 15.77
     },
     {
       "path": "Panama-Peru",
@@ -6362,9 +6362,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 20.5,
-      "app_mid": 14.5,
+      "app_mid": 14.75,
       "app_plain": 12.48,
-      "app_cp": 14.5
+      "app_cp": 14.75
     },
     {
       "path": "Panama-Peru",
@@ -6373,9 +6373,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 19.6,
-      "app_mid": 13.7,
+      "app_mid": 13.85,
       "app_plain": 12.2,
-      "app_cp": 13.7
+      "app_cp": 13.85
     },
     {
       "path": "Panama-Peru",
@@ -6384,9 +6384,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 18.5,
-      "app_mid": 13.02,
+      "app_mid": 13.1,
       "app_plain": 12.15,
-      "app_cp": 13.02
+      "app_cp": 13.1
     },
     {
       "path": "Panama-Peru",
@@ -6395,9 +6395,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 17.6,
-      "app_mid": 12.43,
+      "app_mid": 12.45,
       "app_plain": 12.21,
-      "app_cp": 12.43
+      "app_cp": 12.45
     },
     {
       "path": "Panama-Peru",
@@ -6406,9 +6406,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 16.1,
-      "app_mid": 11.92,
+      "app_mid": 11.88,
       "app_plain": 12.51,
-      "app_cp": 11.92
+      "app_cp": 11.88
     },
     {
       "path": "Panama-Peru",
@@ -6417,9 +6417,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 13.4,
-      "app_mid": 11.49,
+      "app_mid": 11.4,
       "app_plain": 13.19,
-      "app_cp": 11.49
+      "app_cp": 11.4
     },
     {
       "path": "Panama-Peru",
@@ -6428,9 +6428,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 11.5,
-      "app_mid": 11.11,
+      "app_mid": 10.99,
       "app_plain": 14.33,
-      "app_cp": 11.11
+      "app_cp": 10.99
     },
     {
       "path": "Panama-Peru",
@@ -6439,9 +6439,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 12.3,
-      "app_mid": 10.78,
+      "app_mid": 10.63,
       "app_plain": 15.91,
-      "app_cp": 10.78
+      "app_cp": 10.63
     },
     {
       "path": "Panama-Peru",
@@ -6450,9 +6450,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 15.1,
-      "app_mid": 17.61,
+      "app_mid": 18.93,
       "app_plain": 17.85,
-      "app_cp": 17.61
+      "app_cp": 18.93
     },
     {
       "path": "Panama-Peru",
@@ -6461,9 +6461,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 16.8,
-      "app_mid": 19.99,
+      "app_mid": 21.35,
       "app_plain": 20.0,
-      "app_cp": 19.99
+      "app_cp": 21.35
     },
     {
       "path": "Panama-Peru",
@@ -6472,9 +6472,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 17.9,
-      "app_mid": 21.27,
+      "app_mid": 22.6,
       "app_plain": 22.15,
-      "app_cp": 21.27
+      "app_cp": 22.6
     },
     {
       "path": "Panama-Peru",
@@ -6483,9 +6483,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 19.8,
-      "app_mid": 22.06,
+      "app_mid": 23.34,
       "app_plain": 24.12,
-      "app_cp": 22.06
+      "app_cp": 23.34
     },
     {
       "path": "Panama-Peru",
@@ -6494,9 +6494,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 20.9,
-      "app_mid": 22.55,
+      "app_mid": 23.8,
       "app_plain": 25.68,
-      "app_cp": 22.55
+      "app_cp": 23.8
     },
     {
       "path": "Panama-Peru",
@@ -6505,9 +6505,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 21.5,
-      "app_mid": 22.83,
+      "app_mid": 24.05,
       "app_plain": 26.68,
-      "app_cp": 22.83
+      "app_cp": 24.05
     },
     {
       "path": "Panama-Peru",
@@ -6516,9 +6516,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 21.4,
-      "app_mid": 22.95,
+      "app_mid": 24.15,
       "app_plain": 27.01,
-      "app_cp": 22.95
+      "app_cp": 24.15
     },
     {
       "path": "Panama-Peru",
@@ -6527,9 +6527,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 20.7,
-      "app_mid": 22.93,
+      "app_mid": 24.11,
       "app_plain": 26.63,
-      "app_cp": 22.93
+      "app_cp": 24.11
     },
     {
       "path": "Panama-Peru",
@@ -6538,9 +6538,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 21.7,
-      "app_mid": 22.75,
+      "app_mid": 23.92,
       "app_plain": 25.59,
-      "app_cp": 22.75
+      "app_cp": 23.92
     },
     {
       "path": "Panama-Peru",
@@ -6549,9 +6549,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 22.5,
-      "app_mid": 22.4,
+      "app_mid": 23.54,
       "app_plain": 24.0,
-      "app_cp": 22.4
+      "app_cp": 23.54
     },
     {
       "path": "Panama-Peru",
@@ -6560,9 +6560,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 23.2,
-      "app_mid": 21.78,
+      "app_mid": 22.9,
       "app_plain": 22.02,
-      "app_cp": 21.78
+      "app_cp": 22.9
     },
     {
       "path": "Panama-Peru",
@@ -6571,9 +6571,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 23.3,
-      "app_mid": 20.71,
+      "app_mid": 21.74,
       "app_plain": 19.85,
-      "app_cp": 20.71
+      "app_cp": 21.74
     },
     {
       "path": "Panama-Peru",
@@ -6582,9 +6582,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 22.7,
-      "app_mid": 19.13,
+      "app_mid": 19.95,
       "app_plain": 17.72,
-      "app_cp": 19.13
+      "app_cp": 19.95
     }
   ]
 }

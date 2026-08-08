@@ -693,8 +693,10 @@ test('assessFrequency: bounces never change the LUF, only the MUF', function() {
 // See docs/VALIDATION.md Part 11.
 
 test('FOT_RATIO: is the measured value, not the textbook rule of thumb', function() {
-  assert.ok(Math.abs(FOT_RATIO - 0.74) < 1e-9);
-  assert.ok(FOT_RATIO < 0.85, 'the textbook 0.85 was measured to give only 76% of days');
+  // Measured on a grid fine enough to have converged: 4.5% steps give 0.7688
+  // and 2.0% steps give 0.7700. See docs/VALIDATION.md Part 12.
+  assert.ok(Math.abs(FOT_RATIO - 0.77) < 1e-9);
+  assert.ok(FOT_RATIO < 0.85, 'the textbook 0.85 was measured to give only ~82% of days');
   assert.equal(MUF_DAYS_IN_10, 5, 'the MUF is a median by definition');
   assert.equal(FOT_DAYS_IN_10, 9);
 });
@@ -729,4 +731,46 @@ test('assessFrequency: the suggested frequency is the FOT when it fits', functio
   approx(r.fot, FOT_RATIO * r.muf, 1e-9);
   assert.ok(r.suggestedMHz <= r.muf && r.suggestedMHz >= r.luf);
   if (r.fot > r.luf) approx(r.suggestedMHz, r.fot, 1e-9);
+});
+
+
+// ── REFIT GUARDS ─────────────────────────────────────────────────────────────
+// The v1.18.0 refit changed six coefficients at once. These pin the behaviour
+// that the refit had to preserve, so a future refit cannot quietly break it.
+
+test('refit: the winter anomaly survived the coefficient change', function() {
+  // The whole reason Part 6 added a seasonal-ordering constraint. Northern
+  // mid-latitudes must still show January daytime above July.
+  var jan = estimateFoF2(70, 12, 1, 51, 44.6);
+  var jul = estimateFoF2(70, 12, 7, 51, 44.6);
+  assert.ok(jan > jul, '44 N noon: Jan ' + jan.toFixed(2) + ' must exceed Jul ' + jul.toFixed(2));
+  var sJan = estimateFoF2(70, 12, 1, -50, -44.2);
+  var sJul = estimateFoF2(70, 12, 7, -50, -44.2);
+  assert.ok(sJul / sJan > jul / jan, 'the southern hemisphere must still lean the other way');
+});
+
+test('refit: foF2 stays inside published ionosonde ranges', function() {
+  // A fit can minimise error while drifting somewhere unphysical. Mid-latitude
+  // noon foF2 runs roughly 6-13 MHz from solar minimum to maximum, and night
+  // roughly 2-6. Checked at the extremes of the solar cycle.
+  var noonMin = estimateFoF2(0, 12, 6, 45, 40);
+  var noonMax = estimateFoF2(200, 12, 6, 45, 40);
+  var nightMin = estimateFoF2(0, 0, 6, 45, 40);
+  var nightMax = estimateFoF2(200, 0, 6, 45, 40);
+  assert.ok(noonMin > 5 && noonMin < 10, 'solar-min noon out of range: ' + noonMin.toFixed(2));
+  assert.ok(noonMax > 9 && noonMax < 16, 'solar-max noon out of range: ' + noonMax.toFixed(2));
+  assert.ok(nightMin > 1.5 && nightMin < 5, 'solar-min night out of range: ' + nightMin.toFixed(2));
+  assert.ok(nightMax > 3 && nightMax < 9, 'solar-max night out of range: ' + nightMax.toFixed(2));
+  assert.ok(noonMin > nightMin && noonMax > nightMax, 'day must beat night');
+});
+
+test('refit: the lag still puts the peak in the early afternoon', function() {
+  // The recombination lag is what produces the observed afternoon peak. If a
+  // refit drove it to zero the peak would snap back to local noon.
+  var best = 0, bestH = 0;
+  for (var h = 9; h < 17; h += 0.25) {
+    var v = illuminationFactor(35, h, 6);
+    if (v > best) { best = v; bestH = h; }
+  }
+  assert.ok(bestH > 12.1 && bestH < 14.5, 'peak drifted to ' + bestH);
 });

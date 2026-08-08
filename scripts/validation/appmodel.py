@@ -31,13 +31,13 @@ F2_HEIGHT_KM = 360.0
 
 # ── src/freqAdvisor.js constants ─────────────────────────────────────────────
 MID_MONTH_DOY = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]
-FOF2_LAG_HOURS = 1.2
-FOF2_ILLUM_EXP = 0.18
-FOF2_NIGHT_FLOOR = 0.37
-FOF2_AMP_BASE = 6.7
-FOF2_AMP_PER_SSN = 0.0245
+FOF2_LAG_HOURS = 1.05
+FOF2_ILLUM_EXP = 0.16
+FOF2_NIGHT_FLOOR = 0.34
+FOF2_AMP_BASE = 7.1
+FOF2_AMP_PER_SSN = 0.023
 SEASON_LAT_SCALE = 60.0
-SEASON_K_LAT = 0.095
+SEASON_K_LAT = 0.13
 SEASON_K_ANNUAL = 0.06
 SEASON_K_WINTER = -0.14
 # Legacy clock curve, used only when month or latitude is missing.

@@ -54,8 +54,9 @@ coordinates and a frequency into a complete, buildable antenna solution:
   frequency will close the path at the selected power.
 - **Aims at a frequency that actually holds** — the FOT is defined as the
   frequency good 9 days in 10, and the textbook shortcut for it (85% of the
-  MUF) measurably delivers only 76%, so a plan built on it fails one day in
-  four. Measured against VOACAP's own day-by-day statistics and corrected.
+  MUF) measurably delivers about 82%, so a plan built on it fails nearer one
+  day in five. Measured twice against VOACAP's own day-by-day statistics —
+  the second time on a grid fine enough to prove the answer had converged.
 - **Frequency check** — given the path, time of day and month, estimates
   MUF / FOT / LUF offline and rules on whether the assigned frequency will
   close the link, with an alternate to request if it will not. The
@@ -92,7 +93,10 @@ coordinates and a frequency into a complete, buildable antenna solution:
   model was validated the same way against VOACAP's MUF output over 288
   hourly samples: 12.4% mean error, 80% within 20%. A third study extended
   that worldwide — six sites from 60 N to 44 S across all twelve months —
-  to fit the season and magnetic-latitude terms. A fourth checked the
+  to fit the season and magnetic-latitude terms. Accuracy is now uniform to
+  within 0.3 points across three very different regimes — 12.1% regional,
+  12.3% across latitudes, 12.4% transequatorial — and effectively unbiased on
+  paths crossing the equator. A fourth checked the
   ionospheric layer table against both closed-form geometry and VOACAP's own
   mode selection, correcting a hop limit that exceeded what its layer height
   can physically support. A fifth tested six real hemisphere-to-hemisphere

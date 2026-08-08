@@ -26,11 +26,11 @@
 //
 // 3. FOT (Frequency of Optimum Traffic) — the planning figure the operator
 //    actually aims at, DEFINED as the frequency good 90% of days. The
-//    textbook rule of thumb is 0.85 * MUF, and it is wrong: measured against
-//    VOACAP's own MUFday output over 361 samples, 0.85 * MUF delivers only
-//    76% of days, and the real 90% frequency sits at 0.74 * MUF. Aiming at
-//    the textbook figure means the link fails about one day in four instead
-//    of one in ten. See docs/VALIDATION.md Part 11.
+//    textbook rule of thumb is 0.85 * MUF and it aims too high: measured
+//    against VOACAP's own MUFday output, 0.85 * MUF delivers about 82% of
+//    days and the real 90% frequency sits at 0.77 * MUF — so a plan built on
+//    the textbook figure fails nearer one day in five than one in ten.
+//    See docs/VALIDATION.md Parts 11 and 12.
 //
 // 4. LUF (Lowest Usable Frequency) is set by D-layer absorption, which tracks
 //    daylight AND transmit power — unlike the MUF, which no amount of power
@@ -104,7 +104,7 @@ export function localSolarTime(utcHour, lonDeg) {
 // controlled layer as foF ∝ (cos χ)^¼ — production balancing recombination.
 // The F2 layer departs from that because transport, not just photochemistry,
 // governs it, so the exponent below is fitted rather than assumed; it lands
-// near 0.22, in the same family as the theoretical ¼.
+// near 0.16, the same family as the theoretical ¼.
 //
 // Replacing a clock-driven cosine with real solar geometry is what lets the
 // model handle a polar summer (sun never sets), a polar winter (never rises)
@@ -135,7 +135,7 @@ export function cosZenith(latDeg, localHour, declDeg) {
 // what produces both the observed early-afternoon peak and the long evening
 // tail — behaviour the previous clock-based curve had to encode as two
 // separate hand-tuned numbers, and still got wrong after sunset.
-export const FOF2_LAG_HOURS = 1.2;
+export const FOF2_LAG_HOURS = 1.05;
 
 // Illumination actually driving the layer: an exponentially weighted history
 // of max(cos χ, 0) over the preceding hours. 0 = fully dark for a long time,
@@ -158,14 +158,21 @@ export function illuminationFactor(latDeg, localHour, month) {
 // Fitted jointly against 4320 VOACAP samples spanning three independent data
 // sets — mid-latitude, six latitudes from 60 N to 44 S over all twelve months,
 // and six transequatorial circuits. See docs/VALIDATION.md Part 6.
-export const FOF2_AMP_BASE = 6.7;        // MHz at SSN 0, fully illuminated
-export const FOF2_AMP_PER_SSN = 0.0245;  // MHz per sunspot number
-export const FOF2_ILLUM_EXP = 0.18;      // Chapman-family exponent on cos χ
-export const FOF2_NIGHT_FLOOR = 0.37;    // the layer never fully decays
+// Refit in v1.18.0 against the CURRENT structure. Every one of these was
+// originally fitted in Part 6, when the model evaluated the path midpoint and
+// used the terrain-adjusted takeoff angle. Per-bounce evaluation (Part 9) and
+// the geometric-angle fix (Part 10) both changed what the fit sees, so the old
+// values were stale. Refitting improved all three data sets at once —
+// weighted error 13.20% to 12.29% — with the seasonal-ordering constraint from
+// Part 6 still held, so the winter anomaly cannot come out backwards.
+export const FOF2_AMP_BASE = 7.1;        // MHz at SSN 0, fully illuminated
+export const FOF2_AMP_PER_SSN = 0.023;   // MHz per sunspot number
+export const FOF2_ILLUM_EXP = 0.16;      // Chapman-family exponent on cos χ
+export const FOF2_NIGHT_FLOOR = 0.34;    // the layer never fully decays
 
 // Three residual effects that solar geometry alone cannot produce:
 export const SEASON_LAT_SCALE = 60;   // degrees magnetic where the lat term saturates
-export const SEASON_K_LAT = 0.095;    // equator-to-pole gradient, on MAGNETIC latitude
+export const SEASON_K_LAT = 0.13;     // equator-to-pole gradient, on MAGNETIC latitude
 export const SEASON_K_ANNUAL = 0.06;  // December/perihelion anomaly, all latitudes
 // The winter anomaly. Daytime foF2 is HIGHER in local winter than local
 // summer — the opposite of what sunlight alone would give, because it is a
@@ -322,11 +329,21 @@ export function secantFactor(takeoffDeg, layerKm) {
 
 // ── FOT ───────────────────────────────────────────────────────────────────────
 // Measured, not assumed: the frequency VOACAP says works 90% of days, over
-// the MUF, across 4 distances x 2 seasons x 2 solar levels x 24 hours. Median
-// 0.740, and remarkably flat with distance (0.728 at 500 km to 0.751 at
-// 6000 km). An illumination-dependent version was tried and improved the fit
-// by only 5%, so it did not earn the extra term.
-export const FOT_RATIO = 0.74;
+// the MUF. Median 0.769 across 173 samples, and strikingly flat with distance
+// — 0.774 at 500 km, 0.769 at 1500, 3000 and 6000 km — which is what makes a
+// single constant defensible.
+//
+// This number was measured TWICE. The first pass used a coarse frequency grid
+// (2-3 MHz steps) and returned 0.740; re-running it with the grid placed at
+// fixed fractions of each hour's own MUF, one hour per run, moved the answer
+// to 0.769. Halving the step again changes it by 0.001, so it has converged.
+// The coarse figure was biased low, and 0.74 shipped briefly in v1.17.0.
+// See docs/VALIDATION.md Part 12.
+//
+// It does vary with illumination (0.684 daylight, 0.780 night) and that is
+// NOT modelled — the term did not earn its place — so the FOT is slightly
+// optimistic in strong daylight.
+export const FOT_RATIO = 0.77;
 
 // Two anchors the operator can reason about, both directly measured:
 //   at the MUF  — works 5 days in 10 (the MUF is a MEDIAN, by definition)
