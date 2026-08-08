@@ -238,14 +238,16 @@ export function estimateFoF2(ssn, localHour, month, magLatDeg, latDeg) {
 // over paired conditions, going 20 W -> 400 W drops the LUF 43% in daylight,
 // against 42% predicted here. The absolute level is still uncalibrated (see
 // docs/VALIDATION.md Part 8) — this is a better-shaped estimate, not a
-// measured one.
+// measured one. 20 W is both the historical anchor and the AN/PRC-160's
+// GLOBAL setting, so the reference case is a real radio on its top manpack
+// power rather than an arbitrary round number.
 export const LUF_K = 449;              // absorption constant, MHz^2 * dB
 export const LUF_GYRO_MHZ = 1.2;       // electron gyrofrequency
 export const LUF_MARGIN_20W_DB = 10;   // link margin at the 20 W reference
 export const LUF_REF_WATTS = 20;       // reference transmit power
 export const LUF_FLOOR_MHZ = 2.0;      // noise-limited floor; absorption is not
                                        // what stops you at 2 MHz on a dark path
-export const DEFAULT_TX_WATTS = 20;    // a manpack, e.g. AN/PRC-150 on low
+export const DEFAULT_TX_WATTS = 20;    // AN/PRC-160 GLOBAL — the manpack maximum
 
 // Lowest usable frequency, MHz.
 //   illum    0-1 solar illumination where the ray crosses the D layer

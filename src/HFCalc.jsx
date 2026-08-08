@@ -1575,21 +1575,22 @@ function seasonNote(month, magLatDeg) {
 // but below the LUF the D layer is eating the signal, and there power is
 // exactly the right answer.
 //
-// Labelled the way the radio is, not in round numbers, because that is what
-// the operator is actually selecting in the menu. Published figures:
-//   AN/PRC-150(C) and AN/PRC-160(V) manpack — 20 W PEP on HF (10 W VHF)
-//   RF-5833H series power amplifier         — 150 W, the usual VRC fit
-// LOW and MED are the radio's lower presets. Their exact wattage varies by
-// radio, software load and configuration, and is not something the public
-// datasheets pin down — so they are marked as approximate and the operator
-// can type the real number. Note also that Harris sets power either GLOBALLY
-// or per preset/channel, so what is dialled here may not be what a given
-// channel actually transmits at; check the radio.
+// Labelled exactly as the radio menu reads, because that is what the operator
+// is selecting. The manpack values are OPERATOR-REPORTED from an AN/PRC-160(V)
+// rather than taken from a datasheet — the published sheets give only the
+// 20 W HF maximum and never break out the presets. GLOBAL is the top setting
+// and matches that published maximum, which is a good consistency check.
+//
+// USER is the radio's operator-programmable level, so it has no fixed wattage
+// here: type the actual figure into the field instead.
+//
+// VRC is the RF-5833H series power amplifier, 150 W, published.
 var TX_POWERS = [
-  { w: 1,   label: 'LOW',   note: 'manpack low preset (approx)' },
-  { w: 5,   label: 'MED',   note: 'manpack medium preset (approx)' },
-  { w: 20,  label: 'HIGH',  note: 'PRC-150/160 manpack max, 20 W HF' },
-  { w: 150, label: 'VRC',   note: 'RF-5833H vehicle amplifier, 150 W' },
+  { w: 2,   label: 'LOW',    note: 'PRC-160 LOW' },
+  { w: 5,   label: 'MED',    note: 'PRC-160 MED' },
+  { w: 10,  label: 'HIGH',   note: 'PRC-160 HIGH' },
+  { w: 20,  label: 'GLOBAL', note: 'PRC-160 GLOBAL — 20 W, the manpack maximum' },
+  { w: 150, label: 'VRC',    note: 'RF-5833H vehicle amplifier — 150 W' },
 ];
 
 function PowerSelector({ watts, onWatts }) {
@@ -1616,12 +1617,12 @@ function PowerSelector({ watts, onWatts }) {
               onClick={function() { setCustomStr(''); onWatts(p.w); }}
               title={p.note}
               style={{
-                flex: '1 1 0', minWidth: 0, padding: '7px 2px',
+                flex: '1 1 0', minWidth: 0, padding: '7px 1px',
                 background: active ? T.accentDim : T.bg,
                 color: active ? T.accentText : T.textMute,
                 border: '1px solid ' + (active ? T.accent : T.border),
-                borderRadius: 5, fontSize: '0.64rem', fontWeight: 700,
-                letterSpacing: '0.04em', cursor: 'pointer',
+                borderRadius: 5, fontSize: '0.58rem', fontWeight: 700,
+                letterSpacing: '0.02em', cursor: 'pointer',
               }}
             >
               <div>{p.label}</div>
@@ -1639,7 +1640,7 @@ function PowerSelector({ watts, onWatts }) {
           step="1"
           value={customStr}
           onChange={function(e) { applyCustom(e.target.value); }}
-          placeholder="or type actual watts"
+          placeholder="USER / other — type watts"
           style={{ flex: 1, padding: '6px 8px', background: T.bg, color: T.textPrim, border: '1.5px solid ' + (preset ? T.border : T.accent), borderRadius: 5, fontSize: '0.72rem' }}
         />
         <div style={{ color: T.textDim, fontSize: '0.6rem', flexShrink: 0 }}>{'using ' + watts + ' W'}</div>
@@ -1647,10 +1648,10 @@ function PowerSelector({ watts, onWatts }) {
 
       <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 4, lineHeight: 1.45 }}>
         {preset ? preset.note : 'operator-entered power'}
-        {' · LOW/MED wattages vary by radio and load — type yours if you know it. Power is set globally or per preset on Harris sets, so confirm what the channel actually transmits.'}
+        {' · manpack figures are as read off an AN/PRC-160. Different set, different fill, or the radio\u2019s USER level — type the actual watts.'}
       </div>
       <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 3, lineHeight: 1.45 }}>
-        More power lowers the LUF, never raises the MUF. Twenty times the power buys roughly forty percent off the LUF, not twenty times.
+        More power lowers the LUF, never raises the MUF. Going manpack GLOBAL to the 150 W amp buys roughly a third off the LUF, not seven and a half times.
       </div>
     </div>
   );
@@ -2081,7 +2082,7 @@ function AboutBanner() {
               {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
-              {feat('Transmit power', 'set it the way the radio is labelled — LOW/MED/HIGH on the manpack, VRC for the 150 W amp, or type your actual wattage. Power moves the LUF, the floor where the ionosphere absorbs you, and going from manpack to the amp buys roughly 40% off it, not eight times. It does NOT move the MUF: above that, more watts just follow the signal into space. Tells you outright when no frequency will close the path at the power you have.', 'f10c', 'offline')}
+              {feat('Transmit power', 'set it the way the radio is labelled — LOW/MED/HIGH/GLOBAL on a PRC-160, VRC for the 150 W amp, or type your actual wattage for the USER level. Power moves the LUF, the floor where the ionosphere absorbs you, and going from manpack GLOBAL to the 150 W amp buys roughly a third off it, not seven and a half times. It does NOT move the MUF: above that, more watts just follow the signal into space. Tells you outright when no frequency will close the path at the power you have.', 'f10c', 'offline')}
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
               {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
               {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
@@ -2119,7 +2120,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  144 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  145 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

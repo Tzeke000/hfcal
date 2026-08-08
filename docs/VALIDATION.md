@@ -642,17 +642,25 @@ numbers:
 
 | Setting | Watts | Source |
 |---|---|---|
-| LOW | 1 | manpack low preset — approximate |
-| MED | 5 | manpack medium preset — approximate |
-| HIGH | 20 | AN/PRC-150(C) / AN/PRC-160(V) published HF max |
+| LOW | 2 | AN/PRC-160(V), operator-reported |
+| MED | 5 | AN/PRC-160(V), operator-reported |
+| HIGH | 10 | AN/PRC-160(V), operator-reported |
+| GLOBAL | 20 | AN/PRC-160(V), operator-reported — matches the published 20 W HF max |
 | VRC | 150 | RF-5833H series power amplifier, published |
 
-HIGH and VRC come from published manufacturer figures. LOW and MED vary by
-radio, software load and configuration and are *not* pinned down by public
-datasheets, so they are marked approximate and the operator can type the actual
-wattage — which overrides the presets entirely. The UI also notes that Harris
-sets power globally or per preset/channel, so what is dialled in the menu may
-not be what a given channel transmits at.
+The manpack figures were read off a real AN/PRC-160 rather than taken from a
+datasheet, because the published sheets give only the 20 W HF maximum and never
+break out the presets. That the top setting, GLOBAL, lands exactly on the
+published 20 W is a useful consistency check on the rest of the ladder.
+
+Two corrections came out of this. An earlier draft guessed HIGH was the 20 W
+maximum — it is not, HIGH is 10 W and GLOBAL is the top. And GLOBAL was assumed
+to be a *scope* (Harris radios can set power globally or per preset) rather than
+a power level; on this radio's menu it is a level. Both were fixed by asking
+the operator instead of the datasheet.
+
+USER is the radio's operator-programmable level and therefore has no fixed
+wattage: the free-entry field covers it, and overrides the presets entirely.
 
 Hop count feeds the absorption term, since the ray crosses the D layer once per
 hop. Selecting more power can flip a verdict from BELOW LUF to usable and never
@@ -664,7 +672,7 @@ eats everything the ionosphere would still reflect and **no frequency works at
 all**. The advisor had always computed this (`pathClosed`) and never displayed
 it. It is now called out explicitly in the check panel, and closed blocks are
 flagged in red in the 24-hour forecast — on a 1200 km path in June daylight,
-1 W gives a LUF of 18.5 MHz against a MUF of 11.9.
+LOW (2 W) gives a LUF of 20.0 MHz against a MUF of 11.9.
 
 ## Limitations
 

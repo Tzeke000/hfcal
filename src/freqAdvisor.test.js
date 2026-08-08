@@ -521,7 +521,8 @@ test('assessFrequency: reports local solar time at both stations', function() {
 
 test('estimateLUF: matches the historical 20 W calibration', function() {
   // The pre-v1.15 model was LUF = 2.0 + 3.5*illumination at manpack power.
-  // The new form must reproduce its two anchors exactly.
+  // 20 W is also the AN/PRC-160 GLOBAL setting. The new form must reproduce
+  // both anchors of the old curve exactly.
   assert.ok(Math.abs(estimateLUF(1, 20, 1) - 5.5) < 0.02, 'full sun 20 W should be 5.5 MHz');
   assert.equal(estimateLUF(0, 20, 1), LUF_FLOOR_MHZ, 'darkness should sit on the noise floor');
 });
@@ -542,6 +543,28 @@ test('estimateLUF: power buys the SQUARE ROOT of the margin, not linear gain', f
   var drop = 1 - estimateLUF(1, 400, 1) / estimateLUF(1, 20, 1);
   assert.ok(drop > 0.30 && drop < 0.55,
     '20 W -> 400 W should drop the LUF 30-55%, got ' + (drop * 100).toFixed(0) + '%');
+  // The real operational step: PRC-160 GLOBAL (20 W) to the RF-5833H (150 W)
+  // is 7.5x the power and must buy roughly a third, not seven times.
+  var real = 1 - estimateLUF(1, 150, 1) / estimateLUF(1, 20, 1);
+  assert.ok(real > 0.20 && real < 0.45,
+    'GLOBAL -> VRC should drop the LUF 20-45%, got ' + (real * 100).toFixed(0) + '%');
+});
+
+test('estimateLUF: the PRC-160 preset ladder is monotonic and sane', function() {
+  // Operator-reported from the radio: LOW 2, MED 5, HIGH 10, GLOBAL 20 W.
+  var ladder = [2, 5, 10, 20, 150];
+  var prev = Infinity;
+  ladder.forEach(function(w) {
+    var v = estimateLUF(1, w, 1);
+    assert.ok(v < prev, 'each step up the ladder must lower the LUF, broke at ' + w + ' W');
+    assert.ok(isFinite(v) && v >= LUF_FLOOR_MHZ, 'bad LUF at ' + w + ' W: ' + v);
+    prev = v;
+  });
+  // At night the whole ladder collapses onto the noise floor — absorption is
+  // not what limits you in the dark, so power stops mattering.
+  ladder.forEach(function(w) {
+    assert.equal(estimateLUF(0, w, 1), LUF_FLOOR_MHZ, 'night LUF should not depend on power');
+  });
 });
 
 test('estimateLUF: rises with illumination and with hop count', function() {
