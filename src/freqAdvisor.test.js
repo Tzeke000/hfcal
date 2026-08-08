@@ -7,6 +7,7 @@ import {
   DEFAULT_SSN, sfiToSSN, localSolarTime, diurnalFactor, estimateFoF2,
   secantFactor, classifyFrequency, assessFrequency,
   FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO,
+  frequencyForecast, bestBlocks,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -125,4 +126,52 @@ test('assessFrequency: rejects unusable input', function() {
   var r = assessFrequency({ takeoffDeg: 40, layerKm: 360, utcHour: 12 });
   assert.equal(r.verdict, null);
   assert.ok(r.muf > 0);
+});
+
+// ── 24-hour forecast ─────────────────────────────────────────────────────────
+
+test('frequencyForecast: six 4-hour blocks covering the whole day', function() {
+  var f = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: -84, sfi: null, freqMHz: 7.9 });
+  assert.equal(f.length, 6);
+  assert.deepEqual(f.map(function(b) { return b.startZ; }), [0, 4, 8, 12, 16, 20]);
+  assert.equal(f[5].endZ, 0, 'last block wraps to 00Z');
+  f.forEach(function(b) {
+    assert.ok(b.muf > 0 && b.fot > 0 && b.luf > 0, 'finite values');
+    approx(b.fot, 0.85 * b.muf, 1e-9);
+    assert.ok(b.verdict, 'verdict present when a frequency is supplied');
+  });
+});
+
+test('frequencyForecast: honours block size and rejects sizes that do not divide 24', function() {
+  assert.equal(frequencyForecast({ takeoffDeg: 40, layerKm: 360, blockHours: 6 }).length, 4);
+  assert.equal(frequencyForecast({ takeoffDeg: 40, layerKm: 360, blockHours: 5 }).length, 6, 'falls back to 4 h');
+});
+
+test('frequencyForecast: flags exactly one current block', function() {
+  var f = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: 0, nowUtcHour: 22.7 });
+  assert.equal(f.filter(function(b) { return b.isNow; }).length, 1);
+  assert.equal(f.find(function(b) { return b.isNow; }).startZ, 20);
+  // wraps correctly at midnight and handles out-of-range input
+  assert.equal(frequencyForecast({ takeoffDeg: 80, layerKm: 360, nowUtcHour: 0 }).find(function(b) { return b.isNow; }).startZ, 0);
+  assert.equal(frequencyForecast({ takeoffDeg: 80, layerKm: 360 }).filter(function(b) { return b.isNow; }).length, 0);
+});
+
+test('frequencyForecast: MUF peaks in the local-afternoon block', function() {
+  // midLon 0 → the 12-16Z block straddles local solar noon
+  var f = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: 0, sfi: null });
+  var peak = f.reduce(function(a, b) { return b.muf > a.muf ? b : a; });
+  assert.equal(peak.startZ, 12, 'peak block should contain local noon, got ' + peak.startZ);
+  var trough = f.reduce(function(a, b) { return b.muf < a.muf ? b : a; });
+  assert.equal(trough.startZ, 0, 'trough block should be pre-dawn, got ' + trough.startZ);
+});
+
+test('bestBlocks: ranks usable blocks, null when nothing works', function() {
+  var f = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: -84, sfi: null, freqMHz: 7.9 });
+  var best = bestBlocks(f, 7.9);
+  assert.ok(best && best.length, 'some block should work for 7.9 MHz');
+  assert.ok(best[0].verdict.ok);
+  // A frequency far above any MUF has no usable block
+  var f2 = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: -84, sfi: null, freqMHz: 45 });
+  assert.equal(bestBlocks(f2, 45), null);
+  assert.equal(bestBlocks(null, 7), null);
 });

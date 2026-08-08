@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.8.2 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.9.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -40,6 +40,9 @@ coordinates and a frequency into a complete, buildable antenna solution:
 - **Frequency check** — given the path and time of day, estimates MUF / FOT /
   LUF offline and rules on whether the assigned frequency will close the
   link, with an alternate to request if it will not.
+- **24-hour frequency forecast** — MUF/FOT/LUF in 4-hour Zulu blocks with a
+  verdict per block, so comm windows can be planned a day ahead rather than
+  checked one moment at a time.
 - **Saved shots and comm-card export** — keep the day's link plans on the
   device and export any of them as a plain-text comm card.
 
@@ -64,7 +67,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
   hourly samples: 14.6% mean error, 73% within 20%.
-- **Engineered, not improvised:** automated physics test suite (80 tests
+- **Engineered, not improvised:** automated physics test suite (85 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

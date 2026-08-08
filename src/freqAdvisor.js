@@ -179,3 +179,59 @@ export function assessFrequency(params) {
     pathClosed: luf >= muf,
   };
 }
+
+// ── 24-HOUR FORECAST ──────────────────────────────────────────────────────────
+// Rolls assessFrequency across the day in fixed blocks so an operator can plan
+// comm windows rather than only checking the current moment. Blocks are
+// anchored to Zulu (00Z, 04Z, ...) because that is how comm windows are
+// scheduled; each block is evaluated at its midpoint, which is representative
+// of the block as a whole since MUF moves smoothly.
+//
+// params: everything assessFrequency takes (minus utcHour), plus
+//   blockHours   size of each block in hours (default 4, must divide 24)
+//   nowUtcHour   current UTC hour, used to flag the active block
+export function frequencyForecast(params) {
+  var size = params.blockHours || 4;
+  if (24 % size !== 0) size = 4;
+  var blocks = [];
+  for (var start = 0; start < 24; start += size) {
+    var mid = start + size / 2;
+    var r = assessFrequency({
+      takeoffDeg: params.takeoffDeg,
+      layerKm: params.layerKm,
+      midLon: params.midLon,
+      utcHour: mid,
+      sfi: params.sfi,
+      freqMHz: params.freqMHz,
+    });
+    if (!r) return null;
+    var now = params.nowUtcHour;
+    blocks.push({
+      startZ: start,
+      endZ: (start + size) % 24,
+      midZ: mid,
+      muf: r.muf,
+      fot: r.fot,
+      luf: r.luf,
+      suggestedMHz: r.suggestedMHz,
+      verdict: r.verdict,
+      isNow: typeof now === 'number' && isFinite(now)
+        && ((now % 24) + 24) % 24 >= start && ((now % 24) + 24) % 24 < start + size,
+    });
+  }
+  return blocks;
+}
+
+// Pick the best block(s) for a frequency: prefers a GOOD verdict, then the
+// block whose FOT sits closest to the frequency. Returns null when the
+// frequency is unusable in every block.
+export function bestBlocks(blocks, freqMHz) {
+  if (!blocks || !blocks.length || typeof freqMHz !== 'number') return null;
+  var usable = blocks.filter(function(b) { return b.verdict && b.verdict.ok; });
+  if (!usable.length) return null;
+  var good = usable.filter(function(b) { return b.verdict.code === 'good'; });
+  var pool = good.length ? good : usable;
+  return pool.slice().sort(function(a, b) {
+    return Math.abs(a.fot - freqMHz) - Math.abs(b.fot - freqMHz);
+  });
+}

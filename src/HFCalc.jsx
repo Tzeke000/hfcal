@@ -12,7 +12,7 @@ import {
   parseFluxPayload, parseKIndexPayload,
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "./spacewx.js";
-import { assessFrequency } from "./freqAdvisor.js";
+import { assessFrequency, frequencyForecast, bestBlocks } from "./freqAdvisor.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
 // Single source of truth for the app version (also drives the icon badge —
@@ -2241,6 +2241,125 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
   );
 }
 
+// ── FREQUENCY FORECAST CARD ───────────────────────────────────────────────────
+// 24-hour MUF / FOT / LUF in 4-hour Zulu blocks, so an operator can plan comm
+// windows instead of only checking the current moment. Same collapsible
+// pattern as the DAGR and About cards. Fully offline.
+function FreqForecastCard({ results, freqStr }) {
+  var [open, setOpen] = useState(false);
+  var freqMHz = parseFloat(freqStr);
+  var hasFreq = !isNaN(freqMHz) && freqMHz > 0;
+
+  var blocks = null, best = null, usingDefault = true;
+  if (results) {
+    var now = new Date();
+    blocks = frequencyForecast({
+      takeoffDeg: results.directive.takeoffDeg,
+      layerKm: HOP.F2.hKm,
+      midLon: (results.p1.lon + results.p2.lon) / 2,
+      sfi: cachedSFI(),
+      freqMHz: hasFreq ? freqMHz : null,
+      blockHours: 4,
+      nowUtcHour: now.getUTCHours() + now.getUTCMinutes() / 60,
+    });
+    usingDefault = cachedSFI() === null;
+    if (blocks && hasFreq) best = bestBlocks(blocks, freqMHz);
+  }
+
+  // Device offset so each Zulu block can also be shown in the operator's local time
+  var offset = -new Date().getTimezoneOffset() / 60;
+  function localOf(z) { return ((z + offset) % 24 + 24) % 24; }
+  function hh(h) { return String(Math.floor(h)).padStart(2, '0'); }
+
+  var SHORT = { good: 'GOOD', near_muf: 'NEAR MUF', low: 'ABSORB', above_muf: 'ABOVE MUF', below_luf: 'BELOW LUF' };
+  function vColor(c) {
+    return c === 'good' ? T.accent : c === 'near_muf' ? '#c8a24a'
+         : c === 'low' ? '#a8a86a' : T.warn;
+  }
+
+  var cell = { fontSize: '0.78rem', fontWeight: 700, textAlign: 'center' };
+
+  return (
+    <div className="usmc-card" style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div>
+          <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.84rem', letterSpacing: '0.04em' }}>24-Hour Frequency Forecast</div>
+          <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 2 }}>
+            {best && best.length
+              ? 'Best window for ' + freqMHz + ' MHz: ' + hh(best[0].startZ) + '–' + hh(best[0].endZ) + 'Z'
+              : 'MUF / FOT / LUF in 4-hour blocks'}
+          </div>
+        </div>
+        <button onClick={function() { setOpen(!open); }} style={{ background: open ? T.accentDim : T.surfaceHi, color: T.textPrim, border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '6px 16px', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', flexShrink: 0 }}>
+          {open ? 'CLOSE' : 'OPEN'}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14 }}>
+          {!blocks && (
+            <div style={{ color: T.textMute, fontSize: '0.76rem', lineHeight: 1.5 }}>
+              Enter both locations and press CALCULATE — the forecast needs the path geometry.
+            </div>
+          )}
+
+          {blocks && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '86px 1fr 1fr 1fr 84px', gap: 4, padding: '0 6px 6px', color: T.textMute, fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em' }}>
+                <div>ZULU / LOCAL</div>
+                <div style={{ textAlign: 'center' }}>LUF</div>
+                <div style={{ textAlign: 'center' }}>FOT</div>
+                <div style={{ textAlign: 'center' }}>MUF</div>
+                <div style={{ textAlign: 'right' }}>{hasFreq ? freqMHz + ' MHz' : ''}</div>
+              </div>
+
+              {blocks.map(function(b) {
+                return (
+                  <div key={b.startZ} style={{
+                    display: 'grid', gridTemplateColumns: '86px 1fr 1fr 1fr 84px', gap: 4, alignItems: 'center',
+                    background: b.isNow ? T.accentDim : T.bg,
+                    border: '1px solid ' + (b.isNow ? T.accent : T.border),
+                    borderRadius: 6, padding: '8px 6px', marginBottom: 5,
+                  }}>
+                    <div>
+                      <div style={{ color: T.textPrim, fontSize: '0.74rem', fontWeight: 700 }}>
+                        {hh(b.startZ) + '–' + hh(b.endZ) + 'Z'}
+                      </div>
+                      <div style={{ color: b.isNow ? T.accentText : T.textMute, fontSize: '0.6rem', fontWeight: b.isNow ? 700 : 400 }}>
+                        {b.isNow ? 'NOW · ' : ''}{hh(localOf(b.startZ)) + '–' + hh(localOf(b.endZ)) + 'L'}
+                      </div>
+                    </div>
+                    <div style={{ ...cell, color: T.textMute }}>{b.luf.toFixed(1)}</div>
+                    <div style={{ ...cell, color: T.accentText }}>{b.fot.toFixed(1)}</div>
+                    <div style={{ ...cell, color: T.textSec }}>{b.muf.toFixed(1)}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      {b.verdict
+                        ? <span style={{ color: vColor(b.verdict.code), fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em' }}>{SHORT[b.verdict.code]}</span>
+                        : <span style={{ color: T.textDim, fontSize: '0.6rem' }}>{'aim ' + b.suggestedMHz.toFixed(1)}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {hasFreq && !best && (
+                <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 8, lineHeight: 1.5 }}>
+                  {freqMHz + ' MHz does not work on this path at any hour. Aim near the FOT column — request a frequency around ' + blocks[0].suggestedMHz.toFixed(1) + '–' + Math.max.apply(null, blocks.map(function(b) { return b.fot; })).toFixed(1) + ' MHz depending on the hour.'}
+                </div>
+              )}
+
+              <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
+                {'Aim at FOT. Above MUF the signal passes into space (more power will not help); below LUF it is absorbed (more power does help). Blocks evaluated at their midpoint · '
+                  + (usingDefault ? 'default solar activity — connect once to refine' : 'solar activity from NOAA')
+                  + ' · ±15% vs VOACAP.'}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── SAVED SHOTS ───────────────────────────────────────────────────────────────
 // Field workflow: you plan several links in a day. Save each one, export any
 // of them later as a plain-text comm card (copy to clipboard, or download as
@@ -3050,6 +3169,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
+        <FreqForecastCard results={results} freqStr={freq} />
         <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
 
         <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '4px solid #c4442e', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
