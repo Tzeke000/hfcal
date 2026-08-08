@@ -127,7 +127,22 @@ MAG_LAT = {
 F2_HEIGHT_KM = 360.0
 
 
-def app_muf(ssn, lst, month=None, mag_lat=None, lat=None):
+_BOUNCE_CACHE = {}
+
+
+def app_muf(ssn, lst, month=None, mag_lat=None, lat=None, site=None):
+    """Evaluated through the bounce path so the coefficient map is exercised."""
+    if site is not None and month is not None:
+        if site not in _BOUNCE_CACHE:
+            la, lo = [(a, b) for n, a, b in SITES if n == site][0]
+            rx = appmodel.destination_east(la, lo, PATH_KM)
+            pts = appmodel.reflection_points(la, lo, rx[0], rx[1], 1)
+            md = appmodel.modips(pts)
+            _BOUNCE_CACHE[site] = [(p[0], p[1], MAG_LAT[site], m) for p, m in zip(pts, md)]
+        b = _BOUNCE_CACHE[site][0]
+        # lst was computed at the midpoint longitude; recover the UTC hour.
+        utc = (lst - b[1] / 15.0) % 24
+        return appmodel.bounce_fof2(ssn, utc, month, b) * appmodel.path_secant(PATH_KM)
     return appmodel.est_fof2(ssn, lst, month, mag_lat, lat) * appmodel.path_secant(PATH_KM)
 
 
@@ -141,7 +156,7 @@ def evaluate(rows):
                 continue
             e = []
             for r in sub:
-                a = (app_muf(r['ssn'], r['lst'], r['month'], MAG_LAT[name], MID_LAT[name])
+                a = (app_muf(r['ssn'], r['lst'], r['month'], MAG_LAT[name], MID_LAT[name], name)
                      if with_season else app_muf(r['ssn'], r['lst']))
                 e.append(abs(a - r['muf']) / r['muf'] * 100)
             out[name] = statistics.mean(e)

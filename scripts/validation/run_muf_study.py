@@ -45,8 +45,8 @@ def local_solar_time(utc_hour, lon_deg):
     return appmodel.local_solar_time(utc_hour, lon_deg)
 
 
-def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat_deg=None, lat=None):
-    return appmodel.app_muf(dist_km, utc_hour, ssn, mid_lon, month, mag_lat_deg, lat)
+def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat_deg=None, lat=None, bounces=None):
+    return appmodel.app_muf(dist_km, utc_hour, ssn, mid_lon, month, mag_lat_deg, lat, bounces)
 
 
 def parse_voacap_muf(path):
@@ -72,8 +72,12 @@ def run():
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=120)
             vmuf = parse_voacap_muf(os.path.join(RUN_DIR, 'voacapx.out'))
             mid_lat = appmodel.path_midpoint(TX_LAT, TX_LON, rx_lat, rx_lon)[0]
+            _hops = max(1, math.ceil(dist / appmodel.max_hop_km(appmodel.F2_HEIGHT_KM)))
+            _pts = appmodel.reflection_points(TX_LAT, TX_LON, rx_lat, rx_lon, _hops)
+            _md = appmodel.modips(_pts)
+            _bounces = [(p[0], p[1], MAG_LAT, m) for p, m in zip(_pts, _md)]
             for hour, muf in sorted(vmuf.items()):
-                a = app_muf(dist, hour, ssn, mid_lon, month, MAG_LAT, mid_lat)
+                a = app_muf(dist, hour, ssn, mid_lon, month, MAG_LAT, mid_lat, _bounces)
                 plain = app_muf(dist, hour, ssn, mid_lon)
                 rows.append({'dist_km': dist, 'month': month, 'ssn': ssn,
                              'utc_hour': hour, 'voacap_muf': muf,

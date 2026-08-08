@@ -67,6 +67,11 @@
 // Ezekiel S., USMC. Project signature: HFCALC-AG-EZK-USMC-v1
 // ─────────────────────────────────────────────────────────────────────────────
 
+import {
+  FOF2_MAP_ORDERS, FOF2_MAP_MODIP_SCALE, FOF2_MAP_SSN_SCALE,
+  FOF2_MAP_COEFFS, FOF2_MAP_HELDOUT_PCT,
+} from './fof2Map.js';
+
 var R_EARTH = 6371;
 var DEG = Math.PI / 180;
 
@@ -152,6 +157,73 @@ export function illuminationFactor(latDeg, localHour, month) {
     den += w;
   }
   return den > 0 ? num / den : 0;
+}
+
+// ── COEFFICIENT MAP ───────────────────────────────────────────────────────────
+// A compact reconstruction of the ionospheric map VOACAP itself uses, fitted
+// offline against 271296 VOACAP samples over 314 globally spread sites, a
+// quarter of which were never fitted (docs/VALIDATION.md Part 14). On those
+// held-out sites it scores 7.4% against the physical model's 16.9%.
+//
+// It is a FITTED POLYNOMIAL, and polynomials misbehave outside the data that
+// trained them. Swept across the whole input domain this one runs from 0.99 to
+// 1208 MHz — the high end being pure extrapolation blow-up at the corners. So
+// it is never used raw. Inputs are clamped to the trained envelope, the output
+// is clamped to a physical window, and if it still disagrees with the physical
+// model by more than a factor the physical model wins. A wrong frequency is
+// worse than a slightly less accurate one.
+export const MAP_MODIP_LIMIT = 72;        // trained envelope, degrees
+export const MAP_SSN_LIMIT = 165;         // trained to SSN 150
+export const MAP_FOF2_MIN = 1.0;          // physical window, MHz
+export const MAP_FOF2_MAX = 20.0;
+export const MAP_SANITY_FACTOR = 1.8;     // vs the physical model
+export const MAP_HELDOUT_PCT = FOF2_MAP_HELDOUT_PCT;
+
+// Evaluate the map. Returns null when it cannot be trusted, which callers
+// treat as "use the physical model".
+export function mapFoF2(modipDeg, localHour, month, ssn, lonDeg) {
+  if (typeof modipDeg !== 'number' || !isFinite(modipDeg)) return null;
+  if (typeof month !== 'number' || !isFinite(month) || month < 1 || month > 12) return null;
+  if (typeof lonDeg !== 'number' || !isFinite(lonDeg)) return null;
+
+  var O = FOF2_MAP_ORDERS;
+  var mp = Math.max(-MAP_MODIP_LIMIT, Math.min(MAP_MODIP_LIMIT, modipDeg));
+  var u = mp / FOF2_MAP_MODIP_SCALE;
+  var sv = Math.max(0, Math.min(MAP_SSN_LIMIT, ssn)) / FOF2_MAP_SSN_SCALE;
+  var t = 2 * Math.PI * (((localHour % 24) + 24) % 24) / 24;
+  var mo = 2 * Math.PI * (month - 0.5) / 12;
+  var lo = 2 * Math.PI * (((lonDeg + 540) % 360) - 180) / 360;
+
+  var T = [1], M = [1], L = [1], S = [1], k;
+  for (k = 1; k <= O.nt; k++) T.push(Math.cos(k * t), Math.sin(k * t));
+  for (k = 1; k <= O.nm; k++) M.push(Math.cos(k * mo), Math.sin(k * mo));
+  for (k = 1; k <= O.nl; k++) L.push(Math.pow(u, k));
+  for (k = 1; k <= O.ns; k++) S.push(Math.pow(sv, k));
+
+  // Order must match build() in scripts/validation/fit_fof2_map.py exactly.
+  var sum = 0, i = 0, a, b, c, e, ab, abc;
+  for (a = 0; a < T.length; a++) {
+    for (b = 0; b < M.length; b++) {
+      ab = T[a] * M[b];
+      for (c = 0; c < L.length; c++) {
+        abc = ab * L[c];
+        for (e = 0; e < S.length; e++) sum += FOF2_MAP_COEFFS[i++] * abc * S[e];
+      }
+    }
+  }
+  var G = [];
+  for (k = 1; k <= O.nlon; k++) G.push(Math.cos(k * lo), Math.sin(k * lo));
+  for (var g = 0; g < G.length; g++) {
+    for (c = 0; c < 5; c++) {
+      var gc = G[g] * L[c];
+      for (a = 0; a < 5; a++) {
+        for (e = 0; e < 2; e++) sum += FOF2_MAP_COEFFS[i++] * gc * T[a] * S[e];
+      }
+    }
+  }
+  var v = Math.exp(sum);
+  if (!isFinite(v)) return null;
+  return Math.max(MAP_FOF2_MIN, Math.min(MAP_FOF2_MAX, v));
 }
 
 // ── foF2 ──────────────────────────────────────────────────────────────────────
@@ -302,20 +374,36 @@ export function minOrderCorrection(k) {
   return 1 + FOF2_POINT_SIGMA * c;
 }
 
+// foF2 at ONE bounce: the coefficient map where it can be trusted, the
+// physical model otherwise. The map is more than twice as accurate (7.4%
+// against 16.9% on held-out sites) but it is a fitted polynomial, so the
+// physical model stays as a guard — if the two disagree by more than
+// MAP_SANITY_FACTOR the physics wins. A wrong frequency is worse than a
+// slightly less accurate one.
+export function bounceFoF2(ssn, utcHour, month, b) {
+  var lst = localSolarTime(utcHour, b.lon);
+  var phys = estimateFoF2(ssn, lst, month, b.magLatDeg, b.lat);
+  if (typeof b.modipDeg !== 'number' || !isFinite(b.modipDeg)) return phys;
+  var mapped = mapFoF2(b.modipDeg, lst, month, ssn, b.lon);
+  if (mapped === null || !isFinite(mapped)) return phys;
+  if (mapped > phys * MAP_SANITY_FACTOR || mapped * MAP_SANITY_FACTOR < phys) return phys;
+  return mapped;
+}
+
 // foF2 governing the whole path: the weakest bounce, de-biased.
 // `bounces` is [{ lat, lon, magLatDeg }]; falls back to the midpoint when the
 // caller has not worked them out.
-export function pathFoF2(ssn, utcHour, month, bounces, midLon, midLat, midMagLat) {
+export function pathFoF2(ssn, utcHour, month, bounces, midLon, midLat, midMagLat, midModip) {
   if (bounces && bounces.length) {
     var worst = Infinity;
     for (var i = 0; i < bounces.length; i++) {
-      var b = bounces[i];
-      var v = estimateFoF2(ssn, localSolarTime(utcHour, b.lon), month, b.magLatDeg, b.lat);
+      var v = bounceFoF2(ssn, utcHour, month, bounces[i]);
       if (v < worst) worst = v;
     }
     if (isFinite(worst)) return worst * minOrderCorrection(bounces.length);
   }
-  return estimateFoF2(ssn, localSolarTime(utcHour, midLon), month, midMagLat, midLat);
+  return bounceFoF2(ssn, utcHour, month,
+    { lon: midLon, lat: midLat, magLatDeg: midMagLat, modipDeg: midModip });
 }
 
 // Oblique-incidence multiplier (the "M factor") for a takeoff angle, given
@@ -410,7 +498,7 @@ export function assessFrequency(params) {
   // hurts long ones a lot (Part 7), because on a long circuit the signal
   // bounces off the middle, not off either station.
   var foF2 = pathFoF2(ssn, utcHour, params.month, params.bounces,
-                      midLon, params.latDeg, params.magLatDeg);
+                      midLon, params.latDeg, params.magLatDeg, params.modipDeg);
 
   // LUF comes from the TWO ENDS — that is where the ray crosses the absorbing
   // D layer. Falls back to the midpoint, then to the clock curve.
@@ -461,7 +549,7 @@ export function assessFrequency(params) {
       return {
         lat: b.lat, lon: b.lon, magLatDeg: b.magLatDeg,
         localSolarHour: localSolarTime(utcHour, b.lon),
-        foF2: estimateFoF2(ssn, localSolarTime(utcHour, b.lon), params.month, b.magLatDeg, b.lat),
+        foF2: bounceFoF2(ssn, utcHour, params.month, b),
       };
     }) : null,
     daylight: daylight,
@@ -504,6 +592,7 @@ export function frequencyForecast(params) {
       month: params.month,
       magLatDeg: params.magLatDeg,
       latDeg: params.latDeg,
+      modipDeg: params.modipDeg,
       ends: params.ends,
       bounces: params.bounces,
       txWatts: params.txWatts,

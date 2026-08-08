@@ -152,7 +152,8 @@ def run():
         ml = mag_lats([mid] + cps + bpts)
         mid_ml, cp_ml = ml[0], ml[1:1 + len(cps)]
         b_ml = ml[1 + len(cps):]
-        bounces = [(p[0], p[1], m) for p, m in zip(bpts, b_ml)]
+        b_md = appmodel.modips(bpts)
+        bounces = [(p[0], p[1], m, md) for p, m, md in zip(bpts, b_ml, b_md)]
         meta.append({'path': name, 'dist_km': round(dist), 'hops': hops,
                      'bounces': [[round(p[0], 2), round(p[1], 2), round(m, 1)]
                                  for p, m in zip(bpts, b_ml)],

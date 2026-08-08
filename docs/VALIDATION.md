@@ -13,6 +13,7 @@ LUF and transmit-power study: August 2026 (app v1.15.0)
 Per-bounce multi-hop study: August 2026 (app v1.16.0)
 Takeoff-angle and FOT studies: August 2026 (app v1.17.0)
 Fine FOT re-measurement and uncertainty audit: August 2026 (app v1.18.0)
+Global grid and coefficient map: August 2026 (app v1.19.0)
 
 ---
 
@@ -982,7 +983,143 @@ The 10 N tropics site — the worst in the whole suite — goes 18.9% → 16.2%.
 model is now uniform to within 0.3 points across three very different regimes,
 and effectively unbiased on transequatorial paths.
 
+## Part 14 — A coefficient map, and the honest ceiling (v1.19.0)
+
+The brief for this part was "keep going until everything is within 3%". The
+answer is that 3% is not reachable this way, and finding out how far it *is*
+reachable produced the single largest accuracy gain in the project.
+
+### First, an uncomfortable correction
+
+Every accuracy figure before this part was measured on sets that overlapped
+the geography the model was fitted to: one mid-latitude site, six latitudes on
+one meridian sweep, six named circuits. Scored against a **truly global** grid
+— 314 quasi-uniform sites, 271,296 samples — the shipped physical model
+measures **17.4% on training sites and 16.9% on held-out sites**, not the
+12.3% previously reported. Train ≈ test, so it was never overfitted; it was
+simply being graded on home turf.
+
+That is the number the rest of this part improves on.
+
+### Why eight parameters could not go further
+
+VOACAP's MUF comes from the **CCIR coefficient maps** — a spherical-harmonic
+expansion of roughly a thousand coefficients *per month*, fitted to decades of
+worldwide ionosonde data. It carries real geographic structure that no handful
+of smooth physical terms can represent. Continuing to tune eight parameters
+was never going to close that gap. The fix is to fit an expansion of the same
+kind, small enough to ship.
+
+### Building the data
+
+VOACAP runs in about 50 ms, which makes a proper training set cheap. 314 sites
+on a Fibonacci sphere (near-equal area, no pole crowding) × 12 months × 3 solar
+levels × 24 hours = **271,296 samples**. foF2 is isolated from path geometry by
+running a near-vertical 200 km circuit and dividing out the small secant
+factor. **A quarter of the sites are never fitted, only scored**, so the
+reported figure measures generalisation to places the fit has never seen.
+
+### The coordinate matters more than the coefficients
+
+Holding the basis fixed at 1617 coefficients and changing only the latitude
+coordinate:
+
+| Coordinate | Held-out |
+|---|---|
+| Geographic latitude | 9.22% |
+| Magnetic latitude (what the app used) | 8.86% |
+| **MODIP** — atan(I/√cos lat) | **7.89%** |
+
+Which is exactly why CCIR and IRI are built on modip: foF2 contours follow it.
+That one change was worth a full point. `modip()` now sits in `magnetic.js`
+alongside declination.
+
+### Data density, not basis richness, was the binding constraint
+
+On the first 46-site grid, held-out error bottomed at 10.2% and then *rose* to
+13.4% as coefficients were added, while training error fell to 6.5% — textbook
+overfitting. On the 314-site grid the same basis gives 8.85% train and 8.80%
+held-out: the overfitting vanished and the floor dropped. Five times the data
+was worth 1.4 points and removed the need to hold the basis back.
+
+### The shipped map
+
+2111 coefficients — harmonics in local solar time (order 6) × month (order 3)
+× polynomials in modip (order 6) × solar activity (order 2), plus a reduced
+longitude block (order 2) — fitted to log(foF2) by ridge least squares, so the
+output is positive by construction. **46 KB**, evaluated in microseconds.
+
+| | Train | **Held-out sites** |
+|---|---|---|
+| Physical model | 17.45% | 16.91% |
+| **Coefficient map** | 6.57% | **7.44%** |
+
+Held-out error by band: 8.5% inside 15° modip, 7.3% / 7.6% / 6.6% through the
+mid-latitudes, 9.1% above 60°. By solar activity: 7.4% / 6.8% / 8.2% at
+SSN 10 / 70 / 150.
+
+### The guards are not optional
+
+Swept across its entire input domain the raw polynomial ranges from **0.99 to
+1208 MHz**. The high end is pure extrapolation blow-up at the corners. So the
+map is never used raw:
+
+- inputs are clamped to the trained envelope (|modip| ≤ 72°, SSN ≤ 165),
+- output is clamped to a physical window (1–20 MHz),
+- and if the map still disagrees with the **physical model** by more than a
+  factor of 1.8, the physical model wins.
+
+The physical model is therefore retained in full, not as a fallback curiosity
+but as the thing that keeps a fitted polynomial honest. A wrong frequency is
+worse than a slightly less accurate one. Nine tests pin this, including one
+that sweeps latitude, longitude, month and hour across the whole Earth and
+asserts nothing unphysical ever escapes.
+
+The JS evaluator was cross-checked against the Python fit to **1.3e-13 MHz**
+inside the unclamped domain. (An earlier check showed 3.8e-2 MHz; that turned
+out to be the safety clamp doing its job, not an arithmetic error — worth
+recording, because it looked like a bug.)
+
+### End-to-end, on the three independent studies
+
+| Study | Physical model | **With the map** |
+|---|---|---|
+| Mid-latitude (288) | 12.1% | **9.8%** — 94% within 20%, 100% within 30% |
+| Six-latitude seasonal (3456) | 12.3% | **9.3%** |
+| Interhemispheric (576) | 12.4% | **8.0%** |
+| Global held-out (68,256) | 16.9% | **7.4%** |
+
+Every one of the six interhemispheric circuits improved. The 10° N tropics
+site — the worst case in the entire project, 25.2% at the start — is now
+**6.5%**, the *best* of the six.
+
+### So: can it reach 3%?
+
+Not this way. The evidence is the learning curve: 46 sites → 10.2%, 314 sites
+→ 7.4%, with gains flattening as the basis grows. Halving again would take
+orders of magnitude more sampling and a basis approaching CCIR's own size.
+
+There *is* a route. The CCIR foF2 coefficient files ship with VOACAP and total
+**552 KB** — entirely shippable next to the 5.7 MB of OCR data the app already
+carries. Implementing the Jones–Gallet numerical map on top of them would give
+near-exact agreement, because it would *be* VOACAP's ionosphere rather than a
+fit to it. That is a well-defined but substantial piece of work, and it trades
+the last thing that makes this app explainable — every number traceable to a
+formula — for a lookup table. It is recorded here as the honest next step, not
+started.
+
 ## Limitations
+
+- **Accuracy figures before Part 14 were measured on sets overlapping the
+  fitted geography.** The physical model's honest global held-out figure is
+  16.9%, not the ~12% quoted in Parts 6-13. Part 14 onward reports held-out
+  sites only.
+- The coefficient map is a fit to VOACAP, not to the ionosphere. It inherits
+  every limitation VOACAP has — monthly medians, no storms, no sporadic-E —
+  and adds its own smoothing on top.
+- The map is clamped to |modip| <= 72 deg and SSN <= 165. Beyond those it
+  returns its edge value rather than extrapolating, so extreme polar paths and
+  exceptional solar maxima are served the nearest trained condition.
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
   the CCIR coefficient maps VOACAP uses. It carries no sporadic-E, no storm

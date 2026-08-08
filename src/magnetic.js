@@ -95,6 +95,31 @@ export function relativeTurn(fromDeg, toDeg) {
 // Ionospheric behaviour tracks MAGNETIC latitude, not geographic — New Zealand
 // at 44 S sits at about 53 S magnetic and behaves like a far higher latitude,
 // which is why a geographic-latitude model gets the southern hemisphere wrong.
+// MODIFIED DIP LATITUDE (modip) — the coordinate ionospheric foF2 maps are
+// actually built on:
+//
+//     modip = atan( I / sqrt(cos(lat)) )      I = magnetic dip angle
+//
+// Rawer introduced it precisely because foF2 contours follow it far better
+// than they follow geographic or magnetic latitude, and both CCIR and IRI use
+// it. Measured on a 314-site global VOACAP grid it beat magnetic latitude
+// (7.9% against 8.9%) and geographic latitude (9.2%) for exactly that reason.
+// See docs/VALIDATION.md Part 14.
+export function modip(lat, lon, date) {
+  if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  try {
+    var when = date || new Date();
+    if (when.getTime() >= WMM_VALID_UNTIL.getTime()) when = new Date(WMM_VALID_UNTIL.getTime() - 86400000);
+    var info = geomagnetism.model(when).point([lat, lon]);
+    if (!info || typeof info.incl !== 'number' || !isFinite(info.incl)) return null;
+    // cos(lat) is floored so the expression stays finite at the poles.
+    var c = Math.max(0.02, Math.cos(lat * Math.PI / 180));
+    return Math.atan((info.incl * Math.PI / 180) / Math.sqrt(c)) * 180 / Math.PI;
+  } catch (e) { return null; }
+}
+
 export function magneticLatitude(lat, lon, date) {
   if (typeof lat !== 'number' || typeof lon !== 'number') return null;
   if (!isFinite(lat) || !isFinite(lon)) return null;

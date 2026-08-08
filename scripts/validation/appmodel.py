@@ -193,11 +193,79 @@ def reflection_points(la1, lo1, la2, lo2, hops):
     return [interpolate_path(la1, lo1, la2, lo2, (2 * k - 1) / (2 * n)) for k in range(1, n + 1)]
 
 
+_MAP = None
+
+
+def _map_eval(modip_deg, lst, month, ssn, lon):
+    """Mirror of mapFoF2() in src/freqAdvisor.js, read from the generated file."""
+    global _MAP
+    if _MAP is None:
+        import re
+        txt = open(os.path.join(ROOT, 'src', 'fof2Map.js')).read()
+        o = re.search(r'nt: (\d+), nm: (\d+), nl: (\d+), ns: (\d+), nlon: (\d+)', txt)
+        body = txt[txt.index('FOF2_MAP_COEFFS = new Float64Array([') + 36:]
+        body = body[:body.index('])')]
+        _MAP = {'o': [int(x) for x in o.groups()],
+                'c': [float(x) for x in body.replace('\n', '').split(',') if x.strip()]}
+    nt, nm, nl, ns, nlon = _MAP['o']
+    co = _MAP['c']
+    mp = max(-72.0, min(72.0, modip_deg))
+    u = mp / 80.0
+    sv = max(0.0, min(165.0, ssn)) / 100.0
+    t = 2 * math.pi * ((lst % 24) + 24) % 24 / 24 if False else 2 * math.pi * (((lst % 24) + 24) % 24) / 24
+    mo = 2 * math.pi * (month - 0.5) / 12
+    lo = 2 * math.pi * ((((lon + 540) % 360) - 180)) / 360
+    T = [1.0]
+    for k in range(1, nt + 1):
+        T += [math.cos(k * t), math.sin(k * t)]
+    M = [1.0]
+    for k in range(1, nm + 1):
+        M += [math.cos(k * mo), math.sin(k * mo)]
+    L = [1.0] + [u ** k for k in range(1, nl + 1)]
+    S = [1.0] + [sv ** k for k in range(1, ns + 1)]
+    total = 0.0
+    i = 0
+    for a in T:
+        for b in M:
+            ab = a * b
+            for c in L:
+                abc = ab * c
+                for e in S:
+                    total += co[i] * abc * e
+                    i += 1
+    G = []
+    for k in range(1, nlon + 1):
+        G += [math.cos(k * lo), math.sin(k * lo)]
+    for g in G:
+        for c in L[:5]:
+            gc = g * c
+            for a in T[:5]:
+                for e in S[:2]:
+                    total += co[i] * gc * a * e
+                    i += 1
+    v = math.exp(total)
+    return max(1.0, min(20.0, v))
+
+
+MAP_SANITY_FACTOR = 1.8
+
+
+def bounce_fof2(ssn, utc_hour, month, b):
+    """b = (lat, lon, mag_lat, modip)."""
+    lst = local_solar_time(utc_hour, b[1])
+    phys = est_fof2(ssn, lst, month, b[2], b[0])
+    if len(b) < 4 or b[3] is None:
+        return phys
+    m = _map_eval(b[3], lst, month, ssn, b[1])
+    if m > phys * MAP_SANITY_FACTOR or m * MAP_SANITY_FACTOR < phys:
+        return phys
+    return m
+
+
 def path_fof2(ssn, utc_hour, month, bounces, mid_lon, mid_lat, mid_mag_lat):
     """foF2 governing the path: the weakest bounce, de-biased."""
     if bounces:
-        worst = min(est_fof2(ssn, local_solar_time(utc_hour, b[1]), month, b[2], b[0])
-                    for b in bounces)
+        worst = min(bounce_fof2(ssn, utc_hour, month, b) for b in bounces)
         return worst * min_order_correction(len(bounces))
     return est_fof2(ssn, local_solar_time(utc_hour, mid_lon), month, mid_mag_lat, mid_lat)
 
@@ -207,6 +275,15 @@ def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat=None, lat=None,
         return path_fof2(ssn, utc_hour, month, bounces, mid_lon, lat, mag_lat) * path_secant(dist_km)
     lst = local_solar_time(utc_hour, mid_lon)
     return est_fof2(ssn, lst, month, mag_lat, lat) * path_secant(dist_km)
+
+
+def modips(points):
+    """Modified dip latitude for each (lat, lon), from the app's own code."""
+    src = ("import('%s/src/magnetic.js').then(m=>{const p=%s;"
+           "console.log(JSON.stringify(p.map(q=>m.modip(q[0],q[1]))))})"
+           % (ROOT, json.dumps([list(p) for p in points])))
+    out = subprocess.run(['node', '-e', src], capture_output=True, text=True, cwd=ROOT)
+    return json.loads(out.stdout.strip())
 
 
 def mag_latitudes(points):

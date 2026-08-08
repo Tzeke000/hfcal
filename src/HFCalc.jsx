@@ -17,7 +17,7 @@ import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS,
          FOT_DAYS_IN_10, MUF_DAYS_IN_10 } from "./freqAdvisor.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
-import { declination, magneticLatitude, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
+import { declination, magneticLatitude, modip, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
 // Single source of truth for the app version (also drives the icon badge —
 // regenerate icons with scripts/generate-icons.py after bumping it).
 import { version as APP_VERSION } from "../package.json";
@@ -1683,6 +1683,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
+      modipDeg: pathCtx.modipDeg,
       ends: pathCtx.ends,
       bounces: pathCtx.bounces,
       hops: pathCtx.hops,
@@ -2165,14 +2166,14 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 4320 samples — and uniform to within a third of a point whether the path is regional, polar or crosses the equator.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 8-10% — measured against 271,000 VOACAP samples at 314 sites worldwide, a quarter of which the model was never fitted to.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  166 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  175 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2978,6 +2979,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
+      modipDeg: pathCtx.modipDeg,
       ends: pathCtx.ends,
       bounces: pathCtx.bounces,
       hops: pathCtx.hops,
@@ -3498,6 +3500,7 @@ export default function HFCalc() {
     var hops = Math.max(1, Math.ceil(results.geo.distKm / HOP.F2.maxHopKm));
     return {
       midLat: mid.lat, midLon: mid.lon, magLatDeg: magneticLatitude(mid.lat, mid.lon),
+      modipDeg: modip(mid.lat, mid.lon),
       // Both terminals. The MUF comes off the midpoint, but D-layer absorption
       // happens where the ray leaves and re-enters the atmosphere, so the LUF
       // needs the ends — and the operator wants to see the far end's local
@@ -3512,7 +3515,9 @@ export default function HFCalc() {
       // in a different hemisphere and a different season from the midpoint.
       bounces: reflectionPoints(results.p1.lat, results.p1.lon, results.p2.lat, results.p2.lon, hops)
         .map(function(b) {
-          return { lat: b.lat, lon: b.lon, magLatDeg: magneticLatitude(b.lat, b.lon) };
+          return { lat: b.lat, lon: b.lon,
+                   magLatDeg: magneticLatitude(b.lat, b.lon),
+                   modipDeg: modip(b.lat, b.lon) };
         }),
     };
   }, [results]);
@@ -3536,6 +3541,7 @@ export default function HFCalc() {
       midLon: pathCtx ? pathCtx.midLon : 0,
       latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
+      modipDeg: pathCtx ? pathCtx.modipDeg : null,
       ends: pathCtx ? pathCtx.ends : null,
       bounces: pathCtx ? pathCtx.bounces : null,
       hops: pathCtx ? pathCtx.hops : 1,

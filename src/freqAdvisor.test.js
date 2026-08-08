@@ -12,6 +12,8 @@ import {
   estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
   pathFoF2, minOrderCorrection, FOF2_POINT_SIGMA,
   FOT_RATIO, MUF_DAYS_IN_10, FOT_DAYS_IN_10,
+  mapFoF2, bounceFoF2, MAP_FOF2_MIN, MAP_FOF2_MAX, MAP_MODIP_LIMIT,
+  MAP_SANITY_FACTOR, MAP_HELDOUT_PCT,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -773,4 +775,97 @@ test('refit: the lag still puts the peak in the early afternoon', function() {
     if (v > best) { best = v; bestH = h; }
   }
   assert.ok(bestH > 12.1 && bestH < 14.5, 'peak drifted to ' + bestH);
+});
+
+
+// ── COEFFICIENT MAP ──────────────────────────────────────────────────────────
+// A fitted polynomial reconstruction of the ionospheric map VOACAP uses. More
+// than twice as accurate as the physical model, and — being a polynomial —
+// capable of nonsense outside its training envelope, so the guards matter as
+// much as the accuracy. See docs/VALIDATION.md Part 14.
+
+test('mapFoF2: reproduces the fitted values it was exported from', function() {
+  // Cross-checked against the Python fit to 1.3e-13 MHz inside the unclamped
+  // domain; this pins one value so a botched regeneration cannot slip through.
+  var v = mapFoF2(45.0, 12.0, 6, 70, -76.9);
+  assert.ok(Math.abs(v - 7.515674) < 1e-5, 'got ' + v);
+});
+
+test('mapFoF2: never escapes the physical window, however absurd the input', function() {
+  // Swept across its whole input domain the raw polynomial reaches 1208 MHz.
+  // Nothing here may.
+  [-500, -90, -72, 0, 72, 90, 500].forEach(function(mp) {
+    [0, 6, 12, 18, 23.9].forEach(function(h) {
+      [1, 6, 12].forEach(function(m) {
+        [0, 70, 150, 400, 10000].forEach(function(ssn) {
+          [-180, -60, 0, 120, 180].forEach(function(lon) {
+            var v = mapFoF2(mp, h, m, ssn, lon);
+            assert.ok(v === null || (isFinite(v) && v >= MAP_FOF2_MIN && v <= MAP_FOF2_MAX),
+              'escaped at ' + [mp, h, m, ssn, lon] + ': ' + v);
+          });
+        });
+      });
+    });
+  });
+});
+
+test('mapFoF2: refuses bad input rather than guessing', function() {
+  assert.equal(mapFoF2(NaN, 12, 6, 70, 0), null);
+  assert.equal(mapFoF2(45, 12, 0, 70, 0), null, 'month out of range');
+  assert.equal(mapFoF2(45, 12, 13, 70, 0), null);
+  assert.equal(mapFoF2(45, 12, 6, 70, NaN), null);
+  assert.equal(mapFoF2(null, 12, 6, 70, 0), null);
+});
+
+test('mapFoF2: clamps beyond the trained envelope instead of extrapolating', function() {
+  var edge = mapFoF2(MAP_MODIP_LIMIT, 12, 6, 70, 0);
+  assert.equal(mapFoF2(MAP_MODIP_LIMIT + 30, 12, 6, 70, 0), edge, 'modip must clamp');
+  assert.equal(mapFoF2(-MAP_MODIP_LIMIT - 30, 12, 6, 70, 0), mapFoF2(-MAP_MODIP_LIMIT, 12, 6, 70, 0));
+  // Solar activity likewise — the fit only ever saw up to SSN 150.
+  assert.equal(mapFoF2(45, 12, 6, 400, 0), mapFoF2(45, 12, 6, 165, 0));
+});
+
+test('mapFoF2: day beats night and the diurnal shape is sane', function() {
+  for (var mp = -60; mp <= 60; mp += 30) {
+    var noon = mapFoF2(mp, 12, 6, 70, 0);
+    var night = mapFoF2(mp, 2, 6, 70, 0);
+    assert.ok(noon > night, 'noon should beat pre-dawn at modip ' + mp
+      + ': ' + noon.toFixed(2) + ' vs ' + night.toFixed(2));
+  }
+});
+
+test('bounceFoF2: falls back to physics when the map is unavailable', function() {
+  var b = { lat: 40, lon: -76, magLatDeg: 45 };          // no modip
+  assert.equal(bounceFoF2(70, 12, 6, b), estimateFoF2(70, localSolarTime(12, -76), 6, 45, 40));
+  var bad = { lat: 40, lon: -76, magLatDeg: 45, modipDeg: NaN };
+  assert.equal(bounceFoF2(70, 12, 6, bad), estimateFoF2(70, localSolarTime(12, -76), 6, 45, 40));
+});
+
+test('bounceFoF2: the physical model overrules a map that wanders', function() {
+  // The guard that matters: a fitted polynomial that disagrees wildly with the
+  // physics is not to be trusted, whichever way it errs.
+  var b = { lat: 40, lon: -76, magLatDeg: 45, modipDeg: 50 };
+  var used = bounceFoF2(70, 12, 6, b);
+  var phys = estimateFoF2(70, localSolarTime(12, -76), 6, 45, 40);
+  assert.ok(used <= phys * MAP_SANITY_FACTOR + 1e-9, 'must never exceed the sanity band');
+  assert.ok(used * MAP_SANITY_FACTOR >= phys - 1e-9, 'nor fall below it');
+  assert.ok(isFinite(used) && used > 1 && used < 20);
+});
+
+test('bounceFoF2: stays physical everywhere on Earth, all year', function() {
+  for (var lat = -80; lat <= 80; lat += 20) {
+    for (var lon = -180; lon < 180; lon += 60) {
+      for (var m = 1; m <= 12; m += 3) {
+        for (var h = 0; h < 24; h += 6) {
+          var v = bounceFoF2(70, h, m, { lat: lat, lon: lon, magLatDeg: lat * 0.9, modipDeg: lat * 1.1 });
+          assert.ok(isFinite(v) && v > 1 && v < 20, 'bad foF2 at ' + [lat, lon, m, h] + ': ' + v);
+        }
+      }
+    }
+  }
+});
+
+test('the map reports the accuracy it was measured at', function() {
+  assert.ok(MAP_HELDOUT_PCT > 0 && MAP_HELDOUT_PCT < 12,
+    'held-out accuracy should be recorded and single-digit: ' + MAP_HELDOUT_PCT);
 });
