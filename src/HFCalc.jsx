@@ -1737,13 +1737,24 @@ function AboutBanner() {
   var boxLabel = { color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 };
   var body = { color: T.textBody, fontSize: '0.78rem', lineHeight: 1.6 };
 
-  // Feature line: name + what it actually does for the operator
-  var feat = function(name, desc, key) {
+  // Feature line: name, a connectivity tag, then what it does for the operator.
+  // The tag is on every single line deliberately — "works offline" is the
+  // central claim of this app, so it should be provable feature by feature
+  // rather than asserted once and taken on trust.
+  var TAG = {
+    offline: { label: 'OFFLINE', bg: '#16280f', fg: '#8fce7c', bd: '#3d6b32' },
+    online:  { label: 'UPDATES ONLINE', bg: '#2e2610', fg: '#e0c063', bd: '#6b5622' },
+  };
+  var feat = function(name, desc, key, mode) {
+    var t = mode === 'none' ? null : (TAG[mode] || TAG.offline);
     return (
-      <div key={key} style={{ display: 'flex', gap: 9, marginBottom: 9 }}>
+      <div key={key} style={{ display: 'flex', gap: 9, marginBottom: 10 }}>
         <div style={{ color: T.accent, fontWeight: 700, flexShrink: 0, lineHeight: 1.5 }}>▸</div>
-        <div style={{ fontSize: '0.78rem', lineHeight: 1.55 }}>
+        <div style={{ fontSize: '0.78rem', lineHeight: 1.6 }}>
           <span style={{ color: T.textPrim, fontWeight: 700 }}>{name}</span>
+          {t && (
+            <span style={{ display: 'inline-block', marginLeft: 6, padding: '1px 6px', borderRadius: 3, background: t.bg, color: t.fg, border: '1px solid ' + t.bd, fontSize: '0.54rem', fontWeight: 800, letterSpacing: '0.07em', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t.label}</span>
+          )}
           <span style={{ color: T.textBody }}>{' — ' + desc}</span>
         </div>
       </div>
@@ -1831,28 +1842,40 @@ function AboutBanner() {
                 </div>
               </div>
 
+              <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '9px 11px', marginTop: 12, marginBottom: 12 }}>
+                <div style={{ color: T.textSec, fontSize: '0.73rem', lineHeight: 1.7 }}>
+                  <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, background: TAG.offline.bg, color: TAG.offline.fg, border: '1px solid ' + TAG.offline.bd, fontSize: '0.54rem', fontWeight: 800, letterSpacing: '0.07em' }}>OFFLINE</span>
+                  {' works with no signal at all. '}
+                  <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, background: TAG.online.bg, color: TAG.online.fg, border: '1px solid ' + TAG.online.bd, fontSize: '0.54rem', fontWeight: 800, letterSpacing: '0.07em' }}>UPDATES ONLINE</span>
+                  {' still runs offline — it just refreshes its data when a connection exists. Every line below is tagged.'}
+                </div>
+              </div>
+
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Path &amp; propagation</div>
-              {feat('Distance and bearing', 'from two grids. Accepts MGRS, DMS, or decimal lat/lon — or photograph the DAGR screen and let it read the grid.', 'f1')}
-              {feat('Bearing to target', 'plus the back azimuth the distant station aims at you.', 'f2')}
-              {feat('Propagation mode', 'ground wave, NVIS, single-hop or multi-hop DX, chosen from the path length.', 'f3')}
-              {feat('Terrain-aware takeoff angle', 'raised to clear a ridgeline near your position, flattened over ocean, adjusted for desert.', 'f4')}
-              {feat('Hop analysis', 'which layer, how many hops, where the bounce points fall.', 'f5')}
+              {feat('Distance and bearing', 'from two grids. Accepts MGRS, DMS, or decimal lat/lon.', 'f1', 'offline')}
+              {feat('DAGR photo scan', 'photograph the DAGR screen and it reads the grid off it. The text recogniser is bundled in the app, not fetched.', 'f1b', 'offline')}
+              {feat('True and magnetic bearing', 'the great-circle bearing plus the corrected number to dial into a lensatic compass, from a World Magnetic Model carried on the device.', 'f2a', 'offline')}
+              {feat('Back azimuth', 'the bearing the distant station aims back at you.', 'f2', 'offline')}
+              {feat('Compass', 'phone magnetometer with your target bearing marked on the dial and a turn-left / turn-right cue. Opens without a calculation so it works as a standalone compass — an aid to a lensatic, not a replacement.', 'f2b', 'offline')}
+              {feat('Propagation mode', 'ground wave, NVIS, single-hop or multi-hop DX, chosen from the path length.', 'f3', 'offline')}
+              {feat('Terrain-aware takeoff angle', 'raised to clear a ridgeline near your position, flattened over ocean, adjusted for desert.', 'f4', 'offline')}
+              {feat('Hop analysis', 'which layer, how many hops, where the bounce points fall.', 'f5', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Antenna build</div>
-              {feat('Nine antenna types', 'dipole, inverted-V, NVIS variants, sloper, EFHW, vertical, longwire, delta loop — each with build steps and reference photos.', 'f6')}
-              {feat('Cut lengths for your wire', 'velocity factor by conductor material AND gauge — bare, stranded, insulated, CCS, galvanized, stainless, salvage iron, even speaker wire.', 'f7')}
-              {feat('Computed apex height', 'the mast height that puts your radiation where this path needs it — checked against whether quarter-wave legs can physically reach it, with what to do when they cannot.', 'f8')}
-              {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9')}
+              {feat('Nine antenna types', 'dipole, inverted-V, NVIS variants, sloper, EFHW, vertical, longwire, delta loop — each with build steps and reference photos.', 'f6', 'offline')}
+              {feat('Cut lengths for your wire', 'velocity factor by conductor material AND gauge — bare, stranded, insulated, CCS, galvanized, stainless, salvage iron, even speaker wire.', 'f7', 'offline')}
+              {feat('Computed apex height', 'the mast height that puts your radiation where this path needs it — checked against whether quarter-wave legs can physically reach it, with what to do when they cannot.', 'f8', 'offline')}
+              {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
-              {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10')}
-              {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out.', 'f11')}
-              {feat('Space weather', 'live solar flux and Kp from NOAA when a signal exists; falls back to cached or default values when it does not.', 'f12')}
+              {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
+              {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out.', 'f11', 'offline')}
+              {feat('Space weather', 'solar flux and Kp from NOAA, which sharpen the frequency numbers. This is the one feature that reaches the network: with a signal it refreshes, without one it uses the last reading it saw or a documented default. Nothing stops working.', 'f12', 'online')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Field workflow</div>
-              {feat('Saved shots', 'keep the day\u2019s link plans on the device.', 'f13')}
-              {feat('Comm-card export', 'any plan as a plain-text card — DTG, grids, distance, bearing, wire, geometry, frequency window.', 'f14')}
-              {feat('Works with the radio off', 'installs to the home screen and runs with no account, no telemetry and no connection.', 'f15')}
+              {feat('Saved shots', 'keep the day\u2019s link plans on the device.', 'f13', 'offline')}
+              {feat('Comm-card export', 'any plan as a plain-text card — DTG, grids, distance, bearing (true and magnetic), wire, geometry, frequency window.', 'f14', 'offline')}
+              {feat('The app itself', 'installs to the home screen and runs with no account, no telemetry and no connection. Even the fonts and the text recogniser are carried locally — nothing is fetched from anyone else.', 'f15', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8, color: T.accentText, fontSize: '0.64rem' }}>Where the math comes from</div>
               <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6, marginBottom: 9 }}>
@@ -1917,11 +1940,11 @@ function AboutBanner() {
                 'Non-scalable, unevenly distributed, and thinning after twenty years of leaning on satellites. This is that experience written down, tested, and issued to everyone.', 'c5')}
 
               <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8 }}>Where it genuinely leads</div>
-              {feat('Point of need', 'the only one of these that works at the antenna site: phone, offline, grids to cut lengths in under a minute.', 'w1')}
-              {feat('Field-expedient wire', 'velocity factor for salvage iron, galvanized fence wire, speaker wire, by core and gauge. Planning tools assume catalog antennas.', 'w2')}
-              {feat('Buildability check', 'it does not just give the radiation-optimal height \u2014 it checks whether your legs can reach it, and tells you the buildable maximum and what you lose.', 'w3')}
-              {feat('EMCON-clean', 'no account, no telemetry, no server, no third-party CDN. The OCR engine and fonts are bundled, not fetched.', 'w4')}
-              {feat('It teaches', 'formulas are shown, not hidden \u2014 the same tool trains and fields.', 'w5')}
+              {feat('Point of need', 'the only one of these that works at the antenna site: phone, offline, grids to cut lengths in under a minute.', 'w1', 'none')}
+              {feat('Field-expedient wire', 'velocity factor for salvage iron, galvanized fence wire, speaker wire, by core and gauge. Planning tools assume catalog antennas.', 'w2', 'none')}
+              {feat('Buildability check', 'it does not just give the radiation-optimal height \u2014 it checks whether your legs can reach it, and tells you the buildable maximum and what you lose.', 'w3', 'none')}
+              {feat('EMCON-clean', 'no account, no telemetry, no server, no third-party CDN. The OCR engine and fonts are bundled, not fetched.', 'w4', 'none')}
+              {feat('It teaches', 'formulas are shown, not hidden \u2014 the same tool trains and fields.', 'w5', 'none')}
 
               <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, marginTop: 10, fontStyle: 'italic' }}>
                 Validation methodology, comparison data and reproduction scripts are published with the source at github.com/Tzeke000/hfcal.
