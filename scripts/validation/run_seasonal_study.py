@@ -32,6 +32,9 @@ import statistics
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import appmodel  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ITSHFBC = os.path.expanduser('~/itshfbc')
 RUN_DIR = os.path.join(ITSHFBC, 'run')
@@ -103,6 +106,15 @@ def parse_muf(path):
 # Magnetic latitude of each path midpoint, from the WMM dip angle
 # (magneticLatitude() in src/magnetic.js). The ionosphere is organised by the
 # magnetic field, so this — not geographic latitude — is what the model takes.
+MID_LAT = {
+    '60N Finland-ish': appmodel.path_midpoint(60.0, 25.0, *appmodel.destination_east(60.0, 25.0, 1500.0))[0],
+    '44N Michigan': appmodel.path_midpoint(44.45, -83.39, *appmodel.destination_east(44.45, -83.39, 1500.0))[0],
+    '34N Cherry Pt': appmodel.path_midpoint(34.90, -76.88, *appmodel.destination_east(34.90, -76.88, 1500.0))[0],
+    '10N tropics': appmodel.path_midpoint(10.0, -60.0, *appmodel.destination_east(10.0, -60.0, 1500.0))[0],
+    '34S': appmodel.path_midpoint(-34.0, 18.0, *appmodel.destination_east(-34.0, 18.0, 1500.0))[0],
+    '44S NewZealand': appmodel.path_midpoint(-44.0, 171.0, *appmodel.destination_east(-44.0, 171.0, 1500.0))[0],
+}
+
 MAG_LAT = {
     '60N Finland-ish': 60.1,
     '44N Michigan': 51.3,
@@ -113,47 +125,10 @@ MAG_LAT = {
 }
 
 F2_HEIGHT_KM = 360.0
-TAKEOFF_DEG = None  # filled in below from the fixed 1500 km path geometry
 
 
-def app_takeoff_deg(dist_km):
-    theta = dist_km / (2 * EARTH_R)
-    a = math.degrees(math.atan2(
-        math.cos(theta) - EARTH_R / (EARTH_R + F2_HEIGHT_KM), math.sin(theta)))
-    return max(3.0, min(85.0, max(0.0, a)))
-
-
-def diurnal(local_hour):
-    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.4
-
-
-SEASON_LAT_SCALE, K_LAT = 60.0, 0.10
-K_ANNUAL, K_NIGHT, K_DAY, K_EQUINOX = 0.05, 0.20, 0.05, 0.10
-
-
-def season_lat_factor(local_hour, month, mag_lat):
-    """Mirrors seasonLatitudeFactor() in src/freqAdvisor.js."""
-    ml_n = min(abs(mag_lat) / SEASON_LAT_SCALE, 1.0)
-    lat_f = 1 + K_LAT * (1 - 2 * ml_n)
-    day = diurnal(local_hour)
-    night = 1 - day
-    summer_month = 1 if mag_lat < 0 else 7
-    local = math.cos(2 * math.pi * (month - summer_month) / 12)
-    seas_f = (1
-              + K_ANNUAL * math.cos(2 * math.pi * (month - 1) / 12)
-              + ml_n * local * (night * K_NIGHT - day * K_DAY)
-              + K_EQUINOX * (1 - ml_n) * math.cos(4 * math.pi * (month - 3.5) / 12))
-    return max(0.2, lat_f) * max(0.4, seas_f)
-
-
-def app_muf(ssn, lst, month=None, mag_lat=None):
-    noon = 6.8 + 0.036 * ssn
-    night = 0.45 * noon
-    fof2 = night + (noon - night) * diurnal(lst)
-    if month is not None and mag_lat is not None:
-        fof2 *= season_lat_factor(lst, month, mag_lat)
-    sin_phi = min(EARTH_R * math.cos(math.radians(app_takeoff_deg(PATH_KM))) / (EARTH_R + F2_HEIGHT_KM), 0.999999)
-    return fof2 / math.sqrt(1 - sin_phi * sin_phi)
+def app_muf(ssn, lst, month=None, mag_lat=None, lat=None):
+    return appmodel.est_fof2(ssn, lst, month, mag_lat, lat) * appmodel.path_secant(PATH_KM)
 
 
 def evaluate(rows):
@@ -166,15 +141,15 @@ def evaluate(rows):
                 continue
             e = []
             for r in sub:
-                a = (app_muf(r['ssn'], r['lst'], r['month'], MAG_LAT[name]) if with_season
-                     else app_muf(r['ssn'], r['lst']))
+                a = (app_muf(r['ssn'], r['lst'], r['month'], MAG_LAT[name], MID_LAT[name])
+                     if with_season else app_muf(r['ssn'], r['lst']))
                 e.append(abs(a - r['muf']) / r['muf'] * 100)
             out[name] = statistics.mean(e)
         return out
 
     before, after = err(False), err(True)
     print('\nmean absolute MUF error vs VOACAP')
-    print('  %-18s %8s %8s' % ('site', 'before', 'after'))
+    print('  %-18s %8s %8s' % ('site', 'legacy', 'solar'))
     for name in MAG_LAT:
         if name in before:
             print('  %-18s %7.1f%% %7.1f%%' % (name, before[name], after[name]))

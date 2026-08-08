@@ -1588,6 +1588,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
       takeoffDeg: results.directive.takeoffDeg,
       layerKm: HOP.F2.hKm,
       midLon: pathCtx.midLon,
+      latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       month: month,
       utcHour: utcHour,
@@ -1952,7 +1953,7 @@ function AboutBanner() {
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
-              {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app works out the local season at the point your signal actually reflects off, using the magnetic model it already carries — no lookup tables, no connection.', 'f10b', 'offline')}
+              {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
               {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
               {feat('Space weather', 'solar flux and Kp from NOAA, which sharpen the frequency numbers. This is the one feature that reaches the network: with a signal it refreshes, without one it uses the last reading it saw or a documented default. Nothing stops working.', 'f12', 'online')}
 
@@ -1972,7 +1973,7 @@ function AboutBanner() {
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Takeoff angle</strong> — curved-earth reflection geometry, α = atan[(cos θ − R/(R+h)) ÷ sin θ]. Davies, <em>Ionospheric Radio</em>; the same geometry behind the ARRL skip-distance treatment.</div>
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Antenna height</strong> — first elevation lobe at H = λ ÷ (4·sin α), then checked against whether your legs can physically reach it.</div>
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>MUF</strong> — the secant law at oblique incidence with Earth curvature, MUF = foF2 ÷ cos φ. FOT = 0.85 × MUF, the standard planning convention.</div>
-                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Ionosphere</strong> — E, F1 and F2 layer heights and hop limits from published values; foF2 day/night behaviour fitted to VOACAP output and cross-checked to stay inside published mid-latitude ionosonde ranges. Season and magnetic latitude add the winter anomaly, the December/perihelion anomaly and the equatorial equinox peaks, all measured against VOACAP rather than assumed.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Ionosphere</strong> — E, F1 and F2 layer heights and hop limits from published values; foF2 is built from the sun\u2019s actual height over the point your signal reflects off \u2014 the solar zenith angle \u2014 with a lag for how slowly the layer drains after sunset, following Chapman layer theory. Magnetic latitude, the December/perihelion anomaly and the winter anomaly are added on top, because no amount of solar geometry produces those. All measured against VOACAP rather than assumed.</div>
                   <div><strong style={{ color: T.textPrim }}>Space weather</strong> — solar flux and planetary K-index from NOAA's Space Weather Prediction Center, when a connection exists.</div>
                 </div>
               </div>
@@ -1983,11 +1984,11 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 288 hourly samples at mid-latitude, and about 18% on hemisphere-to-hemisphere paths that cross the equator.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 13% across 4320 samples — and about the same whether the path is regional, polar or crosses the equator.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Known weak spot, stated up front: after local sunset the frequency model runs low. Daytime numbers are the reliable ones.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  124 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  127 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2791,6 +2792,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
       takeoffDeg: results.directive.takeoffDeg,
       layerKm: HOP.F2.hKm,
       midLon: pathCtx.midLon,
+      latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       month: month,
       sfi: cachedSFI(),
@@ -3316,6 +3318,7 @@ export default function HFCalc() {
     var _fc = assessFrequency({
       takeoffDeg: results.directive.takeoffDeg, layerKm: HOP.F2.hKm,
       midLon: pathCtx ? pathCtx.midLon : 0,
+      latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
       month: month,
       utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,

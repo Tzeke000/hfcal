@@ -8,17 +8,13 @@
 // to request if the assigned one will not propagate.
 //
 // ── Physics ──────────────────────────────────────────────────────────────────
-// 1. Solar activity → critical frequency foF2 (the highest frequency that
-//    reflects at VERTICAL incidence). Rises with the solar cycle and peaks in
-//    the early afternoon local solar time:
-//       foF2_noon  = 6.8 + 0.036 * SSN   (MHz, mid-latitude)
-//       foF2_night = 0.45 * foF2_noon
-//       foF2(t)    = night + (noon - night) * diurnal(t)
-//    Coefficients calibrated against VOACAP MUF output over 288 hourly
-//    samples (3 path lengths x 2 seasons x 2 solar levels) — see
-//    docs/VALIDATION.md. The resulting foF2 range (7.2 MHz noon at solar
-//    minimum to 12.2 at solar maximum; 3.2-5.5 at night) sits inside
-//    published mid-latitude ionosonde values, so the fit stays physical.
+// 1. Solar activity and the sun's HEIGHT drive the critical frequency foF2
+//    (the highest frequency that reflects at VERTICAL incidence). The layer
+//    responds to the solar zenith angle at the reflection point, not to the
+//    clock, so foF2 is built from cos(chi) with a recombination lag — see
+//    SOLAR ILLUMINATION below. Fitted against 4320 VOACAP samples spanning
+//    mid-latitude, 60 N to 44 S over twelve months, and six transequatorial
+//    circuits; docs/VALIDATION.md Part 6.
 //
 // 2. Oblique incidence raises the usable frequency by the secant law. With
 //    Earth curvature, the incidence angle φ at the layer for takeoff angle α:
@@ -42,11 +38,12 @@
 //    the hop actually bounces off.
 //
 // LIMITATIONS (stated plainly because this is a planning aid, not a model):
-// the season/latitude term is a smooth global fit rather than the CCIR
-// coefficient maps, there is no sporadic-E, no storm or absorption events, no
-// auroral-zone term, and the solar input is a single number. Treat the output
-// as "which way to lean", not as a guarantee. Validated against VOACAP in
-// docs/VALIDATION.md.
+// the residual season/latitude terms are a smooth global fit rather than the
+// CCIR coefficient maps; there is no sporadic-E, no storm or absorption
+// events, no auroral-zone term, and no equatorial-anomaly structure, so low
+// latitudes remain the weakest case; the solar input is a single number; and
+// the LUF side has never been validated against anything. Treat the output as
+// "which way to lean", not as a guarantee. docs/VALIDATION.md.
 //
 // This module is part of the original work of Cpl Angeles-Gonzalez,
 // Ezekiel S., USMC. Project signature: HFCALC-AG-EZK-USMC-v1
@@ -77,84 +74,150 @@ export function localSolarTime(utcHour, lonDeg) {
   return ((t % 24) + 24) % 24;
 }
 
-// Diurnal shape constants (VOACAP-calibrated — see module header).
-export const FOF2_PEAK_HOUR = 12.8;  // local solar time of maximum ionization
-// >1 sharpens the post-sunset falloff. Retuned from 1.6 to 1.4 in v1.13.2:
-// the model was under-predicting evening MUF on every data set, and 1.4
-// improved all three simultaneously (mid-latitude, six-latitude seasonal, and
-// interhemispheric) with no trade-off between them. See docs/VALIDATION.md
-// Part 5 — a residual evening low bias remains and is documented there.
+// ── SOLAR ILLUMINATION ────────────────────────────────────────────────────────
+// The layer is driven by how high the sun actually is over the reflection
+// point, not by the clock. The solar zenith angle χ carries time of day,
+// season and latitude in a single physical quantity:
+//
+//     cos χ = sin(lat)·sin(δ) + cos(lat)·cos(δ)·cos(H)
+//     H     = 15°·(local solar time − 12),  δ = solar declination
+//
+// Chapman layer theory gives the critical frequency of a photochemically
+// controlled layer as foF ∝ (cos χ)^¼ — production balancing recombination.
+// The F2 layer departs from that because transport, not just photochemistry,
+// governs it, so the exponent below is fitted rather than assumed; it lands
+// near 0.22, in the same family as the theoretical ¼.
+//
+// Replacing a clock-driven cosine with real solar geometry is what lets the
+// model handle a polar summer (sun never sets), a polar winter (never rises)
+// and an equatorial path (sun overhead twice a year) without special cases.
+// See docs/VALIDATION.md Part 6.
+
+// Day of year at mid-month, used to get the solar declination for a month.
+var MID_MONTH_DOY = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349];
+
+// Solar declination in degrees — where the sun is overhead. Swings ±23.44°
+// across the year and is the single quantity that encodes "season".
+export function solarDeclination(month) {
+  var doy = MID_MONTH_DOY[Math.max(1, Math.min(12, Math.round(month))) - 1];
+  return 23.44 * Math.sin(2 * Math.PI * (doy - 80.5) / 365.25);
+}
+
+// cos of the solar zenith angle. 1 = sun overhead, 0 = on the horizon,
+// negative = below the horizon (night).
+export function cosZenith(latDeg, localHour, declDeg) {
+  var ha = (localHour - 12) * 15 * DEG;
+  return Math.sin(latDeg * DEG) * Math.sin(declDeg * DEG)
+       + Math.cos(latDeg * DEG) * Math.cos(declDeg * DEG) * Math.cos(ha);
+}
+
+// How long the layer takes to respond to the sun. The ionosphere does not
+// track illumination instantly: production competes with recombination, so
+// density lags behind and drains slowly after sunset. This one constant is
+// what produces both the observed early-afternoon peak and the long evening
+// tail — behaviour the previous clock-based curve had to encode as two
+// separate hand-tuned numbers, and still got wrong after sunset.
+export const FOF2_LAG_HOURS = 1.2;
+
+// Illumination actually driving the layer: an exponentially weighted history
+// of max(cos χ, 0) over the preceding hours. 0 = fully dark for a long time,
+// 1 = sun overhead and steady. Stateless and deterministic — no spin-up.
+export function illuminationFactor(latDeg, localHour, month) {
+  var decl = solarDeclination(month);
+  var STEPS = 48, WINDOW_H = 18, dt = WINDOW_H / STEPS;
+  var num = 0, den = 0;
+  for (var i = 0; i < STEPS; i++) {
+    var s = (i + 0.5) * dt;
+    var w = Math.exp(-s / FOF2_LAG_HOURS);
+    var c = cosZenith(latDeg, localHour - s, decl);
+    if (c > 0) num += c * w;
+    den += w;
+  }
+  return den > 0 ? num / den : 0;
+}
+
+// ── foF2 ──────────────────────────────────────────────────────────────────────
+// Fitted jointly against 4320 VOACAP samples spanning three independent data
+// sets — mid-latitude, six latitudes from 60 N to 44 S over all twelve months,
+// and six transequatorial circuits. See docs/VALIDATION.md Part 6.
+export const FOF2_AMP_BASE = 6.7;        // MHz at SSN 0, fully illuminated
+export const FOF2_AMP_PER_SSN = 0.0245;  // MHz per sunspot number
+export const FOF2_ILLUM_EXP = 0.18;      // Chapman-family exponent on cos χ
+export const FOF2_NIGHT_FLOOR = 0.37;    // the layer never fully decays
+
+// Three residual effects that solar geometry alone cannot produce:
+export const SEASON_LAT_SCALE = 60;   // degrees magnetic where the lat term saturates
+export const SEASON_K_LAT = 0.095;    // equator-to-pole gradient, on MAGNETIC latitude
+export const SEASON_K_ANNUAL = 0.06;  // December/perihelion anomaly, all latitudes
+// The winter anomaly. Daytime foF2 is HIGHER in local winter than local
+// summer — the opposite of what sunlight alone would give, because it is a
+// thermospheric composition (O/N2) effect rather than a photochemical one.
+// Solar geometry can never produce it, so it stays an explicit term. Negative
+// because the cosine it multiplies peaks at the local SUMMER solstice, and
+// weighted by illumination because the effect is a daytime one.
+export const SEASON_K_WINTER = -0.14;
+
+// ── LEGACY CLOCK-BASED CURVE ──────────────────────────────────────────────────
+// Retained for callers that supply no date or no location. It is the v1.13.2
+// model: measurably worse (see Part 6), but better than refusing to answer.
+export const FOF2_PEAK_HOUR = 12.8;
 export const FOF2_DECAY_EXP = 1.4;
 export const FOF2_NIGHT_RATIO = 0.45;
-export const FOF2_NOON_BASE = 6.8;   // MHz at SSN 0
+export const FOF2_NOON_BASE = 6.8;
 export const FOF2_NOON_PER_SSN = 0.036;
 
-// Diurnal ionization factor, 0 (pre-dawn minimum) → 1 (early-afternoon peak).
 export function diurnalFactor(localHour) {
   var cosine = 0.5 * (1 + Math.cos(2 * Math.PI * (localHour - FOF2_PEAK_HOUR) / 24));
   return Math.pow(cosine, FOF2_DECAY_EXP);
 }
 
-// ── SEASON AND LATITUDE ───────────────────────────────────────────────────────
-// The base foF2 curve above was fitted at mid-northern latitudes with no month
-// term, so it drifted badly elsewhere. Measured against VOACAP across six
-// latitudes from 60 N to 44 S over all twelve months (576 samples per site,
-// scripts/validation/run_seasonal_study.py), three real effects show up:
-//
-//  1. Latitude — foF2 is highest near the magnetic equator and falls toward
-//     the poles. This tracks MAGNETIC latitude, which is why New Zealand at
-//     44 S behaves like 50 S.
-//  2. The December/annual anomaly — foF2 runs high around January at every
-//     latitude, an effect of Earth being nearer the Sun at perihelion.
-//  3. Local season, which REVERSES between hemispheres and between day and
-//     night. At mid-latitudes daytime foF2 is higher in local WINTER (the
-//     classic winter anomaly) while night-time is higher in local SUMMER.
-//     Near the equator the solstice pattern gives way to equinox peaks.
-//
-// Coefficients below are fitted to that data set. Together they take the mean
-// absolute MUF error across all six sites from 17.9% to 14.3%, and at the
-// original mid-latitude path from 14.6% to 12.4% — so the model now works
-// worldwide without giving up anything where it was already tuned.
-//
-// The month comes from the operator (the app defaults it to the device date);
-// the magnetic latitude is derived on-device from the World Magnetic Model at
-// the PATH MIDPOINT, the same place local solar time is taken.
-export const SEASON_LAT_SCALE = 60;    // degrees magnetic where the lat term saturates
-export const SEASON_K_LAT = 0.10;      // equator-to-pole swing
-export const SEASON_K_ANNUAL = 0.05;   // December/perihelion anomaly
-export const SEASON_K_NIGHT = 0.20;    // local-summer night enhancement
-export const SEASON_K_DAY = 0.05;      // local-winter day enhancement (winter anomaly)
-export const SEASON_K_EQUINOX = 0.10;  // semi-annual peaks, low latitudes
-
-// Combined latitude + season multiplier on foF2. Returns 1 when month or
-// magnetic latitude is unknown, so callers that have neither are unaffected.
-export function seasonLatitudeFactor(localHour, month, magLatDeg) {
+// Magnetic-latitude, annual-anomaly and winter-anomaly multiplier. The
+// ionosphere organises around the magnetic field rather than geography, which
+// is why New Zealand at 44 S behaves like roughly 50 S. `illum` is how lit the
+// reflection point is (0-1); the winter anomaly is weighted by it because it
+// is a daytime effect that reverses at night.
+export function seasonLatitudeFactor(month, magLatDeg, illum) {
   var haveMonth = typeof month === 'number' && isFinite(month) && month >= 1 && month <= 12;
   var haveLat = typeof magLatDeg === 'number' && isFinite(magLatDeg);
-  if (!haveMonth && !haveLat) return 1;
-
-  var mlN = haveLat ? Math.min(Math.abs(magLatDeg) / SEASON_LAT_SCALE, 1) : 0.5;
-  var latF = haveLat ? (1 + SEASON_K_LAT * (1 - 2 * mlN)) : 1;
-  if (!haveMonth) return Math.max(0.2, latF);
-
-  var day = diurnalFactor(localHour), night = 1 - day;
-  // Local summer solstice month: July in the north, January in the south.
-  var summerMonth = (haveLat && magLatDeg < 0) ? 1 : 7;
-  var local = Math.cos(2 * Math.PI * (month - summerMonth) / 12);
-  var seasF = 1
-    + SEASON_K_ANNUAL * Math.cos(2 * Math.PI * (month - 1) / 12)
-    + mlN * local * (night * SEASON_K_NIGHT - day * SEASON_K_DAY)
-    + SEASON_K_EQUINOX * (1 - mlN) * Math.cos(4 * Math.PI * (month - 3.5) / 12);
-  return Math.max(0.2, latF) * Math.max(0.4, seasF);
+  var x = (typeof illum === 'number' && isFinite(illum)) ? Math.max(0, Math.min(1, illum)) : 0;
+  var f = 1;
+  var mlN = haveLat ? Math.min(Math.abs(magLatDeg) / SEASON_LAT_SCALE, 1) : 0;
+  if (haveLat) f *= 1 + SEASON_K_LAT * (1 - 2 * mlN);
+  if (haveMonth) {
+    f *= 1 + SEASON_K_ANNUAL * Math.cos(2 * Math.PI * (month - 1) / 12);
+    if (haveLat) {
+      // Local summer solstice: July in the north, January in the south.
+      var summerMonth = magLatDeg < 0 ? 1 : 7;
+      f *= 1 + SEASON_K_WINTER * mlN * Math.cos(2 * Math.PI * (month - summerMonth) / 12) * x;
+    }
+  }
+  return Math.max(0.2, f);
 }
 
-// Critical frequency foF2 (MHz). month (1-12) and magnetic latitude are
-// optional; supplying them applies the season/latitude correction above.
-export function estimateFoF2(ssn, localHour, month, magLatDeg) {
+// Critical frequency foF2 in MHz.
+//   latDeg    geographic latitude of the reflection point (path midpoint)
+//   magLatDeg magnetic latitude of the same point
+// With a month AND a latitude the solar-geometry model runs. Without either,
+// it falls back to the legacy clock curve so older call paths still work.
+export function estimateFoF2(ssn, localHour, month, magLatDeg, latDeg) {
+  var haveMonth = typeof month === 'number' && isFinite(month) && month >= 1 && month <= 12;
+  var haveLat = typeof latDeg === 'number' && isFinite(latDeg) && latDeg >= -90 && latDeg <= 90;
+
+  if (haveMonth && haveLat) {
+    var x = illuminationFactor(latDeg, localHour, month);
+    if (x < 0) x = 0; else if (x > 1) x = 1;
+    var amp = FOF2_AMP_BASE + FOF2_AMP_PER_SSN * ssn;
+    var shape = FOF2_NIGHT_FLOOR + (1 - FOF2_NIGHT_FLOOR) * Math.pow(x, FOF2_ILLUM_EXP);
+    return amp * shape * seasonLatitudeFactor(month, magLatDeg, x);
+  }
+
+  // Fallback: no date or no location. The clock curve stands in for real solar
+  // geometry, which costs accuracy (see docs/VALIDATION.md Part 6) but still
+  // answers. diurnalFactor doubles as the illumination proxy here.
+  var d = diurnalFactor(localHour);
   var noon = FOF2_NOON_BASE + FOF2_NOON_PER_SSN * ssn;
   var night = FOF2_NIGHT_RATIO * noon;
-  var base = night + (noon - night) * diurnalFactor(localHour);
-  return base * seasonLatitudeFactor(localHour, month, magLatDeg);
+  return (night + (noon - night) * d) * seasonLatitudeFactor(month, magLatDeg, d);
 }
 
 // Oblique-incidence multiplier (the "M factor") for a takeoff angle, given
@@ -214,9 +277,18 @@ export function assessFrequency(params) {
   var utcHour = (typeof params.utcHour === 'number' && isFinite(params.utcHour)) ? params.utcHour : 12;
   var midLon = (typeof params.midLon === 'number' && isFinite(params.midLon)) ? params.midLon : 0;
   var lst = localSolarTime(utcHour, midLon);
-  var daylight = diurnalFactor(lst);
 
-  var foF2 = estimateFoF2(ssn, lst, params.month, params.magLatDeg);
+  // D-layer absorption tracks the sun's height, so the same illumination that
+  // drives foF2 also sets the LUF. With no latitude this falls back to the
+  // clock curve. NOTE: the LUF scaling itself is not VOACAP-validated — only
+  // the MUF side is. See docs/VALIDATION.md Limitations.
+  var haveGeo = typeof params.latDeg === 'number' && isFinite(params.latDeg)
+             && typeof params.month === 'number' && isFinite(params.month);
+  var daylight = haveGeo
+    ? illuminationFactor(params.latDeg, lst, params.month)
+    : diurnalFactor(lst);
+
+  var foF2 = estimateFoF2(ssn, lst, params.month, params.magLatDeg, params.latDeg);
   var m = secantFactor(takeoffDeg, layerKm);
   var muf = foF2 * m;
   var fot = 0.85 * muf;
@@ -274,6 +346,7 @@ export function frequencyForecast(params) {
       freqMHz: params.freqMHz,
       month: params.month,
       magLatDeg: params.magLatDeg,
+      latDeg: params.latDeg,
     });
     if (!r) return null;
     var now = params.nowUtcHour;

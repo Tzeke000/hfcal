@@ -7,6 +7,7 @@ Frequency (MUF) study: July 2026 (app v1.7.0)
 Season / magnetic-latitude study: August 2026 (app v1.13.0)
 Layer table study: August 2026 (app v1.13.1)
 Hemisphere-to-hemisphere study: August 2026 (app v1.13.2)
+Solar-geometry model rebuild: August 2026 (app v1.14.0)
 
 ---
 
@@ -375,6 +376,108 @@ usable, and now measured rather than assumed. The bias direction means the app
 tends to call a frequency *above MUF* slightly more often than VOACAP would on
 these paths — it errs toward telling you to come down in frequency.
 
+## Part 6 — Rebuilding foF2 on solar geometry (v1.14.0)
+
+Parts 2–5 kept patching one structure: a **clock-driven** cosine of local solar
+time, with latitude and season bolted on as empirical multipliers. Part 5
+showed where that runs out — the curve could not hold the evening, and no
+single exponent fixed it.
+
+The replacement is the quantity the ionosphere actually responds to: the
+**solar zenith angle** at the reflection point.
+
+> cos χ = sin(lat)·sin(δ) + cos(lat)·cos(δ)·cos(H)
+> H = 15°·(local solar time − 12),  δ = solar declination
+
+χ carries time of day, season **and** latitude in one physical quantity.
+Chapman layer theory gives the critical frequency of a photochemically
+controlled layer as foF ∝ (cos χ)^¼. The F2 layer departs from that because
+transport governs it as much as photochemistry, so the exponent was fitted
+rather than assumed — it landed at **0.18**, the same family as the
+theoretical ¼.
+
+**The lag.** The layer does not follow the sun instantly: production competes
+with recombination, so density lags and drains slowly after sunset. The model
+uses an exponentially weighted history of max(cos χ, 0) with a single time
+constant, **1.2 hours**. That one constant produces both the observed
+early-afternoon peak and the long evening tail — behaviour the old curve
+needed two separate hand-tuned numbers for, and still got wrong after dark.
+
+**What geometry cannot produce.** Three terms remain explicit because no
+amount of solar geometry generates them:
+
+- **Magnetic latitude gradient** (`SEASON_K_LAT`) — the ionosphere organises
+  around the magnetic field, not geography.
+- **December/perihelion anomaly** (`SEASON_K_ANNUAL`) — foF2 runs high around
+  January at every latitude.
+- **The winter anomaly** (`SEASON_K_WINTER`) — daytime foF2 is *higher* in
+  local winter than local summer, the opposite of what sunlight alone gives,
+  because it is a thermospheric composition (O/N₂) effect. It is negative and
+  weighted by illumination, since it is a daytime effect.
+
+**Fitting method.** All 4320 cached VOACAP samples from Parts 2, 3 and 5 were
+used at once — mid-latitude, six latitudes from 60 N to 44 S over twelve
+months, and six transequatorial circuits. The objective minimised the *worst*
+data set rather than the total, so the fit could not buy accuracy in one
+regime by giving it up in another.
+
+**A trap worth recording.** A first fit optimised on aggregate error alone
+scored better than the shipped model on every headline number — and got the
+**season backwards**. Its January/July daytime ratio at 44 N was 0.98 where
+VOACAP says 1.16: it would have told an operator that summer beats winter.
+The winter anomaly is a second-order effect on mean error but a first-order
+effect on the seasonal *ordering*, so the ratio had to be added to the
+objective as an explicit constraint. Aggregate error alone is not a sufficient
+test of a physical model.
+
+| Site, daytime Jan/Jul MUF ratio | VOACAP | v1.13.2 | v1.14.0 |
+|---|---|---|---|
+| 60 N Finland | 1.13 | 1.18 | 1.03 |
+| 44 N Michigan | 1.16 | 1.16 | 1.15 |
+| 34 N Cherry Point | 1.18 | 1.16 | 1.18 |
+| 44 S New Zealand | 1.05 | 1.06 | 1.11 |
+
+**Results.**
+
+| Data set | Samples | v1.13.2 | v1.14.0 |
+|---|---|---|---|
+| Mid-latitude | 288 | **12.1%** | 12.4% |
+| Six-latitude seasonal | 3456 | 14.2% | **13.3%** |
+| Interhemispheric | 576 | 17.9% | **13.4%** |
+| **Sample-weighted** | **4320** | **14.6%** | **13.3%** |
+| Interhemispheric signed bias | — | −7.1% | **−0.8%** |
+
+Per site, the seasonal set: 60 N 14.1 → 13.6, 44 N 11.5 → 10.7, 34 N
+11.4 → 10.6, 10 N 21.9 → 18.9, 34 S 14.8 → 17.4, 44 S 11.7 → 8.8. Five of six
+improve. Per circuit, the interhemispheric set: five of six improve, and the
+worst case in the entire validation suite — Panama–Peru, sitting on the
+magnetic equator — goes 22.9 → 14.9.
+
+**Honest debits.** Mid-latitude got very slightly worse (12.1 → 12.4%), and
+34 S regressed (14.8 → 17.4%). Mid-latitude is also the one set that was
+partly *training data* for the old coefficients, so it flattered them; the
+new model was fitted across all three at once and its accuracy is now roughly
+uniform (12.4 / 13.3 / 13.4) instead of good where it was tuned and poor
+elsewhere (12.1 / 14.2 / 17.9). Uniformity across regimes is the point.
+
+**Capability that came free with the physics.** The old curve had no idea the
+sun behaves differently at 78 N: it faded to night every day of the year.
+The new one handles polar day (sun never sets — the layer stays up through
+local midnight) and polar night (never rises) with no special case, because
+cos χ simply never goes negative or never goes positive. Tests pin both.
+
+**Fallback.** A caller that supplies no month or no latitude still gets an
+answer from the old clock curve. That path measures **15.0%** on the
+mid-latitude set against 12.4% for the full model — worse, but better than
+refusing. The app itself always has both.
+
+**One mirror, not four.** Each study needs a copy of the app's model to
+compare against, and three scripts had each hand-copied their own diurnal
+curve — which had already drifted apart once. They now share
+`scripts/validation/appmodel.py`, and `python3 scripts/validation/appmodel.py
+--check` verifies that mirror against `src/freqAdvisor.js` directly (currently
+exact to 1e-9 MHz across 80 cases).
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -386,17 +489,20 @@ these paths — it errs toward telling you to come down in frequency.
 - The season correction needs the month. The app defaults it to the device
   clock, but a device with a wrong date will bias the estimate — worst case
   by roughly 20% if it is half a year out at a high-latitude site.
-- **Evening MUF is the model's weakest point.** After local sunset it
-  under-predicts by roughly 10% at mid-latitude and 23% on interhemispheric
-  paths, even after the v1.13.2 retune. A simple cosine-power diurnal curve
-  cannot reproduce the post-sunset F2 height rise, and no single exponent
-  fixes it. Daytime figures are markedly more reliable than night figures.
+- The evening bias that dominated v1.13.2 is largely resolved by the
+  v1.14.0 solar-geometry rebuild (interhemispheric signed bias −7.1% → −0.8%),
+  but night figures still carry more scatter than daytime ones.
+- **The LUF side is not validated.** Only MUF was compared against VOACAP.
+  `LUF = 2.0 + 3.5 × illumination` is a published-form approximation for
+  ~20 W manpack power with no dependence on actual transmit power, antenna
+  gain, required SNR or hop count. Treat LUF as the weakest number the app
+  reports.
 - **The equatorial ionization anomaly is not modelled.** The latitude term
   peaks at the magnetic equator, whereas the real ionosphere has a trough
   there and crests near ±15° magnetic. Adding an anomaly term did not improve
-  agreement with VOACAP and was therefore left out, but it is why the
-  near-equatorial cases (21.9% seasonal, 22.9% Panama–Peru) are the worst in
-  the whole validation set.
+  agreement with VOACAP and was therefore left out. Low-latitude cases are
+  still the worst in the suite (18.9% at 10 N, 14.9% Panama–Peru), though the
+  v1.14.0 rebuild improved both substantially.
 - Hemisphere-to-hemisphere paths carry roughly 18% MUF error against 12% at
   mid-latitude. Both are inside the tool's stated planning tolerance, but a
   transequatorial shot deserves more margin than a regional one.

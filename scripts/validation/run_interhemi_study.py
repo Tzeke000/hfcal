@@ -40,6 +40,9 @@ import statistics
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import appmodel  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ITSHFBC = os.path.expanduser('~/itshfbc')
 RUN_DIR = os.path.join(ITSHFBC, 'run')
@@ -63,61 +66,14 @@ PATHS = [
 CONDITIONS = [(1, 30), (1, 100), (7, 30), (7, 100)]   # Jan and Jul: opposite seasons
 
 
-# ── App model, mirroring src/freqAdvisor.js + src/propagation.js ─────────────
-SEASON_LAT_SCALE, K_LAT = 60.0, 0.10
-K_ANNUAL, K_NIGHT, K_DAY, K_EQUINOX = 0.05, 0.20, 0.05, 0.10
+# ── App model — see scripts/validation/appmodel.py ───────────────────────────
+est_fof2 = appmodel.est_fof2
+secant = appmodel.path_secant
 
 
-def diurnal(local_hour):
-    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.4
-
-
-def season_lat_factor(local_hour, month, mag_lat):
-    ml_n = min(abs(mag_lat) / SEASON_LAT_SCALE, 1.0)
-    lat_f = 1 + K_LAT * (1 - 2 * ml_n)
-    day = diurnal(local_hour)
-    night = 1 - day
-    summer_month = 1 if mag_lat < 0 else 7
-    local = math.cos(2 * math.pi * (month - summer_month) / 12)
-    seas_f = (1
-              + K_ANNUAL * math.cos(2 * math.pi * (month - 1) / 12)
-              + ml_n * local * (night * K_NIGHT - day * K_DAY)
-              + K_EQUINOX * (1 - ml_n) * math.cos(4 * math.pi * (month - 3.5) / 12))
-    return max(0.2, lat_f) * max(0.4, seas_f)
-
-
-def est_fof2(ssn, lst, month=None, mag_lat=None):
-    noon = 6.8 + 0.036 * ssn
-    night = 0.45 * noon
-    base = night + (noon - night) * diurnal(lst)
-    if month is not None and mag_lat is not None:
-        base *= season_lat_factor(lst, month, mag_lat)
-    return base
-
-
-def max_hop_km(h):
-    return 2 * EARTH_R * math.acos(EARTH_R / (EARTH_R + h))
-
-
-def takeoff_deg(dist_km):
-    hops = max(1, math.ceil(dist_km / max_hop_km(F2_HEIGHT_KM)))
-    theta = (dist_km / hops) / (2 * EARTH_R)
-    a = math.degrees(math.atan2(
-        math.cos(theta) - EARTH_R / (EARTH_R + F2_HEIGHT_KM), math.sin(theta)))
-    return max(3.0, min(85.0, max(0.0, a)))
-
-
-def secant(dist_km):
-    sp = min(EARTH_R * math.cos(math.radians(takeoff_deg(dist_km))) / (EARTH_R + F2_HEIGHT_KM), 0.999999)
-    return 1.0 / math.sqrt(1 - sp * sp)
-
-
-# ── Geodesy ──────────────────────────────────────────────────────────────────
-def great_circle_km(la1, lo1, la2, lo2):
-    p1, p2 = math.radians(la1), math.radians(la2)
-    dp, dl = p2 - p1, math.radians(lo2 - lo1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * EARTH_R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+# ── Geodesy — see scripts/validation/appmodel.py ─────────────────────────────
+great_circle_km = appmodel.great_circle_km
+mag_lats = appmodel.mag_latitudes
 
 
 def interpolate(la1, lo1, la2, lo2, frac):
@@ -132,15 +88,6 @@ def interpolate(la1, lo1, la2, lo2, frac):
     z = a * math.sin(p1) + b * math.sin(p2)
     return (math.degrees(math.atan2(z, math.hypot(x, y))),
             ((math.degrees(math.atan2(y, x)) + 540) % 360) - 180)
-
-
-def mag_lats(points):
-    """Magnetic latitude for each (lat, lon) — from the app's own WMM code."""
-    src = ("import('%s/src/magnetic.js').then(m=>{const p=%s;"
-           "console.log(JSON.stringify(p.map(q=>m.magneticLatitude(q[0],q[1]))))})"
-           % (ROOT, json.dumps([list(p) for p in points])))
-    out = subprocess.run(['node', '-e', src], capture_output=True, text=True, cwd=ROOT)
-    return json.loads(out.stdout.strip())
 
 
 # ── VOACAP ───────────────────────────────────────────────────────────────────
@@ -217,11 +164,11 @@ def run():
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=180)
             for hour, vmuf in sorted(parse_muf(os.path.join(RUN_DIR, 'voacapx.out')).items()):
                 # (a) what the app ships: single midpoint
-                app_mid = est_fof2(ssn, lst_of(hour, mid[1]), month, mid_ml) * sec
+                app_mid = est_fof2(ssn, lst_of(hour, mid[1]), month, mid_ml, mid[0]) * sec
                 # (b) no season term at all, for reference
                 app_plain = est_fof2(ssn, lst_of(hour, mid[1])) * sec
                 # (c) IONCAP-style: lowest control-point MUF along the path
-                app_cp = min(est_fof2(ssn, lst_of(hour, c[1]), month, m) * sec
+                app_cp = min(est_fof2(ssn, lst_of(hour, c[1]), month, m, c[0]) * sec
                              for c, m in zip(cps, cp_ml))
                 rows.append({'path': name, 'dist_km': round(dist), 'month': month,
                              'ssn': ssn, 'utc': hour, 'voacap_muf': vmuf,

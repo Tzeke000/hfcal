@@ -8,6 +8,7 @@ import {
   secantFactor, classifyFrequency, assessFrequency,
   FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO, seasonLatitudeFactor,
   frequencyForecast, bestBlocks,
+  solarDeclination, cosZenith, illuminationFactor,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -177,78 +178,76 @@ test('bestBlocks: ranks usable blocks, null when nothing works', function() {
 });
 
 
-// ── SEASON + LATITUDE ────────────────────────────────────────────────────────
-// Behaviour pinned against the VOACAP seasonal study (docs/VALIDATION.md) and
-// the textbook anomalies it reproduces.
+// ── SOLAR GEOMETRY ───────────────────────────────────────────────────────────
+// The model is driven by the sun's actual height over the reflection point.
+// Pinned against astronomy and against the VOACAP fit in docs/VALIDATION.md
+// Parts 3 and 6.
 
-test('seasonLatitudeFactor: no-op when month and latitude are unknown', function() {
-  assert.equal(seasonLatitudeFactor(12, undefined, undefined), 1);
-  assert.equal(seasonLatitudeFactor(12, null, null), 1);
-  assert.equal(seasonLatitudeFactor(12, 13, 40), seasonLatitudeFactor(12, undefined, 40),
-    'out-of-range month is ignored, not clamped');
-  // Backwards compatible: estimateFoF2 with no season args is unchanged.
-  assert.equal(estimateFoF2(70, 12), estimateFoF2(70, 12, undefined, undefined));
+test('solarDeclination: solstices and equinoxes land where they should', function() {
+  assert.ok(solarDeclination(6) > 22, 'June should be near +23.44, got ' + solarDeclination(6));
+  assert.ok(solarDeclination(12) < -22, 'December should be near -23.44, got ' + solarDeclination(12));
+  assert.ok(Math.abs(solarDeclination(3)) < 5, 'March should be near 0, got ' + solarDeclination(3));
+  assert.ok(Math.abs(solarDeclination(9)) < 5, 'September should be near 0, got ' + solarDeclination(9));
 });
 
-test('seasonLatitudeFactor: winter anomaly — daytime foF2 higher in local winter', function() {
-  // 55 deg magnetic north, local noon. January (winter) must beat July.
-  var jan = seasonLatitudeFactor(12, 1, 55);
-  var jul = seasonLatitudeFactor(12, 7, 55);
-  assert.ok(jan > jul, 'northern mid-lat noon: Jan ' + jan.toFixed(3) + ' should exceed Jul ' + jul.toFixed(3));
+test('cosZenith: sun overhead at the subsolar point, below the horizon at night', function() {
+  // Equator at equinox, local noon: sun straight up.
+  assert.ok(Math.abs(cosZenith(0, 12, 0) - 1) < 1e-9);
+  // Same place at midnight: directly underfoot.
+  assert.ok(Math.abs(cosZenith(0, 0, 0) + 1) < 1e-9);
+  // Tropic of Cancer at the June solstice, local noon: overhead again.
+  assert.ok(cosZenith(23.44, 12, solarDeclination(6)) > 0.999);
+  // Sunrise/sunset at the equator on the equinox is 06 and 18.
+  assert.ok(Math.abs(cosZenith(0, 6, 0)) < 1e-9);
+  assert.ok(Math.abs(cosZenith(0, 18, 0)) < 1e-9);
 });
 
-test('seasonLatitudeFactor: night ordering reverses — summer nights are better', function() {
-  var jan = seasonLatitudeFactor(0, 1, 55);   // northern winter night
-  var jul = seasonLatitudeFactor(0, 7, 55);   // northern summer night
-  assert.ok(jul > jan, 'northern mid-lat midnight: Jul should exceed Jan');
-});
-
-test('seasonLatitudeFactor: hemispheres are mirrored', function() {
-  // New Zealand vs Finland in the same month must land on opposite sides of
-  // the seasonal cycle — this is the whole reason the model takes latitude.
-  var finlandJan = seasonLatitudeFactor(12, 1, 55);
-  var nzJan = seasonLatitudeFactor(12, 1, -55);
-  assert.ok(finlandJan > nzJan, 'January noon: northern winter should beat southern summer');
-  var finlandJul = seasonLatitudeFactor(12, 7, 55);
-  var nzJul = seasonLatitudeFactor(12, 7, -55);
-  assert.ok(nzJul > finlandJul, 'July noon: southern winter should beat northern summer');
-});
-
-test('seasonLatitudeFactor: the day/night reversal is mid-latitude only', function() {
-  // The winter anomaly is a mid- and high-latitude effect: noon peaks in local
-  // winter while midnight peaks in local summer. Near the magnetic equator
-  // that reversal disappears and the year is governed by the equinox peaks
-  // instead, so day and night move together.
-  function ratio(hour, lat) { return seasonLatitudeFactor(hour, 1, lat) / seasonLatitudeFactor(hour, 7, lat); }
-  assert.ok(ratio(12, 55) > 1, 'mid-lat noon should favour January (northern winter)');
-  assert.ok(ratio(0, 55) < 1, 'mid-lat midnight should favour July (northern summer)');
-  assert.ok(ratio(12, 5) > 1 && ratio(0, 5) > 1, 'equatorial day and night should move together');
-  // And the size of the reversal grows with latitude.
-  function split(lat) { return Math.abs(Math.log(ratio(12, lat)) - Math.log(ratio(0, lat))); }
-  assert.ok(split(60) > split(40), 'reversal should widen toward the pole');
-  assert.ok(split(40) > split(10), 'reversal should narrow toward the equator');
-});
-
-test('seasonLatitudeFactor: low latitudes run a higher foF2 than high ones', function() {
-  // Averaged over the year so the seasonal term cannot carry the comparison.
-  function annual(lat) {
-    var s = 0;
-    for (var m = 1; m <= 12; m++) s += seasonLatitudeFactor(12, m, lat);
-    return s / 12;
+test('illuminationFactor: polar day and polar night are handled without special cases', function() {
+  // 78 N in June: the sun never sets, so even local midnight stays lit.
+  var midnightJun = illuminationFactor(78, 0, 6);
+  var noonJun = illuminationFactor(78, 12, 6);
+  assert.ok(midnightJun > 0.3 * noonJun,
+    'polar day midnight should stay lit, got ' + midnightJun.toFixed(3) + ' vs noon ' + noonJun.toFixed(3));
+  // 78 N in December: the sun never rises.
+  assert.ok(illuminationFactor(78, 12, 12) < 0.02, 'polar night noon should be dark');
+  // Equator: bright at noon, dark at midnight, every month.
+  for (var m = 1; m <= 12; m++) {
+    assert.ok(illuminationFactor(0, 12, m) > 0.5, 'equator noon should be bright in month ' + m);
+    assert.ok(illuminationFactor(0, 0, m) < 0.1, 'equator midnight should be dark in month ' + m);
   }
-  assert.ok(annual(5) > annual(60), 'equatorial annual mean should exceed polar');
 });
 
-test('seasonLatitudeFactor: stays in a physical range everywhere', function() {
-  for (var lat = -80; lat <= 80; lat += 5) {
-    for (var m = 1; m <= 12; m++) {
+test('illuminationFactor: lags the sun, so it peaks after local noon', function() {
+  var best = 0, bestH = 0;
+  for (var h = 8; h < 18; h += 0.25) {
+    var v = illuminationFactor(35, h, 6);
+    if (v > best) { best = v; bestH = h; }
+  }
+  assert.ok(bestH > 12 && bestH < 14.5,
+    'peak should sit in the early afternoon, got ' + bestH);
+});
+
+test('illuminationFactor: stays in [0,1] everywhere', function() {
+  for (var lat = -90; lat <= 90; lat += 15) {
+    for (var m = 1; m <= 12; m += 2) {
       for (var h = 0; h < 24; h += 3) {
-        var f = seasonLatitudeFactor(h, m, lat);
-        assert.ok(f > 0.5 && f < 1.6, 'factor out of range at lat ' + lat + ' month ' + m + ' hour ' + h + ': ' + f);
+        var v = illuminationFactor(lat, h, m);
+        assert.ok(v >= 0 && v <= 1, 'out of range at ' + [lat, m, h] + ': ' + v);
       }
     }
   }
 });
+
+// ── SEASON + LATITUDE ────────────────────────────────────────────────────────
+// Behaviour pinned against the VOACAP seasonal study (docs/VALIDATION.md) and
+// the textbook anomalies it reproduces.
+
+
+
+
+
+
+
 
 test('assessFrequency and frequencyForecast carry season through', function() {
   var base = { takeoffDeg: 8, layerKm: 360, midLon: 25, utcHour: 10, sfi: null, freqMHz: 14.2 };
@@ -270,33 +269,7 @@ test('assessFrequency and frequencyForecast carry season through', function() {
 // scripts/validation/run_interhemi_study.py; these pin the behaviour that
 // study checked.
 
-test('seasonLatitudeFactor: continuous across the magnetic equator', function() {
-  // The hemisphere flip (summer = July north, January south) is a hard switch
-  // at magLat 0. It must not produce a step, because a transequatorial path's
-  // midpoint lands right there. The flip is weighted by |magLat|, which goes
-  // to zero at the same point — this test is what keeps that coupling.
-  [0, 6, 12, 18].forEach(function(hour) {
-    for (var m = 1; m <= 12; m++) {
-      var north = seasonLatitudeFactor(hour, m, 0.01);
-      var south = seasonLatitudeFactor(hour, m, -0.01);
-      assert.ok(Math.abs(north - south) < 0.001,
-        'step at the magnetic equator, month ' + m + ' hour ' + hour
-        + ': ' + north.toFixed(5) + ' vs ' + south.toFixed(5));
-    }
-  });
-});
 
-test('seasonLatitudeFactor: seasonal swing collapses toward the dip equator', function() {
-  // On a transequatorial path the model should stop asserting a strong season,
-  // because the reflection region genuinely has little solstitial swing. What
-  // is left near the equator is the semi-annual (equinox) term, not a
-  // hemisphere-dependent one.
-  function solstitialSwing(lat) {
-    return Math.abs(seasonLatitudeFactor(12, 1, lat) - seasonLatitudeFactor(12, 7, lat));
-  }
-  assert.ok(solstitialSwing(2) < solstitialSwing(30), 'swing should shrink at the equator');
-  assert.ok(solstitialSwing(30) < solstitialSwing(55), 'and grow toward the pole');
-});
 
 test('assessFrequency: a transequatorial path stays physical all day', function() {
   // Cherry Point to Argentina: 7963 km, midpoint on the equator at 8 deg
@@ -324,4 +297,76 @@ test('assessFrequency: opposite hemispheres, same month, differ near the poles',
       magLatDeg: magLat, month: 1, utcHour: 12, sfi: null }).muf;
   }
   assert.ok(muf(50) > muf(-50), 'January noon: northern winter should beat southern summer');
+});
+
+
+// ── SEASON AND LATITUDE, AGAINST THE REAL INTERFACE ──────────────────────────
+// estimateFoF2 is what callers use, so the seasonal behaviour is pinned there
+// rather than on the internal multiplier.
+
+test('seasonLatitudeFactor: no-op without month or magnetic latitude', function() {
+  assert.equal(seasonLatitudeFactor(undefined, undefined, 0.5), 1);
+  assert.equal(seasonLatitudeFactor(null, null), 1);
+  assert.equal(seasonLatitudeFactor(13, undefined), 1, 'out-of-range month ignored, not clamped');
+});
+
+test('seasonLatitudeFactor: continuous across the magnetic equator', function() {
+  // The hemisphere flip is a hard switch at magLat 0 and a transequatorial
+  // path's midpoint lands right there. It only stays smooth because the term
+  // is weighted by |magLat|, which vanishes at the same point.
+  for (var m = 1; m <= 12; m++) {
+    for (var x = 0; x <= 1; x += 0.5) {
+      var n = seasonLatitudeFactor(m, 0.01, x), s = seasonLatitudeFactor(m, -0.01, x);
+      assert.ok(Math.abs(n - s) < 0.001, 'step at the magnetic equator, month ' + m);
+    }
+  }
+});
+
+test('estimateFoF2: winter anomaly — daytime foF2 higher in local winter', function() {
+  // Northern mid-latitudes, local noon. January must beat July even though
+  // there is far less sunlight, because the anomaly is a composition effect.
+  var jan = estimateFoF2(70, 12, 1, 51, 44.6);
+  var jul = estimateFoF2(70, 12, 7, 51, 44.6);
+  assert.ok(jan > jul, '44 N noon: Jan ' + jan.toFixed(2) + ' should exceed Jul ' + jul.toFixed(2));
+  // And the southern hemisphere runs its own winter, in July.
+  var njan = estimateFoF2(70, 12, 1, -50, -44.2);
+  var njul = estimateFoF2(70, 12, 7, -50, -44.2);
+  assert.ok(njul / njan > jul / jan, 'southern hemisphere should lean the other way');
+});
+
+test('estimateFoF2: polar day keeps the layer up, polar night collapses it', function() {
+  var junMidnight = estimateFoF2(70, 0, 6, 75, 78);
+  var junNoon = estimateFoF2(70, 12, 6, 75, 78);
+  assert.ok(junMidnight > 0.7 * junNoon, 'sun never sets — midnight should stay close to noon');
+  var decNoon = estimateFoF2(70, 12, 12, 75, 78);
+  assert.ok(decNoon < 0.6 * junNoon, 'polar night noon should be far below polar day');
+});
+
+test('estimateFoF2: low latitudes run higher than high ones', function() {
+  function annual(magLat, lat) {
+    var s = 0;
+    for (var m = 1; m <= 12; m++) s += estimateFoF2(70, 12, m, magLat, lat);
+    return s / 12;
+  }
+  assert.ok(annual(5, 5) > annual(60, 60), 'equatorial annual mean should exceed polar');
+});
+
+test('estimateFoF2: falls back to the clock curve without a latitude', function() {
+  var withLat = estimateFoF2(70, 12, 6, 51, 44.6);
+  var without = estimateFoF2(70, 12, 6, 51);
+  assert.ok(isFinite(without) && without > 2 && without < 30);
+  assert.ok(Math.abs(withLat - without) > 0.01, 'the two paths should not be identical');
+  // And with nothing at all it still answers.
+  assert.ok(estimateFoF2(70, 12) > 2);
+});
+
+test('estimateFoF2: physical everywhere across the whole globe and year', function() {
+  for (var lat = -85; lat <= 85; lat += 10) {
+    for (var m = 1; m <= 12; m += 1) {
+      for (var h = 0; h < 24; h += 4) {
+        var v = estimateFoF2(70, h, m, lat * 0.9, lat);
+        assert.ok(v > 1.5 && v < 20, 'foF2 out of range at ' + [lat, m, h] + ': ' + v);
+      }
+    }
+  }
 });

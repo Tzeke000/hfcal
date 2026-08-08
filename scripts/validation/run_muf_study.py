@@ -27,6 +27,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import appmodel  # noqa: E402
 from run_voacap_study import (  # noqa: E402
     ITSHFBC, RUN_DIR, OUT_DIR, TX_LAT, TX_LON, EARTH_R, F2_HEIGHT_KM,
     F2_MAX_HOP_KM, destination_east, make_deck,
@@ -40,68 +41,12 @@ MAG_LAT = 40.1
 CONDITIONS = [(6, 30), (6, 100), (12, 30), (12, 100)]
 
 
-def app_takeoff_deg(dist_km):
-    """Curved-earth per-hop takeoff angle — mirrors propagation.js."""
-    hops = max(1, math.ceil(dist_km / F2_MAX_HOP_KM))
-    theta = (dist_km / hops) / (2 * EARTH_R)
-    a = math.degrees(math.atan2(
-        math.cos(theta) - EARTH_R / (EARTH_R + F2_HEIGHT_KM), math.sin(theta)))
-    return max(3.0, min(85.0, max(0.0, a)))
-
-
 def local_solar_time(utc_hour, lon_deg):
-    return ((utc_hour + lon_deg / 15) % 24 + 24) % 24
+    return appmodel.local_solar_time(utc_hour, lon_deg)
 
 
-def diurnal(local_hour):
-    # Mirrors freqAdvisor.js (VOACAP-calibrated constants)
-    return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.4
-
-
-# Season/latitude correction — mirrors seasonLatitudeFactor() in freqAdvisor.js.
-SEASON_LAT_SCALE = 60.0
-SEASON_K_LAT = 0.10
-SEASON_K_ANNUAL = 0.05
-SEASON_K_NIGHT = 0.20
-SEASON_K_DAY = 0.05
-SEASON_K_EQUINOX = 0.10
-
-
-def season_lat_factor(local_hour, month, mag_lat_deg):
-    if month is None and mag_lat_deg is None:
-        return 1.0
-    ml_n = min(abs(mag_lat_deg) / SEASON_LAT_SCALE, 1.0) if mag_lat_deg is not None else 0.5
-    lat_f = (1 + SEASON_K_LAT * (1 - 2 * ml_n)) if mag_lat_deg is not None else 1.0
-    if month is None:
-        return max(0.2, lat_f)
-    day = diurnal(local_hour)
-    night = 1 - day
-    summer_month = 1 if (mag_lat_deg is not None and mag_lat_deg < 0) else 7
-    local = math.cos(2 * math.pi * (month - summer_month) / 12)
-    seas_f = (1
-              + SEASON_K_ANNUAL * math.cos(2 * math.pi * (month - 1) / 12)
-              + ml_n * local * (night * SEASON_K_NIGHT - day * SEASON_K_DAY)
-              + SEASON_K_EQUINOX * (1 - ml_n) * math.cos(4 * math.pi * (month - 3.5) / 12))
-    return max(0.2, lat_f) * max(0.4, seas_f)
-
-
-def est_fof2(ssn, local_hour, month=None, mag_lat_deg=None):
-    noon = 6.8 + 0.036 * ssn
-    night = 0.45 * noon
-    base = night + (noon - night) * diurnal(local_hour)
-    return base * season_lat_factor(local_hour, month, mag_lat_deg)
-
-
-def secant_factor(takeoff_deg, layer_km):
-    sin_phi = EARTH_R * math.cos(math.radians(takeoff_deg)) / (EARTH_R + layer_km)
-    sin_phi = min(sin_phi, 0.999999)
-    return 1.0 / math.sqrt(1 - sin_phi * sin_phi)
-
-
-def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat_deg=None):
-    lst = local_solar_time(utc_hour, mid_lon)
-    return (est_fof2(ssn, lst, month, mag_lat_deg)
-            * secant_factor(app_takeoff_deg(dist_km), F2_HEIGHT_KM))
+def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat_deg=None, lat=None):
+    return appmodel.app_muf(dist_km, utc_hour, ssn, mid_lon, month, mag_lat_deg, lat)
 
 
 def parse_voacap_muf(path):
@@ -126,8 +71,9 @@ def run():
             open(os.path.join(RUN_DIR, 'voacapx.dat'), 'w').write(deck)
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=120)
             vmuf = parse_voacap_muf(os.path.join(RUN_DIR, 'voacapx.out'))
+            mid_lat = appmodel.path_midpoint(TX_LAT, TX_LON, rx_lat, rx_lon)[0]
             for hour, muf in sorted(vmuf.items()):
-                a = app_muf(dist, hour, ssn, mid_lon, month, MAG_LAT)
+                a = app_muf(dist, hour, ssn, mid_lon, month, MAG_LAT, mid_lat)
                 plain = app_muf(dist, hour, ssn, mid_lon)
                 rows.append({'dist_km': dist, 'month': month, 'ssn': ssn,
                              'utc_hour': hour, 'voacap_muf': muf,
@@ -154,10 +100,10 @@ def run():
               f"mean |Δ| {summary[-1]['mean_abs_pct']:.1f}%  "
               f"within 20%: {summary[-1]['within_20pct']}%")
 
-    # Regression guard: the season term must not make the mid-latitude case
-    # (the one the original coefficients were fitted to) worse.
+    # Reference: the same paths with no date and no location, i.e. the legacy
+    # clock curve the model falls back to when a caller supplies neither.
     prior = [abs(r['delta_noseason']) / r['voacap_muf'] * 100 for r in rows if r['voacap_muf'] > 0]
-    print(f"without season term: mean |delta| {statistics.mean(prior):.1f}%  "
+    print(f"legacy clock fallback: mean |delta| {statistics.mean(prior):.1f}%  "
           f"within 20%: {round(100 * sum(1 for x in prior if x <= 20) / len(prior))}%")
 
     allrel = [abs(r['delta']) / r['voacap_muf'] * 100 for r in rows if r['voacap_muf'] > 0]
