@@ -13,7 +13,7 @@ import {
   parseFluxPayload, parseKIndexPayload,
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "./spacewx.js";
-import { assessFrequency, frequencyForecast, bestBlocks } from "./freqAdvisor.js";
+import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS } from "./freqAdvisor.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
 import { declination, magneticLatitude, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
@@ -1569,12 +1569,62 @@ function seasonNote(month, magLatDeg) {
        + (south ? 'south' : 'north') + ' — ' + effect;
 }
 
+// ── TRANSMIT POWER ────────────────────────────────────────────────────────────
+// Power moves the LUF and nothing else. It cannot raise the MUF — above the
+// MUF the signal leaves the ionosphere and more watts follow it into space —
+// but below the LUF the D layer is eating the signal, and there power is
+// exactly the right answer. The options are the radios a Marine is actually
+// handed rather than round numbers.
+var TX_POWERS = [
+  { w: 5,   label: '5 W',   note: 'handheld / low' },
+  { w: 20,  label: '20 W',  note: 'manpack (PRC-150/160)' },
+  { w: 50,  label: '50 W',  note: 'manpack high' },
+  { w: 150, label: '150 W', note: 'vehicle amp' },
+  { w: 400, label: '400 W', note: 'base / heavy amp' },
+];
+
+function PowerSelector({ watts, onWatts }) {
+  return (
+    <div style={{ marginTop: 10 }}>
+      <label style={{ color: T.textSec, fontWeight: 600, fontSize: '0.68rem', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        Transmit Power (sets the LUF)
+      </label>
+      <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 4 }}>
+        {TX_POWERS.map(function(p) {
+          var active = p.w === watts;
+          return (
+            <button
+              key={p.w}
+              onClick={function() { onWatts(p.w); }}
+              title={p.note}
+              style={{
+                flex: '1 0 auto', minWidth: 54, padding: '7px 4px',
+                background: active ? T.accentDim : T.bg,
+                color: active ? T.accentText : T.textMute,
+                border: '1px solid ' + (active ? T.accent : T.border),
+                borderRadius: 5, fontSize: '0.64rem', fontWeight: 700,
+                letterSpacing: '0.04em', cursor: 'pointer',
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 3, lineHeight: 1.4 }}>
+        {(TX_POWERS.find(function(p) { return p.w === watts; }) || {}).note}
+        {' · more power lowers the LUF, never raises the MUF'}
+      </div>
+    </div>
+  );
+}
+
 // ── FREQUENCY CHECK PANEL ─────────────────────────────────────────────────────
 // Units are normally ASSIGNED their frequencies, so this is a check rather
 // than a picker: "will the frequency I was given actually close this path at
 // this time?" Collapsed by default — it is an aid, not part of the main flow.
 // Runs entirely offline (see freqAdvisor.js).
-function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
+function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, onWatts }) {
   var [open, setOpen] = useState(false);
   var [hourMode, setHourMode] = useState('now');
 
@@ -1591,6 +1641,8 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       ends: pathCtx.ends,
+      hops: pathCtx.hops,
+      txWatts: txWatts,
       month: month,
       utcHour: utcHour,
       sfi: cachedSFI(),
@@ -1644,6 +1696,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
           </select>
 
           <MonthWheel month={month} onMonth={onMonth} />
+          <PowerSelector watts={txWatts} onWatts={onWatts} />
 
           {!assess && (
             <div style={{ color: T.textMute, fontSize: '0.74rem', lineHeight: 1.5 }}>
@@ -1978,6 +2031,7 @@ function AboutBanner() {
               {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
+              {feat('Transmit power', 'pick the radio you actually have. Power moves the LUF — the floor where the ionosphere absorbs you — and a 400 W amp buys about 40% off it, not 20 times. It does NOT move the MUF: above that, more watts just follow the signal into space.', 'f10c', 'offline')}
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
               {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
               {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
@@ -2015,7 +2069,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  137 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  143 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2807,7 +2861,7 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
 // 24-hour MUF / FOT / LUF in 4-hour Zulu blocks, so an operator can plan comm
 // windows instead of only checking the current moment. Same collapsible
 // pattern as the DAGR and About cards. Fully offline.
-function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
+function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, onWatts }) {
   var [open, setOpen] = useState(false);
   var freqMHz = parseFloat(freqStr);
   var hasFreq = !isNaN(freqMHz) && freqMHz > 0;
@@ -2822,6 +2876,8 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       ends: pathCtx.ends,
+      hops: pathCtx.hops,
+      txWatts: txWatts,
       month: month,
       sfi: cachedSFI(),
       freqMHz: hasFreq ? freqMHz : null,
@@ -2864,6 +2920,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
       {open && (
         <div style={{ marginTop: 14 }}>
           <MonthWheel month={month} onMonth={onMonth} />
+          <PowerSelector watts={txWatts} onWatts={onWatts} />
 
           {!blocks && (
             <div style={{ color: T.textMute, fontSize: '0.76rem', lineHeight: 1.5 }}>
@@ -2922,7 +2979,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
               )}
 
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
-                {'Aim at FOT. Above MUF the signal passes into space (more power will not help); below LUF it is absorbed (more power does help). Blocks evaluated at their midpoint · '
+                {'Aim at FOT. Above MUF the signal passes into space (more power will not help); below LUF it is absorbed (more power does help — the LUF shown is for ' + txWatts + ' W). Blocks evaluated at their midpoint · '
                   + (usingDefault ? 'default solar activity — connect once to refine' : 'solar activity from NOAA')
                   + ' · ±15% vs VOACAP.'}
               </div>
@@ -3305,6 +3362,8 @@ export default function HFCalc() {
   // the operator can change it to plan ahead. Shared by the frequency check
   // and the 24-hour forecast so the two never disagree.
   var [month, setMonth] = useState(new Date().getMonth() + 1);
+  // Transmit power. Only affects the LUF — see PowerSelector.
+  var [txWatts, setTxWatts] = useState(DEFAULT_TX_WATTS);
 
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
   var effectiveGauge = customGauge.trim() !== '' ? customGauge.trim() : wireGauge;
@@ -3334,6 +3393,9 @@ export default function HFCalc() {
       // time regardless.
       ends: [{ lat: results.p1.lat, lon: results.p1.lon },
              { lat: results.p2.lat, lon: results.p2.lon }],
+      // The ray crosses the absorbing D layer once per hop, so absorption —
+      // and therefore the LUF — scales with hop count.
+      hops: Math.max(1, Math.ceil(results.geo.distKm / HOP.F2.maxHopKm)),
     };
   }, [results]);
 
@@ -3357,6 +3419,8 @@ export default function HFCalc() {
       latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
       ends: pathCtx ? pathCtx.ends : null,
+      hops: pathCtx ? pathCtx.hops : 1,
+      txWatts: txWatts,
       month: month,
       utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
       sfi: cachedSFI(), freqMHz: results.freq,
@@ -3798,7 +3862,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
-        <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} />
+        <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
         <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
 
         <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '4px solid #c4442e', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
@@ -3858,7 +3922,7 @@ export default function HFCalc() {
             />
             {errors.freq && <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 5 }}>{errors.freq}</div>}
 
-            <FreqCheckPanel results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} />
+            <FreqCheckPanel results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
           </div>
 
           <div>

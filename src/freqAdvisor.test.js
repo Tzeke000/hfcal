@@ -9,6 +9,7 @@ import {
   FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO, seasonLatitudeFactor,
   frequencyForecast, bestBlocks,
   solarDeclination, cosZenith, illuminationFactor,
+  estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -511,4 +512,66 @@ test('assessFrequency: reports local solar time at both stations', function() {
   // Cherry Point is evening at the same instant.
   assert.ok(r.endSolarHours[1] > 18 && r.endSolarHours[1] < 20, 'Cherry Point should be evening');
   assert.equal(assessFrequency({ takeoffDeg: 5, layerKm: 360, sfi: null }).endSolarHours, null);
+});
+
+
+// ── LUF AND TRANSMIT POWER ───────────────────────────────────────────────────
+// Absorption physics: L = K*I^0.75/(f+fH)^2 per hop, closing while L stays
+// under a margin that grows as 10*log10(P). See docs/VALIDATION.md Part 8.
+
+test('estimateLUF: matches the historical 20 W calibration', function() {
+  // The pre-v1.15 model was LUF = 2.0 + 3.5*illumination at manpack power.
+  // The new form must reproduce its two anchors exactly.
+  assert.ok(Math.abs(estimateLUF(1, 20, 1) - 5.5) < 0.02, 'full sun 20 W should be 5.5 MHz');
+  assert.equal(estimateLUF(0, 20, 1), LUF_FLOOR_MHZ, 'darkness should sit on the noise floor');
+});
+
+test('estimateLUF: more power lowers the LUF, and never raises it', function() {
+  var prev = Infinity;
+  [5, 20, 50, 150, 400, 1000].forEach(function(w) {
+    var v = estimateLUF(1, w, 1);
+    assert.ok(v <= prev, 'LUF must not rise with power, broke at ' + w + ' W');
+    prev = v;
+  });
+  assert.ok(estimateLUF(1, 5, 1) > estimateLUF(1, 400, 1), '5 W should be far worse than 400 W');
+});
+
+test('estimateLUF: power buys the SQUARE ROOT of the margin, not linear gain', function() {
+  // 20x the power measured 43% lower in VOACAP; the model must land near that
+  // and must NOT behave linearly (which would be a 95% drop).
+  var drop = 1 - estimateLUF(1, 400, 1) / estimateLUF(1, 20, 1);
+  assert.ok(drop > 0.30 && drop < 0.55,
+    '20 W -> 400 W should drop the LUF 30-55%, got ' + (drop * 100).toFixed(0) + '%');
+});
+
+test('estimateLUF: rises with illumination and with hop count', function() {
+  assert.ok(estimateLUF(1, 20, 1) > estimateLUF(0.5, 20, 1));
+  assert.ok(estimateLUF(0.5, 20, 1) > estimateLUF(0.1, 20, 1));
+  // The ray crosses the absorbing layer once per hop.
+  assert.ok(estimateLUF(1, 20, 3) > estimateLUF(1, 20, 1), 'three hops absorb more than one');
+});
+
+test('estimateLUF: never returns below the noise floor, or a bad number', function() {
+  [0, 0.001, 0.5, 1].forEach(function(i) {
+    [1, 20, 5000].forEach(function(w) {
+      var v = estimateLUF(i, w, 1);
+      assert.ok(isFinite(v) && v >= LUF_FLOOR_MHZ && v < 60, 'bad LUF at ' + [i, w] + ': ' + v);
+    });
+  });
+  // Junk input falls back to the reference power rather than producing NaN.
+  assert.equal(estimateLUF(1, null, null), estimateLUF(1, DEFAULT_TX_WATTS, 1));
+  assert.equal(estimateLUF(null, 20, 1), LUF_FLOOR_MHZ);
+});
+
+test('assessFrequency: power moves the LUF and leaves the MUF alone', function() {
+  var base = { takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 35, magLatDeg: 40,
+               month: 6, utcHour: 12, sfi: null, freqMHz: 4, hops: 1 };
+  var low = assessFrequency(Object.assign({}, base, { txWatts: 20 }));
+  var high = assessFrequency(Object.assign({}, base, { txWatts: 400 }));
+  assert.equal(low.muf, high.muf, 'power must never change the MUF');
+  assert.ok(high.luf < low.luf, 'more power must lower the LUF');
+  // And that can flip a verdict from unusable to usable.
+  assert.equal(low.verdict.code, 'below_luf', '4 MHz at 20 W in full sun should be absorbed');
+  assert.ok(high.verdict.ok, 'the same frequency at 400 W should come back');
+  assert.equal(assessFrequency(base).txWatts, DEFAULT_TX_WATTS, 'defaults to a manpack');
 });

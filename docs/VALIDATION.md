@@ -9,6 +9,7 @@ Layer table study: August 2026 (app v1.13.1)
 Hemisphere-to-hemisphere study: August 2026 (app v1.13.2)
 Solar-geometry model rebuild: August 2026 (app v1.14.0)
 Terminator and path-sampling study: August 2026 (app v1.14.1)
+LUF and transmit-power study: August 2026 (app v1.15.0)
 
 ---
 
@@ -567,6 +568,81 @@ The app now also displays local solar time at **your station, the midpoint and
 the target**, each marked daylight or dark — so an operator can see directly
 that the far end is in daylight while they are not.
 
+## Part 8 — The LUF, and transmit power (v1.15.0)
+
+Everything through Part 7 validated the MUF and left the LUF as a stated
+unknown: a flat `LUF = 2.0 + 3.5 × illumination` with **no dependence on
+transmit power at all**. That is backwards from an operator's point of view.
+The MUF is a ceiling nothing can move — above it the signal leaves the
+ionosphere and more watts follow it into space. The LUF is the one number
+power *can* fix, and the app had no idea power existed.
+
+**A finding about the earlier studies.** VOACAP takes transmit power as the
+last field on the XMTR `ANTENNA` card, and the decks inherited its default
+`const17.voa` — the **17 dBi transmit array the Voice of America uses**, at
+**500 kW**. Fine for a broadcast station, absurd for a Marine with wire in a
+tree. Parts 1–7 are unaffected, because the MUF is a propagation ceiling that
+depends on neither power nor antenna gain. But it meant the LUF had never been
+meaningfully exercised: the first run of this study closed every link at the
+bottom of the frequency grid regardless of power. Re-run with **isotropic
+antennas at both ends**, which is the conservative floor; a real field dipole
+adds 2–6 dB on top as margin.
+
+**Method.** VOACAP reports circuit RELIABILITY per frequency, so the
+operational LUF is simply *the lowest frequency meeting the required
+reliability*. Four distances (300–3000 km) × six powers (5 W – 1 kW) × two
+months × two solar levels × 24 hours, at 38 dB-Hz required SNR (SSB voice, not
+VOACAP's 73 dB-Hz broadcast default) and 90% reliability. Reproduce with
+`python3 scripts/validation/run_luf_study.py`.
+
+**Honest limit of this study.** The result is heavily **censored**: at low
+power many daylight hours have no closing frequency anywhere in the grid, so
+they drop out, and only 4 of 318 conditions produced a LUF at *every* power.
+That is enough to measure the *shape* of the power dependence, and not enough
+to calibrate its absolute level. Both statements are load-bearing below.
+
+**Physics fitted.** Non-deviative D-layer absorption per hop:
+
+> L = K · I^0.75 / (f + f_H)²  dB
+
+The link closes while L stays under the available margin M, which grows as
+10·log10(P). Setting L = M and solving:
+
+> **LUF = √( K · I^0.75 · hops / M(P) ) − f_H**
+
+So the LUF falls as the **square root** of the margin. K is anchored so the
+reference case — 20 W, one hop, sun overhead — reproduces the 5.5 MHz the app
+has always used, meaning nothing changes for an operator who leaves the power
+on its manpack default.
+
+| Power | Full sun | Half sun | Night |
+|---|---|---|---|
+| 5 W | 9.42 | 6.99 | 2.00 |
+| **20 W** | **5.50** | 3.97 | 2.00 |
+| 50 W | 4.47 | 3.17 | 2.00 |
+| 150 W | 3.69 | 2.57 | 2.00 |
+| 400 W | 3.22 | 2.21 | 2.00 |
+
+**Corroboration.** Going 20 W → 400 W, the model predicts the LUF drops
+**42%**. VOACAP, measured over paired conditions in daylight, gives **43%**
+(27% across all conditions including night, where absorption is not the
+limit). The shape is right. That is the useful operational fact:
+**twenty times the power buys about forty percent off the LUF, not twenty
+times less.** Worth knowing before hauling an amplifier.
+
+**What is and is not claimed.** The *shape* — square-root-of-margin, ^0.75
+illumination, linear in hop count — is derived from absorption physics and
+corroborated by VOACAP. The *absolute level* is still anchored to the app's
+own historical 20 W figure, not measured. The LUF remains the softest number
+the app reports, and the UI says so.
+
+**In the app.** A transmit-power selector (5 / 20 / 50 / 150 / 400 W, labelled
+by the radio rather than the round number) now sits beside the month wheel in
+both frequency panels, and hop count feeds the absorption term — the ray
+crosses the D layer once per hop, so a three-hop path absorbs three times as
+much. Selecting more power can flip a verdict from BELOW LUF to usable, and
+never changes the MUF.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -581,13 +657,16 @@ that the far end is in daylight while they are not.
 - The evening bias that dominated v1.13.2 is largely resolved by the
   v1.14.0 solar-geometry rebuild (interhemispheric signed bias −7.1% → −0.8%),
   but night figures still carry more scatter than daytime ones.
-- **The LUF side is not validated.** Only MUF was compared against VOACAP.
-  `LUF = 2.0 + 3.5 × illumination` is a published-form approximation for
-  ~20 W manpack power with no dependence on actual transmit power, antenna
-  gain, required SNR or hop count. Since v1.14.1 the illumination is averaged
-  over the two terminals rather than taken at the midpoint, which is better
-  physics but still unmeasured. Treat LUF as the weakest number the app
-  reports.
+- **The LUF's absolute level is still not calibrated.** Part 8 measured and
+  adopted the *shape* of its power dependence, but the VOACAP data was too
+  censored to pin the level, which stays anchored to the app's own historical
+  20 W figure. Antenna gain and required SNR are folded into that anchor
+  rather than modelled — a better antenna or a less demanding mode both
+  effectively lower your real LUF below what is shown. It remains the softest
+  number the app reports.
+- The LUF assumes SSB voice. CW and digital modes close at markedly lower
+  SNR, so their real LUF is lower than displayed — the figure is conservative
+  for them, not wrong.
 - Day length is geometric (cos χ = 0). Published sunrise/sunset times are
   ~10 min wider at 34° and ~23 min at 60° because of refraction and the solar
   disc. Irrelevant for ionisation, but do not use the app as an almanac.

@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.14.1 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.15.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -45,6 +45,10 @@ coordinates and a frequency into a complete, buildable antenna solution:
   the dial and a turn-left/turn-right cue. Works with no calculation run, so it
   is usable as a standalone compass, and is labelled as an aid to a lensatic
   rather than a replacement.
+- **Transmit power aware** — the LUF moves with the radio you actually have
+  (5 W handheld to 400 W amp) and with hop count, on absorption physics
+  corroborated against VOACAP. The MUF correctly does not move: more power
+  never gets you above it.
 - **Frequency check** — given the path, time of day and month, estimates
   MUF / FOT / LUF offline and rules on whether the assigned frequency will
   close the link, with an alternate to request if it will not. The
@@ -92,7 +96,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (137 tests
+- **Engineered, not improvised:** automated physics test suite (143 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

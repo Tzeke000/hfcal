@@ -29,14 +29,19 @@
 //    ionospheric variation.
 //
 // 4. LUF (Lowest Usable Frequency) is set by D-layer absorption, which tracks
-//    daylight. Approximated for typical manpack power (~20 W):
-//       LUF = 2.0 + 3.5 * daylight   (MHz)
+//    daylight AND transmit power — unlike the MUF, which no amount of power
+//    will move. Non-deviative absorption per hop goes as
+//       L = K * I^0.75 / (f + fH)^2   dB
+//    and the link closes while L stays under the available power margin M,
+//    which grows as 10*log10(P). Solving L = M for f:
+//       LUF = sqrt( K * I^0.75 * hops / M(P) ) - fH
+//    So the LUF falls as the SQUARE ROOT of the margin: 20x the power buys
+//    roughly 40% off the LUF, not 20x. See estimateLUF below.
 //    Note the different geometry from the MUF: the ray crosses the absorbing
 //    D layer (60-90 km) close to EACH STATION, not at the reflection point, so
 //    daylight here is averaged over the two endpoints rather than taken at the
 //    midpoint. On a path with one end in sun and one in darkness those are
-//    very different numbers. This split is on physical grounds only — the LUF
-//    has never been validated against VOACAP. See docs/VALIDATION.md Part 7.
+//    very different numbers. See docs/VALIDATION.md Parts 7 and 8.
 //
 // 5. Season and latitude scale foF2 (see seasonLatitudeFactor below). Both are
 //    taken at the PATH MIDPOINT — the reflection point — not at the station,
@@ -226,6 +231,36 @@ export function estimateFoF2(ssn, localHour, month, magLatDeg, latDeg) {
   return (night + (noon - night) * d) * seasonLatitudeFactor(month, magLatDeg, d);
 }
 
+// ── LUF ───────────────────────────────────────────────────────────────────────
+// Absorption constant, anchored so that the reference case — 20 W, one hop,
+// sun overhead — reproduces the 5.5 MHz the app has always used, and the shape
+// then carries it to any other power. VOACAP corroborates the SHAPE: measured
+// over paired conditions, going 20 W -> 400 W drops the LUF 43% in daylight,
+// against 42% predicted here. The absolute level is still uncalibrated (see
+// docs/VALIDATION.md Part 8) — this is a better-shaped estimate, not a
+// measured one.
+export const LUF_K = 449;              // absorption constant, MHz^2 * dB
+export const LUF_GYRO_MHZ = 1.2;       // electron gyrofrequency
+export const LUF_MARGIN_20W_DB = 10;   // link margin at the 20 W reference
+export const LUF_REF_WATTS = 20;       // reference transmit power
+export const LUF_FLOOR_MHZ = 2.0;      // noise-limited floor; absorption is not
+                                       // what stops you at 2 MHz on a dark path
+export const DEFAULT_TX_WATTS = 20;    // a manpack, e.g. AN/PRC-150 on low
+
+// Lowest usable frequency, MHz.
+//   illum    0-1 solar illumination where the ray crosses the D layer
+//   watts    transmit power; defaults to a 20 W manpack
+//   hops     number of hops — the ray crosses the absorbing layer once per hop
+export function estimateLUF(illum, watts, hops) {
+  var i = (typeof illum === 'number' && isFinite(illum)) ? Math.max(0, Math.min(1, illum)) : 0;
+  var p = (typeof watts === 'number' && isFinite(watts) && watts > 0) ? watts : DEFAULT_TX_WATTS;
+  var n = (typeof hops === 'number' && isFinite(hops) && hops >= 1) ? hops : 1;
+  var margin = LUF_MARGIN_20W_DB + 10 * (Math.log(p / LUF_REF_WATTS) / Math.LN10);
+  if (margin < 1) margin = 1;
+  var absorbed = Math.sqrt(LUF_K * Math.pow(i, 0.75) * n / margin) - LUF_GYRO_MHZ;
+  return Math.max(LUF_FLOOR_MHZ, absorbed);
+}
+
 // Oblique-incidence multiplier (the "M factor") for a takeoff angle, given
 // the reflection height. sin φ = R·cos α /(R+h);  M = 1/cos φ.
 export function secantFactor(takeoffDeg, layerKm) {
@@ -309,7 +344,7 @@ export function assessFrequency(params) {
   var m = secantFactor(takeoffDeg, layerKm);
   var muf = foF2 * m;
   var fot = 0.85 * muf;
-  var luf = 2.0 + 3.5 * daylight;
+  var luf = estimateLUF(daylight, params.txWatts, params.hops);
 
   var verdict = null;
   if (typeof params.freqMHz === 'number' && isFinite(params.freqMHz) && params.freqMHz > 0) {
@@ -339,6 +374,7 @@ export function assessFrequency(params) {
     muf: muf,
     fot: fot,
     luf: luf,
+    txWatts: (typeof params.txWatts === 'number' && params.txWatts > 0) ? params.txWatts : DEFAULT_TX_WATTS,
     suggestedMHz: suggested,
     verdict: verdict,
     // True when the whole band is closed for this path/time (LUF above MUF)
@@ -373,6 +409,8 @@ export function frequencyForecast(params) {
       magLatDeg: params.magLatDeg,
       latDeg: params.latDeg,
       ends: params.ends,
+      txWatts: params.txWatts,
+      hops: params.hops,
     });
     if (!r) return null;
     var now = params.nowUtcHour;
