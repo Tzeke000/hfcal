@@ -162,7 +162,49 @@ def est_fof2(ssn, local_hour, month=None, mag_lat=None, lat=None):
     return (night + (noon - night) * d) * season_lat_factor(month, mag_lat, d)
 
 
-def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat=None, lat=None):
+# Mirrors minOrderCorrection() in src/freqAdvisor.js. The minimum of k noisy
+# estimates sits below the true minimum by sigma * E[min of k standard
+# normals]; sigma is the model's own measured per-point error, not a fit.
+FOF2_POINT_SIGMA = 0.13
+_MIN_ORDER_BIAS = [0.0, 0.0, 0.5642, 0.8463, 1.0294, 1.1630]
+
+
+def min_order_correction(k):
+    if k <= 1:
+        return 1.0
+    return 1 + FOF2_POINT_SIGMA * _MIN_ORDER_BIAS[min(k, len(_MIN_ORDER_BIAS) - 1)]
+
+
+def interpolate_path(la1, lo1, la2, lo2, frac):
+    p1, l1, p2, l2 = map(math.radians, (la1, lo1, la2, lo2))
+    d = great_circle_km(la1, lo1, la2, lo2) / EARTH_R
+    if d == 0:
+        return la1, lo1
+    a, b = math.sin((1 - frac) * d) / math.sin(d), math.sin(frac * d) / math.sin(d)
+    x = a * math.cos(p1) * math.cos(l1) + b * math.cos(p2) * math.cos(l2)
+    y = a * math.cos(p1) * math.sin(l1) + b * math.cos(p2) * math.sin(l2)
+    z = a * math.sin(p1) + b * math.sin(p2)
+    return (math.degrees(math.atan2(z, math.hypot(x, y))),
+            ((math.degrees(math.atan2(y, x)) + 540) % 360) - 180)
+
+
+def reflection_points(la1, lo1, la2, lo2, hops):
+    n = max(1, int(round(hops or 1)))
+    return [interpolate_path(la1, lo1, la2, lo2, (2 * k - 1) / (2 * n)) for k in range(1, n + 1)]
+
+
+def path_fof2(ssn, utc_hour, month, bounces, mid_lon, mid_lat, mid_mag_lat):
+    """foF2 governing the path: the weakest bounce, de-biased."""
+    if bounces:
+        worst = min(est_fof2(ssn, local_solar_time(utc_hour, b[1]), month, b[2], b[0])
+                    for b in bounces)
+        return worst * min_order_correction(len(bounces))
+    return est_fof2(ssn, local_solar_time(utc_hour, mid_lon), month, mid_mag_lat, mid_lat)
+
+
+def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat=None, lat=None, bounces=None):
+    if bounces:
+        return path_fof2(ssn, utc_hour, month, bounces, mid_lon, lat, mag_lat) * path_secant(dist_km)
     lst = local_solar_time(utc_hour, mid_lon)
     return est_fof2(ssn, lst, month, mag_lat, lat) * path_secant(dist_km)
 

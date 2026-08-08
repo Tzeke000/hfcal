@@ -14,6 +14,7 @@ import {
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
   pathMidpoint,
   maxHopKm,
+  interpolatePath, reflectionPoints,
 } from './propagation.js';
 
 function approx(actual, expected, tol, msg) {
@@ -333,4 +334,67 @@ test('HOP: layers are ordered and land in published ranges', function() {
   // offering it entirely past that; the F2 limit must sit in that neighbourhood.
   assert.ok(HOP.F2.maxHopKm > 3800 && HOP.F2.maxHopKm < 4600,
     'F2 single-hop limit ' + HOP.F2.maxHopKm.toFixed(0) + ' km is outside what VOACAP offers');
+});
+
+
+// ── REFLECTION POINTS ────────────────────────────────────────────────────────
+// Where the signal actually touches the ionosphere. An n-hop path reflects at
+// the middle of each hop — fractions (2k-1)/(2n) — which for two hops is
+// neither the midpoint nor either station.
+
+test('interpolatePath: endpoints, midpoint and the dateline', function() {
+  var a = interpolatePath(0, 0, 0, 60, 0);
+  approx(a.lat, 0, 1e-9); approx(a.lon, 0, 1e-9);
+  var b = interpolatePath(0, 0, 0, 60, 1);
+  approx(b.lat, 0, 1e-9); approx(b.lon, 60, 1e-6);
+  var m = interpolatePath(0, 0, 0, 60, 0.5);
+  approx(m.lon, 30, 1e-6);
+  // Agrees with the dedicated midpoint routine, including across the dateline.
+  var pm = pathMidpoint(13.4, 144.8, 21.3, -157.9);
+  var ip = interpolatePath(13.4, 144.8, 21.3, -157.9, 0.5);
+  approx(ip.lat, pm.lat, 1e-6);
+  approx(ip.lon, pm.lon, 1e-6);
+});
+
+test('reflectionPoints: one hop reflects at the midpoint', function() {
+  var p = reflectionPoints(34.9, -76.9, 44.45, -70, 1);
+  assert.equal(p.length, 1);
+  var m = pathMidpoint(34.9, -76.9, 44.45, -70);
+  approx(p[0].lat, m.lat, 1e-6);
+  approx(p[0].lon, m.lon, 1e-6);
+});
+
+test('reflectionPoints: multi-hop bounces are NOT the midpoint or the ends', function() {
+  // Two hops on a due-south meridian path: bounces at 1/4 and 3/4.
+  var p = reflectionPoints(60, 25, -30, 25, 2);
+  assert.equal(p.length, 2);
+  approx(p[0].lat, 37.5, 0.01);
+  approx(p[1].lat, -7.5, 0.01);
+  p.forEach(function(q) { approx(q.lon, 25, 1e-6); });
+  // Three hops: 1/6, 1/2, 5/6.
+  var t = reflectionPoints(60, 25, -30, 25, 3);
+  assert.equal(t.length, 3);
+  approx(t[0].lat, 45, 0.01);
+  approx(t[1].lat, 15, 0.01);
+  approx(t[2].lat, -15, 0.01);
+});
+
+test('reflectionPoints: a long path can put bounces in different hemispheres', function() {
+  // Finland to South Africa: three bounces, the first far north and the last
+  // south of the equator — different hemisphere, therefore opposite season.
+  var p = reflectionPoints(60, 25, -30, 25, 3);
+  assert.ok(p[0].lat > 30, 'first bounce should be well north');
+  assert.ok(p[2].lat < 0, 'last bounce should be in the southern hemisphere');
+  assert.ok(Math.sign(p[0].lat) !== Math.sign(p[2].lat), 'hemispheres must differ');
+});
+
+test('reflectionPoints: symmetric and defensive', function() {
+  var fwd = reflectionPoints(34.9, -76.9, -34.6, -58.4, 2);
+  var rev = reflectionPoints(-34.6, -58.4, 34.9, -76.9, 2).reverse();
+  fwd.forEach(function(q, i) {
+    approx(q.lat, rev[i].lat, 1e-6);
+    approx(q.lon, rev[i].lon, 1e-6);
+  });
+  assert.equal(reflectionPoints(0, 0, 0, 10, 0).length, 1, 'zero hops floors at one');
+  assert.equal(reflectionPoints(0, 0, 0, 10).length, 1, 'missing hop count floors at one');
 });

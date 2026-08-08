@@ -10,6 +10,7 @@ import {
   frequencyForecast, bestBlocks,
   solarDeclination, cosZenith, illuminationFactor,
   estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
+  pathFoF2, minOrderCorrection, FOF2_POINT_SIGMA,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -615,4 +616,70 @@ test('assessFrequency: flags a path that no frequency can close', function() {
   var night = assessFrequency({ takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 35,
     magLatDeg: 40, month: 6, utcHour: 0, sfi: null, freqMHz: 7, txWatts: 1, hops: 2 });
   assert.ok(!night.pathClosed, 'darkness removes the absorption limit');
+});
+
+
+// ── MULTI-HOP: THE WEAKEST BOUNCE ────────────────────────────────────────────
+// A multi-hop signal must reflect at every bounce, so the path is capped by
+// the worst. See docs/VALIDATION.md Part 9.
+
+test('minOrderCorrection: no correction for one point, growing with more', function() {
+  assert.equal(minOrderCorrection(1), 1);
+  assert.equal(minOrderCorrection(0), 1);
+  assert.ok(minOrderCorrection(2) > 1 && minOrderCorrection(3) > minOrderCorrection(2));
+  // The correction is the model's own error times a known order statistic,
+  // not a tuned knob: min of 2 is biased low by 0.564 sigma.
+  assert.ok(Math.abs(minOrderCorrection(2) - (1 + FOF2_POINT_SIGMA * 0.5642)) < 1e-6);
+});
+
+test('pathFoF2: a single bounce is exactly the midpoint answer', function() {
+  var one = pathFoF2(70, 12, 6, [{ lat: 40, lon: 0, magLatDeg: 45 }], 0, 40, 45);
+  assert.equal(one, estimateFoF2(70, 12, 6, 45, 40));
+});
+
+test('pathFoF2: the weakest bounce caps the path', function() {
+  // One bounce in darkness, one in daylight. The dark one must govern.
+  var bounces = [{ lat: 40, lon: 0, magLatDeg: 45 },      // local noon at 12Z
+                 { lat: 40, lon: 180, magLatDeg: 45 }];   // local midnight
+  var v = pathFoF2(70, 12, 6, bounces, 0, 40, 45);
+  var lit = estimateFoF2(70, 12, 6, 45, 40);
+  var dark = estimateFoF2(70, 0, 6, 45, 40);
+  assert.ok(dark < lit, 'sanity: the second bounce really is the weaker one');
+  assert.ok(v < lit, 'the daylit bounce must not set the path');
+  assert.ok(Math.abs(v - dark * minOrderCorrection(2)) < 1e-9, 'weakest bounce, de-biased');
+});
+
+test('pathFoF2: falls back to the midpoint when bounces are unknown', function() {
+  var mid = estimateFoF2(70, 12, 6, 45, 40);
+  assert.equal(pathFoF2(70, 12, 6, null, 0, 40, 45), mid);
+  assert.equal(pathFoF2(70, 12, 6, [], 0, 40, 45), mid);
+});
+
+test('assessFrequency: a bad bounce on a long path pulls the MUF down', function() {
+  // Finland to South Africa in January: three bounces, and the northern one
+  // sits in deep winter dawn while the others are in the tropics.
+  var bounces = [{ lat: 45, lon: 25, magLatDeg: 44 },
+                 { lat: 15, lon: 25, magLatDeg: 7 },
+                 { lat: -15, lon: 25, magLatDeg: -34 }];
+  var base = { takeoffDeg: 3, layerKm: 360, midLon: 25, latDeg: 15, magLatDeg: 7,
+               month: 1, utcHour: 6, sfi: null, hops: 3 };
+  var mid = assessFrequency(base);
+  var full = assessFrequency(Object.assign({}, base, { bounces: bounces }));
+  assert.ok(full.muf < mid.muf,
+    'the weak northern bounce should cut the MUF: ' + full.muf.toFixed(1) + ' vs ' + mid.muf.toFixed(1));
+  assert.equal(full.bounceDetail.length, 3);
+  // And the reported detail must identify which one is limiting.
+  var worst = full.bounceDetail.reduce(function(a, b) { return b.foF2 < a.foF2 ? b : a; });
+  assert.equal(worst.lat, 45, 'the northern winter bounce should be the limiting one');
+});
+
+test('assessFrequency: bounces never change the LUF, only the MUF', function() {
+  var base = { takeoffDeg: 6, layerKm: 360, midLon: 0, latDeg: 20, magLatDeg: 20,
+               month: 6, utcHour: 12, sfi: null, hops: 2, txWatts: 20,
+               ends: [{ lat: 50, lon: 0 }, { lat: -10, lon: 0 }] };
+  var a = assessFrequency(base);
+  var b = assessFrequency(Object.assign({}, base, {
+    bounces: [{ lat: 35, lon: 0, magLatDeg: 38 }, { lat: 5, lon: 0, magLatDeg: 5 }] }));
+  assert.equal(a.luf, b.luf, 'the LUF is set at the terminals, not the bounces');
+  assert.ok(b.muf !== a.muf, 'the MUF is set at the bounces');
 });

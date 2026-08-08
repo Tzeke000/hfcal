@@ -146,9 +146,16 @@ def run():
                    interpolate(la1, lo1, la2, lo2, 1 - f)]
         else:
             cps = [mid]
-        ml = mag_lats([mid] + cps)
-        mid_ml, cp_ml = ml[0], ml[1:]
-        meta.append({'path': name, 'dist_km': round(dist),
+        # Real ionospheric bounces: an n-hop path reflects at (2k-1)/(2n).
+        hops = max(1, math.ceil(dist / appmodel.max_hop_km(F2_HEIGHT_KM)))
+        bpts = appmodel.reflection_points(la1, lo1, la2, lo2, hops)
+        ml = mag_lats([mid] + cps + bpts)
+        mid_ml, cp_ml = ml[0], ml[1:1 + len(cps)]
+        b_ml = ml[1 + len(cps):]
+        bounces = [(p[0], p[1], m) for p, m in zip(bpts, b_ml)]
+        meta.append({'path': name, 'dist_km': round(dist), 'hops': hops,
+                     'bounces': [[round(p[0], 2), round(p[1], 2), round(m, 1)]
+                                 for p, m in zip(bpts, b_ml)],
                      'mid': [round(mid[0], 2), round(mid[1], 2)],
                      'mid_mag_lat': round(mid_ml, 1),
                      'control_points': [[round(c[0], 2), round(c[1], 2)] for c in cps],
@@ -163,8 +170,9 @@ def run():
                 deck(la1, lo1, la2, lo2, month, ssn))
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=180)
             for hour, vmuf in sorted(parse_muf(os.path.join(RUN_DIR, 'voacapx.out')).items()):
-                # (a) what the app ships: single midpoint
-                app_mid = est_fof2(ssn, lst_of(hour, mid[1]), month, mid_ml, mid[0]) * sec
+                # (a) what the app ships: every bounce, weakest governs
+                app_mid = appmodel.path_fof2(ssn, hour, month, bounces,
+                                             mid[1], mid[0], mid_ml) * sec
                 # (b) no season term at all, for reference
                 app_plain = est_fof2(ssn, lst_of(hour, mid[1])) * sec
                 # (c) IONCAP-style: lowest control-point MUF along the path
@@ -182,21 +190,21 @@ def run():
         return statistics.mean(e) if e else float('nan')
 
     print('\nmean absolute MUF error vs VOACAP')
-    print('  %-20s %9s %9s %9s' % ('path', 'no season', 'midpoint', 'ctrl pts'))
+    print('  %-20s %9s %9s %9s' % ('path', 'no season', 'bounces', 'ctrl pts'))
     summary = {}
     for name, *_ in PATHS:
         sub = [r for r in rows if r['path'] == name]
         summary[name] = {'no_season': round(err('app_plain', sub), 1),
-                         'midpoint': round(err('app_mid', sub), 1),
+                         'bounces': round(err('app_mid', sub), 1),
                          'control_points': round(err('app_cp', sub), 1)}
         print('  %-20s %8.1f%% %8.1f%% %8.1f%%'
-              % (name, summary[name]['no_season'], summary[name]['midpoint'],
+              % (name, summary[name]['no_season'], summary[name]['bounces'],
                  summary[name]['control_points']))
     overall = {'no_season': round(err('app_plain', rows), 1),
-               'midpoint': round(err('app_mid', rows), 1),
+               'bounces': round(err('app_mid', rows), 1),
                'control_points': round(err('app_cp', rows), 1)}
     print('  %-20s %8.1f%% %8.1f%% %8.1f%%'
-          % ('ALL', overall['no_season'], overall['midpoint'], overall['control_points']))
+          % ('ALL', overall['no_season'], overall['bounces'], overall['control_points']))
 
     # Bias: is the model systematically high or low on these paths?
     for key in ('app_mid', 'app_cp'):

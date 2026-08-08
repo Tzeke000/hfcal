@@ -10,6 +10,7 @@ Hemisphere-to-hemisphere study: August 2026 (app v1.13.2)
 Solar-geometry model rebuild: August 2026 (app v1.14.0)
 Terminator and path-sampling study: August 2026 (app v1.14.1)
 LUF and transmit-power study: August 2026 (app v1.15.0)
+Per-bounce multi-hop study: August 2026 (app v1.16.0)
 
 ---
 
@@ -674,6 +675,93 @@ it. It is now called out explicitly in the check panel, and closed blocks are
 flagged in red in the 24-hour forecast — on a 1200 km path in June daylight,
 LOW (2 W) gives a LUF of 20.0 MHz against a MUF of 11.9.
 
+## Part 9 — Every bounce, not just the midpoint (v1.16.0)
+
+Parts 5 and 7 asked "one point on the path, or both ends?" and concluded the
+midpoint wins. **That question was wrong.** It sampled the two *stations* and
+the midpoint — but on a multi-hop path the signal touches the ionosphere at
+neither. An n-hop circuit reflects at the middle of each hop, at fractions
+(2k−1)/(2n) along the great circle:
+
+| Hops | Bounce fractions |
+|---|---|
+| 1 | 0.50 |
+| 2 | 0.25, 0.75 |
+| 3 | 0.17, 0.50, 0.83 |
+
+For two hops that is 0.25 and 0.75 — neither an endpoint nor the midpoint. So
+the actual reflection points had never been evaluated. Five of the six
+interhemispheric circuits are multi-hop, which is exactly the regime that has
+been the model's weakest throughout.
+
+**The physics.** The signal must reflect successfully at *every* bounce, so
+the path MUF is capped by the worst one. A bounce in darkness closes the
+circuit no matter how good the others are — and on a long enough path, bounces
+sit in different hemispheres and therefore different seasons. Finland–South
+Africa in January is the clean example:
+
+| Bounce | Position | Magnetic lat | Local solar time | foF2 |
+|---|---|---|---|---|
+| 1 | 45.0 N, 25.0 E | +44 | 07:42 | **3.53** |
+| 2 | 15.0 N, 25.0 E | +7 | 07:42 | 7.61 |
+| 3 | 15.0 S, 25.0 E | −34 | 07:42 | 7.43 |
+
+The first bounce sits in northern winter at dawn and is less than half the
+others. Evaluating only the midpoint gives a path MUF of 23.0 MHz; the real
+limit is 11.9.
+
+**Why a plain minimum makes it worse.** Taking the raw minimum scored 14.36%
+against the midpoint's 13.44%, with a −8.6% bias. The reason is statistical,
+not physical: **the minimum of several noisy estimates sits below the true
+minimum.** For k independent estimates with relative error σ, the expected
+shortfall is σ · E[min of k standard normals]:
+
+| k | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| E[min] | 0.000 | 0.564 | 0.846 | 1.029 |
+
+At σ ≈ 13% — the model's own measured per-point error from Part 6 — min-of-2
+runs ~7% low and min-of-3 ~11% low. That is almost exactly the −8.6% observed.
+
+**The fix uses no new free parameter.** Multiply the minimum by
+(1 + σ · E[min of k]), with σ taken from the model's own measured error rather
+than fitted. Sweeping σ confirms 0.13 is essentially optimal (12.81% at 0.13,
+12.80% at 0.15) — the measured value was kept rather than the optimum, since
+using the number already established is the more honest of two identical
+answers.
+
+**Results.**
+
+| | Midpoint | Raw min | **De-biased min** |
+|---|---|---|---|
+| Interhemispheric error | 13.44% | 14.36% | **12.81%** |
+| Signed bias | −0.78% | −8.62% | −2.44% |
+
+Per circuit:
+
+| Circuit | Hops | Midpoint | Per-bounce |
+|---|---|---|---|
+| Cherry Point – Argentina | 2 | 11.4% | **11.3%** |
+| **Finland – South Africa** | **3** | **19.2%** | **15.1%** |
+| Japan – Australia | 2 | 11.8% | 12.0% |
+| Hawaii – New Zealand | 2 | 10.1% | 10.2% |
+| Cherry Point – Brazil | 2 | 13.1% | 13.3% |
+
+Four circuits move by less than 0.2 points; the one that moves is the 3-hop,
+10,000 km path whose bounces genuinely span 44° N to 34° S magnetic — the
+hardest shot in the set. The bounce *spread* predicts it exactly: that path's
+bounces disagree by 20% while every other path's agree within 7–10%.
+
+**Single-hop paths are untouched**, by construction — one bounce is the
+midpoint and the correction is 1.0. Re-running Parts 2 and 3 confirms it:
+mid-latitude stays 12.4%, the six-latitude seasonal set stays 13.3%.
+
+**In the app.** The check panel now lists every bounce with its position,
+local solar time, day/night state and foF2, and marks which one is limiting
+the path. On a long shot an operator can see that the reason they cannot close
+is a bounce three thousand kilometres away, in the dark, in the other
+hemisphere's winter.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -701,10 +789,14 @@ LOW (2 W) gives a LUF of 20.0 MHz against a MUF of 11.9.
 - Day length is geometric (cos χ = 0). Published sunrise/sunset times are
   ~10 min wider at 34° and ~23 min at 60° because of refraction and the solar
   disc. Irrelevant for ionisation, but do not use the app as an almanac.
-- The model asks about the F2 layer at the path midpoint only. For a
-  multi-hop circuit there are several reflection points and the real limiting
-  one may not be the middle; sampling more of them was tested and made the fit
-  worse (Part 7), but that is a property of this model, not a general result.
+- Multi-hop paths are now evaluated at every reflection point and capped by
+  the weakest (Part 9), but all hops are assumed EQUAL LENGTH. A real circuit
+  can trade hop lengths to route around a bad patch of ionosphere, and the
+  ionosphere is not flat — tilts steer rays in ways a mirror model cannot
+  represent. So the bounce positions are nominal, not exact.
+- The de-bias correction assumes the per-bounce errors are independent. They
+  are not entirely: neighbouring bounces share solar conditions, so the true
+  correction is somewhat smaller than applied.
 - **The equatorial ionization anomaly is not modelled.** The latitude term
   peaks at the magnetic equator, whereas the real ionosphere has a trough
   there and crests near ±15° magnetic. Adding an anomaly term did not improve

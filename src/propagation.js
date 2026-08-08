@@ -3,14 +3,15 @@
 // No React, no DOM — everything here is unit-testable with `npm test`.
 //
 // Theory references:
-//  - Flat-earth skip geometry: skip = 2h·cot(α)  ⇔  α = atan(2h/d).
-//    Within a few percent of the curved-earth answer for single hops up to
-//    ~3000 km and elevation angles above ~5° (ARRL Antenna Book; Siwiak,
-//    "An Optimum Height for an Elevated HF Antenna", QEX May/Jun 2011).
-//  - Layer heights: E ≈ 90–130 km, F1 ≈ 200 km, F2 ≈ 250–400 km.
-//  - Max single-hop range is geometry-limited to ≈ 2·√(2·R·h) for a
-//    tangential (0°) launch: ≈2300 km for E, ≈4500 km for F2 at 400 km.
-//    Published practice: E ≈ 2000 km, F2 ≈ 4000–4500 km per hop.
+//  - Curved-earth skip geometry: α = atan[(cos θ − R/(R+h)) / sin θ], θ = d/2R
+//    (Davies, "Ionospheric Radio"). The flat-earth form α = atan(2h/d) is
+//    within a few percent only for short, steep paths and is NOT used here —
+//    see docs/VALIDATION.md, where replacing it cut takeoff-angle error from
+//    7.0° to 1.2° against VOACAP.
+//  - Layer heights: E ≈ 90–130 km, F1 ≈ 200 km, F2 ≈ 250–400 km true; the F2
+//    entry below carries a calibrated VIRTUAL height of 360 km instead.
+//  - Max single-hop range is the 0° launch limit, derived rather than quoted:
+//    d_max = 2·R·acos(R/(R+h)). See maxHopKm().
 //
 // This module is part of the original work of Cpl Angeles-Gonzalez, Ezekiel S.,
 // United States Marine Corps. Project signature: HFCALC-AG-EZK-USMC-v1
@@ -68,6 +69,43 @@ export function pathMidpoint(lat1, lon1, lat2, lon2) {
                        Math.sqrt((Math.cos(la1) + bx) * (Math.cos(la1) + bx) + by * by));
   var lon = lon1 * D + Math.atan2(by, Math.cos(la1) + bx);
   return { lat: lat / D, lon: ((lon / D + 540) % 360) - 180 };
+}
+
+// Point at `frac` along the great circle (0 = station 1, 1 = station 2).
+// Spherical interpolation, so it follows the path the signal actually takes
+// rather than a straight line on a flat map.
+export function interpolatePath(lat1, lon1, lat2, lon2, frac) {
+  var D = Math.PI / 180;
+  var p1 = lat1 * D, l1 = lon1 * D, p2 = lat2 * D, l2 = lon2 * D;
+  var d = 2 * Math.asin(Math.sqrt(
+    Math.pow(Math.sin((p2 - p1) / 2), 2) +
+    Math.cos(p1) * Math.cos(p2) * Math.pow(Math.sin((l2 - l1) / 2), 2)));
+  if (d === 0) return { lat: lat1, lon: lon1 };
+  var a = Math.sin((1 - frac) * d) / Math.sin(d);
+  var b = Math.sin(frac * d) / Math.sin(d);
+  var x = a * Math.cos(p1) * Math.cos(l1) + b * Math.cos(p2) * Math.cos(l2);
+  var y = a * Math.cos(p1) * Math.sin(l1) + b * Math.cos(p2) * Math.sin(l2);
+  var z = a * Math.sin(p1) + b * Math.sin(p2);
+  return {
+    lat: Math.atan2(z, Math.sqrt(x * x + y * y)) / D,
+    lon: ((Math.atan2(y, x) / D + 540) % 360) - 180,
+  };
+}
+
+// Where the signal actually touches the ionosphere. An n-hop path reflects at
+// the middle of each hop, i.e. at fractions (2k-1)/(2n) along the great
+// circle — for two hops that is 1/4 and 3/4, which is neither the midpoint nor
+// either station. Each bounce is somewhere different, at a different local
+// solar time and magnetic latitude, and on a long path in a different
+// hemisphere and therefore a different season. The signal has to survive all
+// of them.
+export function reflectionPoints(lat1, lon1, lat2, lon2, hops) {
+  var n = Math.max(1, Math.round(hops || 1));
+  var out = [];
+  for (var k = 1; k <= n; k++) {
+    out.push(interpolatePath(lat1, lon1, lat2, lon2, (2 * k - 1) / (2 * n)));
+  }
+  return out;
 }
 
 export function propagationZone(distKm) {

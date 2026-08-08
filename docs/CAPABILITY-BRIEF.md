@@ -93,13 +93,16 @@ coordinates and a frequency into a complete, buildable antenna solution:
   mode selection, correcting a hop limit that exceeded what its layer height
   can physically support. A fifth tested six real hemisphere-to-hemisphere
   circuits — opposite seasons at either end, crossing the geomagnetic equator.
-  A sixth rebuilt the frequency model on solar zenith angle and Chapman layer
-  theory and refitted it against all 4320 accumulated VOACAP samples at once:
+  A ninth evaluates every ionospheric bounce on a multi-hop path rather than
+  the midpoint alone, since the signal is capped by its weakest reflection —
+  which on a long shot can be in the other hemisphere's winter. A sixth
+  rebuilt the frequency model on solar zenith angle and Chapman layer theory
+  and refitted it against all 4320 accumulated VOACAP samples at once:
   **13.3% mean MUF error, and now roughly uniform** (12.4% regional, 13.3%
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (145 tests
+- **Engineered, not improvised:** automated physics test suite (156 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

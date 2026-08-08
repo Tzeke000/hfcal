@@ -6,7 +6,7 @@ import {
 import {
   geodesics, propagationZone, bearingToCardinal,
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
-  pathMidpoint,
+  pathMidpoint, reflectionPoints,
 } from "./propagation.js";
 import {
   SWPC_FLUX_URL, SWPC_KINDEX_URL,
@@ -1497,13 +1497,14 @@ function cachedSFI() {
 }
 
 // ── SEASON / MONTH SELECTOR ───────────────────────────────────────────────────
-// The ionosphere is seasonal, and the season that matters is the one at the
+// The ionosphere is seasonal, and the season that matters is the one at each
 // REFLECTION POINT, not the calendar month in some reference time zone. July
 // is summer in Finland and winter in New Zealand, and the mid-latitude
-// "winter anomaly" means daytime foF2 is actually HIGHER in local winter.
-// The advisor therefore takes the month plus the magnetic latitude of the
-// path midpoint and works out the local season itself — the operator only
-// has to say which month it is.
+// "winter anomaly" means daytime foF2 is actually HIGHER in local winter. On a
+// long shot the bounces land in different hemispheres, so one month means two
+// opposite seasons along the same path. The advisor works all of that out from
+// the month plus each bounce's magnetic latitude — the operator only has to
+// say which month it is.
 var MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 function MonthWheel({ month, onMonth }) {
@@ -1519,7 +1520,7 @@ function MonthWheel({ month, onMonth }) {
   return (
     <div>
       <label style={{ color: T.textSec, fontWeight: 600, fontSize: '0.68rem', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-        Month (season at path midpoint)
+        Month (season at each bounce)
       </label>
       <div
         ref={railRef}
@@ -1679,6 +1680,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       ends: pathCtx.ends,
+      bounces: pathCtx.bounces,
       hops: pathCtx.hops,
       txWatts: txWatts,
       month: month,
@@ -1789,6 +1791,36 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                 </div>
               )}
 
+              {assess.bounceDetail && assess.bounceDetail.length > 1 && (function() {
+                var worst = assess.bounceDetail.reduce(function(a, b) { return b.foF2 < a.foF2 ? b : a; });
+                return (
+                  <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '9px 10px', marginBottom: 8 }}>
+                    <div style={{ ...cellLbl, marginBottom: 5 }}>
+                      {'IONOSPHERIC BOUNCES (' + assess.bounceDetail.length + ' HOPS)'}
+                    </div>
+                    {assess.bounceDetail.map(function(b, i) {
+                      var limiting = b === worst;
+                      var lit = b.localSolarHour >= 6 && b.localSolarHour < 18;
+                      return (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6, padding: '3px 0', color: limiting ? T.warn : T.textMute, fontSize: '0.66rem' }}>
+                          <span style={{ fontWeight: limiting ? 700 : 400 }}>
+                            {(i + 1) + '. ' + Math.abs(b.lat).toFixed(1) + (b.lat >= 0 ? '°N ' : '°S ')
+                              + Math.abs(b.lon).toFixed(1) + (b.lon >= 0 ? '°E' : '°W')}
+                          </span>
+                          <span style={{ flexShrink: 0 }}>
+                            {hhmm(b.localSolarHour) + (lit ? ' ☀' : ' ☾') + '  foF2 ' + b.foF2.toFixed(1)
+                              + (limiting ? '  ← LIMITS PATH' : '')}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ color: T.textDim, fontSize: '0.6rem', marginTop: 4, lineHeight: 1.45 }}>
+                      The signal has to reflect at every one of these. The weakest bounce caps the whole path — on a long shot that can be a different hemisphere, and a different season, from where you are standing.
+                    </div>
+                  </div>
+                );
+              })()}
+
               {assess.endSolarHours && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 8 }}>
                   {[['YOU', assess.endSolarHours[0]],
@@ -1809,17 +1841,28 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
               )}
 
               <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5 }}>
-                {'Sun times are LOCAL SOLAR time, not your watch. MUF is taken where the signal reflects (the midpoint); LUF comes from both ends, where the signal crosses the absorbing D layer.'}
+                {'Sun times are LOCAL SOLAR time, not your watch. The MUF is taken where the signal reflects — every bounce above, capped by the weakest. The LUF comes from both ends, where the signal crosses the absorbing D layer.'}
               </div>
               <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5, marginTop: 4 }}>
                 {'foF2 ≈ ' + assess.foF2.toFixed(1) + ' MHz · SSN '
                   + assess.ssn + (assess.usingDefaultSolar ? ' (default — connect once to refine)' : ' (from NOAA)')}
               </div>
-              {pathCtx && seasonNote(month, pathCtx.magLatDeg) && (
-                <div style={{ color: T.textMute, fontSize: '0.66rem', marginTop: 4, lineHeight: 1.5 }}>
-                  {seasonNote(month, pathCtx.magLatDeg)}
-                </div>
-              )}
+              {(function() {
+                // Describe the bounce that is actually limiting the path, not
+                // the midpoint — on a long shot they can be in opposite seasons.
+                var lim = (assess.bounceDetail && assess.bounceDetail.length)
+                  ? assess.bounceDetail.reduce(function(a, b) { return b.foF2 < a.foF2 ? b : a; })
+                  : null;
+                var magLat = lim ? lim.magLatDeg : (pathCtx ? pathCtx.magLatDeg : null);
+                var note = seasonNote(month, magLat);
+                if (!note) return null;
+                var multi = assess.bounceDetail && assess.bounceDetail.length > 1;
+                return (
+                  <div style={{ color: T.textMute, fontSize: '0.66rem', marginTop: 4, lineHeight: 1.5 }}>
+                    {(multi ? 'Limiting bounce — ' : '') + note}
+                  </div>
+                );
+              })()}
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 6, lineHeight: 1.45 }}>
                 Planning aid — statistical model, ±15% vs VOACAP. Your SOI/JCEOI assignment governs.
               </div>
@@ -2084,6 +2127,7 @@ function AboutBanner() {
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
               {feat('Transmit power', 'set it the way the radio is labelled — LOW/MED/HIGH/GLOBAL on a PRC-160, VRC for the 150 W amp, or type your actual wattage for the USER level. Power moves the LUF, the floor where the ionosphere absorbs you, and going from manpack GLOBAL to the 150 W amp buys roughly a third off it, not seven and a half times. It does NOT move the MUF: above that, more watts just follow the signal into space. Tells you outright when no frequency will close the path at the power you have.', 'f10c', 'offline')}
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
+              {feat('Every bounce checked', 'a long shot does not touch the ionosphere once. The app works out where each hop reflects, what time of day and what season it is at each of those places, and caps the path at the weakest one — then shows you which bounce is the problem.', 'f10d', 'offline')}
               {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app computes where the sun actually is over the point your signal reflects off, then adds the magnetic-latitude and winter-anomaly corrections the sun alone cannot explain. Handles a polar summer where the sun never sets. No lookup tables, no connection.', 'f10b', 'offline')}
               {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
               {feat('Space weather', 'solar flux and Kp from NOAA, which sharpen the frequency numbers. This is the one feature that reaches the network: with a signal it refreshes, without one it uses the last reading it saw or a documented default. Nothing stops working.', 'f12', 'online')}
@@ -2119,8 +2163,9 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  145 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  156 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2927,6 +2972,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
       ends: pathCtx.ends,
+      bounces: pathCtx.bounces,
       hops: pathCtx.hops,
       txWatts: txWatts,
       month: month,
@@ -3442,6 +3488,7 @@ export default function HFCalc() {
   var pathCtx = useMemo(function() {
     if (!results) return null;
     var mid = pathMidpoint(results.p1.lat, results.p1.lon, results.p2.lat, results.p2.lon);
+    var hops = Math.max(1, Math.ceil(results.geo.distKm / HOP.F2.maxHopKm));
     return {
       midLat: mid.lat, midLon: mid.lon, magLatDeg: magneticLatitude(mid.lat, mid.lon),
       // Both terminals. The MUF comes off the midpoint, but D-layer absorption
@@ -3452,7 +3499,14 @@ export default function HFCalc() {
              { lat: results.p2.lat, lon: results.p2.lon }],
       // The ray crosses the absorbing D layer once per hop, so absorption —
       // and therefore the LUF — scales with hop count.
-      hops: Math.max(1, Math.ceil(results.geo.distKm / HOP.F2.maxHopKm)),
+      hops: hops,
+      // Every place the signal actually touches the ionosphere. The path is
+      // capped by the weakest of them, which on a long circuit can be a bounce
+      // in a different hemisphere and a different season from the midpoint.
+      bounces: reflectionPoints(results.p1.lat, results.p1.lon, results.p2.lat, results.p2.lon, hops)
+        .map(function(b) {
+          return { lat: b.lat, lon: b.lon, magLatDeg: magneticLatitude(b.lat, b.lon) };
+        }),
     };
   }, [results]);
 
@@ -3476,6 +3530,7 @@ export default function HFCalc() {
       latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
       ends: pathCtx ? pathCtx.ends : null,
+      bounces: pathCtx ? pathCtx.bounces : null,
       hops: pathCtx ? pathCtx.hops : 1,
       txWatts: txWatts,
       month: month,

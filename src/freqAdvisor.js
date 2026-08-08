@@ -43,10 +43,13 @@
 //    midpoint. On a path with one end in sun and one in darkness those are
 //    very different numbers. See docs/VALIDATION.md Parts 7 and 8.
 //
-// 5. Season and latitude scale foF2 (see seasonLatitudeFactor below). Both are
-//    taken at the PATH MIDPOINT — the reflection point — not at the station,
-//    for the same reason local solar time is: that is the patch of ionosphere
-//    the hop actually bounces off.
+// 5. Season and latitude scale foF2 (see seasonLatitudeFactor below), taken
+//    where the signal REFLECTS. On a single hop that is the path midpoint. On
+//    a multi-hop path there are several bounces, each somewhere different, at
+//    a different local solar time and magnetic latitude — and on a long enough
+//    circuit in a different hemisphere and therefore a different season. The
+//    signal must reflect at every one of them, so the path is limited by the
+//    weakest. See pathFoF2 and docs/VALIDATION.md Part 9.
 //
 // LIMITATIONS (stated plainly because this is a planning aid, not a model):
 // the residual season/latitude terms are a smooth global fit rather than the
@@ -263,6 +266,47 @@ export function estimateLUF(illum, watts, hops) {
   return Math.max(LUF_FLOOR_MHZ, absorbed);
 }
 
+// ── MULTI-HOP: THE WEAKEST BOUNCE ────────────────────────────────────────────
+// A multi-hop signal has to reflect successfully at EVERY bounce, so the path
+// is capped by the worst one — one bounce in darkness closes the circuit no
+// matter how good the others are.
+//
+// Taking a plain minimum makes predictions worse, though, and for a reason
+// worth naming: the minimum of several NOISY estimates sits below the true
+// minimum. With k independent estimates of relative error sigma, the expected
+// shortfall is sigma * E[min of k standard normals]:
+//
+//     k = 1: 0.000    k = 2: 0.564    k = 3: 0.846    k = 4: 1.029
+//
+// Measured against VOACAP, a raw minimum ran 8.6% low. Correcting for that
+// recovers the physics without inventing a tunable knob — sigma below is the
+// model's OWN measured per-point error (docs/VALIDATION.md Part 6), not a
+// fitted parameter.
+export const FOF2_POINT_SIGMA = 0.13;
+var MIN_ORDER_BIAS = [0, 0, 0.5642, 0.8463, 1.0294, 1.1630];
+
+export function minOrderCorrection(k) {
+  if (!(k > 1)) return 1;
+  var c = MIN_ORDER_BIAS[Math.min(k, MIN_ORDER_BIAS.length - 1)] || 1.2;
+  return 1 + FOF2_POINT_SIGMA * c;
+}
+
+// foF2 governing the whole path: the weakest bounce, de-biased.
+// `bounces` is [{ lat, lon, magLatDeg }]; falls back to the midpoint when the
+// caller has not worked them out.
+export function pathFoF2(ssn, utcHour, month, bounces, midLon, midLat, midMagLat) {
+  if (bounces && bounces.length) {
+    var worst = Infinity;
+    for (var i = 0; i < bounces.length; i++) {
+      var b = bounces[i];
+      var v = estimateFoF2(ssn, localSolarTime(utcHour, b.lon), month, b.magLatDeg, b.lat);
+      if (v < worst) worst = v;
+    }
+    if (isFinite(worst)) return worst * minOrderCorrection(bounces.length);
+  }
+  return estimateFoF2(ssn, localSolarTime(utcHour, midLon), month, midMagLat, midLat);
+}
+
 // Oblique-incidence multiplier (the "M factor") for a takeoff angle, given
 // the reflection height. sin φ = R·cos α /(R+h);  M = 1/cos φ.
 export function secantFactor(takeoffDeg, layerKm) {
@@ -325,7 +369,8 @@ export function assessFrequency(params) {
   // VOACAP, sampling both endpoints instead helps short paths a little and
   // hurts long ones a lot (Part 7), because on a long circuit the signal
   // bounces off the middle, not off either station.
-  var foF2 = estimateFoF2(ssn, lst, params.month, params.magLatDeg, params.latDeg);
+  var foF2 = pathFoF2(ssn, utcHour, params.month, params.bounces,
+                      midLon, params.latDeg, params.magLatDeg);
 
   // LUF comes from the TWO ENDS — that is where the ray crosses the absorbing
   // D layer. Falls back to the midpoint, then to the clock curve.
@@ -370,6 +415,15 @@ export function assessFrequency(params) {
     usingDefaultSolar: usingDefault,
     localSolarHour: lst,
     endSolarHours: endHours,
+    // Each ionospheric bounce with its own local solar time, and which one is
+    // limiting the path — the operator can see WHICH bounce is closing them.
+    bounceDetail: (params.bounces && params.bounces.length) ? params.bounces.map(function(b) {
+      return {
+        lat: b.lat, lon: b.lon, magLatDeg: b.magLatDeg,
+        localSolarHour: localSolarTime(utcHour, b.lon),
+        foF2: estimateFoF2(ssn, localSolarTime(utcHour, b.lon), params.month, b.magLatDeg, b.lat),
+      };
+    }) : null,
     daylight: daylight,
     foF2: foF2,
     mFactor: m,
@@ -411,6 +465,7 @@ export function frequencyForecast(params) {
       magLatDeg: params.magLatDeg,
       latDeg: params.latDeg,
       ends: params.ends,
+      bounces: params.bounces,
       txWatts: params.txWatts,
       hops: params.hops,
     });
