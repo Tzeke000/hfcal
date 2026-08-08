@@ -2425,25 +2425,29 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
   var [open, setOpen] = useState(false);
   var [status, setStatus] = useState('idle');   // idle|active|denied|unsupported
   var [headingMag, setHeadingMag] = useState(null);
+  var [stale, setStale] = useState(false);
   var handlerRef = useRef(null);
+  var lastFixRef = useRef(0);
+  var grantedRef = useRef(false);   // permission already granted this session
 
   var decl = (typeof selfLat === 'number' && typeof selfLon === 'number')
     ? declination(selfLat, selfLon) : null;
   var hasDecl = typeof decl === 'number';
-  var headingTrue = (headingMag !== null && hasDecl) ? norm360(headingMag + decl) : null;
-  // The bearing the operator must face, expressed the way their compass reads
+  // A stale reading is treated as no reading — never draw a needle that is not live.
+  var liveHeading = (headingMag !== null && !stale) ? headingMag : null;
+  var headingTrue = (liveHeading !== null && hasDecl) ? norm360(liveHeading + decl) : null;
   var targetMag = (typeof targetBearingTrue === 'number' && hasDecl)
     ? trueToMagnetic(targetBearingTrue, decl) : null;
-  var turn = (headingMag !== null && targetMag !== null) ? relativeTurn(headingMag, targetMag) : null;
+  var turn = (liveHeading !== null && targetMag !== null) ? relativeTurn(liveHeading, targetMag) : null;
 
-  function stop() {
+  function detach() {
     if (handlerRef.current) {
       window.removeEventListener('deviceorientationabsolute', handlerRef.current);
       window.removeEventListener('deviceorientation', handlerRef.current);
       handlerRef.current = null;
     }
   }
-  useEffect(function() { return stop; }, []);
+  useEffect(function() { return detach; }, []);
 
   function onOrientation(e) {
     var h = null;
@@ -2452,26 +2456,41 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     } else if (typeof e.alpha === 'number' && isFinite(e.alpha) && (e.absolute || e.type === 'deviceorientationabsolute')) {
       h = norm360(360 - e.alpha);                  // Android absolute: alpha is CCW from north
     }
-    if (h !== null) { setHeadingMag(norm360(h)); setStatus('active'); }
+    if (h !== null) {
+      lastFixRef.current = Date.now();
+      setHeadingMag(norm360(h));
+      setStale(false);
+      setStatus('active');
+    }
+  }
+
+  // Attach the sensor listeners. Separate from start() because re-opening the
+  // card (or returning to the tab) must re-attach WITHOUT re-prompting for
+  // permission — iOS only grants requestPermission() from a user gesture.
+  function attach() {
+    detach();
+    handlerRef.current = onOrientation;
+    window.addEventListener('deviceorientationabsolute', onOrientation);
+    window.addEventListener('deviceorientation', onOrientation);
+    lastFixRef.current = 0;
+    setStale(false);
+    setTimeout(function() {
+      // Nothing arrived at all -> there is no usable magnetometer here.
+      if (!lastFixRef.current) setStatus(function(cur) { return cur === 'active' ? cur : 'unsupported'; });
+    }, 2500);
   }
 
   function start() {
     if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') {
       setStatus('unsupported'); return;
     }
-    function attach() {
-      stop();
-      handlerRef.current = onOrientation;
-      window.addEventListener('deviceorientationabsolute', onOrientation);
-      window.addEventListener('deviceorientation', onOrientation);
-      // If nothing arrives the device has no usable magnetometer
-      setTimeout(function() { setStatus(function(s) { return s === 'active' ? s : 'unsupported'; }); }, 2500);
-    }
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission().then(function(res) {
-        if (res === 'granted') attach(); else setStatus('denied');
+        if (res === 'granted') { grantedRef.current = true; attach(); }
+        else setStatus('denied');
       }).catch(function() { setStatus('denied'); });
     } else {
+      grantedRef.current = true;
       attach();
     }
   }
@@ -2479,9 +2498,41 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
   function toggle() {
     var next = !open;
     setOpen(next);
-    if (next && status === 'idle') start();
-    if (!next) stop();
+    if (next) {
+      // Always re-arm on open. Closing detaches the listeners, so without this
+      // a re-opened card kept rendering its last heading — a compass frozen
+      // pointing wherever you happened to be standing when you closed it.
+      if (status === 'denied' || status === 'unsupported') return;
+      if (grantedRef.current) attach(); else start();
+    } else {
+      detach();
+      setHeadingMag(null);   // nothing stale left to draw
+      setStale(false);
+    }
   }
+
+  // Watchdog: if the sensor stops feeding while the card is open, say so
+  // instead of leaving a dead needle on screen.
+  useEffect(function() {
+    if (!open || status !== 'active') return;
+    var id = setInterval(function() {
+      setStale(lastFixRef.current > 0 && Date.now() - lastFixRef.current > 3000);
+    }, 1000);
+    return function() { clearInterval(id); };
+  }, [open, status]);
+
+  // Browsers stop delivering orientation events to a backgrounded tab and do
+  // not always resume — re-attach when we come back to the foreground.
+  useEffect(function() {
+    if (!open) return;
+    function onVis() {
+      if (document.visibilityState !== 'visible') return;
+      if (status === 'denied' || status === 'unsupported') return;
+      if (grantedRef.current) attach();
+    }
+    document.addEventListener('visibilitychange', onVis);
+    return function() { document.removeEventListener('visibilitychange', onVis); };
+  }, [open, status]);
 
   // ── dial ──
   var R = 86, CX = 100, CY = 100;
@@ -2528,8 +2579,9 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
         <div>
           <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.84rem', letterSpacing: '0.04em' }}>Compass</div>
           <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 2 }}>
-            {status === 'active' && headingMag !== null
-              ? Math.round(headingMag) + '° MAG' + (headingTrue !== null ? '  ·  ' + Math.round(headingTrue) + '° TRUE' : '')
+            {status === 'active' && liveHeading !== null
+              ? Math.round(liveHeading) + '° MAG' + (headingTrue !== null ? '  ·  ' + Math.round(headingTrue) + '° TRUE' : '')
+              : stale ? 'Signal lost — re-acquiring…'
               : 'Aid for pointing the antenna — works offline'}
           </div>
         </div>
@@ -2550,13 +2602,15 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
                 {/* fixed index — the direction the phone is pointing */}
                 <polygon points={(CX - 9) + ',6 ' + (CX + 9) + ',6 ' + CX + ',20'} fill={T.warn} />
                 <circle cx={CX} cy={CY} r={R} fill={T.bg} stroke={T.borderHi} strokeWidth="2" />
-                <g transform={'rotate(' + (headingMag === null ? 0 : -headingMag) + ' ' + CX + ' ' + CY + ')'}
-                   style={{ transition: 'transform 120ms linear' }}>
+                <g transform={'rotate(' + (liveHeading === null ? 0 : -liveHeading) + ' ' + CX + ' ' + CY + ')'}
+                   style={{ transition: 'transform 120ms linear', opacity: liveHeading === null ? 0.25 : 1 }}>
                   {ticks}{cards}{targetMark}
                 </g>
                 <circle cx={CX} cy={CY} r="4" fill={T.textMute} />
-                <text x={CX} y="207" textAnchor="middle" fontSize="12" fontWeight="700" fill={T.textMute}>
-                  {headingMag === null ? 'ACQUIRING…' : Math.round(headingMag) + '° MAGNETIC'}
+                <text x={CX} y="207" textAnchor="middle" fontSize="12" fontWeight="700" fill={stale ? T.warn : T.textMute}>
+                  {stale ? 'SIGNAL LOST — RE-ACQUIRING…'
+                    : liveHeading === null ? 'ACQUIRING…'
+                    : Math.round(liveHeading) + '° MAGNETIC'}
                 </text>
               </svg>
             </div>
