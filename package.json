@@ -1,6 +1,6 @@
 {
   "name": "hf-field-antenna-calc",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "private": true,
   "type": "module",
   "description": "USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.",

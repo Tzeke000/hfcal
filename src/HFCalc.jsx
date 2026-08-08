@@ -1718,6 +1718,45 @@ function SpaceWxCard({ freqMHz, zone }) {
 
 function AboutBanner() {
   var [open, setOpen] = useState(false);
+  var [tab, setTab] = useState(0);
+
+  var tabBtn = function(label, idx) {
+    return (
+      <button onClick={function() { setTab(idx); }} style={{ flex: 1, padding: '7px 2px', background: tab === idx ? T.oliveDim : '#0a0e08', color: tab === idx ? T.textPrim : T.textMute, border: '1px solid #2a3a1a', borderRadius: 3, fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.03em' }}>
+        {label}
+      </button>
+    );
+  };
+  var box = { background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '10px 12px', marginBottom: 10 };
+  var boxLabel = { color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 };
+  var body = { color: T.textBody, fontSize: '0.78rem', lineHeight: 1.6 };
+
+  // Feature line: name + what it actually does for the operator
+  var feat = function(name, desc, key) {
+    return (
+      <div key={key} style={{ display: 'flex', gap: 9, marginBottom: 9 }}>
+        <div style={{ color: T.accent, fontWeight: 700, flexShrink: 0, lineHeight: 1.5 }}>▸</div>
+        <div style={{ fontSize: '0.78rem', lineHeight: 1.55 }}>
+          <span style={{ color: T.textPrim, fontWeight: 700 }}>{name}</span>
+          <span style={{ color: T.textBody }}>{' — ' + desc}</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Comparison row: what exists, and the gap this fills
+  var cmp = function(what, isWhat, gap, key) {
+    return (
+      <div key={key} style={{ ...box, borderLeft: '3px solid ' + T.borderHi }}>
+        <div style={{ color: T.accentText, fontSize: '0.74rem', fontWeight: 700, marginBottom: 3 }}>{what}</div>
+        <div style={{ color: T.textMute, fontSize: '0.72rem', lineHeight: 1.5, marginBottom: 5 }}>{isWhat}</div>
+        <div style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.55 }}>
+          <span style={{ color: T.textSec, fontWeight: 700 }}>{'Gap this fills: '}</span>{gap}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.accent }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1732,31 +1771,114 @@ function AboutBanner() {
 
       {open && (
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + T.border }}>
-          <div style={{ color: T.textPrim, fontSize: '0.84rem', fontWeight: 700, marginBottom: 6 }}>
-            HF Field Antenna Calculator
-          </div>
-          <div style={{ color: T.textBody, fontSize: '0.78rem', lineHeight: 1.6, marginBottom: 12 }}>
-            This application is the original work of <strong style={{ color: T.accentText }}>{AUTHOR_NAME}</strong>, {AUTHOR_BRANCH}.
-            All calculation logic, antenna deployment guidance, terrain modeling, and visual design are the author's own.
+          <div style={{ display: 'flex', gap: 5, marginBottom: 14 }}>
+            {tabBtn('About', 0)}
+            {tabBtn('What It Does', 1)}
+            {tabBtn('Vs. Fielded Tools', 2)}
           </div>
 
-          <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '10px 12px', marginBottom: 10 }}>
-            <div style={{ color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>License</div>
-            <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.55 }}>
-              Released under <strong>CC BY-NC-ND 4.0</strong> — free to share with attribution, no commercial use, no derivative works without permission.
+          {tab === 0 && (
+            <div>
+              <div style={{ color: T.textPrim, fontSize: '0.84rem', fontWeight: 700, marginBottom: 6 }}>
+                HF Field Antenna Calculator
+              </div>
+              <div style={{ ...body, marginBottom: 12 }}>
+                This application is the original work of <strong style={{ color: T.accentText }}>{AUTHOR_NAME}</strong>, {AUTHOR_BRANCH}.
+                All calculation logic, antenna deployment guidance, terrain modeling, and visual design are the author's own.
+              </div>
+              <div style={box}>
+                <div style={boxLabel}>License</div>
+                <div style={{ color: T.textSec, fontSize: '0.74rem', lineHeight: 1.55 }}>
+                  Released under <strong>CC BY-NC-ND 4.0</strong> — free to share with attribution, no commercial use, no derivative works without permission.
+                </div>
+              </div>
+              <div style={box}>
+                <div style={boxLabel}>Project Signature</div>
+                <div style={{ color: T.textSec, fontSize: '0.74rem', fontFamily: 'monospace' }}>{APP_SIGNATURE}</div>
+              </div>
+              <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, fontStyle: 'italic' }}>
+                Wire lengths and propagation guidance are estimates — always trim antennas for SWR before transmitting. Use at your own risk.
+              </div>
             </div>
-          </div>
+          )}
 
-          <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '10px 12px', marginBottom: 10 }}>
-            <div style={{ color: T.textMute, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Project Signature</div>
-            <div style={{ color: T.textSec, fontSize: '0.74rem', fontFamily: 'monospace' }}>
-              {APP_SIGNATURE}
+          {tab === 1 && (
+            <div>
+              <div style={{ ...box, borderLeft: '3px solid ' + T.accent }}>
+                <div style={boxLabel}>What this is for</div>
+                <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6 }}>
+                  Building a working HF wire antenna in the field, fast, with whatever wire you have — and knowing whether the frequency you were assigned will actually close the path. Everything runs on the device with no signal.
+                </div>
+              </div>
+
+              <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Path &amp; propagation</div>
+              {feat('Distance and bearing', 'from two grids. Accepts MGRS, DMS, or decimal lat/lon — or photograph the DAGR screen and let it read the grid.', 'f1')}
+              {feat('Bearing to target', 'plus the back azimuth the distant station aims at you.', 'f2')}
+              {feat('Propagation mode', 'ground wave, NVIS, single-hop or multi-hop DX, chosen from the path length.', 'f3')}
+              {feat('Terrain-aware takeoff angle', 'raised to clear a ridgeline near your position, flattened over ocean, adjusted for desert.', 'f4')}
+              {feat('Hop analysis', 'which layer, how many hops, where the bounce points fall.', 'f5')}
+
+              <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Antenna build</div>
+              {feat('Nine antenna types', 'dipole, inverted-V, NVIS variants, sloper, EFHW, vertical, longwire, delta loop — each with build steps and reference photos.', 'f6')}
+              {feat('Cut lengths for your wire', 'velocity factor by conductor material AND gauge — bare, stranded, insulated, CCS, galvanized, stainless, salvage iron, even speaker wire.', 'f7')}
+              {feat('Computed apex height', 'the mast height that puts your radiation where this path needs it — checked against whether quarter-wave legs can physically reach it, with what to do when they cannot.', 'f8')}
+              {feat('Geometry planner', 'apex angle, leg slope, stake distances and total footprint.', 'f9')}
+
+              <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
+              {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10')}
+              {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out.', 'f11')}
+              {feat('Space weather', 'live solar flux and Kp from NOAA when a signal exists; falls back to cached or default values when it does not.', 'f12')}
+
+              <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Field workflow</div>
+              {feat('Saved shots', 'keep the day\u2019s link plans on the device.', 'f13')}
+              {feat('Comm-card export', 'any plan as a plain-text card — DTG, grids, distance, bearing, wire, geometry, frequency window.', 'f14')}
+              {feat('Works with the radio off', 'installs to the home screen and runs with no account, no telemetry and no connection.', 'f15')}
+
+              <div style={{ ...box, marginTop: 12, borderLeft: '3px solid ' + T.warn }}>
+                <div style={{ ...boxLabel, color: T.warn }}>What it is not</div>
+                <div style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.55 }}>
+                  Not a link-budget or full ionospheric model, and not a substitute for your SOI/JCEOI assignment. Propagation figures are statistical monthly-median estimates, not a forecast for one specific hour. Trim for SWR and confirm with the radio before you rely on anything here.
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, fontStyle: 'italic' }}>
-            Wire lengths and propagation guidance are estimates — always trim antennas for SWR before transmitting. Use at your own risk.
-          </div>
+          {tab === 2 && (
+            <div>
+              <div style={{ ...box, borderLeft: '3px solid ' + T.accent }}>
+                <div style={boxLabel}>The honest framing</div>
+                <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6 }}>
+                  The tools the military already has are good — they are just not where the antenna is. This does not claim to beat them. It claims to match the standard where the standard has never been able to go: offline, in your hand, at the point of construction.
+                </div>
+              </div>
+
+              {cmp('VOACAP', 'The government-standard HF prediction engine since the 1980s. Accurate and trusted.',
+                'Desktop software for a trained analyst. Nobody runs VOACAP kneeling next to a wire spool. This app\u2019s takeoff angles agree with VOACAP within about 1\u00b0 across 250\u20136000 km, and its MUF within about 15% \u2014 offline, on a phone. Study and reproduction scripts ship with the source.', 'c1')}
+
+              {cmp('Comm planning suites', 'Planner-grade propagation and link tools at the S-6 level.',
+                'Laptop tools for planners. Their output reaches the operator as a frequency assignment \u2014 not as \u201ccut 19 ft 8 in per leg, apex at 16 ft.\u201d', 'c2')}
+
+              {cmp('The Antenna Handbook', 'The doctrinal antenna reference. Excellent theory.',
+                'A static book of formulas and generic figures \u2014 \u201c468/f\u201d, \u201c30\u201340 ft\u201d. No path-specific computation, no wire-material correction, no check that what it tells you to build is physically buildable. This app is that math, executed for your exact path and your exact wire.', 'c3')}
+
+              {cmp('ALE / 3G HF radios', 'The radio finds a workable frequency automatically.',
+                'ALE optimises whatever the antenna hands it. It cannot fix a wire cut wrong, hung at the wrong height, or made from uncorrected steel. Antenna geometry is the input ALE depends on \u2014 and the part still done from memory.', 'c4')}
+
+              {cmp('Senior operator experience', 'The real legacy system, and still the best one.',
+                'Non-scalable, unevenly distributed, and thinning after twenty years of leaning on satellites. This is that experience written down, tested, and issued to everyone.', 'c5')}
+
+              <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8 }}>Where it genuinely leads</div>
+              {feat('Point of need', 'the only one of these that works at the antenna site: phone, offline, grids to cut lengths in under a minute.', 'w1')}
+              {feat('Field-expedient wire', 'velocity factor for salvage iron, galvanized fence wire, speaker wire, by core and gauge. Planning tools assume catalog antennas.', 'w2')}
+              {feat('Buildability check', 'it does not just give the radiation-optimal height \u2014 it checks whether your legs can reach it, and tells you the buildable maximum and what you lose.', 'w3')}
+              {feat('EMCON-clean', 'no account, no telemetry, no server, no third-party CDN. The OCR engine and fonts are bundled, not fetched.', 'w4')}
+              {feat('It teaches', 'formulas are shown, not hidden \u2014 the same tool trains and fields.', 'w5')}
+
+              <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, marginTop: 10, fontStyle: 'italic' }}>
+                Validation methodology, comparison data and reproduction scripts are published with the source at github.com/Tzeke000/hfcal.
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
