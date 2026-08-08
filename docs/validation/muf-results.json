@@ -3,34 +3,36 @@
     {
       "dist_km": 500,
       "n": 96,
-      "mean_delta": 0.36,
-      "median_abs_delta": 0.76,
-      "mean_abs_pct": 15.1,
-      "within_20pct": 70
+      "mean_delta": -0.1,
+      "median_abs_delta": 0.55,
+      "mean_abs_pct": 10.9,
+      "within_20pct": 85
     },
     {
       "dist_km": 1500,
       "n": 96,
-      "mean_delta": -0.23,
-      "median_abs_delta": 1.31,
-      "mean_abs_pct": 12.7,
-      "within_20pct": 82
+      "mean_delta": -1.03,
+      "median_abs_delta": 1.24,
+      "mean_abs_pct": 11.4,
+      "within_20pct": 86
     },
     {
       "dist_km": 3000,
       "n": 96,
-      "mean_delta": -0.83,
-      "median_abs_delta": 3.04,
-      "mean_abs_pct": 15.8,
-      "within_20pct": 67
+      "mean_delta": -1.95,
+      "median_abs_delta": 2.65,
+      "mean_abs_pct": 14.9,
+      "within_20pct": 70
     }
   ],
   "overall": {
     "n": 288,
-    "mean_abs_pct": 14.6,
-    "median_abs_pct": 11.9,
-    "within_20pct": 73,
-    "within_30pct": 90
+    "mean_abs_pct": 12.4,
+    "median_abs_pct": 10.7,
+    "within_20pct": 81,
+    "within_30pct": 96,
+    "mean_abs_pct_noseason": 14.6,
+    "within_20pct_noseason": 73
   },
   "rows": [
     {
@@ -39,8 +41,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 7.6,
-      "app_muf": 7.09,
-      "delta": -0.51
+      "app_muf": 6.62,
+      "delta": -0.98,
+      "app_muf_noseason": 7.09,
+      "delta_noseason": -0.51
     },
     {
       "dist_km": 500,
@@ -48,8 +52,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 7.9,
-      "app_muf": 6.3,
-      "delta": -1.6
+      "app_muf": 6.02,
+      "delta": -1.88,
+      "app_muf_noseason": 6.3,
+      "delta_noseason": -1.6
     },
     {
       "dist_km": 500,
@@ -57,8 +63,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 7.7,
-      "app_muf": 5.59,
-      "delta": -2.11
+      "app_muf": 5.45,
+      "delta": -2.25,
+      "app_muf_noseason": 5.59,
+      "delta_noseason": -2.11
     },
     {
       "dist_km": 500,
@@ -66,8 +74,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 7.1,
-      "app_muf": 5.03,
-      "delta": -2.07
+      "app_muf": 4.97,
+      "delta": -2.13,
+      "app_muf_noseason": 5.03,
+      "delta_noseason": -2.07
     },
     {
       "dist_km": 500,
@@ -76,7 +86,9 @@
       "utc_hour": 5,
       "voacap_muf": 6.4,
       "app_muf": 4.64,
-      "delta": -1.76
+      "delta": -1.76,
+      "app_muf_noseason": 4.64,
+      "delta_noseason": -1.76
     },
     {
       "dist_km": 500,
@@ -84,8 +96,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 5.9,
-      "app_muf": 4.41,
-      "delta": -1.49
+      "app_muf": 4.44,
+      "delta": -1.46,
+      "app_muf_noseason": 4.41,
+      "delta_noseason": -1.49
     },
     {
       "dist_km": 500,
@@ -93,8 +107,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 5.4,
-      "app_muf": 4.32,
-      "delta": -1.08
+      "app_muf": 4.35,
+      "delta": -1.05,
+      "app_muf_noseason": 4.32,
+      "delta_noseason": -1.08
     },
     {
       "dist_km": 500,
@@ -102,8 +118,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 5.1,
-      "app_muf": 4.3,
-      "delta": -0.8
+      "app_muf": 4.34,
+      "delta": -0.76,
+      "app_muf_noseason": 4.3,
+      "delta_noseason": -0.8
     },
     {
       "dist_km": 500,
@@ -111,8 +129,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 4.9,
-      "app_muf": 4.3,
-      "delta": -0.6
+      "app_muf": 4.34,
+      "delta": -0.56,
+      "app_muf_noseason": 4.3,
+      "delta_noseason": -0.6
     },
     {
       "dist_km": 500,
@@ -120,8 +140,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 4.7,
-      "app_muf": 4.34,
-      "delta": -0.36
+      "app_muf": 4.37,
+      "delta": -0.33,
+      "app_muf_noseason": 4.34,
+      "delta_noseason": -0.36
     },
     {
       "dist_km": 500,
@@ -129,8 +151,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 4.5,
-      "app_muf": 4.46,
-      "delta": -0.04
+      "app_muf": 4.48,
+      "delta": -0.02,
+      "app_muf_noseason": 4.46,
+      "delta_noseason": -0.04
     },
     {
       "dist_km": 500,
@@ -138,8 +162,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 4.6,
-      "app_muf": 4.73,
-      "delta": 0.13
+      "app_muf": 4.72,
+      "delta": 0.12,
+      "app_muf_noseason": 4.73,
+      "delta_noseason": 0.13
     },
     {
       "dist_km": 500,
@@ -147,8 +173,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 5.2,
-      "app_muf": 5.17,
-      "delta": -0.03
+      "app_muf": 5.1,
+      "delta": -0.1,
+      "app_muf_noseason": 5.17,
+      "delta_noseason": -0.03
     },
     {
       "dist_km": 500,
@@ -156,8 +184,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 6.1,
-      "app_muf": 5.78,
-      "delta": -0.32
+      "app_muf": 5.6,
+      "delta": -0.5,
+      "app_muf_noseason": 5.78,
+      "delta_noseason": -0.32
     },
     {
       "dist_km": 500,
@@ -165,8 +195,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 6.9,
-      "app_muf": 6.52,
-      "delta": -0.38
+      "app_muf": 6.19,
+      "delta": -0.71,
+      "app_muf_noseason": 6.52,
+      "delta_noseason": -0.38
     },
     {
       "dist_km": 500,
@@ -174,8 +206,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 6.9,
-      "app_muf": 7.33,
-      "delta": 0.43
+      "app_muf": 6.8,
+      "delta": -0.1,
+      "app_muf_noseason": 7.33,
+      "delta_noseason": 0.43
     },
     {
       "dist_km": 500,
@@ -183,8 +217,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 6.8,
-      "app_muf": 8.12,
-      "delta": 1.32
+      "app_muf": 7.36,
+      "delta": 0.56,
+      "app_muf_noseason": 8.12,
+      "delta_noseason": 1.32
     },
     {
       "dist_km": 500,
@@ -192,8 +228,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 7.3,
-      "app_muf": 8.8,
-      "delta": 1.5
+      "app_muf": 7.82,
+      "delta": 0.52,
+      "app_muf_noseason": 8.8,
+      "delta_noseason": 1.5
     },
     {
       "dist_km": 500,
@@ -201,8 +239,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 7.6,
-      "app_muf": 9.29,
-      "delta": 1.69
+      "app_muf": 8.14,
+      "delta": 0.54,
+      "app_muf_noseason": 9.29,
+      "delta_noseason": 1.69
     },
     {
       "dist_km": 500,
@@ -210,8 +250,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 7.6,
-      "app_muf": 9.53,
-      "delta": 1.93
+      "app_muf": 8.29,
+      "delta": 0.69,
+      "app_muf_noseason": 9.53,
+      "delta_noseason": 1.93
     },
     {
       "dist_km": 500,
@@ -219,8 +261,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 7.4,
-      "app_muf": 9.49,
-      "delta": 2.09
+      "app_muf": 8.26,
+      "delta": 0.86,
+      "app_muf_noseason": 9.49,
+      "delta_noseason": 2.09
     },
     {
       "dist_km": 500,
@@ -228,8 +272,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 7.3,
-      "app_muf": 9.17,
-      "delta": 1.87
+      "app_muf": 8.06,
+      "delta": 0.76,
+      "app_muf_noseason": 9.17,
+      "delta_noseason": 1.87
     },
     {
       "dist_km": 500,
@@ -237,8 +283,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 7.3,
-      "app_muf": 8.62,
-      "delta": 1.32
+      "app_muf": 7.7,
+      "delta": 0.4,
+      "app_muf_noseason": 8.62,
+      "delta_noseason": 1.32
     },
     {
       "dist_km": 500,
@@ -246,8 +294,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 7.4,
-      "app_muf": 7.89,
-      "delta": 0.49
+      "app_muf": 7.21,
+      "delta": -0.19,
+      "app_muf_noseason": 7.89,
+      "delta_noseason": 0.49
     },
     {
       "dist_km": 500,
@@ -255,8 +305,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 8.7,
-      "app_muf": 9.36,
-      "delta": 0.66
+      "app_muf": 8.74,
+      "delta": 0.04,
+      "app_muf_noseason": 9.36,
+      "delta_noseason": 0.66
     },
     {
       "dist_km": 500,
@@ -264,8 +316,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 8.7,
-      "app_muf": 8.31,
-      "delta": -0.39
+      "app_muf": 7.94,
+      "delta": -0.76,
+      "app_muf_noseason": 8.31,
+      "delta_noseason": -0.39
     },
     {
       "dist_km": 500,
@@ -273,8 +327,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 8.5,
-      "app_muf": 7.38,
-      "delta": -1.12
+      "app_muf": 7.19,
+      "delta": -1.31,
+      "app_muf_noseason": 7.38,
+      "delta_noseason": -1.12
     },
     {
       "dist_km": 500,
@@ -282,8 +338,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 8.0,
-      "app_muf": 6.64,
-      "delta": -1.36
+      "app_muf": 6.56,
+      "delta": -1.44,
+      "app_muf_noseason": 6.64,
+      "delta_noseason": -1.36
     },
     {
       "dist_km": 500,
@@ -292,7 +350,9 @@
       "utc_hour": 5,
       "voacap_muf": 7.6,
       "app_muf": 6.12,
-      "delta": -1.48
+      "delta": -1.48,
+      "app_muf_noseason": 6.12,
+      "delta_noseason": -1.48
     },
     {
       "dist_km": 500,
@@ -300,8 +360,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 7.2,
-      "app_muf": 5.83,
-      "delta": -1.37
+      "app_muf": 5.86,
+      "delta": -1.34,
+      "app_muf_noseason": 5.83,
+      "delta_noseason": -1.37
     },
     {
       "dist_km": 500,
@@ -309,8 +371,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 6.9,
-      "app_muf": 5.7,
-      "delta": -1.2
+      "app_muf": 5.75,
+      "delta": -1.15,
+      "app_muf_noseason": 5.7,
+      "delta_noseason": -1.2
     },
     {
       "dist_km": 500,
@@ -318,8 +382,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 6.7,
-      "app_muf": 5.67,
-      "delta": -1.03
+      "app_muf": 5.72,
+      "delta": -0.98,
+      "app_muf_noseason": 5.67,
+      "delta_noseason": -1.03
     },
     {
       "dist_km": 500,
@@ -327,8 +393,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 6.4,
-      "app_muf": 5.68,
-      "delta": -0.72
+      "app_muf": 5.72,
+      "delta": -0.68,
+      "app_muf_noseason": 5.68,
+      "delta_noseason": -0.72
     },
     {
       "dist_km": 500,
@@ -336,8 +404,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 6.2,
-      "app_muf": 5.72,
-      "delta": -0.48
+      "app_muf": 5.77,
+      "delta": -0.43,
+      "app_muf_noseason": 5.72,
+      "delta_noseason": -0.48
     },
     {
       "dist_km": 500,
@@ -345,8 +415,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 5.9,
-      "app_muf": 5.89,
-      "delta": -0.01
+      "app_muf": 5.92,
+      "delta": 0.02,
+      "app_muf_noseason": 5.89,
+      "delta_noseason": -0.01
     },
     {
       "dist_km": 500,
@@ -354,8 +426,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 5.9,
-      "app_muf": 6.25,
-      "delta": 0.35
+      "app_muf": 6.23,
+      "delta": 0.33,
+      "app_muf_noseason": 6.25,
+      "delta_noseason": 0.35
     },
     {
       "dist_km": 500,
@@ -363,8 +437,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 6.4,
-      "app_muf": 6.83,
-      "delta": 0.43
+      "app_muf": 6.73,
+      "delta": 0.33,
+      "app_muf_noseason": 6.83,
+      "delta_noseason": 0.43
     },
     {
       "dist_km": 500,
@@ -372,8 +448,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 7.3,
-      "app_muf": 7.63,
-      "delta": 0.33
+      "app_muf": 7.39,
+      "delta": 0.09,
+      "app_muf_noseason": 7.63,
+      "delta_noseason": 0.33
     },
     {
       "dist_km": 500,
@@ -381,8 +459,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 7.9,
-      "app_muf": 8.6,
-      "delta": 0.7
+      "app_muf": 8.17,
+      "delta": 0.27,
+      "app_muf_noseason": 8.6,
+      "delta_noseason": 0.7
     },
     {
       "dist_km": 500,
@@ -390,8 +470,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 8.0,
-      "app_muf": 9.67,
-      "delta": 1.67
+      "app_muf": 8.97,
+      "delta": 0.97,
+      "app_muf_noseason": 9.67,
+      "delta_noseason": 1.67
     },
     {
       "dist_km": 500,
@@ -399,8 +481,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 7.9,
-      "app_muf": 10.71,
-      "delta": 2.81
+      "app_muf": 9.71,
+      "delta": 1.81,
+      "app_muf_noseason": 10.71,
+      "delta_noseason": 2.81
     },
     {
       "dist_km": 500,
@@ -408,8 +492,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 8.0,
-      "app_muf": 11.61,
-      "delta": 3.61
+      "app_muf": 10.32,
+      "delta": 2.32,
+      "app_muf_noseason": 11.61,
+      "delta_noseason": 3.61
     },
     {
       "dist_km": 500,
@@ -417,8 +503,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 8.4,
-      "app_muf": 12.26,
-      "delta": 3.86
+      "app_muf": 10.74,
+      "delta": 2.34,
+      "app_muf_noseason": 12.26,
+      "delta_noseason": 3.86
     },
     {
       "dist_km": 500,
@@ -426,8 +514,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 8.5,
-      "app_muf": 12.58,
-      "delta": 4.08
+      "app_muf": 10.94,
+      "delta": 2.44,
+      "app_muf_noseason": 12.58,
+      "delta_noseason": 4.08
     },
     {
       "dist_km": 500,
@@ -435,8 +525,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 8.6,
-      "app_muf": 12.53,
-      "delta": 3.93
+      "app_muf": 10.9,
+      "delta": 2.3,
+      "app_muf_noseason": 12.53,
+      "delta_noseason": 3.93
     },
     {
       "dist_km": 500,
@@ -444,8 +536,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 8.6,
-      "app_muf": 12.11,
-      "delta": 3.51
+      "app_muf": 10.64,
+      "delta": 2.04,
+      "app_muf_noseason": 12.11,
+      "delta_noseason": 3.51
     },
     {
       "dist_km": 500,
@@ -453,8 +547,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 8.6,
-      "app_muf": 11.37,
-      "delta": 2.77
+      "app_muf": 10.16,
+      "delta": 1.56,
+      "app_muf_noseason": 11.37,
+      "delta_noseason": 2.77
     },
     {
       "dist_km": 500,
@@ -462,8 +558,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 8.6,
-      "app_muf": 10.42,
-      "delta": 1.82
+      "app_muf": 9.51,
+      "delta": 0.91,
+      "app_muf_noseason": 10.42,
+      "delta_noseason": 1.82
     },
     {
       "dist_km": 500,
@@ -471,8 +569,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 6.1,
-      "app_muf": 7.09,
-      "delta": 0.99
+      "app_muf": 6.69,
+      "delta": 0.59,
+      "app_muf_noseason": 7.09,
+      "delta_noseason": 0.99
     },
     {
       "dist_km": 500,
@@ -480,8 +580,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 4.9,
-      "app_muf": 6.3,
-      "delta": 1.4
+      "app_muf": 5.8,
+      "delta": 0.9,
+      "app_muf_noseason": 6.3,
+      "delta_noseason": 1.4
     },
     {
       "dist_km": 500,
@@ -489,8 +591,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 4.3,
-      "app_muf": 5.59,
-      "delta": 1.29
+      "app_muf": 5.05,
+      "delta": 0.75,
+      "app_muf_noseason": 5.59,
+      "delta_noseason": 1.29
     },
     {
       "dist_km": 500,
@@ -498,8 +602,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 4.2,
-      "app_muf": 5.03,
-      "delta": 0.83
+      "app_muf": 4.47,
+      "delta": 0.27,
+      "app_muf_noseason": 5.03,
+      "delta_noseason": 0.83
     },
     {
       "dist_km": 500,
@@ -507,8 +613,10 @@
       "ssn": 30,
       "utc_hour": 5,
       "voacap_muf": 4.1,
-      "app_muf": 4.64,
-      "delta": 0.54
+      "app_muf": 4.07,
+      "delta": -0.03,
+      "app_muf_noseason": 4.64,
+      "delta_noseason": 0.54
     },
     {
       "dist_km": 500,
@@ -516,8 +624,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 4.1,
-      "app_muf": 4.41,
-      "delta": 0.31
+      "app_muf": 3.85,
+      "delta": -0.25,
+      "app_muf_noseason": 4.41,
+      "delta_noseason": 0.31
     },
     {
       "dist_km": 500,
@@ -525,8 +635,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 4.1,
-      "app_muf": 4.32,
-      "delta": 0.22
+      "app_muf": 3.75,
+      "delta": -0.35,
+      "app_muf_noseason": 4.32,
+      "delta_noseason": 0.22
     },
     {
       "dist_km": 500,
@@ -534,8 +646,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 4.4,
-      "app_muf": 4.3,
-      "delta": -0.1
+      "app_muf": 3.73,
+      "delta": -0.67,
+      "app_muf_noseason": 4.3,
+      "delta_noseason": -0.1
     },
     {
       "dist_km": 500,
@@ -543,8 +657,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 4.6,
-      "app_muf": 4.3,
-      "delta": -0.3
+      "app_muf": 3.73,
+      "delta": -0.87,
+      "app_muf_noseason": 4.3,
+      "delta_noseason": -0.3
     },
     {
       "dist_km": 500,
@@ -552,8 +668,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 4.7,
-      "app_muf": 4.34,
-      "delta": -0.36
+      "app_muf": 3.77,
+      "delta": -0.93,
+      "app_muf_noseason": 4.34,
+      "delta_noseason": -0.36
     },
     {
       "dist_km": 500,
@@ -561,8 +679,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 4.3,
-      "app_muf": 4.46,
-      "delta": 0.16
+      "app_muf": 3.9,
+      "delta": -0.4,
+      "app_muf_noseason": 4.46,
+      "delta_noseason": 0.16
     },
     {
       "dist_km": 500,
@@ -570,8 +690,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 3.9,
-      "app_muf": 4.73,
-      "delta": 0.83
+      "app_muf": 4.17,
+      "delta": 0.27,
+      "app_muf_noseason": 4.73,
+      "delta_noseason": 0.83
     },
     {
       "dist_km": 500,
@@ -579,8 +701,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 3.8,
-      "app_muf": 5.17,
-      "delta": 1.37
+      "app_muf": 4.61,
+      "delta": 0.81,
+      "app_muf_noseason": 5.17,
+      "delta_noseason": 1.37
     },
     {
       "dist_km": 500,
@@ -588,8 +712,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 4.8,
-      "app_muf": 5.78,
-      "delta": 0.98
+      "app_muf": 5.25,
+      "delta": 0.45,
+      "app_muf_noseason": 5.78,
+      "delta_noseason": 0.98
     },
     {
       "dist_km": 500,
@@ -597,8 +723,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 6.5,
-      "app_muf": 6.52,
-      "delta": 0.02
+      "app_muf": 6.05,
+      "delta": -0.45,
+      "app_muf_noseason": 6.52,
+      "delta_noseason": 0.02
     },
     {
       "dist_km": 500,
@@ -606,8 +734,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 8.2,
-      "app_muf": 7.33,
-      "delta": -0.87
+      "app_muf": 6.95,
+      "delta": -1.25,
+      "app_muf_noseason": 7.33,
+      "delta_noseason": -0.87
     },
     {
       "dist_km": 500,
@@ -615,8 +745,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 9.0,
-      "app_muf": 8.12,
-      "delta": -0.88
+      "app_muf": 7.87,
+      "delta": -1.13,
+      "app_muf_noseason": 8.12,
+      "delta_noseason": -0.88
     },
     {
       "dist_km": 500,
@@ -624,8 +756,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 9.5,
-      "app_muf": 8.8,
-      "delta": -0.7
+      "app_muf": 8.7,
+      "delta": -0.8,
+      "app_muf_noseason": 8.8,
+      "delta_noseason": -0.7
     },
     {
       "dist_km": 500,
@@ -633,8 +767,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 9.6,
-      "app_muf": 9.29,
-      "delta": -0.31
+      "app_muf": 9.31,
+      "delta": -0.29,
+      "app_muf_noseason": 9.29,
+      "delta_noseason": -0.31
     },
     {
       "dist_km": 500,
@@ -642,8 +778,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 9.9,
-      "app_muf": 9.53,
-      "delta": -0.37
+      "app_muf": 9.61,
+      "delta": -0.29,
+      "app_muf_noseason": 9.53,
+      "delta_noseason": -0.37
     },
     {
       "dist_km": 500,
@@ -651,8 +789,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 10.0,
-      "app_muf": 9.49,
-      "delta": -0.51
+      "app_muf": 9.56,
+      "delta": -0.44,
+      "app_muf_noseason": 9.49,
+      "delta_noseason": -0.51
     },
     {
       "dist_km": 500,
@@ -660,8 +800,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 9.5,
-      "app_muf": 9.17,
-      "delta": -0.33
+      "app_muf": 9.16,
+      "delta": -0.34,
+      "app_muf_noseason": 9.17,
+      "delta_noseason": -0.33
     },
     {
       "dist_km": 500,
@@ -669,8 +811,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 8.8,
-      "app_muf": 8.62,
-      "delta": -0.18
+      "app_muf": 8.48,
+      "delta": -0.32,
+      "app_muf_noseason": 8.62,
+      "delta_noseason": -0.18
     },
     {
       "dist_km": 500,
@@ -678,8 +822,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 7.6,
-      "app_muf": 7.89,
-      "delta": 0.29
+      "app_muf": 7.61,
+      "delta": 0.01,
+      "app_muf_noseason": 7.89,
+      "delta_noseason": 0.29
     },
     {
       "dist_km": 500,
@@ -687,8 +833,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 9.3,
-      "app_muf": 9.36,
-      "delta": 0.06
+      "app_muf": 8.82,
+      "delta": -0.48,
+      "app_muf_noseason": 9.36,
+      "delta_noseason": 0.06
     },
     {
       "dist_km": 500,
@@ -696,8 +844,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 8.0,
-      "app_muf": 8.31,
-      "delta": 0.31
+      "app_muf": 7.66,
+      "delta": -0.34,
+      "app_muf_noseason": 8.31,
+      "delta_noseason": 0.31
     },
     {
       "dist_km": 500,
@@ -705,8 +855,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 7.0,
-      "app_muf": 7.38,
-      "delta": 0.38
+      "app_muf": 6.66,
+      "delta": -0.34,
+      "app_muf_noseason": 7.38,
+      "delta_noseason": 0.38
     },
     {
       "dist_km": 500,
@@ -714,8 +866,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 6.1,
-      "app_muf": 6.64,
-      "delta": 0.54
+      "app_muf": 5.89,
+      "delta": -0.21,
+      "app_muf_noseason": 6.64,
+      "delta_noseason": 0.54
     },
     {
       "dist_km": 500,
@@ -723,8 +877,10 @@
       "ssn": 100,
       "utc_hour": 5,
       "voacap_muf": 5.4,
-      "app_muf": 6.12,
-      "delta": 0.72
+      "app_muf": 5.37,
+      "delta": -0.03,
+      "app_muf_noseason": 6.12,
+      "delta_noseason": 0.72
     },
     {
       "dist_km": 500,
@@ -732,8 +888,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 4.9,
-      "app_muf": 5.83,
-      "delta": 0.93
+      "app_muf": 5.08,
+      "delta": 0.18,
+      "app_muf_noseason": 5.83,
+      "delta_noseason": 0.93
     },
     {
       "dist_km": 500,
@@ -741,8 +899,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 4.7,
-      "app_muf": 5.7,
-      "delta": 1.0
+      "app_muf": 4.95,
+      "delta": 0.25,
+      "app_muf_noseason": 5.7,
+      "delta_noseason": 1.0
     },
     {
       "dist_km": 500,
@@ -750,8 +910,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 4.8,
-      "app_muf": 5.67,
-      "delta": 0.87
+      "app_muf": 4.93,
+      "delta": 0.13,
+      "app_muf_noseason": 5.67,
+      "delta_noseason": 0.87
     },
     {
       "dist_km": 500,
@@ -759,8 +921,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 5.1,
-      "app_muf": 5.68,
-      "delta": 0.58
+      "app_muf": 4.93,
+      "delta": -0.17,
+      "app_muf_noseason": 5.68,
+      "delta_noseason": 0.58
     },
     {
       "dist_km": 500,
@@ -768,8 +932,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 5.2,
-      "app_muf": 5.72,
-      "delta": 0.52
+      "app_muf": 4.98,
+      "delta": -0.22,
+      "app_muf_noseason": 5.72,
+      "delta_noseason": 0.52
     },
     {
       "dist_km": 500,
@@ -777,8 +943,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 4.8,
-      "app_muf": 5.89,
-      "delta": 1.09
+      "app_muf": 5.14,
+      "delta": 0.34,
+      "app_muf_noseason": 5.89,
+      "delta_noseason": 1.09
     },
     {
       "dist_km": 500,
@@ -786,8 +954,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 4.3,
-      "app_muf": 6.25,
-      "delta": 1.95
+      "app_muf": 5.5,
+      "delta": 1.2,
+      "app_muf_noseason": 6.25,
+      "delta_noseason": 1.95
     },
     {
       "dist_km": 500,
@@ -795,8 +965,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 4.4,
-      "app_muf": 6.83,
-      "delta": 2.43
+      "app_muf": 6.09,
+      "delta": 1.69,
+      "app_muf_noseason": 6.83,
+      "delta_noseason": 2.43
     },
     {
       "dist_km": 500,
@@ -804,8 +976,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 5.8,
-      "app_muf": 7.63,
-      "delta": 1.83
+      "app_muf": 6.93,
+      "delta": 1.13,
+      "app_muf_noseason": 7.63,
+      "delta_noseason": 1.83
     },
     {
       "dist_km": 500,
@@ -813,8 +987,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 8.2,
-      "app_muf": 8.6,
-      "delta": 0.4
+      "app_muf": 7.98,
+      "delta": -0.22,
+      "app_muf_noseason": 8.6,
+      "delta_noseason": 0.4
     },
     {
       "dist_km": 500,
@@ -822,8 +998,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 10.7,
-      "app_muf": 9.67,
-      "delta": -1.03
+      "app_muf": 9.18,
+      "delta": -1.52,
+      "app_muf_noseason": 9.67,
+      "delta_noseason": -1.03
     },
     {
       "dist_km": 500,
@@ -831,8 +1009,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 12.1,
-      "app_muf": 10.71,
-      "delta": -1.39
+      "app_muf": 10.39,
+      "delta": -1.71,
+      "app_muf_noseason": 10.71,
+      "delta_noseason": -1.39
     },
     {
       "dist_km": 500,
@@ -840,8 +1020,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 12.6,
-      "app_muf": 11.61,
-      "delta": -0.99
+      "app_muf": 11.48,
+      "delta": -1.12,
+      "app_muf_noseason": 11.61,
+      "delta_noseason": -0.99
     },
     {
       "dist_km": 500,
@@ -849,8 +1031,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 12.6,
-      "app_muf": 12.26,
-      "delta": -0.34
+      "app_muf": 12.28,
+      "delta": -0.32,
+      "app_muf_noseason": 12.26,
+      "delta_noseason": -0.34
     },
     {
       "dist_km": 500,
@@ -858,8 +1042,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 12.6,
-      "app_muf": 12.58,
-      "delta": -0.02
+      "app_muf": 12.68,
+      "delta": 0.08,
+      "app_muf_noseason": 12.58,
+      "delta_noseason": -0.02
     },
     {
       "dist_km": 500,
@@ -867,8 +1053,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 12.6,
-      "app_muf": 12.53,
-      "delta": -0.07
+      "app_muf": 12.61,
+      "delta": 0.01,
+      "app_muf_noseason": 12.53,
+      "delta_noseason": -0.07
     },
     {
       "dist_km": 500,
@@ -876,8 +1064,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 12.3,
-      "app_muf": 12.11,
-      "delta": -0.19
+      "app_muf": 12.09,
+      "delta": -0.21,
+      "app_muf_noseason": 12.11,
+      "delta_noseason": -0.19
     },
     {
       "dist_km": 500,
@@ -885,8 +1075,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 11.7,
-      "app_muf": 11.37,
-      "delta": -0.33
+      "app_muf": 11.19,
+      "delta": -0.51,
+      "app_muf_noseason": 11.37,
+      "delta_noseason": -0.33
     },
     {
       "dist_km": 500,
@@ -894,8 +1086,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 10.6,
-      "app_muf": 10.42,
-      "delta": -0.18
+      "app_muf": 10.05,
+      "delta": -0.55,
+      "app_muf_noseason": 10.42,
+      "delta_noseason": -0.18
     },
     {
       "dist_km": 1500,
@@ -903,8 +1097,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 13.8,
-      "app_muf": 11.81,
-      "delta": -1.99
+      "app_muf": 11.12,
+      "delta": -2.68,
+      "app_muf_noseason": 11.81,
+      "delta_noseason": -1.99
     },
     {
       "dist_km": 1500,
@@ -912,8 +1108,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 14.2,
-      "app_muf": 10.47,
-      "delta": -3.73
+      "app_muf": 10.08,
+      "delta": -4.12,
+      "app_muf_noseason": 10.47,
+      "delta_noseason": -3.73
     },
     {
       "dist_km": 1500,
@@ -921,8 +1119,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 13.6,
-      "app_muf": 9.32,
-      "delta": -4.28
+      "app_muf": 9.14,
+      "delta": -4.46,
+      "app_muf_noseason": 9.32,
+      "delta_noseason": -4.28
     },
     {
       "dist_km": 1500,
@@ -930,8 +1130,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 12.3,
-      "app_muf": 8.45,
-      "delta": -3.85
+      "app_muf": 8.4,
+      "delta": -3.9,
+      "app_muf_noseason": 8.45,
+      "delta_noseason": -3.85
     },
     {
       "dist_km": 1500,
@@ -939,8 +1141,10 @@
       "ssn": 30,
       "utc_hour": 5,
       "voacap_muf": 11.0,
-      "app_muf": 7.88,
-      "delta": -3.12
+      "app_muf": 7.9,
+      "delta": -3.1,
+      "app_muf_noseason": 7.88,
+      "delta_noseason": -3.12
     },
     {
       "dist_km": 1500,
@@ -948,8 +1152,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 9.9,
-      "app_muf": 7.58,
-      "delta": -2.32
+      "app_muf": 7.63,
+      "delta": -2.27,
+      "app_muf_noseason": 7.58,
+      "delta_noseason": -2.32
     },
     {
       "dist_km": 1500,
@@ -957,8 +1163,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 9.0,
-      "app_muf": 7.48,
-      "delta": -1.52
+      "app_muf": 7.54,
+      "delta": -1.46,
+      "app_muf_noseason": 7.48,
+      "delta_noseason": -1.52
     },
     {
       "dist_km": 1500,
@@ -966,8 +1174,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 8.4,
-      "app_muf": 7.46,
-      "delta": -0.94
+      "app_muf": 7.53,
+      "delta": -0.87,
+      "app_muf_noseason": 7.46,
+      "delta_noseason": -0.94
     },
     {
       "dist_km": 1500,
@@ -975,8 +1185,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 8.1,
-      "app_muf": 7.48,
-      "delta": -0.62
+      "app_muf": 7.54,
+      "delta": -0.56,
+      "app_muf_noseason": 7.48,
+      "delta_noseason": -0.62
     },
     {
       "dist_km": 1500,
@@ -984,8 +1196,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 7.9,
-      "app_muf": 7.58,
-      "delta": -0.32
+      "app_muf": 7.63,
+      "delta": -0.27,
+      "app_muf_noseason": 7.58,
+      "delta_noseason": -0.32
     },
     {
       "dist_km": 1500,
@@ -993,8 +1207,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 7.8,
-      "app_muf": 7.89,
-      "delta": 0.09
+      "app_muf": 7.9,
+      "delta": 0.1,
+      "app_muf_noseason": 7.89,
+      "delta_noseason": 0.09
     },
     {
       "dist_km": 1500,
@@ -1002,8 +1218,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 8.2,
-      "app_muf": 8.46,
-      "delta": 0.26
+      "app_muf": 8.4,
+      "delta": 0.2,
+      "app_muf_noseason": 8.46,
+      "delta_noseason": 0.26
     },
     {
       "dist_km": 1500,
@@ -1011,8 +1229,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 9.6,
-      "app_muf": 9.33,
-      "delta": -0.27
+      "app_muf": 9.14,
+      "delta": -0.46,
+      "app_muf_noseason": 9.33,
+      "delta_noseason": -0.27
     },
     {
       "dist_km": 1500,
@@ -1020,8 +1240,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 11.7,
-      "app_muf": 10.47,
-      "delta": -1.23
+      "app_muf": 10.08,
+      "delta": -1.62,
+      "app_muf_noseason": 10.47,
+      "delta_noseason": -1.23
     },
     {
       "dist_km": 1500,
@@ -1029,8 +1251,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 12.6,
-      "app_muf": 11.81,
-      "delta": -0.79
+      "app_muf": 11.13,
+      "delta": -1.47,
+      "app_muf_noseason": 11.81,
+      "delta_noseason": -0.79
     },
     {
       "dist_km": 1500,
@@ -1038,8 +1262,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 14.2,
-      "app_muf": 13.22,
-      "delta": -0.98
+      "app_muf": 12.17,
+      "delta": -2.03,
+      "app_muf_noseason": 13.22,
+      "delta_noseason": -0.98
     },
     {
       "dist_km": 1500,
@@ -1047,8 +1273,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 15.5,
-      "app_muf": 14.55,
-      "delta": -0.95
+      "app_muf": 13.09,
+      "delta": -2.41,
+      "app_muf_noseason": 14.55,
+      "delta_noseason": -0.95
     },
     {
       "dist_km": 1500,
@@ -1056,8 +1284,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 16.5,
-      "app_muf": 15.63,
-      "delta": -0.87
+      "app_muf": 13.81,
+      "delta": -2.69,
+      "app_muf_noseason": 15.63,
+      "delta_noseason": -0.87
     },
     {
       "dist_km": 1500,
@@ -1065,8 +1295,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 17.0,
-      "app_muf": 16.34,
-      "delta": -0.66
+      "app_muf": 14.25,
+      "delta": -2.75,
+      "app_muf_noseason": 16.34,
+      "delta_noseason": -0.66
     },
     {
       "dist_km": 1500,
@@ -1074,8 +1306,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 16.8,
-      "app_muf": 16.58,
-      "delta": -0.22
+      "app_muf": 14.41,
+      "delta": -2.39,
+      "app_muf_noseason": 16.58,
+      "delta_noseason": -0.22
     },
     {
       "dist_km": 1500,
@@ -1083,8 +1317,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 16.1,
-      "app_muf": 16.33,
-      "delta": 0.23
+      "app_muf": 14.25,
+      "delta": -1.85,
+      "app_muf_noseason": 16.33,
+      "delta_noseason": 0.23
     },
     {
       "dist_km": 1500,
@@ -1092,8 +1328,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 14.9,
-      "app_muf": 15.62,
-      "delta": 0.72
+      "app_muf": 13.8,
+      "delta": -1.1,
+      "app_muf_noseason": 15.62,
+      "delta_noseason": 0.72
     },
     {
       "dist_km": 1500,
@@ -1101,8 +1339,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 13.3,
-      "app_muf": 14.54,
-      "delta": 1.24
+      "app_muf": 13.09,
+      "delta": -0.21,
+      "app_muf_noseason": 14.54,
+      "delta_noseason": 1.24
     },
     {
       "dist_km": 1500,
@@ -1110,8 +1350,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 13.4,
-      "app_muf": 13.21,
-      "delta": -0.19
+      "app_muf": 12.16,
+      "delta": -1.24,
+      "app_muf_noseason": 13.21,
+      "delta_noseason": -0.19
     },
     {
       "dist_km": 1500,
@@ -1119,8 +1361,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 14.8,
-      "app_muf": 15.58,
-      "delta": 0.78
+      "app_muf": 14.68,
+      "delta": -0.12,
+      "app_muf_noseason": 15.58,
+      "delta_noseason": 0.78
     },
     {
       "dist_km": 1500,
@@ -1128,8 +1372,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 14.9,
-      "app_muf": 13.82,
-      "delta": -1.08
+      "app_muf": 13.3,
+      "delta": -1.6,
+      "app_muf_noseason": 13.82,
+      "delta_noseason": -1.08
     },
     {
       "dist_km": 1500,
@@ -1137,8 +1383,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 14.3,
-      "app_muf": 12.3,
-      "delta": -2.0
+      "app_muf": 12.06,
+      "delta": -2.24,
+      "app_muf_noseason": 12.3,
+      "delta_noseason": -2.0
     },
     {
       "dist_km": 1500,
@@ -1146,8 +1394,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 13.4,
-      "app_muf": 11.16,
-      "delta": -2.24
+      "app_muf": 11.08,
+      "delta": -2.32,
+      "app_muf_noseason": 11.16,
+      "delta_noseason": -2.24
     },
     {
       "dist_km": 1500,
@@ -1155,8 +1405,10 @@
       "ssn": 100,
       "utc_hour": 5,
       "voacap_muf": 12.6,
-      "app_muf": 10.4,
-      "delta": -2.2
+      "app_muf": 10.43,
+      "delta": -2.17,
+      "app_muf_noseason": 10.4,
+      "delta_noseason": -2.2
     },
     {
       "dist_km": 1500,
@@ -1164,8 +1416,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 11.9,
-      "app_muf": 10.01,
-      "delta": -1.89
+      "app_muf": 10.08,
+      "delta": -1.82,
+      "app_muf_noseason": 10.01,
+      "delta_noseason": -1.89
     },
     {
       "dist_km": 1500,
@@ -1173,8 +1427,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 11.2,
-      "app_muf": 9.87,
-      "delta": -1.33
+      "app_muf": 9.95,
+      "delta": -1.25,
+      "app_muf_noseason": 9.87,
+      "delta_noseason": -1.33
     },
     {
       "dist_km": 1500,
@@ -1182,8 +1438,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 10.7,
-      "app_muf": 9.85,
-      "delta": -0.85
+      "app_muf": 9.93,
+      "delta": -0.77,
+      "app_muf_noseason": 9.85,
+      "delta_noseason": -0.85
     },
     {
       "dist_km": 1500,
@@ -1191,8 +1449,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 10.3,
-      "app_muf": 9.87,
-      "delta": -0.43
+      "app_muf": 9.95,
+      "delta": -0.35,
+      "app_muf_noseason": 9.87,
+      "delta_noseason": -0.43
     },
     {
       "dist_km": 1500,
@@ -1200,8 +1460,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 10.0,
-      "app_muf": 10.01,
-      "delta": 0.01
+      "app_muf": 10.08,
+      "delta": 0.08,
+      "app_muf_noseason": 10.01,
+      "delta_noseason": 0.01
     },
     {
       "dist_km": 1500,
@@ -1209,8 +1471,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 9.7,
-      "app_muf": 10.41,
-      "delta": 0.71
+      "app_muf": 10.43,
+      "delta": 0.73,
+      "app_muf_noseason": 10.41,
+      "delta_noseason": 0.71
     },
     {
       "dist_km": 1500,
@@ -1218,8 +1482,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 9.9,
-      "app_muf": 11.16,
-      "delta": 1.26
+      "app_muf": 11.09,
+      "delta": 1.19,
+      "app_muf_noseason": 11.16,
+      "delta_noseason": 1.26
     },
     {
       "dist_km": 1500,
@@ -1227,8 +1493,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 11.0,
-      "app_muf": 12.31,
-      "delta": 1.31
+      "app_muf": 12.07,
+      "delta": 1.07,
+      "app_muf_noseason": 12.31,
+      "delta_noseason": 1.31
     },
     {
       "dist_km": 1500,
@@ -1236,8 +1504,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 12.5,
-      "app_muf": 13.82,
-      "delta": 1.32
+      "app_muf": 13.3,
+      "delta": 0.8,
+      "app_muf_noseason": 13.82,
+      "delta_noseason": 1.32
     },
     {
       "dist_km": 1500,
@@ -1245,8 +1515,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 14.4,
-      "app_muf": 15.59,
-      "delta": 1.19
+      "app_muf": 14.69,
+      "delta": 0.29,
+      "app_muf_noseason": 15.59,
+      "delta_noseason": 1.19
     },
     {
       "dist_km": 1500,
@@ -1254,8 +1526,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 15.9,
-      "app_muf": 17.45,
-      "delta": 1.55
+      "app_muf": 16.06,
+      "delta": 0.16,
+      "app_muf_noseason": 17.45,
+      "delta_noseason": 1.55
     },
     {
       "dist_km": 1500,
@@ -1263,8 +1537,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 17.2,
-      "app_muf": 19.2,
-      "delta": 2.0
+      "app_muf": 17.28,
+      "delta": 0.08,
+      "app_muf_noseason": 19.2,
+      "delta_noseason": 2.0
     },
     {
       "dist_km": 1500,
@@ -1272,8 +1548,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 18.1,
-      "app_muf": 20.63,
-      "delta": 2.53
+      "app_muf": 18.22,
+      "delta": 0.12,
+      "app_muf_noseason": 20.63,
+      "delta_noseason": 2.53
     },
     {
       "dist_km": 1500,
@@ -1281,8 +1559,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 18.7,
-      "app_muf": 21.56,
-      "delta": 2.86
+      "app_muf": 18.81,
+      "delta": 0.11,
+      "app_muf_noseason": 21.56,
+      "delta_noseason": 2.86
     },
     {
       "dist_km": 1500,
@@ -1290,8 +1570,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 18.6,
-      "app_muf": 21.89,
-      "delta": 3.29
+      "app_muf": 19.01,
+      "delta": 0.41,
+      "app_muf_noseason": 21.89,
+      "delta_noseason": 3.29
     },
     {
       "dist_km": 1500,
@@ -1299,8 +1581,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 18.0,
-      "app_muf": 21.56,
-      "delta": 3.56
+      "app_muf": 18.81,
+      "delta": 0.81,
+      "app_muf_noseason": 21.56,
+      "delta_noseason": 3.56
     },
     {
       "dist_km": 1500,
@@ -1308,8 +1592,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 16.7,
-      "app_muf": 20.62,
-      "delta": 3.92
+      "app_muf": 18.22,
+      "delta": 1.52,
+      "app_muf_noseason": 20.62,
+      "delta_noseason": 3.92
     },
     {
       "dist_km": 1500,
@@ -1317,8 +1603,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 15.0,
-      "app_muf": 19.19,
-      "delta": 4.19
+      "app_muf": 17.27,
+      "delta": 2.27,
+      "app_muf_noseason": 19.19,
+      "delta_noseason": 4.19
     },
     {
       "dist_km": 1500,
@@ -1326,8 +1614,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 14.5,
-      "app_muf": 17.44,
-      "delta": 2.94
+      "app_muf": 16.05,
+      "delta": 1.55,
+      "app_muf_noseason": 17.44,
+      "delta_noseason": 2.94
     },
     {
       "dist_km": 1500,
@@ -1335,8 +1625,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 11.1,
-      "app_muf": 11.81,
-      "delta": 0.71
+      "app_muf": 11.04,
+      "delta": -0.06,
+      "app_muf_noseason": 11.81,
+      "delta_noseason": 0.71
     },
     {
       "dist_km": 1500,
@@ -1344,8 +1636,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 9.0,
-      "app_muf": 10.47,
-      "delta": 1.47
+      "app_muf": 9.57,
+      "delta": 0.57,
+      "app_muf_noseason": 10.47,
+      "delta_noseason": 1.47
     },
     {
       "dist_km": 1500,
@@ -1353,8 +1647,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 7.9,
-      "app_muf": 9.32,
-      "delta": 1.42
+      "app_muf": 8.36,
+      "delta": 0.46,
+      "app_muf_noseason": 9.32,
+      "delta_noseason": 1.42
     },
     {
       "dist_km": 1500,
@@ -1362,8 +1658,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 7.6,
-      "app_muf": 8.45,
-      "delta": 0.85
+      "app_muf": 7.47,
+      "delta": -0.13,
+      "app_muf_noseason": 8.45,
+      "delta_noseason": 0.85
     },
     {
       "dist_km": 1500,
@@ -1371,8 +1669,10 @@
       "ssn": 30,
       "utc_hour": 5,
       "voacap_muf": 7.4,
-      "app_muf": 7.88,
-      "delta": 0.48
+      "app_muf": 6.9,
+      "delta": -0.5,
+      "app_muf_noseason": 7.88,
+      "delta_noseason": 0.48
     },
     {
       "dist_km": 1500,
@@ -1380,8 +1680,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 7.2,
-      "app_muf": 7.58,
-      "delta": 0.38
+      "app_muf": 6.6,
+      "delta": -0.6,
+      "app_muf_noseason": 7.58,
+      "delta_noseason": 0.38
     },
     {
       "dist_km": 1500,
@@ -1389,8 +1691,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 7.5,
-      "app_muf": 7.48,
-      "delta": -0.02
+      "app_muf": 6.49,
+      "delta": -1.01,
+      "app_muf_noseason": 7.48,
+      "delta_noseason": -0.02
     },
     {
       "dist_km": 1500,
@@ -1398,8 +1702,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 8.2,
-      "app_muf": 7.46,
-      "delta": -0.74
+      "app_muf": 6.48,
+      "delta": -1.72,
+      "app_muf_noseason": 7.46,
+      "delta_noseason": -0.74
     },
     {
       "dist_km": 1500,
@@ -1407,8 +1713,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 8.9,
-      "app_muf": 7.48,
-      "delta": -1.42
+      "app_muf": 6.5,
+      "delta": -2.4,
+      "app_muf_noseason": 7.48,
+      "delta_noseason": -1.42
     },
     {
       "dist_km": 1500,
@@ -1416,8 +1724,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 8.7,
-      "app_muf": 7.58,
-      "delta": -1.12
+      "app_muf": 6.6,
+      "delta": -2.1,
+      "app_muf_noseason": 7.58,
+      "delta_noseason": -1.12
     },
     {
       "dist_km": 1500,
@@ -1425,8 +1735,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 7.6,
-      "app_muf": 7.89,
-      "delta": 0.29
+      "app_muf": 6.9,
+      "delta": -0.7,
+      "app_muf_noseason": 7.89,
+      "delta_noseason": 0.29
     },
     {
       "dist_km": 1500,
@@ -1434,8 +1746,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 6.8,
-      "app_muf": 8.46,
-      "delta": 1.66
+      "app_muf": 7.47,
+      "delta": 0.67,
+      "app_muf_noseason": 8.46,
+      "delta_noseason": 1.66
     },
     {
       "dist_km": 1500,
@@ -1443,8 +1757,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 7.3,
-      "app_muf": 9.33,
-      "delta": 2.03
+      "app_muf": 8.37,
+      "delta": 1.07,
+      "app_muf_noseason": 9.33,
+      "delta_noseason": 2.03
     },
     {
       "dist_km": 1500,
@@ -1452,8 +1768,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 9.9,
-      "app_muf": 10.47,
-      "delta": 0.57
+      "app_muf": 9.58,
+      "delta": -0.32,
+      "app_muf_noseason": 10.47,
+      "delta_noseason": 0.57
     },
     {
       "dist_km": 1500,
@@ -1461,8 +1779,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 13.7,
-      "app_muf": 11.81,
-      "delta": -1.89
+      "app_muf": 11.05,
+      "delta": -2.65,
+      "app_muf_noseason": 11.81,
+      "delta_noseason": -1.89
     },
     {
       "dist_km": 1500,
@@ -1470,8 +1790,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 16.9,
-      "app_muf": 13.22,
-      "delta": -3.68
+      "app_muf": 12.65,
+      "delta": -4.25,
+      "app_muf_noseason": 13.22,
+      "delta_noseason": -3.68
     },
     {
       "dist_km": 1500,
@@ -1479,8 +1801,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 18.6,
-      "app_muf": 14.55,
-      "delta": -4.05
+      "app_muf": 14.21,
+      "delta": -4.39,
+      "app_muf_noseason": 14.55,
+      "delta_noseason": -4.05
     },
     {
       "dist_km": 1500,
@@ -1488,8 +1812,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 18.6,
-      "app_muf": 15.63,
-      "delta": -2.97
+      "app_muf": 15.53,
+      "delta": -3.07,
+      "app_muf_noseason": 15.63,
+      "delta_noseason": -2.97
     },
     {
       "dist_km": 1500,
@@ -1497,8 +1823,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 18.7,
-      "app_muf": 16.34,
-      "delta": -2.36
+      "app_muf": 16.41,
+      "delta": -2.29,
+      "app_muf_noseason": 16.34,
+      "delta_noseason": -2.36
     },
     {
       "dist_km": 1500,
@@ -1506,8 +1834,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 19.1,
-      "app_muf": 16.58,
-      "delta": -2.52
+      "app_muf": 16.72,
+      "delta": -2.38,
+      "app_muf_noseason": 16.58,
+      "delta_noseason": -2.52
     },
     {
       "dist_km": 1500,
@@ -1515,8 +1845,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 19.2,
-      "app_muf": 16.33,
-      "delta": -2.87
+      "app_muf": 16.41,
+      "delta": -2.79,
+      "app_muf_noseason": 16.33,
+      "delta_noseason": -2.87
     },
     {
       "dist_km": 1500,
@@ -1524,8 +1856,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 18.1,
-      "app_muf": 15.62,
-      "delta": -2.48
+      "app_muf": 15.52,
+      "delta": -2.58,
+      "app_muf_noseason": 15.62,
+      "delta_noseason": -2.48
     },
     {
       "dist_km": 1500,
@@ -1533,8 +1867,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 16.4,
-      "app_muf": 14.54,
-      "delta": -1.86
+      "app_muf": 14.2,
+      "delta": -2.2,
+      "app_muf_noseason": 14.54,
+      "delta_noseason": -1.86
     },
     {
       "dist_km": 1500,
@@ -1542,8 +1878,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 13.8,
-      "app_muf": 13.21,
-      "delta": -0.59
+      "app_muf": 12.64,
+      "delta": -1.16,
+      "app_muf_noseason": 13.21,
+      "delta_noseason": -0.59
     },
     {
       "dist_km": 1500,
@@ -1551,8 +1889,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 16.2,
-      "app_muf": 15.58,
-      "delta": -0.62
+      "app_muf": 14.57,
+      "delta": -1.63,
+      "app_muf_noseason": 15.58,
+      "delta_noseason": -0.62
     },
     {
       "dist_km": 1500,
@@ -1560,8 +1900,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 14.1,
-      "app_muf": 13.82,
-      "delta": -0.28
+      "app_muf": 12.64,
+      "delta": -1.46,
+      "app_muf_noseason": 13.82,
+      "delta_noseason": -0.28
     },
     {
       "dist_km": 1500,
@@ -1569,8 +1911,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 12.2,
-      "app_muf": 12.3,
-      "delta": 0.1
+      "app_muf": 11.04,
+      "delta": -1.16,
+      "app_muf_noseason": 12.3,
+      "delta_noseason": 0.1
     },
     {
       "dist_km": 1500,
@@ -1578,8 +1922,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 10.4,
-      "app_muf": 11.16,
-      "delta": 0.76
+      "app_muf": 9.86,
+      "delta": -0.54,
+      "app_muf_noseason": 11.16,
+      "delta_noseason": 0.76
     },
     {
       "dist_km": 1500,
@@ -1587,8 +1933,10 @@
       "ssn": 100,
       "utc_hour": 5,
       "voacap_muf": 9.1,
-      "app_muf": 10.4,
-      "delta": 1.3
+      "app_muf": 9.1,
+      "delta": 0.0,
+      "app_muf_noseason": 10.4,
+      "delta_noseason": 1.3
     },
     {
       "dist_km": 1500,
@@ -1596,8 +1944,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 8.3,
-      "app_muf": 10.01,
-      "delta": 1.71
+      "app_muf": 8.71,
+      "delta": 0.41,
+      "app_muf_noseason": 10.01,
+      "delta_noseason": 1.71
     },
     {
       "dist_km": 1500,
@@ -1605,8 +1955,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 8.2,
-      "app_muf": 9.87,
-      "delta": 1.67
+      "app_muf": 8.57,
+      "delta": 0.37,
+      "app_muf_noseason": 9.87,
+      "delta_noseason": 1.67
     },
     {
       "dist_km": 1500,
@@ -1614,8 +1966,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 8.7,
-      "app_muf": 9.85,
-      "delta": 1.15
+      "app_muf": 8.55,
+      "delta": -0.15,
+      "app_muf_noseason": 9.85,
+      "delta_noseason": 1.15
     },
     {
       "dist_km": 1500,
@@ -1623,8 +1977,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 9.2,
-      "app_muf": 9.87,
-      "delta": 0.67
+      "app_muf": 8.57,
+      "delta": -0.63,
+      "app_muf_noseason": 9.87,
+      "delta_noseason": 0.67
     },
     {
       "dist_km": 1500,
@@ -1632,8 +1988,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 9.0,
-      "app_muf": 10.01,
-      "delta": 1.01
+      "app_muf": 8.71,
+      "delta": -0.29,
+      "app_muf_noseason": 10.01,
+      "delta_noseason": 1.01
     },
     {
       "dist_km": 1500,
@@ -1641,8 +1999,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 8.0,
-      "app_muf": 10.41,
-      "delta": 2.41
+      "app_muf": 9.11,
+      "delta": 1.11,
+      "app_muf_noseason": 10.41,
+      "delta_noseason": 2.41
     },
     {
       "dist_km": 1500,
@@ -1650,8 +2010,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 7.1,
-      "app_muf": 11.16,
-      "delta": 4.06
+      "app_muf": 9.86,
+      "delta": 2.76,
+      "app_muf_noseason": 11.16,
+      "delta_noseason": 4.06
     },
     {
       "dist_km": 1500,
@@ -1659,8 +2021,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 8.1,
-      "app_muf": 12.31,
-      "delta": 4.21
+      "app_muf": 11.05,
+      "delta": 2.95,
+      "app_muf_noseason": 12.31,
+      "delta_noseason": 4.21
     },
     {
       "dist_km": 1500,
@@ -1668,8 +2032,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 11.7,
-      "app_muf": 13.82,
-      "delta": 2.12
+      "app_muf": 12.65,
+      "delta": 0.95,
+      "app_muf_noseason": 13.82,
+      "delta_noseason": 2.12
     },
     {
       "dist_km": 1500,
@@ -1677,8 +2043,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 16.8,
-      "app_muf": 15.59,
-      "delta": -1.21
+      "app_muf": 14.58,
+      "delta": -2.22,
+      "app_muf_noseason": 15.59,
+      "delta_noseason": -1.21
     },
     {
       "dist_km": 1500,
@@ -1686,8 +2054,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 21.1,
-      "app_muf": 17.45,
-      "delta": -3.65
+      "app_muf": 16.7,
+      "delta": -4.4,
+      "app_muf_noseason": 17.45,
+      "delta_noseason": -3.65
     },
     {
       "dist_km": 1500,
@@ -1695,8 +2065,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 23.0,
-      "app_muf": 19.2,
-      "delta": -3.8
+      "app_muf": 18.76,
+      "delta": -4.24,
+      "app_muf_noseason": 19.2,
+      "delta_noseason": -3.8
     },
     {
       "dist_km": 1500,
@@ -1704,8 +2076,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 23.3,
-      "app_muf": 20.63,
-      "delta": -2.67
+      "app_muf": 20.5,
+      "delta": -2.8,
+      "app_muf_noseason": 20.63,
+      "delta_noseason": -2.67
     },
     {
       "dist_km": 1500,
@@ -1713,8 +2087,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 22.9,
-      "app_muf": 21.56,
-      "delta": -1.34
+      "app_muf": 21.66,
+      "delta": -1.24,
+      "app_muf_noseason": 21.56,
+      "delta_noseason": -1.34
     },
     {
       "dist_km": 1500,
@@ -1722,8 +2098,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 22.8,
-      "app_muf": 21.89,
-      "delta": -0.91
+      "app_muf": 22.07,
+      "delta": -0.73,
+      "app_muf_noseason": 21.89,
+      "delta_noseason": -0.91
     },
     {
       "dist_km": 1500,
@@ -1731,8 +2109,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 22.6,
-      "app_muf": 21.56,
-      "delta": -1.04
+      "app_muf": 21.66,
+      "delta": -0.94,
+      "app_muf_noseason": 21.56,
+      "delta_noseason": -1.04
     },
     {
       "dist_km": 1500,
@@ -1740,8 +2120,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 22.0,
-      "app_muf": 20.62,
-      "delta": -1.38
+      "app_muf": 20.49,
+      "delta": -1.51,
+      "app_muf_noseason": 20.62,
+      "delta_noseason": -1.38
     },
     {
       "dist_km": 1500,
@@ -1749,8 +2131,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 20.6,
-      "app_muf": 19.19,
-      "delta": -1.41
+      "app_muf": 18.75,
+      "delta": -1.85,
+      "app_muf_noseason": 19.19,
+      "delta_noseason": -1.41
     },
     {
       "dist_km": 1500,
@@ -1758,8 +2142,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 18.5,
-      "app_muf": 17.44,
-      "delta": -1.06
+      "app_muf": 16.69,
+      "delta": -1.81,
+      "app_muf_noseason": 17.44,
+      "delta_noseason": -1.06
     },
     {
       "dist_km": 3000,
@@ -1767,8 +2153,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 21.1,
-      "app_muf": 15.55,
-      "delta": -5.55
+      "app_muf": 14.82,
+      "delta": -6.28,
+      "app_muf_noseason": 15.55,
+      "delta_noseason": -5.55
     },
     {
       "dist_km": 3000,
@@ -1776,8 +2164,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 20.8,
-      "app_muf": 13.8,
-      "delta": -7.0
+      "app_muf": 13.41,
+      "delta": -7.39,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": -7.0
     },
     {
       "dist_km": 3000,
@@ -1785,8 +2175,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 19.3,
-      "app_muf": 12.38,
-      "delta": -6.92
+      "app_muf": 12.23,
+      "delta": -7.07,
+      "app_muf_noseason": 12.38,
+      "delta_noseason": -6.92
     },
     {
       "dist_km": 3000,
@@ -1794,8 +2186,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 17.2,
-      "app_muf": 11.38,
-      "delta": -5.82
+      "app_muf": 11.36,
+      "delta": -5.84,
+      "app_muf_noseason": 11.38,
+      "delta_noseason": -5.82
     },
     {
       "dist_km": 3000,
@@ -1803,8 +2197,10 @@
       "ssn": 30,
       "utc_hour": 5,
       "voacap_muf": 15.3,
-      "app_muf": 10.79,
-      "delta": -4.51
+      "app_muf": 10.84,
+      "delta": -4.46,
+      "app_muf_noseason": 10.79,
+      "delta_noseason": -4.51
     },
     {
       "dist_km": 3000,
@@ -1812,8 +2208,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 13.8,
-      "app_muf": 10.52,
-      "delta": -3.28
+      "app_muf": 10.6,
+      "delta": -3.2,
+      "app_muf_noseason": 10.52,
+      "delta_noseason": -3.28
     },
     {
       "dist_km": 3000,
@@ -1821,8 +2219,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 12.3,
-      "app_muf": 10.46,
-      "delta": -1.84
+      "app_muf": 10.55,
+      "delta": -1.75,
+      "app_muf_noseason": 10.46,
+      "delta_noseason": -1.84
     },
     {
       "dist_km": 3000,
@@ -1830,8 +2230,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 11.3,
-      "app_muf": 10.46,
-      "delta": -0.84
+      "app_muf": 10.55,
+      "delta": -0.75,
+      "app_muf_noseason": 10.46,
+      "delta_noseason": -0.84
     },
     {
       "dist_km": 3000,
@@ -1839,8 +2241,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 11.0,
-      "app_muf": 10.53,
-      "delta": -0.47
+      "app_muf": 10.61,
+      "delta": -0.39,
+      "app_muf_noseason": 10.53,
+      "delta_noseason": -0.47
     },
     {
       "dist_km": 3000,
@@ -1848,8 +2252,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 11.3,
-      "app_muf": 10.8,
-      "delta": -0.5
+      "app_muf": 10.85,
+      "delta": -0.45,
+      "app_muf_noseason": 10.8,
+      "delta_noseason": -0.5
     },
     {
       "dist_km": 3000,
@@ -1857,8 +2263,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 11.8,
-      "app_muf": 11.41,
-      "delta": -0.39
+      "app_muf": 11.39,
+      "delta": -0.41,
+      "app_muf_noseason": 11.41,
+      "delta_noseason": -0.39
     },
     {
       "dist_km": 3000,
@@ -1866,8 +2274,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 13.2,
-      "app_muf": 12.43,
-      "delta": -0.77
+      "app_muf": 12.26,
+      "delta": -0.94,
+      "app_muf_noseason": 12.43,
+      "delta_noseason": -0.77
     },
     {
       "dist_km": 3000,
@@ -1875,8 +2285,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 15.6,
-      "app_muf": 13.85,
-      "delta": -1.75
+      "app_muf": 13.46,
+      "delta": -2.14,
+      "app_muf_noseason": 13.85,
+      "delta_noseason": -1.75
     },
     {
       "dist_km": 3000,
@@ -1884,8 +2296,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 18.4,
-      "app_muf": 15.62,
-      "delta": -2.78
+      "app_muf": 14.87,
+      "delta": -3.53,
+      "app_muf_noseason": 15.62,
+      "delta_noseason": -2.78
     },
     {
       "dist_km": 3000,
@@ -1893,8 +2307,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 18.7,
-      "app_muf": 17.57,
-      "delta": -1.13
+      "app_muf": 16.35,
+      "delta": -2.35,
+      "app_muf_noseason": 17.57,
+      "delta_noseason": -1.13
     },
     {
       "dist_km": 3000,
@@ -1902,8 +2318,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 18.2,
-      "app_muf": 19.51,
-      "delta": 1.31
+      "app_muf": 17.74,
+      "delta": -0.46,
+      "app_muf_noseason": 19.51,
+      "delta_noseason": 1.31
     },
     {
       "dist_km": 3000,
@@ -1911,8 +2329,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 17.9,
-      "app_muf": 21.22,
-      "delta": 3.32
+      "app_muf": 18.9,
+      "delta": 1.0,
+      "app_muf_noseason": 21.22,
+      "delta_noseason": 3.32
     },
     {
       "dist_km": 3000,
@@ -1920,8 +2340,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 18.4,
-      "app_muf": 22.48,
-      "delta": 4.08
+      "app_muf": 19.72,
+      "delta": 1.32,
+      "app_muf_noseason": 22.48,
+      "delta_noseason": 4.08
     },
     {
       "dist_km": 3000,
@@ -1929,8 +2351,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 18.9,
-      "app_muf": 23.15,
-      "delta": 4.25
+      "app_muf": 20.14,
+      "delta": 1.24,
+      "app_muf_noseason": 23.15,
+      "delta_noseason": 4.25
     },
     {
       "dist_km": 3000,
@@ -1938,8 +2362,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 19.1,
-      "app_muf": 23.14,
-      "delta": 4.04
+      "app_muf": 20.13,
+      "delta": 1.03,
+      "app_muf_noseason": 23.14,
+      "delta_noseason": 4.04
     },
     {
       "dist_km": 3000,
@@ -1947,8 +2373,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 19.1,
-      "app_muf": 22.45,
-      "delta": 3.35
+      "app_muf": 19.7,
+      "delta": 0.6,
+      "app_muf_noseason": 22.45,
+      "delta_noseason": 3.35
     },
     {
       "dist_km": 3000,
@@ -1956,8 +2384,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 19.4,
-      "app_muf": 21.16,
-      "delta": 1.76
+      "app_muf": 18.87,
+      "delta": -0.53,
+      "app_muf_noseason": 21.16,
+      "delta_noseason": 1.76
     },
     {
       "dist_km": 3000,
@@ -1965,8 +2395,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 20.0,
-      "app_muf": 19.44,
-      "delta": -0.56
+      "app_muf": 17.7,
+      "delta": -2.3,
+      "app_muf_noseason": 19.44,
+      "delta_noseason": -0.56
     },
     {
       "dist_km": 3000,
@@ -1974,8 +2406,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 20.5,
-      "app_muf": 17.5,
-      "delta": -3.0
+      "app_muf": 16.3,
+      "delta": -4.2,
+      "app_muf_noseason": 17.5,
+      "delta_noseason": -3.0
     },
     {
       "dist_km": 3000,
@@ -1983,8 +2417,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 22.3,
-      "app_muf": 20.53,
-      "delta": -1.77
+      "app_muf": 19.56,
+      "delta": -2.74,
+      "app_muf_noseason": 20.53,
+      "delta_noseason": -1.77
     },
     {
       "dist_km": 3000,
@@ -1992,8 +2428,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 22.0,
-      "app_muf": 18.21,
-      "delta": -3.79
+      "app_muf": 17.7,
+      "delta": -4.3,
+      "app_muf_noseason": 18.21,
+      "delta_noseason": -3.79
     },
     {
       "dist_km": 3000,
@@ -2001,8 +2439,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 20.9,
-      "app_muf": 16.34,
-      "delta": -4.56
+      "app_muf": 16.14,
+      "delta": -4.76,
+      "app_muf_noseason": 16.34,
+      "delta_noseason": -4.56
     },
     {
       "dist_km": 3000,
@@ -2010,8 +2450,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 19.5,
-      "app_muf": 15.02,
-      "delta": -4.48
+      "app_muf": 15.0,
+      "delta": -4.5,
+      "app_muf_noseason": 15.02,
+      "delta_noseason": -4.48
     },
     {
       "dist_km": 3000,
@@ -2019,8 +2461,10 @@
       "ssn": 100,
       "utc_hour": 5,
       "voacap_muf": 18.3,
-      "app_muf": 14.24,
-      "delta": -4.06
+      "app_muf": 14.31,
+      "delta": -3.99,
+      "app_muf_noseason": 14.24,
+      "delta_noseason": -4.06
     },
     {
       "dist_km": 3000,
@@ -2028,8 +2472,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 17.2,
-      "app_muf": 13.89,
-      "delta": -3.31
+      "app_muf": 14.0,
+      "delta": -3.2,
+      "app_muf_noseason": 13.89,
+      "delta_noseason": -3.31
     },
     {
       "dist_km": 3000,
@@ -2037,8 +2483,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 16.0,
-      "app_muf": 13.8,
-      "delta": -2.2
+      "app_muf": 13.92,
+      "delta": -2.08,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": -2.2
     },
     {
       "dist_km": 3000,
@@ -2046,8 +2494,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 15.0,
-      "app_muf": 13.8,
-      "delta": -1.2
+      "app_muf": 13.92,
+      "delta": -1.08,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": -1.2
     },
     {
       "dist_km": 3000,
@@ -2055,8 +2505,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 14.5,
-      "app_muf": 13.89,
-      "delta": -0.61
+      "app_muf": 14.0,
+      "delta": -0.5,
+      "app_muf_noseason": 13.89,
+      "delta_noseason": -0.61
     },
     {
       "dist_km": 3000,
@@ -2064,8 +2516,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 14.4,
-      "app_muf": 14.26,
-      "delta": -0.14
+      "app_muf": 14.32,
+      "delta": -0.08,
+      "app_muf_noseason": 14.26,
+      "delta_noseason": -0.14
     },
     {
       "dist_km": 3000,
@@ -2073,8 +2527,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 14.5,
-      "app_muf": 15.06,
-      "delta": 0.56
+      "app_muf": 15.03,
+      "delta": 0.53,
+      "app_muf_noseason": 15.06,
+      "delta_noseason": 0.56
     },
     {
       "dist_km": 3000,
@@ -2082,8 +2538,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 15.4,
-      "app_muf": 16.4,
-      "delta": 1.0
+      "app_muf": 16.19,
+      "delta": 0.79,
+      "app_muf_noseason": 16.4,
+      "delta_noseason": 1.0
     },
     {
       "dist_km": 3000,
@@ -2091,8 +2549,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 17.3,
-      "app_muf": 18.29,
-      "delta": 0.99
+      "app_muf": 17.76,
+      "delta": 0.46,
+      "app_muf_noseason": 18.29,
+      "delta_noseason": 0.99
     },
     {
       "dist_km": 3000,
@@ -2100,8 +2560,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 19.3,
-      "app_muf": 20.61,
-      "delta": 1.31
+      "app_muf": 19.63,
+      "delta": 0.33,
+      "app_muf_noseason": 20.61,
+      "delta_noseason": 1.31
     },
     {
       "dist_km": 3000,
@@ -2109,8 +2571,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 19.9,
-      "app_muf": 23.19,
-      "delta": 3.29
+      "app_muf": 21.58,
+      "delta": 1.68,
+      "app_muf_noseason": 23.19,
+      "delta_noseason": 3.29
     },
     {
       "dist_km": 3000,
@@ -2118,8 +2582,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 19.6,
-      "app_muf": 25.75,
-      "delta": 6.15
+      "app_muf": 23.42,
+      "delta": 3.82,
+      "app_muf_noseason": 25.75,
+      "delta_noseason": 6.15
     },
     {
       "dist_km": 3000,
@@ -2127,8 +2593,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 20.2,
-      "app_muf": 28.0,
-      "delta": 7.8
+      "app_muf": 24.94,
+      "delta": 4.74,
+      "app_muf_noseason": 28.0,
+      "delta_noseason": 7.8
     },
     {
       "dist_km": 3000,
@@ -2136,8 +2604,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 21.0,
-      "app_muf": 29.67,
-      "delta": 8.67
+      "app_muf": 26.02,
+      "delta": 5.02,
+      "app_muf_noseason": 29.67,
+      "delta_noseason": 8.67
     },
     {
       "dist_km": 3000,
@@ -2145,8 +2615,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 21.4,
-      "app_muf": 30.56,
-      "delta": 9.16
+      "app_muf": 26.58,
+      "delta": 5.18,
+      "app_muf_noseason": 30.56,
+      "delta_noseason": 9.16
     },
     {
       "dist_km": 3000,
@@ -2154,8 +2626,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 21.2,
-      "app_muf": 30.54,
-      "delta": 9.34
+      "app_muf": 26.57,
+      "delta": 5.37,
+      "app_muf_noseason": 30.54,
+      "delta_noseason": 9.34
     },
     {
       "dist_km": 3000,
@@ -2163,8 +2637,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 21.1,
-      "app_muf": 29.63,
-      "delta": 8.53
+      "app_muf": 25.99,
+      "delta": 4.89,
+      "app_muf_noseason": 29.63,
+      "delta_noseason": 8.53
     },
     {
       "dist_km": 3000,
@@ -2172,8 +2648,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 21.1,
-      "app_muf": 27.93,
-      "delta": 6.83
+      "app_muf": 24.9,
+      "delta": 3.8,
+      "app_muf_noseason": 27.93,
+      "delta_noseason": 6.83
     },
     {
       "dist_km": 3000,
@@ -2181,8 +2659,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 21.5,
-      "app_muf": 25.66,
-      "delta": 4.16
+      "app_muf": 23.36,
+      "delta": 1.86,
+      "app_muf_noseason": 25.66,
+      "delta_noseason": 4.16
     },
     {
       "dist_km": 3000,
@@ -2190,8 +2670,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 21.9,
-      "app_muf": 23.1,
-      "delta": 1.2
+      "app_muf": 21.52,
+      "delta": -0.38,
+      "app_muf_noseason": 23.1,
+      "delta_noseason": 1.2
     },
     {
       "dist_km": 3000,
@@ -2199,8 +2681,10 @@
       "ssn": 30,
       "utc_hour": 1,
       "voacap_muf": 15.5,
-      "app_muf": 15.55,
-      "delta": 0.05
+      "app_muf": 14.38,
+      "delta": -1.12,
+      "app_muf_noseason": 15.55,
+      "delta_noseason": 0.05
     },
     {
       "dist_km": 3000,
@@ -2208,8 +2692,10 @@
       "ssn": 30,
       "utc_hour": 2,
       "voacap_muf": 13.0,
-      "app_muf": 13.8,
-      "delta": 0.8
+      "app_muf": 12.49,
+      "delta": -0.51,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": 0.8
     },
     {
       "dist_km": 3000,
@@ -2217,8 +2703,10 @@
       "ssn": 30,
       "utc_hour": 3,
       "voacap_muf": 11.7,
-      "app_muf": 12.38,
-      "delta": 0.68
+      "app_muf": 11.02,
+      "delta": -0.68,
+      "app_muf_noseason": 12.38,
+      "delta_noseason": 0.68
     },
     {
       "dist_km": 3000,
@@ -2226,8 +2714,10 @@
       "ssn": 30,
       "utc_hour": 4,
       "voacap_muf": 11.2,
-      "app_muf": 11.38,
-      "delta": 0.18
+      "app_muf": 10.0,
+      "delta": -1.2,
+      "app_muf_noseason": 11.38,
+      "delta_noseason": 0.18
     },
     {
       "dist_km": 3000,
@@ -2235,8 +2725,10 @@
       "ssn": 30,
       "utc_hour": 5,
       "voacap_muf": 10.8,
-      "app_muf": 10.79,
-      "delta": -0.01
+      "app_muf": 9.41,
+      "delta": -1.39,
+      "app_muf_noseason": 10.79,
+      "delta_noseason": -0.01
     },
     {
       "dist_km": 3000,
@@ -2244,8 +2736,10 @@
       "ssn": 30,
       "utc_hour": 6,
       "voacap_muf": 10.7,
-      "app_muf": 10.52,
-      "delta": -0.18
+      "app_muf": 9.15,
+      "delta": -1.55,
+      "app_muf_noseason": 10.52,
+      "delta_noseason": -0.18
     },
     {
       "dist_km": 3000,
@@ -2253,8 +2747,10 @@
       "ssn": 30,
       "utc_hour": 7,
       "voacap_muf": 11.4,
-      "app_muf": 10.46,
-      "delta": -0.94
+      "app_muf": 9.08,
+      "delta": -2.32,
+      "app_muf_noseason": 10.46,
+      "delta_noseason": -0.94
     },
     {
       "dist_km": 3000,
@@ -2262,8 +2758,10 @@
       "ssn": 30,
       "utc_hour": 8,
       "voacap_muf": 12.8,
-      "app_muf": 10.46,
-      "delta": -2.34
+      "app_muf": 9.08,
+      "delta": -3.72,
+      "app_muf_noseason": 10.46,
+      "delta_noseason": -2.34
     },
     {
       "dist_km": 3000,
@@ -2271,8 +2769,10 @@
       "ssn": 30,
       "utc_hour": 9,
       "voacap_muf": 13.6,
-      "app_muf": 10.53,
-      "delta": -3.07
+      "app_muf": 9.15,
+      "delta": -4.45,
+      "app_muf_noseason": 10.53,
+      "delta_noseason": -3.07
     },
     {
       "dist_km": 3000,
@@ -2280,8 +2780,10 @@
       "ssn": 30,
       "utc_hour": 10,
       "voacap_muf": 12.7,
-      "app_muf": 10.8,
-      "delta": -1.9
+      "app_muf": 9.42,
+      "delta": -3.28,
+      "app_muf_noseason": 10.8,
+      "delta_noseason": -1.9
     },
     {
       "dist_km": 3000,
@@ -2289,8 +2791,10 @@
       "ssn": 30,
       "utc_hour": 11,
       "voacap_muf": 10.9,
-      "app_muf": 11.41,
-      "delta": 0.51
+      "app_muf": 10.03,
+      "delta": -0.87,
+      "app_muf_noseason": 11.41,
+      "delta_noseason": 0.51
     },
     {
       "dist_km": 3000,
@@ -2298,8 +2802,10 @@
       "ssn": 30,
       "utc_hour": 12,
       "voacap_muf": 10.5,
-      "app_muf": 12.43,
-      "delta": 1.93
+      "app_muf": 11.06,
+      "delta": 0.56,
+      "app_muf_noseason": 12.43,
+      "delta_noseason": 1.93
     },
     {
       "dist_km": 3000,
@@ -2307,8 +2813,10 @@
       "ssn": 30,
       "utc_hour": 13,
       "voacap_muf": 13.0,
-      "app_muf": 13.85,
-      "delta": 0.85
+      "app_muf": 12.55,
+      "delta": -0.45,
+      "app_muf_noseason": 13.85,
+      "delta_noseason": 0.85
     },
     {
       "dist_km": 3000,
@@ -2316,8 +2824,10 @@
       "ssn": 30,
       "utc_hour": 14,
       "voacap_muf": 18.0,
-      "app_muf": 15.62,
-      "delta": -2.38
+      "app_muf": 14.45,
+      "delta": -3.55,
+      "app_muf_noseason": 15.62,
+      "delta_noseason": -2.38
     },
     {
       "dist_km": 3000,
@@ -2325,8 +2835,10 @@
       "ssn": 30,
       "utc_hour": 15,
       "voacap_muf": 23.4,
-      "app_muf": 17.57,
-      "delta": -5.83
+      "app_muf": 16.63,
+      "delta": -6.77,
+      "app_muf_noseason": 17.57,
+      "delta_noseason": -5.83
     },
     {
       "dist_km": 3000,
@@ -2334,8 +2846,10 @@
       "ssn": 30,
       "utc_hour": 16,
       "voacap_muf": 27.0,
-      "app_muf": 19.51,
-      "delta": -7.49
+      "app_muf": 18.88,
+      "delta": -8.12,
+      "app_muf_noseason": 19.51,
+      "delta_noseason": -7.49
     },
     {
       "dist_km": 3000,
@@ -2343,8 +2857,10 @@
       "ssn": 30,
       "utc_hour": 17,
       "voacap_muf": 28.6,
-      "app_muf": 21.22,
-      "delta": -7.38
+      "app_muf": 20.92,
+      "delta": -7.68,
+      "app_muf_noseason": 21.22,
+      "delta_noseason": -7.38
     },
     {
       "dist_km": 3000,
@@ -2352,8 +2868,10 @@
       "ssn": 30,
       "utc_hour": 18,
       "voacap_muf": 28.4,
-      "app_muf": 22.48,
-      "delta": -5.92
+      "app_muf": 22.49,
+      "delta": -5.91,
+      "app_muf_noseason": 22.48,
+      "delta_noseason": -5.92
     },
     {
       "dist_km": 3000,
@@ -2361,8 +2879,10 @@
       "ssn": 30,
       "utc_hour": 19,
       "voacap_muf": 28.2,
-      "app_muf": 23.15,
-      "delta": -5.05
+      "app_muf": 23.33,
+      "delta": -4.87,
+      "app_muf_noseason": 23.15,
+      "delta_noseason": -5.05
     },
     {
       "dist_km": 3000,
@@ -2370,8 +2890,10 @@
       "ssn": 30,
       "utc_hour": 20,
       "voacap_muf": 28.6,
-      "app_muf": 23.14,
-      "delta": -5.46
+      "app_muf": 23.31,
+      "delta": -5.29,
+      "app_muf_noseason": 23.14,
+      "delta_noseason": -5.46
     },
     {
       "dist_km": 3000,
@@ -2379,8 +2901,10 @@
       "ssn": 30,
       "utc_hour": 21,
       "voacap_muf": 28.6,
-      "app_muf": 22.45,
-      "delta": -6.15
+      "app_muf": 22.44,
+      "delta": -6.16,
+      "app_muf_noseason": 22.45,
+      "delta_noseason": -6.15
     },
     {
       "dist_km": 3000,
@@ -2388,8 +2912,10 @@
       "ssn": 30,
       "utc_hour": 22,
       "voacap_muf": 26.5,
-      "app_muf": 21.16,
-      "delta": -5.34
+      "app_muf": 20.86,
+      "delta": -5.64,
+      "app_muf_noseason": 21.16,
+      "delta_noseason": -5.34
     },
     {
       "dist_km": 3000,
@@ -2397,8 +2923,10 @@
       "ssn": 30,
       "utc_hour": 23,
       "voacap_muf": 23.2,
-      "app_muf": 19.44,
-      "delta": -3.76
+      "app_muf": 18.8,
+      "delta": -4.4,
+      "app_muf_noseason": 19.44,
+      "delta_noseason": -3.76
     },
     {
       "dist_km": 3000,
@@ -2406,8 +2934,10 @@
       "ssn": 30,
       "utc_hour": 24,
       "voacap_muf": 19.1,
-      "app_muf": 17.5,
-      "delta": -1.6
+      "app_muf": 16.55,
+      "delta": -2.55,
+      "app_muf_noseason": 17.5,
+      "delta_noseason": -1.6
     },
     {
       "dist_km": 3000,
@@ -2415,8 +2945,10 @@
       "ssn": 100,
       "utc_hour": 1,
       "voacap_muf": 22.9,
-      "app_muf": 20.53,
-      "delta": -2.37
+      "app_muf": 18.97,
+      "delta": -3.93,
+      "app_muf_noseason": 20.53,
+      "delta_noseason": -2.37
     },
     {
       "dist_km": 3000,
@@ -2424,8 +2956,10 @@
       "ssn": 100,
       "utc_hour": 2,
       "voacap_muf": 20.0,
-      "app_muf": 18.21,
-      "delta": -1.79
+      "app_muf": 16.48,
+      "delta": -3.52,
+      "app_muf_noseason": 18.21,
+      "delta_noseason": -1.79
     },
     {
       "dist_km": 3000,
@@ -2433,8 +2967,10 @@
       "ssn": 100,
       "utc_hour": 3,
       "voacap_muf": 17.2,
-      "app_muf": 16.34,
-      "delta": -0.86
+      "app_muf": 14.54,
+      "delta": -2.66,
+      "app_muf_noseason": 16.34,
+      "delta_noseason": -0.86
     },
     {
       "dist_km": 3000,
@@ -2442,8 +2978,10 @@
       "ssn": 100,
       "utc_hour": 4,
       "voacap_muf": 14.8,
-      "app_muf": 15.02,
-      "delta": 0.22
+      "app_muf": 13.2,
+      "delta": -1.6,
+      "app_muf_noseason": 15.02,
+      "delta_noseason": 0.22
     },
     {
       "dist_km": 3000,
@@ -2451,8 +2989,10 @@
       "ssn": 100,
       "utc_hour": 5,
       "voacap_muf": 13.1,
-      "app_muf": 14.24,
-      "delta": 1.14
+      "app_muf": 12.42,
+      "delta": -0.68,
+      "app_muf_noseason": 14.24,
+      "delta_noseason": 1.14
     },
     {
       "dist_km": 3000,
@@ -2460,8 +3000,10 @@
       "ssn": 100,
       "utc_hour": 6,
       "voacap_muf": 12.3,
-      "app_muf": 13.89,
-      "delta": 1.59
+      "app_muf": 12.07,
+      "delta": -0.23,
+      "app_muf_noseason": 13.89,
+      "delta_noseason": 1.59
     },
     {
       "dist_km": 3000,
@@ -2469,8 +3011,10 @@
       "ssn": 100,
       "utc_hour": 7,
       "voacap_muf": 12.5,
-      "app_muf": 13.8,
-      "delta": 1.3
+      "app_muf": 11.99,
+      "delta": -0.51,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": 1.3
     },
     {
       "dist_km": 3000,
@@ -2478,8 +3022,10 @@
       "ssn": 100,
       "utc_hour": 8,
       "voacap_muf": 13.5,
-      "app_muf": 13.8,
-      "delta": 0.3
+      "app_muf": 11.99,
+      "delta": -1.51,
+      "app_muf_noseason": 13.8,
+      "delta_noseason": 0.3
     },
     {
       "dist_km": 3000,
@@ -2487,8 +3033,10 @@
       "ssn": 100,
       "utc_hour": 9,
       "voacap_muf": 14.2,
-      "app_muf": 13.89,
-      "delta": -0.31
+      "app_muf": 12.08,
+      "delta": -2.12,
+      "app_muf_noseason": 13.89,
+      "delta_noseason": -0.31
     },
     {
       "dist_km": 3000,
@@ -2496,8 +3044,10 @@
       "ssn": 100,
       "utc_hour": 10,
       "voacap_muf": 13.2,
-      "app_muf": 14.26,
-      "delta": 1.06
+      "app_muf": 12.44,
+      "delta": -0.76,
+      "app_muf_noseason": 14.26,
+      "delta_noseason": 1.06
     },
     {
       "dist_km": 3000,
@@ -2505,8 +3055,10 @@
       "ssn": 100,
       "utc_hour": 11,
       "voacap_muf": 11.4,
-      "app_muf": 15.06,
-      "delta": 3.66
+      "app_muf": 13.24,
+      "delta": 1.84,
+      "app_muf_noseason": 15.06,
+      "delta_noseason": 3.66
     },
     {
       "dist_km": 3000,
@@ -2514,8 +3066,10 @@
       "ssn": 100,
       "utc_hour": 12,
       "voacap_muf": 11.2,
-      "app_muf": 16.4,
-      "delta": 5.2
+      "app_muf": 14.6,
+      "delta": 3.4,
+      "app_muf_noseason": 16.4,
+      "delta_noseason": 5.2
     },
     {
       "dist_km": 3000,
@@ -2523,8 +3077,10 @@
       "ssn": 100,
       "utc_hour": 13,
       "voacap_muf": 14.8,
-      "app_muf": 18.29,
-      "delta": 3.49
+      "app_muf": 16.56,
+      "delta": 1.76,
+      "app_muf_noseason": 18.29,
+      "delta_noseason": 3.49
     },
     {
       "dist_km": 3000,
@@ -2532,8 +3088,10 @@
       "ssn": 100,
       "utc_hour": 14,
       "voacap_muf": 21.7,
-      "app_muf": 20.61,
-      "delta": -1.09
+      "app_muf": 19.07,
+      "delta": -2.63,
+      "app_muf_noseason": 20.61,
+      "delta_noseason": -1.09
     },
     {
       "dist_km": 3000,
@@ -2541,8 +3099,10 @@
       "ssn": 100,
       "utc_hour": 15,
       "voacap_muf": 29.0,
-      "app_muf": 23.19,
-      "delta": -5.81
+      "app_muf": 21.95,
+      "delta": -7.05,
+      "app_muf_noseason": 23.19,
+      "delta_noseason": -5.81
     },
     {
       "dist_km": 3000,
@@ -2550,8 +3110,10 @@
       "ssn": 100,
       "utc_hour": 16,
       "voacap_muf": 33.6,
-      "app_muf": 25.75,
-      "delta": -7.85
+      "app_muf": 24.91,
+      "delta": -8.69,
+      "app_muf_noseason": 25.75,
+      "delta_noseason": -7.85
     },
     {
       "dist_km": 3000,
@@ -2559,8 +3121,10 @@
       "ssn": 100,
       "utc_hour": 17,
       "voacap_muf": 35.4,
-      "app_muf": 28.0,
-      "delta": -7.4
+      "app_muf": 27.62,
+      "delta": -7.78,
+      "app_muf_noseason": 28.0,
+      "delta_noseason": -7.4
     },
     {
       "dist_km": 3000,
@@ -2568,8 +3132,10 @@
       "ssn": 100,
       "utc_hour": 18,
       "voacap_muf": 35.0,
-      "app_muf": 29.67,
-      "delta": -5.33
+      "app_muf": 29.68,
+      "delta": -5.32,
+      "app_muf_noseason": 29.67,
+      "delta_noseason": -5.33
     },
     {
       "dist_km": 3000,
@@ -2577,8 +3143,10 @@
       "ssn": 100,
       "utc_hour": 19,
       "voacap_muf": 34.4,
-      "app_muf": 30.56,
-      "delta": -3.84
+      "app_muf": 30.79,
+      "delta": -3.61,
+      "app_muf_noseason": 30.56,
+      "delta_noseason": -3.84
     },
     {
       "dist_km": 3000,
@@ -2586,8 +3154,10 @@
       "ssn": 100,
       "utc_hour": 20,
       "voacap_muf": 34.2,
-      "app_muf": 30.54,
-      "delta": -3.66
+      "app_muf": 30.77,
+      "delta": -3.43,
+      "app_muf_noseason": 30.54,
+      "delta_noseason": -3.66
     },
     {
       "dist_km": 3000,
@@ -2595,8 +3165,10 @@
       "ssn": 100,
       "utc_hour": 21,
       "voacap_muf": 33.6,
-      "app_muf": 29.63,
-      "delta": -3.97
+      "app_muf": 29.62,
+      "delta": -3.98,
+      "app_muf_noseason": 29.63,
+      "delta_noseason": -3.97
     },
     {
       "dist_km": 3000,
@@ -2604,8 +3176,10 @@
       "ssn": 100,
       "utc_hour": 22,
       "voacap_muf": 32.3,
-      "app_muf": 27.93,
-      "delta": -4.37
+      "app_muf": 27.53,
+      "delta": -4.77,
+      "app_muf_noseason": 27.93,
+      "delta_noseason": -4.37
     },
     {
       "dist_km": 3000,
@@ -2613,8 +3187,10 @@
       "ssn": 100,
       "utc_hour": 23,
       "voacap_muf": 29.7,
-      "app_muf": 25.66,
-      "delta": -4.04
+      "app_muf": 24.81,
+      "delta": -4.89,
+      "app_muf_noseason": 25.66,
+      "delta_noseason": -4.04
     },
     {
       "dist_km": 3000,
@@ -2622,8 +3198,10 @@
       "ssn": 100,
       "utc_hour": 24,
       "voacap_muf": 26.2,
-      "app_muf": 23.1,
-      "delta": -3.1
+      "app_muf": 21.84,
+      "delta": -4.36,
+      "app_muf_noseason": 23.1,
+      "delta_noseason": -3.1
     }
   ]
 }

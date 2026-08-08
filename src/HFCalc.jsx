@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   WIRE_GAUGES, WIRE_CORES, computeVF,
   wavelength, toLengths, apexHeightPlan,
@@ -6,6 +6,7 @@ import {
 import {
   geodesics, propagationZone, bearingToCardinal,
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
+  pathMidpoint,
 } from "./propagation.js";
 import {
   SWPC_FLUX_URL, SWPC_KINDEX_URL,
@@ -15,7 +16,7 @@ import {
 import { assessFrequency, frequencyForecast, bestBlocks } from "./freqAdvisor.js";
 import { dtg, formatCommCard, shotLabel, commCardFilename } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
-import { declination, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
+import { declination, magneticLatitude, trueToMagnetic, formatDeclination, norm360, relativeTurn, isDeclinationModelCurrent } from "./magnetic.js";
 // Single source of truth for the app version (also drives the icon badge —
 // regenerate icons with scripts/generate-icons.py after bumping it).
 import { version as APP_VERSION } from "../package.json";
@@ -1495,12 +1496,85 @@ function cachedSFI() {
   } catch (e) { return null; }
 }
 
+// ── SEASON / MONTH SELECTOR ───────────────────────────────────────────────────
+// The ionosphere is seasonal, and the season that matters is the one at the
+// REFLECTION POINT, not the calendar month in some reference time zone. July
+// is summer in Finland and winter in New Zealand, and the mid-latitude
+// "winter anomaly" means daytime foF2 is actually HIGHER in local winter.
+// The advisor therefore takes the month plus the magnetic latitude of the
+// path midpoint and works out the local season itself — the operator only
+// has to say which month it is.
+var MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+function MonthWheel({ month, onMonth }) {
+  var railRef = useRef(null);
+  // Keep the selected month in view when the panel opens on, say, DEC.
+  useEffect(function() {
+    var rail = railRef.current;
+    if (!rail) return;
+    var chip = rail.children[month - 1];
+    if (chip && chip.scrollIntoView) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [month]);
+
+  return (
+    <div>
+      <label style={{ color: T.textSec, fontWeight: 600, fontSize: '0.68rem', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        Month (season at path midpoint)
+      </label>
+      <div
+        ref={railRef}
+        style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 4, marginBottom: 4, WebkitOverflowScrolling: 'touch' }}
+      >
+        {MONTH_ABBR.map(function(name, i) {
+          var m = i + 1;
+          var active = m === month;
+          return (
+            <button
+              key={name}
+              onClick={function() { onMonth(m); }}
+              style={{
+                flex: '0 0 auto', minWidth: 46, padding: '7px 0',
+                background: active ? T.accentDim : T.bg,
+                color: active ? T.accentText : T.textMute,
+                border: '1px solid ' + (active ? T.accent : T.border),
+                borderRadius: 5, fontSize: '0.64rem', fontWeight: 700,
+                letterSpacing: '0.06em', cursor: 'pointer',
+              }}
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// One-line plain-language read of what the season term is doing, so the
+// operator can sanity-check the number instead of trusting it blindly.
+function seasonNote(month, magLatDeg) {
+  if (typeof magLatDeg !== 'number' || !isFinite(magLatDeg)) return null;
+  var abs = Math.abs(magLatDeg);
+  if (abs < 20) return MONTH_ABBR[month - 1] + ' · near-equatorial path — little seasonal swing, high daytime MUF';
+  var south = magLatDeg < 0;
+  // Local winter runs Nov-Feb in the north, May-Aug in the south.
+  var northWinter = (month >= 11 || month <= 2);
+  var winter = south ? (month >= 5 && month <= 8) : northWinter;
+  var summer = south ? northWinter : (month >= 5 && month <= 8);
+  var season = winter ? 'local winter' : summer ? 'local summer' : 'near equinox';
+  var effect = winter ? 'higher daytime MUF, much lower at night (winter anomaly)'
+             : summer ? 'lower daytime MUF, higher at night'
+             : 'seasonal peak — daytime MUF near its annual high';
+  return MONTH_ABBR[month - 1] + ' · ' + season + ' at ' + abs.toFixed(0) + '° magnetic '
+       + (south ? 'south' : 'north') + ' — ' + effect;
+}
+
 // ── FREQUENCY CHECK PANEL ─────────────────────────────────────────────────────
 // Units are normally ASSIGNED their frequencies, so this is a check rather
 // than a picker: "will the frequency I was given actually close this path at
 // this time?" Collapsed by default — it is an aid, not part of the main flow.
 // Runs entirely offline (see freqAdvisor.js).
-function FreqCheckPanel({ results, freqStr }) {
+function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
   var [open, setOpen] = useState(false);
   var [hourMode, setHourMode] = useState('now');
 
@@ -1509,11 +1583,13 @@ function FreqCheckPanel({ results, freqStr }) {
   var utcHour = hourMode === 'now' ? nowUTC : parseFloat(hourMode);
 
   var assess = null;
-  if (results) {
+  if (results && pathCtx) {
     assess = assessFrequency({
       takeoffDeg: results.directive.takeoffDeg,
       layerKm: HOP.F2.hKm,
-      midLon: (results.p1.lon + results.p2.lon) / 2,
+      midLon: pathCtx.midLon,
+      magLatDeg: pathCtx.magLatDeg,
+      month: month,
       utcHour: utcHour,
       sfi: cachedSFI(),
       freqMHz: isNaN(freqMHz) ? null : freqMHz,
@@ -1559,6 +1635,8 @@ function FreqCheckPanel({ results, freqStr }) {
           >
             {hourOpts.map(function(o) { return <option key={o.v} value={o.v}>{o.l}</option>; })}
           </select>
+
+          <MonthWheel month={month} onMonth={onMonth} />
 
           {!assess && (
             <div style={{ color: T.textMute, fontSize: '0.74rem', lineHeight: 1.5 }}>
@@ -1606,6 +1684,11 @@ function FreqCheckPanel({ results, freqStr }) {
                   + ' · foF2 ≈ ' + assess.foF2.toFixed(1) + ' MHz · SSN '
                   + assess.ssn + (assess.usingDefaultSolar ? ' (default — connect once to refine)' : ' (from NOAA)')}
               </div>
+              {pathCtx && seasonNote(month, pathCtx.magLatDeg) && (
+                <div style={{ color: T.textMute, fontSize: '0.66rem', marginTop: 4, lineHeight: 1.5 }}>
+                  {seasonNote(month, pathCtx.magLatDeg)}
+                </div>
+              )}
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 6, lineHeight: 1.45 }}>
                 Planning aid — statistical model, ±15% vs VOACAP. Your SOI/JCEOI assignment governs.
               </div>
@@ -1869,7 +1952,8 @@ function AboutBanner() {
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Frequency</div>
               {feat('Frequency check', 'MUF, FOT and LUF for this path and hour, and a verdict on the frequency you were assigned — with an alternate to request if it will not propagate.', 'f10', 'offline')}
-              {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out.', 'f11', 'offline')}
+              {feat('Season and latitude', 'the ionosphere is not the same in July over Finland as it is in July over New Zealand. Pick the month and the app works out the local season at the point your signal actually reflects off, using the magnetic model it already carries — no lookup tables, no connection.', 'f10b', 'offline')}
+              {feat('24-hour forecast', 'the same numbers in 4-hour Zulu blocks so comm windows can be planned a day out, for any month you pick.', 'f11', 'offline')}
               {feat('Space weather', 'solar flux and Kp from NOAA, which sharpen the frequency numbers. This is the one feature that reaches the network: with a signal it refreshes, without one it uses the last reading it saw or a documented default. Nothing stops working.', 'f12', 'online')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Field workflow</div>
@@ -1888,7 +1972,7 @@ function AboutBanner() {
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Takeoff angle</strong> — curved-earth reflection geometry, α = atan[(cos θ − R/(R+h)) ÷ sin θ]. Davies, <em>Ionospheric Radio</em>; the same geometry behind the ARRL skip-distance treatment.</div>
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Antenna height</strong> — first elevation lobe at H = λ ÷ (4·sin α), then checked against whether your legs can physically reach it.</div>
                   <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>MUF</strong> — the secant law at oblique incidence with Earth curvature, MUF = foF2 ÷ cos φ. FOT = 0.85 × MUF, the standard planning convention.</div>
-                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Ionosphere</strong> — E, F1 and F2 layer heights and hop limits from published values; foF2 day/night behaviour fitted to VOACAP output and cross-checked to stay inside published mid-latitude ionosonde ranges.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Ionosphere</strong> — E, F1 and F2 layer heights and hop limits from published values; foF2 day/night behaviour fitted to VOACAP output and cross-checked to stay inside published mid-latitude ionosonde ranges. Season and magnetic latitude add the winter anomaly, the December/perihelion anomaly and the equatorial equinox peaks, all measured against VOACAP rather than assumed.</div>
                   <div><strong style={{ color: T.textPrim }}>Space weather</strong> — solar flux and planetary K-index from NOAA's Space Weather Prediction Center, when a connection exists.</div>
                 </div>
               </div>
@@ -1899,8 +1983,9 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 15% across 288 hourly samples.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  85 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 12% across 288 hourly samples at mid-latitude.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  114 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -1925,7 +2010,7 @@ function AboutBanner() {
               </div>
 
               {cmp('VOACAP', 'The government-standard HF prediction engine since the 1980s. Accurate and trusted.',
-                'Desktop software for a trained analyst. Nobody runs VOACAP kneeling next to a wire spool. This app\u2019s takeoff angles agree with VOACAP within about 1\u00b0 across 250\u20136000 km, and its MUF within about 15% \u2014 offline, on a phone. Study and reproduction scripts ship with the source.', 'c1')}
+                'Desktop software for a trained analyst. Nobody runs VOACAP kneeling next to a wire spool. This app\u2019s takeoff angles agree with VOACAP within about 1\u00b0 across 250\u20136000 km, and its MUF within about 12% at mid-latitude and 14% worldwide \u2014 offline, on a phone. Study and reproduction scripts ship with the source.', 'c1')}
 
               {cmp('Comm planning suites', 'Planner-grade propagation and link tools at the S-6 level.',
                 'Laptop tools for planners. Their output reaches the operator as a frequency assignment \u2014 not as \u201ccut 19 ft 8 in per leg, apex at 16 ft.\u201d', 'c2')}
@@ -2692,18 +2777,20 @@ function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
 // 24-hour MUF / FOT / LUF in 4-hour Zulu blocks, so an operator can plan comm
 // windows instead of only checking the current moment. Same collapsible
 // pattern as the DAGR and About cards. Fully offline.
-function FreqForecastCard({ results, freqStr }) {
+function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
   var [open, setOpen] = useState(false);
   var freqMHz = parseFloat(freqStr);
   var hasFreq = !isNaN(freqMHz) && freqMHz > 0;
 
   var blocks = null, best = null, usingDefault = true;
-  if (results) {
+  if (results && pathCtx) {
     var now = new Date();
     blocks = frequencyForecast({
       takeoffDeg: results.directive.takeoffDeg,
       layerKm: HOP.F2.hKm,
-      midLon: (results.p1.lon + results.p2.lon) / 2,
+      midLon: pathCtx.midLon,
+      magLatDeg: pathCtx.magLatDeg,
+      month: month,
       sfi: cachedSFI(),
       freqMHz: hasFreq ? freqMHz : null,
       blockHours: 4,
@@ -2744,6 +2831,8 @@ function FreqForecastCard({ results, freqStr }) {
 
       {open && (
         <div style={{ marginTop: 14 }}>
+          <MonthWheel month={month} onMonth={onMonth} />
+
           {!blocks && (
             <div style={{ color: T.textMute, fontSize: '0.76rem', lineHeight: 1.5 }}>
               Enter both locations and press CALCULATE — the forecast needs the path geometry.
@@ -2791,6 +2880,12 @@ function FreqForecastCard({ results, freqStr }) {
               {hasFreq && !best && (
                 <div style={{ color: T.warn, fontSize: '0.74rem', marginTop: 8, lineHeight: 1.5 }}>
                   {freqMHz + ' MHz does not work on this path at any hour. Aim near the FOT column — request a frequency around ' + blocks[0].suggestedMHz.toFixed(1) + '–' + Math.max.apply(null, blocks.map(function(b) { return b.fot; })).toFixed(1) + ' MHz depending on the hour.'}
+                </div>
+              )}
+
+              {pathCtx && seasonNote(month, pathCtx.magLatDeg) && (
+                <div style={{ color: T.textMute, fontSize: '0.66rem', marginTop: 8, lineHeight: 1.5 }}>
+                  {seasonNote(month, pathCtx.magLatDeg)}
                 </div>
               )}
 
@@ -3174,6 +3269,10 @@ export default function HFCalc() {
   var [legEndUnit, setLegEndUnit] = useState('in'); // 'in' | 'ft'
   var [results, setResults] = useState(null);
   var [errors, setErrors] = useState({ loc1: '', loc2: '', freq: '' });
+  // Season for the propagation model. Defaults to the device's current month;
+  // the operator can change it to plan ahead. Shared by the frequency check
+  // and the 24-hour forecast so the two never disagree.
+  var [month, setMonth] = useState(new Date().getMonth() + 1);
 
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
   var effectiveGauge = customGauge.trim() !== '' ? customGauge.trim() : wireGauge;
@@ -3187,6 +3286,16 @@ export default function HFCalc() {
 
   var parsed1 = loc1.trim() ? parseCoords(loc1) : null;
   var parsed2 = loc2.trim() ? parseCoords(loc2) : null;
+
+  // Where the signal actually reflects. Local solar time and magnetic latitude
+  // are both taken here rather than at the station, because that is the patch
+  // of ionosphere the hop bounces off. Memoized because the magnetic latitude
+  // comes out of the World Magnetic Model, which is not free to evaluate.
+  var pathCtx = useMemo(function() {
+    if (!results) return null;
+    var mid = pathMidpoint(results.p1.lat, results.p1.lon, results.p2.lat, results.p2.lon);
+    return { midLat: mid.lat, midLon: mid.lon, magLatDeg: magneticLatitude(mid.lat, mid.lon) };
+  }, [results]);
 
   // Snapshot of the current plan in the shape SavedShots/commCard.js expect.
   // Built from the primary (first) recommended antenna — the one the operator
@@ -3204,7 +3313,9 @@ export default function HFCalc() {
       : null;
     var _fc = assessFrequency({
       takeoffDeg: results.directive.takeoffDeg, layerKm: HOP.F2.hKm,
-      midLon: (results.p1.lon + results.p2.lon) / 2,
+      midLon: pathCtx ? pathCtx.midLon : 0,
+      magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
+      month: month,
       utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
       sfi: cachedSFI(), freqMHz: results.freq,
     });
@@ -3645,7 +3756,7 @@ export default function HFCalc() {
         <InstallBanner pwa={pwa} />
         <AboutBanner />
         <DAGRInstructions />
-        <FreqForecastCard results={results} freqStr={freq} />
+        <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} />
         <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
 
         <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '4px solid #c4442e', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
@@ -3705,7 +3816,7 @@ export default function HFCalc() {
             />
             {errors.freq && <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 5 }}>{errors.freq}</div>}
 
-            <FreqCheckPanel results={results} freqStr={freq} />
+            <FreqCheckPanel results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} />
           </div>
 
           <div>

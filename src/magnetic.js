@@ -90,3 +90,22 @@ export function relativeTurn(fromDeg, toDeg) {
   if (d < -180) d += 360;
   return d;
 }
+
+// Geomagnetic latitude from the WMM dip (inclination) angle: tan(I) = 2·tan(magLat).
+// Ionospheric behaviour tracks MAGNETIC latitude, not geographic — New Zealand
+// at 44 S sits at about 53 S magnetic and behaves like a far higher latitude,
+// which is why a geographic-latitude model gets the southern hemisphere wrong.
+export function magneticLatitude(lat, lon, date) {
+  if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  try {
+    var when = date || new Date();
+    if (when.getTime() >= WMM_VALID_UNTIL.getTime()) when = new Date(WMM_VALID_UNTIL.getTime() - 86400000);
+    var info = geomagnetism.model(when).point([lat, lon]);
+    if (!info || typeof info.incl !== 'number' || !isFinite(info.incl)) return null;
+    return Math.atan(Math.tan(info.incl * Math.PI / 180) / 2) * 180 / Math.PI;
+  } catch (e) {
+    return null;
+  }
+}

@@ -4,6 +4,7 @@
 Project signature: HFCALC-AG-EZK-USMC-v1
 Takeoff-angle study: July 2026 (app v1.4.1) · Model correction and re-validation: v1.5.0
 Frequency (MUF) study: July 2026 (app v1.7.0)
+Season / magnetic-latitude study: August 2026 (app v1.13.0)
 
 ---
 
@@ -40,6 +41,10 @@ feed, and five minutes to rig wire.
   populated cell.
 - **Comparison:** app angle vs the median and min–max envelope of VOACAP
   TANGLE across all F2-mode cells with the same hop count.
+
+Parts 2 and 3 add a second geometry sweep for the frequency model: fixed path
+length, six sites spanning 60 N to 44 S, all twelve months — described in
+those sections.
 
 Reproduce with: `python3 scripts/validation/run_voacap_study.py`
 (raw data: `docs/validation/voacap-results.json`).
@@ -135,7 +140,7 @@ solar minimum noon to 12.2 at solar maximum, 3.2-5.5 MHz at night — sit
 inside published mid-latitude ionosonde ranges, so the fit stays physical
 rather than merely numerical.
 
-**Results.**
+**Results (v1.7 model, no seasonal term).**
 
 | Path | Samples | Mean Δ | Median abs Δ | Mean abs error | Within 20% |
 |---|---|---|---|---|---|
@@ -144,27 +149,95 @@ rather than merely numerical.
 | 3000 km | 96 | -0.83 MHz | 3.04 MHz | 15.8% | 67% |
 | **All** | **288** | — | — | **14.6%** | **73%** |
 
+Mean absolute error **14.6%**, median **11.9%**, with **73%** of samples
+within 20%. Residual bias was small and changed sign with distance, i.e.
+there was no systematic over- or under-estimate to correct. The dominant
+remaining error source was the absent seasonal term: the app returned one
+number where VOACAP separates June from December. That is what Part 3
+addresses.
+
+## Part 3 — Season and magnetic latitude (v1.13.0)
+
+The v1.7 foF2 curve was fitted at one mid-northern site and carried no month
+term, which is wrong in two ways an operator would notice. The season
+reverses between hemispheres — July is summer in Finland and winter in New
+Zealand — and at mid-latitudes the daytime behaviour is counter-intuitive:
+foF2 runs HIGHER in local winter (the classic winter anomaly) while at night
+the ordering flips.
+
+**Method.** Six sites spanning 60 N to 44 S x all twelve months x 24 UTC
+hours x two solar levels (SSN 30, 100), on a fixed 1500 km due-east path so
+the secant factor is constant and every MUF difference is a foF2 difference.
+Reproduce with `python3 scripts/validation/run_seasonal_study.py`, then
+`--eval` to re-score the model against the collected data.
+
+**What the data showed.** Three separable effects:
+
+1. **Magnetic latitude.** foF2 peaks near the magnetic equator and falls
+   toward the poles. It tracks *magnetic* latitude, not geographic — which is
+   why New Zealand at 44 S behaves like roughly 50 S. The app derives this
+   on-device from the World Magnetic Model dip angle
+   (`magneticLatitude()` in `src/magnetic.js`, tan I = 2 tan λm).
+2. **The December/annual anomaly.** foF2 runs high around January at every
+   latitude, from Earth being nearer the Sun at perihelion.
+3. **Local season**, which reverses between hemispheres and between day and
+   night, collapsing to equinox peaks near the equator.
+
+**Implementation.** `seasonLatitudeFactor()` in `src/freqAdvisor.js`
+multiplies the diurnal foF2 curve. It takes the month from the operator (a
+12-month selector, defaulted to the device date) and the magnetic latitude at
+the **path midpoint** — the reflection point, the same place local solar time
+is already taken. With neither supplied it returns exactly 1, so older call
+paths are unchanged.
+
+**Results — worldwide, mean absolute MUF error vs VOACAP:**
+
+| Site | Magnetic lat | Before | After |
+|---|---|---|---|
+| 60 N (Finland) | 60.1 | 21.9% | **13.2%** |
+| 44 N (Michigan) | 51.3 | 12.8% | **11.7%** |
+| 34 N (Cherry Point) | 39.8 | 12.0% | 11.9% |
+| 10 N (tropics) | 10.0 | 26.1% | **22.7%** |
+| 34 S | -44.2 | 19.0% | **14.4%** |
+| 44 S (New Zealand) | -49.8 | 15.8% | **11.7%** |
+| **All sites** | — | **17.9%** | **14.3%** |
+
+**Regression check.** Re-running the Part 2 matrix — the mid-latitude paths
+the original coefficients were fitted to — with the season term active:
+
+| Path | Samples | Mean Δ | Median abs Δ | Mean abs error | Within 20% |
+|---|---|---|---|---|---|
+| 500 km | 96 | -0.10 MHz | 0.55 MHz | 10.9% | 85% |
+| 1500 km | 96 | -1.03 MHz | 1.24 MHz | 11.4% | 86% |
+| 3000 km | 96 | -1.95 MHz | 2.65 MHz | 14.9% | 70% |
+| **All** | **288** | — | — | **12.4%** | **81%** |
+
 ![MUF comparison](validation/muf-comparison.png)
 
-Mean absolute error **14.6%**, median **11.9%**, with **73%** of samples
-within 20% and **90%** within 30%. Residual bias is small and changes sign
-with distance (+0.36 MHz at 500 km, -0.83 MHz at 3000 km), i.e. there is no
-systematic over- or under-estimate to correct.
+So the correction improved the mid-latitude case as well: **14.6% → 12.4%**
+mean absolute error, **73% → 81%** of samples within 20%. It is an
+improvement everywhere and a regression nowhere.
 
-**Interpretation.** This is a materially looser fit than the takeoff-angle
-result, and deliberately reported as such. The dominant error source is the
-absent seasonal term: the app returns one number where VOACAP separates June
-from December. For the tool's actual job — ruling an assigned frequency
-GOOD / MARGINAL / ABOVE MUF / BELOW LUF — a ~15% MUF error moves the verdict
-only for frequencies already near a boundary, and the FOT convention
-(0.85 x MUF) absorbs part of it. The UI states the tolerance and defers to
-the unit's SOI/JCEOI assignment.
+**Interpretation.** This remains a materially looser fit than the
+takeoff-angle result, and is deliberately reported as such. The worst
+residual is the near-equatorial case (22.7%), where equatorial-anomaly
+structure is genuinely not captured by a smooth global fit. For the tool's
+actual job — ruling an assigned frequency GOOD / MARGINAL / ABOVE MUF /
+BELOW LUF — a ~12% MUF error moves the verdict only for frequencies already
+near a boundary, and the FOT convention (0.85 x MUF) absorbs part of it. The
+UI states the tolerance and defers to the unit's SOI/JCEOI assignment.
 
 ## Limitations
 
-- The frequency advisor has no seasonal or latitude term and takes a single
+- The frequency advisor's season/latitude term is a smooth global fit, not
+  the CCIR coefficient maps VOACAP uses. It carries no sporadic-E, no storm
+  or absorption events and no auroral-zone term, and takes a single
   solar-activity number; offline it uses a documented default (SSN 70) until
-  the app has been online once. Expect ~15% MUF accuracy, not VOACAP parity.
+  the app has been online once. Expect ~12% MUF accuracy at mid-latitudes and
+  ~20% near the magnetic equator, not VOACAP parity.
+- The season correction needs the month. The app defaults it to the device
+  clock, but a device with a wrong date will bias the estimate — worst case
+  by roughly 20% if it is half a year out at a high-latitude site.
 - VOACAP itself is a statistical monthly-median model, not ground truth;
   agreement with VOACAP demonstrates consistency with the planning standard,
   not with any specific day's ionosphere.

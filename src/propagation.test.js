@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import {
   EARTH_RADIUS_KM, geodesics, initialBearing, propagationZone, bearingToCardinal,
   calcTakeoffAngle, groundWaveMultiplier, chordalHopPossible, HOP, calcHops,
+  pathMidpoint,
 } from './propagation.js';
 
 function approx(actual, expected, tol, msg) {
@@ -214,4 +215,49 @@ test('calcHops: single hop short path', function() {
     assert.equal(layer.reflectFracs.length, 0);
     assert.equal(layer.bounceTerrainNote, null);
   });
+});
+
+
+// ── PATH MIDPOINT ────────────────────────────────────────────────────────────
+// The reflection point drives local solar time and magnetic latitude in the
+// frequency advisor, so it has to survive the antimeridian.
+
+test('pathMidpoint: halfway along a meridian', function() {
+  var m = pathMidpoint(0, 0, 60, 0);
+  approx(m.lat, 30, 1e-6);
+  approx(m.lon, 0, 1e-6);
+});
+
+test('pathMidpoint: equatorial path splits the longitude', function() {
+  var m = pathMidpoint(0, -80, 0, -60);
+  approx(m.lat, 0, 1e-6);
+  approx(m.lon, -70, 1e-6);
+});
+
+test('pathMidpoint: does not fly to the far side of the planet across the dateline', function() {
+  // Guam to Hawaii. A naive (lon1+lon2)/2 gives about -13 deg — the middle of
+  // Africa — which would shift local solar time by roughly twelve hours.
+  var m = pathMidpoint(13.4, 144.8, 21.3, -157.9);
+  assert.ok(m.lon > 160 || m.lon < -170, 'midpoint should stay in the Pacific, got ' + m.lon);
+  assert.ok(m.lat > 13 && m.lat < 25, 'latitude should stay between the endpoints, got ' + m.lat);
+  // Exactly on the dateline
+  var d = pathMidpoint(0, 170, 0, -170);
+  assert.ok(Math.abs(Math.abs(d.lon) - 180) < 1e-6, 'expected +/-180, got ' + d.lon);
+});
+
+test('pathMidpoint: symmetric and idempotent for a zero-length path', function() {
+  var a = pathMidpoint(34.9, -76.88, 51.5, -0.13);
+  var b = pathMidpoint(51.5, -0.13, 34.9, -76.88);
+  approx(a.lat, b.lat, 1e-9);
+  approx(a.lon, b.lon, 1e-9);
+  var same = pathMidpoint(34.9, -76.88, 34.9, -76.88);
+  approx(same.lat, 34.9, 1e-6);
+  approx(same.lon, -76.88, 1e-6);
+});
+
+test('pathMidpoint: lies on the great circle, not the average of endpoints', function() {
+  // A high-latitude east-west path bulges poleward of the endpoint latitudes.
+  var m = pathMidpoint(60, -20, 60, 20);
+  assert.ok(m.lat > 60.5, 'great-circle midpoint should sit north of 60, got ' + m.lat);
+  approx(m.lon, 0, 1e-6);
 });

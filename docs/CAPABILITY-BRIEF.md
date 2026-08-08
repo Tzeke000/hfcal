@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.12.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.13.0 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -45,12 +45,17 @@ coordinates and a frequency into a complete, buildable antenna solution:
   the dial and a turn-left/turn-right cue. Works with no calculation run, so it
   is usable as a standalone compass, and is labelled as an aid to a lensatic
   rather than a replacement.
-- **Frequency check** — given the path and time of day, estimates MUF / FOT /
-  LUF offline and rules on whether the assigned frequency will close the
-  link, with an alternate to request if it will not.
+- **Frequency check** — given the path, time of day and month, estimates
+  MUF / FOT / LUF offline and rules on whether the assigned frequency will
+  close the link, with an alternate to request if it will not. The
+  ionospheric model is season- and latitude-aware: it works out the local
+  season at the path's reflection point from the World Magnetic Model carried
+  on the device, so a July shot in Finland and a July shot in New Zealand get
+  opposite corrections.
 - **24-hour frequency forecast** — MUF/FOT/LUF in 4-hour Zulu blocks with a
   verdict per block, so comm windows can be planned a day ahead rather than
-  checked one moment at a time.
+  checked one moment at a time. A 12-month selector lets the operator plan
+  for a future month, not just today.
 - **Saved shots and comm-card export** — keep the day's link plans on the
   device and export any of them as a plain-text comm card.
 
@@ -74,8 +79,11 @@ coordinates and a frequency into a complete, buildable antenna solution:
   inside VOACAP's own environmental spread at every distance. Full
   methodology and reproduction scripts: `docs/VALIDATION.md`. The frequency
   model was validated the same way against VOACAP's MUF output over 288
-  hourly samples: 14.6% mean error, 73% within 20%.
-- **Engineered, not improvised:** automated physics test suite (96 tests
+  hourly samples: 12.4% mean error, 81% within 20%. A third study extended
+  that worldwide — six sites from 60 N to 44 S across all twelve months —
+  to fit the season and magnetic-latitude terms, taking global MUF error
+  from 17.9% to 14.3% while improving the mid-latitude case as well.
+- **Engineered, not improvised:** automated physics test suite (114 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

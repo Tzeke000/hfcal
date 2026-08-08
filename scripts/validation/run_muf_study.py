@@ -7,8 +7,9 @@ against the app's offline estimate:
     foF2(SSN, local solar time)  x  secant factor(takeoff angle, layer height)
 
 for a set of path distances, hour by hour, in June and December at two solar
-activity levels. The app's model has NO seasonal term by design, so the
-June/December spread is reported explicitly as model error rather than hidden.
+activity levels. Since v1.13 the app also applies a season/magnetic-latitude
+correction (see run_seasonal_study.py), so this script mirrors that term too
+and reports the June/December behaviour with and without it.
 
 Outputs (docs/validation/):
   muf-results.json          raw hourly comparison
@@ -32,6 +33,10 @@ from run_voacap_study import (  # noqa: E402
 )
 
 DISTANCES_KM = [500, 1500, 3000]
+# Geomagnetic latitude of the Twentynine Palms path midpoint, from the WMM dip
+# angle (magneticLatitude() in src/magnetic.js). The paths run due east and are
+# short enough that a single value covers all three distances.
+MAG_LAT = 40.1
 CONDITIONS = [(6, 30), (6, 100), (12, 30), (12, 100)]
 
 
@@ -53,10 +58,38 @@ def diurnal(local_hour):
     return (0.5 * (1 + math.cos(2 * math.pi * (local_hour - 12.8) / 24))) ** 1.6
 
 
-def est_fof2(ssn, local_hour):
+# Season/latitude correction — mirrors seasonLatitudeFactor() in freqAdvisor.js.
+SEASON_LAT_SCALE = 60.0
+SEASON_K_LAT = 0.10
+SEASON_K_ANNUAL = 0.05
+SEASON_K_NIGHT = 0.20
+SEASON_K_DAY = 0.05
+SEASON_K_EQUINOX = 0.10
+
+
+def season_lat_factor(local_hour, month, mag_lat_deg):
+    if month is None and mag_lat_deg is None:
+        return 1.0
+    ml_n = min(abs(mag_lat_deg) / SEASON_LAT_SCALE, 1.0) if mag_lat_deg is not None else 0.5
+    lat_f = (1 + SEASON_K_LAT * (1 - 2 * ml_n)) if mag_lat_deg is not None else 1.0
+    if month is None:
+        return max(0.2, lat_f)
+    day = diurnal(local_hour)
+    night = 1 - day
+    summer_month = 1 if (mag_lat_deg is not None and mag_lat_deg < 0) else 7
+    local = math.cos(2 * math.pi * (month - summer_month) / 12)
+    seas_f = (1
+              + SEASON_K_ANNUAL * math.cos(2 * math.pi * (month - 1) / 12)
+              + ml_n * local * (night * SEASON_K_NIGHT - day * SEASON_K_DAY)
+              + SEASON_K_EQUINOX * (1 - ml_n) * math.cos(4 * math.pi * (month - 3.5) / 12))
+    return max(0.2, lat_f) * max(0.4, seas_f)
+
+
+def est_fof2(ssn, local_hour, month=None, mag_lat_deg=None):
     noon = 6.8 + 0.036 * ssn
     night = 0.45 * noon
-    return night + (noon - night) * diurnal(local_hour)
+    base = night + (noon - night) * diurnal(local_hour)
+    return base * season_lat_factor(local_hour, month, mag_lat_deg)
 
 
 def secant_factor(takeoff_deg, layer_km):
@@ -65,9 +98,10 @@ def secant_factor(takeoff_deg, layer_km):
     return 1.0 / math.sqrt(1 - sin_phi * sin_phi)
 
 
-def app_muf(dist_km, utc_hour, ssn, mid_lon):
+def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat_deg=None):
     lst = local_solar_time(utc_hour, mid_lon)
-    return est_fof2(ssn, lst) * secant_factor(app_takeoff_deg(dist_km), F2_HEIGHT_KM)
+    return (est_fof2(ssn, lst, month, mag_lat_deg)
+            * secant_factor(app_takeoff_deg(dist_km), F2_HEIGHT_KM))
 
 
 def parse_voacap_muf(path):
@@ -93,10 +127,13 @@ def run():
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=120)
             vmuf = parse_voacap_muf(os.path.join(RUN_DIR, 'voacapx.out'))
             for hour, muf in sorted(vmuf.items()):
-                a = app_muf(dist, hour, ssn, mid_lon)
+                a = app_muf(dist, hour, ssn, mid_lon, month, MAG_LAT)
+                plain = app_muf(dist, hour, ssn, mid_lon)
                 rows.append({'dist_km': dist, 'month': month, 'ssn': ssn,
                              'utc_hour': hour, 'voacap_muf': muf,
-                             'app_muf': round(a, 2), 'delta': round(a - muf, 2)})
+                             'app_muf': round(a, 2), 'delta': round(a - muf, 2),
+                             'app_muf_noseason': round(plain, 2),
+                             'delta_noseason': round(plain - muf, 2)})
 
     # Summaries
     summary = []
@@ -117,6 +154,12 @@ def run():
               f"mean |Δ| {summary[-1]['mean_abs_pct']:.1f}%  "
               f"within 20%: {summary[-1]['within_20pct']}%")
 
+    # Regression guard: the season term must not make the mid-latitude case
+    # (the one the original coefficients were fitted to) worse.
+    prior = [abs(r['delta_noseason']) / r['voacap_muf'] * 100 for r in rows if r['voacap_muf'] > 0]
+    print(f"without season term: mean |delta| {statistics.mean(prior):.1f}%  "
+          f"within 20%: {round(100 * sum(1 for x in prior if x <= 20) / len(prior))}%")
+
     allrel = [abs(r['delta']) / r['voacap_muf'] * 100 for r in rows if r['voacap_muf'] > 0]
     overall = {
         'n': len(rows),
@@ -124,6 +167,8 @@ def run():
         'median_abs_pct': round(statistics.median(allrel), 1),
         'within_20pct': round(100 * sum(1 for r in allrel if r <= 20) / len(allrel)),
         'within_30pct': round(100 * sum(1 for r in allrel if r <= 30) / len(allrel)),
+        'mean_abs_pct_noseason': round(statistics.mean(prior), 1),
+        'within_20pct_noseason': round(100 * sum(1 for x in prior if x <= 20) / len(prior)),
     }
     print('OVERALL:', overall)
 

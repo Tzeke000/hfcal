@@ -52,6 +52,24 @@ export function geodesics(lat1, lon1, lat2, lon2) {
   };
 }
 
+// Great-circle midpoint — the ionospheric reflection point for a single hop,
+// and therefore the place whose local solar time and magnetic latitude drive
+// the propagation model. Computed on the sphere rather than by averaging the
+// two coordinates: a plain average puts a path that crosses the antimeridian
+// (e.g. Guam to Hawaii) on the opposite side of the planet, which silently
+// shifts local solar time by twelve hours.
+export function pathMidpoint(lat1, lon1, lat2, lon2) {
+  var D = Math.PI / 180;
+  var dLon = (lon2 - lon1) * D;
+  var la1 = lat1 * D, la2 = lat2 * D;
+  var bx = Math.cos(la2) * Math.cos(dLon);
+  var by = Math.cos(la2) * Math.sin(dLon);
+  var lat = Math.atan2(Math.sin(la1) + Math.sin(la2),
+                       Math.sqrt((Math.cos(la1) + bx) * (Math.cos(la1) + bx) + by * by));
+  var lon = lon1 * D + Math.atan2(by, Math.cos(la1) + bx);
+  return { lat: lat / D, lon: ((lon / D + 540) % 360) - 180 };
+}
+
 export function propagationZone(distKm) {
   if (distKm < 80) return 'groundwave';
   if (distKm < 500) return 'nvis';

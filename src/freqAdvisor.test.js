@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_SSN, sfiToSSN, localSolarTime, diurnalFactor, estimateFoF2,
   secantFactor, classifyFrequency, assessFrequency,
-  FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO,
+  FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO, seasonLatitudeFactor,
   frequencyForecast, bestBlocks,
 } from './freqAdvisor.js';
 
@@ -174,4 +174,91 @@ test('bestBlocks: ranks usable blocks, null when nothing works', function() {
   var f2 = frequencyForecast({ takeoffDeg: 80, layerKm: 360, midLon: -84, sfi: null, freqMHz: 45 });
   assert.equal(bestBlocks(f2, 45), null);
   assert.equal(bestBlocks(null, 7), null);
+});
+
+
+// ── SEASON + LATITUDE ────────────────────────────────────────────────────────
+// Behaviour pinned against the VOACAP seasonal study (docs/VALIDATION.md) and
+// the textbook anomalies it reproduces.
+
+test('seasonLatitudeFactor: no-op when month and latitude are unknown', function() {
+  assert.equal(seasonLatitudeFactor(12, undefined, undefined), 1);
+  assert.equal(seasonLatitudeFactor(12, null, null), 1);
+  assert.equal(seasonLatitudeFactor(12, 13, 40), seasonLatitudeFactor(12, undefined, 40),
+    'out-of-range month is ignored, not clamped');
+  // Backwards compatible: estimateFoF2 with no season args is unchanged.
+  assert.equal(estimateFoF2(70, 12), estimateFoF2(70, 12, undefined, undefined));
+});
+
+test('seasonLatitudeFactor: winter anomaly — daytime foF2 higher in local winter', function() {
+  // 55 deg magnetic north, local noon. January (winter) must beat July.
+  var jan = seasonLatitudeFactor(12, 1, 55);
+  var jul = seasonLatitudeFactor(12, 7, 55);
+  assert.ok(jan > jul, 'northern mid-lat noon: Jan ' + jan.toFixed(3) + ' should exceed Jul ' + jul.toFixed(3));
+});
+
+test('seasonLatitudeFactor: night ordering reverses — summer nights are better', function() {
+  var jan = seasonLatitudeFactor(0, 1, 55);   // northern winter night
+  var jul = seasonLatitudeFactor(0, 7, 55);   // northern summer night
+  assert.ok(jul > jan, 'northern mid-lat midnight: Jul should exceed Jan');
+});
+
+test('seasonLatitudeFactor: hemispheres are mirrored', function() {
+  // New Zealand vs Finland in the same month must land on opposite sides of
+  // the seasonal cycle — this is the whole reason the model takes latitude.
+  var finlandJan = seasonLatitudeFactor(12, 1, 55);
+  var nzJan = seasonLatitudeFactor(12, 1, -55);
+  assert.ok(finlandJan > nzJan, 'January noon: northern winter should beat southern summer');
+  var finlandJul = seasonLatitudeFactor(12, 7, 55);
+  var nzJul = seasonLatitudeFactor(12, 7, -55);
+  assert.ok(nzJul > finlandJul, 'July noon: southern winter should beat northern summer');
+});
+
+test('seasonLatitudeFactor: the day/night reversal is mid-latitude only', function() {
+  // The winter anomaly is a mid- and high-latitude effect: noon peaks in local
+  // winter while midnight peaks in local summer. Near the magnetic equator
+  // that reversal disappears and the year is governed by the equinox peaks
+  // instead, so day and night move together.
+  function ratio(hour, lat) { return seasonLatitudeFactor(hour, 1, lat) / seasonLatitudeFactor(hour, 7, lat); }
+  assert.ok(ratio(12, 55) > 1, 'mid-lat noon should favour January (northern winter)');
+  assert.ok(ratio(0, 55) < 1, 'mid-lat midnight should favour July (northern summer)');
+  assert.ok(ratio(12, 5) > 1 && ratio(0, 5) > 1, 'equatorial day and night should move together');
+  // And the size of the reversal grows with latitude.
+  function split(lat) { return Math.abs(Math.log(ratio(12, lat)) - Math.log(ratio(0, lat))); }
+  assert.ok(split(60) > split(40), 'reversal should widen toward the pole');
+  assert.ok(split(40) > split(10), 'reversal should narrow toward the equator');
+});
+
+test('seasonLatitudeFactor: low latitudes run a higher foF2 than high ones', function() {
+  // Averaged over the year so the seasonal term cannot carry the comparison.
+  function annual(lat) {
+    var s = 0;
+    for (var m = 1; m <= 12; m++) s += seasonLatitudeFactor(12, m, lat);
+    return s / 12;
+  }
+  assert.ok(annual(5) > annual(60), 'equatorial annual mean should exceed polar');
+});
+
+test('seasonLatitudeFactor: stays in a physical range everywhere', function() {
+  for (var lat = -80; lat <= 80; lat += 5) {
+    for (var m = 1; m <= 12; m++) {
+      for (var h = 0; h < 24; h += 3) {
+        var f = seasonLatitudeFactor(h, m, lat);
+        assert.ok(f > 0.5 && f < 1.6, 'factor out of range at lat ' + lat + ' month ' + m + ' hour ' + h + ': ' + f);
+      }
+    }
+  }
+});
+
+test('assessFrequency and frequencyForecast carry season through', function() {
+  var base = { takeoffDeg: 8, layerKm: 360, midLon: 25, utcHour: 10, sfi: null, freqMHz: 14.2 };
+  var jan = assessFrequency(Object.assign({}, base, { month: 1, magLatDeg: 55 }));
+  var jul = assessFrequency(Object.assign({}, base, { month: 7, magLatDeg: 55 }));
+  assert.ok(jan.muf !== jul.muf, 'month must change the MUF');
+  var none = assessFrequency(base);
+  assert.equal(none.muf, assessFrequency(Object.assign({}, base, { month: null, magLatDeg: null })).muf);
+
+  var fJan = frequencyForecast({ takeoffDeg: 8, layerKm: 360, midLon: 25, sfi: null, month: 1, magLatDeg: 55 });
+  var fJul = frequencyForecast({ takeoffDeg: 8, layerKm: 360, midLon: 25, sfi: null, month: 7, magLatDeg: 55 });
+  assert.ok(fJan.some(function(b, i) { return b.muf !== fJul[i].muf; }), 'forecast must respond to month');
 });
