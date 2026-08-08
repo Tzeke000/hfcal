@@ -1,7 +1,7 @@
 # HF Field Antenna Calculator — Capability Brief
 
 **Developer:** Cpl Angeles-Gonzalez, Ezekiel S., USMC
-**Version:** 1.14.0 · **Live demo:** https://tzeke000.github.io/hfcal/
+**Version:** 1.14.1 · **Live demo:** https://tzeke000.github.io/hfcal/
 **Classification:** UNCLASSIFIED — no CUI, no PII, no network dependency
 
 ---
@@ -92,7 +92,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (127 tests
+- **Engineered, not improvised:** automated physics test suite (137 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

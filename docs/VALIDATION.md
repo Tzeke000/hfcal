@@ -8,6 +8,7 @@ Season / magnetic-latitude study: August 2026 (app v1.13.0)
 Layer table study: August 2026 (app v1.13.1)
 Hemisphere-to-hemisphere study: August 2026 (app v1.13.2)
 Solar-geometry model rebuild: August 2026 (app v1.14.0)
+Terminator and path-sampling study: August 2026 (app v1.14.1)
 
 ---
 
@@ -478,6 +479,94 @@ curve — which had already drifted apart once. They now share
 --check` verifies that mirror against `src/freqAdvisor.js` directly (currently
 exact to 1e-9 MHz across 80 cases).
 
+## Part 7 — Terminator, and which point on the path (v1.14.1)
+
+Two things the v1.14.0 rebuild left unchecked.
+
+### Sunrise, sunset and dusk in both hemispheres
+
+The whole model rests on the terminator being in the right place, and that had
+only been tested indirectly through foF2. Checked directly:
+
+| Latitude | Mar | Jun | Sep | Dec |
+|---|---|---|---|---|
+| 60 N | 11.39 | 18.44 | 12.47 | 5.56 |
+| 34 N | 11.76 | 14.26 | 12.19 | 9.74 |
+| 0 | 12.01 | 12.01 | 12.01 | 12.01 |
+| 34 S | 12.24 | 9.74 | 11.81 | 14.26 |
+| 60 S | 12.61 | 5.56 | 11.52 | 18.44 |
+
+Geometric day length, hours. The hemispheres mirror exactly — 34 N in June
+(14.26 h) equals 34 S in December to the digit, and sunrise/sunset land at
+04:53 / 19:08 local solar time in both. Solar noon sits at 12:00 at every
+latitude and month tested. The equator holds 12 h all year.
+
+Against published sunrise-to-sunset times the model runs about 10 minutes
+short at 34° and 23 minutes short at 60°. That is the expected offset:
+published times include atmospheric refraction and the sun's disc, which
+lengthen the *visible* day but do not change ionisation. Ten tests now pin day
+length, hemispheric mirroring, terminator symmetry about noon, and the shape
+of the dawn rise and dusk decay.
+
+**Dusk specifically.** The recombination lag is what keeps an evening path
+open, so it is tested as a shape, not a number: foF2 must fall monotonically
+after sunset, stay above 60% of its sunset value an hour later, and never drop
+below 45% within two hours. That is the behaviour v1.13.2 got wrong.
+
+### The layer is lit before the ground is
+
+At 300 km the F2 layer climbs out of Earth's shadow while the sun is still
+~17° below the horizon underneath it — it is lit while sin χ ≥ R/(R+h), i.e.
+down to cos χ = −0.297. The model evaluates cos χ at the *ground*, so its
+terminator is nominally late.
+
+Adding the geometrically correct offset makes the fit **worse**:
+
+| Shadow offset | Mid-lat | Seasonal | Interhemi | Weighted |
+|---|---|---|---|---|
+| 0.000 (ground) | 12.35% | 13.34% | 13.44% | **13.28%** |
+| 0.100 | 12.07% | 13.42% | 14.11% | 13.42% |
+| 0.297 (300 km layer) | 13.65% | 16.75% | 16.49% | 16.51% |
+
+The 1.2-hour recombination lag was fitted *with* the ground terminator and
+already absorbs the early illumination; adding the offset double-counts it.
+Not adopted — recorded here so the question is not reopened blindly.
+
+### One point on the path, or both ends?
+
+The natural expectation is that the app should use your station's local time
+*and* the target's. Measured, on the same 4320 samples:
+
+| Sampling | Mid-lat | Seasonal | Interhemi | Weighted |
+|---|---|---|---|---|
+| Midpoint only | 12.35% | 13.34% | **13.44%** | **13.28%** |
+| Both endpoints averaged | **11.86%** | 13.28% | 15.56% | 13.49% |
+| Endpoints + midpoint | 11.84% | **13.21%** | 15.27% | 13.39% |
+| Lowest of three | 13.90% | 14.39% | 16.25% | 14.60% |
+| Highest of three | 11.77% | 13.46% | 16.15% | 13.71% |
+
+Averaging the ends helps short paths slightly and hurts long ones badly. That
+is the physics: **on a long circuit the signal reflects off the middle, not
+off either station**, so the midpoint is the right place to ask about the F2
+layer. Midpoint retained for MUF.
+
+### But the ends do matter — for the LUF
+
+The two questions have different geometry, which the model had been conflating.
+D-layer absorption happens at 60–90 km, where the ray *leaves and re-enters*
+the atmosphere — near each terminal, not at the reflection point. So the LUF
+now averages illumination over the two endpoints while the MUF stays on the
+midpoint. On a Guam–Cherry Point path at 04Z the midpoint is dark but Guam is
+in full daylight, and the LUF correctly rises from 2.19 to 3.36 MHz.
+
+This split is on **physical grounds only**. The LUF has never been validated
+against VOACAP and this change does not alter that. It is a better-shaped
+guess, not a measured improvement.
+
+The app now also displays local solar time at **your station, the midpoint and
+the target**, each marked daylight or dark — so an operator can see directly
+that the far end is in daylight while they are not.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -495,8 +584,17 @@ exact to 1e-9 MHz across 80 cases).
 - **The LUF side is not validated.** Only MUF was compared against VOACAP.
   `LUF = 2.0 + 3.5 × illumination` is a published-form approximation for
   ~20 W manpack power with no dependence on actual transmit power, antenna
-  gain, required SNR or hop count. Treat LUF as the weakest number the app
+  gain, required SNR or hop count. Since v1.14.1 the illumination is averaged
+  over the two terminals rather than taken at the midpoint, which is better
+  physics but still unmeasured. Treat LUF as the weakest number the app
   reports.
+- Day length is geometric (cos χ = 0). Published sunrise/sunset times are
+  ~10 min wider at 34° and ~23 min at 60° because of refraction and the solar
+  disc. Irrelevant for ionisation, but do not use the app as an almanac.
+- The model asks about the F2 layer at the path midpoint only. For a
+  multi-hop circuit there are several reflection points and the real limiting
+  one may not be the middle; sampling more of them was tested and made the fit
+  worse (Part 7), but that is a property of this model, not a general result.
 - **The equatorial ionization anomaly is not modelled.** The latitude term
   peaks at the magnetic equator, whereas the real ionosphere has a trough
   there and crests near ±15° magnetic. Adding an anomaly term did not improve

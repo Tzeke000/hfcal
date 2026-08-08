@@ -31,6 +31,12 @@
 // 4. LUF (Lowest Usable Frequency) is set by D-layer absorption, which tracks
 //    daylight. Approximated for typical manpack power (~20 W):
 //       LUF = 2.0 + 3.5 * daylight   (MHz)
+//    Note the different geometry from the MUF: the ray crosses the absorbing
+//    D layer (60-90 km) close to EACH STATION, not at the reflection point, so
+//    daylight here is averaged over the two endpoints rather than taken at the
+//    midpoint. On a path with one end in sun and one in darkness those are
+//    very different numbers. This split is on physical grounds only — the LUF
+//    has never been validated against VOACAP. See docs/VALIDATION.md Part 7.
 //
 // 5. Season and latitude scale foF2 (see seasonLatitudeFactor below). Both are
 //    taken at the PATH MIDPOINT — the reflection point — not at the station,
@@ -278,17 +284,28 @@ export function assessFrequency(params) {
   var midLon = (typeof params.midLon === 'number' && isFinite(params.midLon)) ? params.midLon : 0;
   var lst = localSolarTime(utcHour, midLon);
 
-  // D-layer absorption tracks the sun's height, so the same illumination that
-  // drives foF2 also sets the LUF. With no latitude this falls back to the
-  // clock curve. NOTE: the LUF scaling itself is not VOACAP-validated — only
-  // the MUF side is. See docs/VALIDATION.md Limitations.
+  // MUF comes from the REFLECTION POINT — the midpoint. Measured against
+  // VOACAP, sampling both endpoints instead helps short paths a little and
+  // hurts long ones a lot (Part 7), because on a long circuit the signal
+  // bounces off the middle, not off either station.
+  var foF2 = estimateFoF2(ssn, lst, params.month, params.magLatDeg, params.latDeg);
+
+  // LUF comes from the TWO ENDS — that is where the ray crosses the absorbing
+  // D layer. Falls back to the midpoint, then to the clock curve.
   var haveGeo = typeof params.latDeg === 'number' && isFinite(params.latDeg)
              && typeof params.month === 'number' && isFinite(params.month);
-  var daylight = haveGeo
-    ? illuminationFactor(params.latDeg, lst, params.month)
-    : diurnalFactor(lst);
-
-  var foF2 = estimateFoF2(ssn, lst, params.month, params.magLatDeg, params.latDeg);
+  var ends = params.ends;
+  var daylight;
+  if (haveGeo && ends && ends.length === 2
+      && typeof ends[0].lat === 'number' && typeof ends[1].lat === 'number') {
+    daylight = 0.5 * (
+      illuminationFactor(ends[0].lat, localSolarTime(utcHour, ends[0].lon), params.month) +
+      illuminationFactor(ends[1].lat, localSolarTime(utcHour, ends[1].lon), params.month));
+  } else if (haveGeo) {
+    daylight = illuminationFactor(params.latDeg, lst, params.month);
+  } else {
+    daylight = diurnalFactor(lst);
+  }
   var m = secantFactor(takeoffDeg, layerKm);
   var muf = foF2 * m;
   var fot = 0.85 * muf;
@@ -304,10 +321,18 @@ export function assessFrequency(params) {
   if (suggested < luf) suggested = Math.min(luf + 0.5, muf);
   if (suggested > muf) suggested = muf;
 
+  // Local solar time at each station, so an operator can see at a glance
+  // whether the far end is in daylight while they are in the dark.
+  var endHours = (ends && ends.length === 2
+    && typeof ends[0].lon === 'number' && typeof ends[1].lon === 'number')
+    ? [localSolarTime(utcHour, ends[0].lon), localSolarTime(utcHour, ends[1].lon)]
+    : null;
+
   return {
     ssn: ssn,
     usingDefaultSolar: usingDefault,
     localSolarHour: lst,
+    endSolarHours: endHours,
     daylight: daylight,
     foF2: foF2,
     mFactor: m,
@@ -347,6 +372,7 @@ export function frequencyForecast(params) {
       month: params.month,
       magLatDeg: params.magLatDeg,
       latDeg: params.latDeg,
+      ends: params.ends,
     });
     if (!r) return null;
     var now = params.nowUtcHour;

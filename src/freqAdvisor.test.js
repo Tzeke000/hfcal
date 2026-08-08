@@ -370,3 +370,145 @@ test('estimateFoF2: physical everywhere across the whole globe and year', functi
     }
   }
 });
+
+
+// ── SUNRISE, SUNSET AND DUSK, BOTH HEMISPHERES ───────────────────────────────
+// Day length and terminator timing are what the whole solar model rests on, so
+// they are checked directly rather than only through foF2. Values are
+// GEOMETRIC (cos χ = 0); published sunrise/sunset run a few minutes wider
+// because of atmospheric refraction and the sun's disc, which does not matter
+// for ionisation.
+
+function dayLengthHours(lat, month) {
+  var d = solarDeclination(month), up = 0, step = 1 / 120;
+  for (var h = 0; h < 24; h += step) if (cosZenith(lat, h, d) > 0) up += step;
+  return up;
+}
+
+function terminator(lat, month) {
+  var d = solarDeclination(month), rise = null, set = null, step = 1 / 240;
+  for (var h = step; h < 24; h += step) {
+    var a = cosZenith(lat, h - step, d), b = cosZenith(lat, h, d);
+    if (a <= 0 && b > 0) rise = h;
+    if (a > 0 && b <= 0) set = h;
+  }
+  return { rise: rise, set: set };
+}
+
+test('day length: equinox gives twelve hours at every latitude', function() {
+  [-60, -34, -10, 0, 10, 34, 60].forEach(function(lat) {
+    [3, 9].forEach(function(m) {
+      assert.ok(Math.abs(dayLengthHours(lat, m) - 12) < 0.7,
+        'lat ' + lat + ' month ' + m + ' should be near 12 h, got ' + dayLengthHours(lat, m).toFixed(2));
+    });
+  });
+});
+
+test('day length: hemispheres mirror six months apart', function() {
+  // The core hemisphere check. Midwinter in the north must equal midwinter in
+  // the south half a year later, at the same latitude magnitude.
+  [60, 44, 34, 10].forEach(function(lat) {
+    for (var m = 1; m <= 12; m++) {
+      var m2 = ((m + 5) % 12) + 1;
+      var north = dayLengthHours(lat, m), south = dayLengthHours(-lat, m2);
+      assert.ok(Math.abs(north - south) < 0.4,
+        'lat ' + lat + ' month ' + m + ' (' + north.toFixed(2) + ' h) should mirror lat '
+        + (-lat) + ' month ' + m2 + ' (' + south.toFixed(2) + ' h)');
+    }
+  });
+});
+
+test('day length: summer is long and winter is short, oppositely per hemisphere', function() {
+  // 34 N: June long, December short. 34 S: exactly the reverse.
+  assert.ok(dayLengthHours(34, 6) > 14, 'northern summer should exceed 14 h');
+  assert.ok(dayLengthHours(34, 12) < 10, 'northern winter should be under 10 h');
+  assert.ok(dayLengthHours(-34, 12) > 14, 'southern summer is December');
+  assert.ok(dayLengthHours(-34, 6) < 10, 'southern winter is June');
+  // Equator barely moves all year.
+  var eq = [];
+  for (var m = 1; m <= 12; m++) eq.push(dayLengthHours(0, m));
+  assert.ok(Math.max.apply(null, eq) - Math.min.apply(null, eq) < 0.3,
+    'equatorial day length should be near constant');
+});
+
+test('day length: matches published figures within the refraction allowance', function() {
+  // Published sunrise-to-sunset runs longer than geometric because of
+  // refraction and the solar disc — about 8 min at 34 deg, more nearer the pole.
+  assert.ok(Math.abs(dayLengthHours(34, 6) - 14.42) < 0.35, 'Los Angeles-ish, June solstice');
+  assert.ok(Math.abs(dayLengthHours(-34, 12) - 14.42) < 0.35, 'Sydney-ish, December solstice');
+  assert.ok(Math.abs(dayLengthHours(0, 6) - 12.12) < 0.25, 'equator, June');
+});
+
+test('sunrise and sunset land symmetrically about local solar noon', function() {
+  [-60, -34, 0, 34, 60].forEach(function(lat) {
+    [1, 4, 7, 10].forEach(function(m) {
+      var t = terminator(lat, m);
+      if (t.rise === null || t.set === null) return;   // polar day or night
+      var noon = (t.rise + t.set) / 2;
+      assert.ok(Math.abs(noon - 12) < 0.1,
+        'lat ' + lat + ' month ' + m + ': solar noon should sit at 12, got ' + noon.toFixed(2));
+    });
+  });
+});
+
+test('sunrise and sunset mirror exactly between hemispheres', function() {
+  var n = terminator(34, 6), s = terminator(-34, 12);
+  assert.ok(Math.abs(n.rise - s.rise) < 0.05 && Math.abs(n.set - s.set) < 0.05,
+    '34 N in June should match 34 S in December');
+});
+
+test('dusk: foF2 decays gradually after sunset rather than dropping off a cliff', function() {
+  // The recombination lag is what keeps an evening path open. Sample the two
+  // hours after local sunset and require a smooth, monotonic decline.
+  var lat = 34, month = 6, set = terminator(lat, month).set;
+  var prev = estimateFoF2(70, set, month, 40, lat);
+  var atSet = prev;
+  for (var dt = 0.25; dt <= 2; dt += 0.25) {
+    var v = estimateFoF2(70, set + dt, month, 40, lat);
+    assert.ok(v < prev, 'should keep falling after sunset, rose at +' + dt + ' h');
+    assert.ok(v > 0.45 * atSet, 'should not collapse instantly, at +' + dt + ' h it was ' + (v / atSet).toFixed(2));
+    prev = v;
+  }
+  // An hour after sunset the layer must still be well above its floor.
+  assert.ok(estimateFoF2(70, set + 1, month, 40, lat) > 0.6 * atSet,
+    'one hour past sunset should still be usable');
+});
+
+test('dawn: foF2 climbs through sunrise in both hemispheres', function() {
+  [[34, 6], [-34, 12], [60, 4], [-60, 10]].forEach(function(c) {
+    var lat = c[0], month = c[1], rise = terminator(lat, month).rise;
+    if (rise === null) return;
+    var before = estimateFoF2(70, rise - 1, month, lat * 0.9, lat);
+    var after = estimateFoF2(70, rise + 2, month, lat * 0.9, lat);
+    assert.ok(after > before,
+      'lat ' + lat + ' month ' + month + ': should rise after dawn, ' + before.toFixed(2) + ' -> ' + after.toFixed(2));
+  });
+});
+
+// ── PATH ENDS ────────────────────────────────────────────────────────────────
+// MUF is taken at the reflection point; LUF at the two terminals, where the
+// ray crosses the absorbing D layer. Measured in docs/VALIDATION.md Part 7.
+
+test('assessFrequency: endpoints move the LUF but never the MUF', function() {
+  // Guam to Cherry Point: one end in daylight while the other is dark.
+  var base = { takeoffDeg: 5, layerKm: 360, midLon: -146, latDeg: 38,
+               magLatDeg: 40, month: 1, utcHour: 4, sfi: null };
+  var ends = [{ lat: 13.4, lon: 144.8 }, { lat: 34.9, lon: -76.9 }];
+  var withEnds = assessFrequency(Object.assign({}, base, { ends: ends }));
+  var without = assessFrequency(base);
+  assert.equal(withEnds.muf, without.muf, 'MUF must not depend on the endpoints');
+  assert.ok(withEnds.luf > without.luf,
+    'a daylit far end should raise the LUF: ' + withEnds.luf.toFixed(2) + ' vs ' + without.luf.toFixed(2));
+});
+
+test('assessFrequency: reports local solar time at both stations', function() {
+  var r = assessFrequency({ takeoffDeg: 5, layerKm: 360, midLon: -146, latDeg: 38,
+    magLatDeg: 40, month: 1, utcHour: 0, sfi: null,
+    ends: [{ lat: 13.4, lon: 144.8 }, { lat: 34.9, lon: -76.9 }] });
+  assert.equal(r.endSolarHours.length, 2);
+  // Guam is east of the dateline-adjacent meridian: mid-morning at 00Z.
+  assert.ok(r.endSolarHours[0] > 9 && r.endSolarHours[0] < 11, 'Guam should be mid-morning');
+  // Cherry Point is evening at the same instant.
+  assert.ok(r.endSolarHours[1] > 18 && r.endSolarHours[1] < 20, 'Cherry Point should be evening');
+  assert.equal(assessFrequency({ takeoffDeg: 5, layerKm: 360, sfi: null }).endSolarHours, null);
+});

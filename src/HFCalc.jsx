@@ -1590,6 +1590,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
+      ends: pathCtx.ends,
       month: month,
       utcHour: utcHour,
       sfi: cachedSFI(),
@@ -1602,6 +1603,11 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
 
   var hourOpts = [{ v: 'now', l: 'Now (' + String(Math.floor(nowUTC)).padStart(2, '0') + 'Z)' }];
   for (var h = 0; h < 24; h++) hourOpts.push({ v: String(h), l: String(h).padStart(2, '0') + '00Z' });
+
+  function hhmm(h) {
+    var m = Math.round(h * 60) % 1440;
+    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  }
 
   var cell = { background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '8px 10px', textAlign: 'center' };
   var cellLbl = { color: T.textMute, fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em' };
@@ -1679,10 +1685,30 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx }) {
                 </div>
               )}
 
+              {assess.endSolarHours && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 8 }}>
+                  {[['YOU', assess.endSolarHours[0]],
+                    ['MIDPOINT', assess.localSolarHour],
+                    ['TARGET', assess.endSolarHours[1]]].map(function(e) {
+                    var lit = e[1] >= 6 && e[1] < 18;
+                    return (
+                      <div key={e[0]} style={{ ...cell, borderColor: lit ? '#5a6b3a' : T.border }}>
+                        <div style={cellLbl}>{e[0]}</div>
+                        <div style={{ ...cellVal, fontSize: '0.82rem' }}>{hhmm(e[1])}</div>
+                        <div style={{ color: lit ? '#c8d9a0' : T.textDim, fontSize: '0.55rem' }}>
+                          {lit ? '☀ daylight' : '☾ dark'}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5 }}>
-                {'Local solar time at path midpoint ' + String(Math.floor(assess.localSolarHour)).padStart(2, '0')
-                  + ':' + String(Math.round((assess.localSolarHour % 1) * 60)).padStart(2, '0')
-                  + ' · foF2 ≈ ' + assess.foF2.toFixed(1) + ' MHz · SSN '
+                {'Sun times are LOCAL SOLAR time, not your watch. MUF is taken where the signal reflects (the midpoint); LUF comes from both ends, where the signal crosses the absorbing D layer.'}
+              </div>
+              <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5, marginTop: 4 }}>
+                {'foF2 ≈ ' + assess.foF2.toFixed(1) + ' MHz · SSN '
                   + assess.ssn + (assess.usingDefaultSolar ? ' (default — connect once to refine)' : ' (from NOAA)')}
               </div>
               {pathCtx && seasonNote(month, pathCtx.magLatDeg) && (
@@ -1987,8 +2013,9 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  MUF within about 13% across 4320 samples — and about the same whether the path is regional, polar or crosses the equator.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  127 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  137 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2794,6 +2821,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx }) {
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
       magLatDeg: pathCtx.magLatDeg,
+      ends: pathCtx.ends,
       month: month,
       sfi: cachedSFI(),
       freqMHz: hasFreq ? freqMHz : null,
@@ -3298,7 +3326,15 @@ export default function HFCalc() {
   var pathCtx = useMemo(function() {
     if (!results) return null;
     var mid = pathMidpoint(results.p1.lat, results.p1.lon, results.p2.lat, results.p2.lon);
-    return { midLat: mid.lat, midLon: mid.lon, magLatDeg: magneticLatitude(mid.lat, mid.lon) };
+    return {
+      midLat: mid.lat, midLon: mid.lon, magLatDeg: magneticLatitude(mid.lat, mid.lon),
+      // Both terminals. The MUF comes off the midpoint, but D-layer absorption
+      // happens where the ray leaves and re-enters the atmosphere, so the LUF
+      // needs the ends — and the operator wants to see the far end's local
+      // time regardless.
+      ends: [{ lat: results.p1.lat, lon: results.p1.lon },
+             { lat: results.p2.lat, lon: results.p2.lon }],
+    };
   }, [results]);
 
   // Snapshot of the current plan in the shape SavedShots/commCard.js expect.
@@ -3320,6 +3356,7 @@ export default function HFCalc() {
       midLon: pathCtx ? pathCtx.midLon : 0,
       latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
+      ends: pathCtx ? pathCtx.ends : null,
       month: month,
       utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
       sfi: cachedSFI(), freqMHz: results.freq,
