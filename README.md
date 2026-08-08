@@ -98,6 +98,10 @@ This guide is written so any AI can read it and learn how to drive the calculato
 
 Tested across 12 real-world paths (Norfolk → Lagos transatlantic, Karachi → Beijing through the Himalayas, etc.). Distances and bearings match haversine to <0.05 km / 0.05°. Takeoff angles align with published references (G4KNO, Skywave Radio Handbook, R&S NVIS notes).
 
+The propagation model is measured against VOACAP — the U.S. government's own HF engine — at sites it was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5%. The full study, the raw data and the scripts to re-run it are in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+
+194 unit tests pin the physics. A second suite of 11 browser tests (`npm run test:ui`) builds the app and drives it in Chromium, covering the state that unit tests cannot reach — every bug reported from actual use was in the UI, not the math. That suite was itself verified by reintroducing all three of those bugs and confirming it caught each one.
+
 ---
 
 ## ⚖️ Authorship and License
@@ -142,6 +146,8 @@ and the evidence supporting it.
 npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
+npm test             # 194 unit tests over the physics and coordinate math
+npm run test:ui      # 11 browser tests: builds dist/, drives it in Chromium
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 

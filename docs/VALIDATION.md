@@ -17,6 +17,7 @@ Global grid and coefficient map: August 2026 (app v1.19.0)
 Own-built foF2 lookup table: August 2026 (app v1.20.0)
 Geometry / M-factor rebuild: August 2026 (app v1.21.0)
 Transequatorial fix and uncertainty audit: August 2026 (app v1.22.0)
+Browser tests for the state the operator touches: August 2026 (app v1.23.0)
 
 ---
 
@@ -1366,6 +1367,64 @@ are documented limits.
   against. Since Part 10 they affect only the ANTENNA angle and never the MUF,
   which bounds how much harm a wrong one can do, but they remain unmeasured
   heuristics and are labelled as such.
+
+## Part 18 — Testing what the operator actually touches (v1.23.0)
+
+Everything above measures physics. It says nothing about the app.
+
+Parts 1–17 built up 194 unit tests, and every one of them calls a pure
+function: `takeoffAngle`, `bounceFoF2`, `estimateLUF`, `mgrsToLatLon`. That
+is the right way to test the physics and it is why the physics is trustworthy.
+But it is worth being blunt about what it does not cover, because the record
+is unambiguous: **not one bug reported from use was in a pure function.**
+
+Three were reported. All three were React state:
+
+| Reported as | Actual cause |
+|---|---|
+| "the compass freezes if you close it and open it again" | closing detached the sensor listeners; re-opening never re-attached them, so the card kept rendering its last heading |
+| "a shot I deleted came back" | each delete handler filtered the list it had closed over, so two quick taps both worked from the same pre-delete snapshot |
+| "deleting one shot deleted two" | shot ids were `Date.now()`; two saves in the same millisecond shared an id, so `filter` removed both and React saw duplicate keys |
+
+All three were fixed when they were found. None of them could have been
+caught by any test in this repository, because none of them lived in a
+function a test could call. They lived in what happens when you tap the
+screen twice quickly, or close a panel and open it again.
+
+So a second suite was added: `tests/ui/flows.test.mjs`, 11 tests, run with
+`npm run test:ui`. It builds the app, serves `dist/` — the real artefact, not
+the dev server — and drives it in Chromium by clicking. It covers the compass
+open/close/re-open cycle with a synthetic magnetometer feed, five saves and
+three rapid deletions with a reload to confirm they stay deleted, the month
+wheel, the transmit-power ladder, the PATH CLOSED banner, and an
+open-close-open pass over every collapsible card. Any console error or
+uncaught exception fails the test that provoked it. Network failures are
+ignored on purpose: the space-weather fetch is expected to fail offline, and
+the app still working when it does is the point.
+
+**The suite was checked against the bugs it claims to cover.** Rather than
+trust that it would have caught them, all three were deliberately reintroduced
+into `src/HFCalc.jsx` and the suite was run:
+
+| Regression reintroduced | Result |
+|---|---|
+| re-open no longer re-arms the compass | `re-opening re-arms the sensor instead of freezing on the old heading` **fails** |
+| `remove()` filters the closed-over list | `three rapid deletions remove exactly three shots, and they stay gone` **fails** |
+| shot id back to bare `Date.now()` | `five saves produce five rows with five distinct ids` **fails** |
+
+8 passed, 3 failed — one failure per reintroduced bug, and no false alarms
+from the other 8. The mutations were then reverted and all 11 pass again.
+A test suite that has never been shown to fail is not evidence of anything;
+this one has been.
+
+The suite skips itself, rather than failing, on a machine with no Chromium,
+so `npm test` stays usable where a browser is not available.
+
+What this does *not* do: it does not test on a phone, and the three reported
+bugs were all found on one. Chromium on a desktop has no magnetometer (the
+compass test feeds the app synthetic `deviceorientationabsolute` events), no
+touch input, and no mobile browser's memory pressure. Real-device testing
+remains manual.
 
 ## Limitations
 

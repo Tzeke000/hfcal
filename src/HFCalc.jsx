@@ -2185,7 +2185,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  194 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  194 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2194,7 +2194,7 @@ function AboutBanner() {
               <div style={{ ...box, marginTop: 12, borderLeft: '3px solid ' + T.warn }}>
                 <div style={{ ...boxLabel, color: T.warn }}>What it is not</div>
                 <div style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.55 }}>
-                  Not a link-budget or full ionospheric model, and not a substitute for your SOI/JCEOI assignment. Propagation figures are statistical monthly-median estimates, not a forecast for one specific hour. Trim for SWR and confirm with the radio before you rely on anything here.
+                  Not a link-budget or full ionospheric model, and not a substitute for your SOI/JCEOI assignment. Propagation figures are statistical monthly-median estimates, not a forecast for one specific hour. Trim for SWR and confirm with the radio before you rely on anything here. The automated browser tests run on a desktop, which has no magnetometer and no touch screen — phone behaviour is still checked by hand, so tell me if something misbehaves on yours.
                 </div>
               </div>
             </div>
