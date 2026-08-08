@@ -2101,7 +2101,7 @@ function AboutBanner() {
                     How close is it?
                   </div>
                   <div style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.55 }}>
-                    Checked against VOACAP — the government's own HF engine — at sites the app was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5%. Where it is weaker it says so: paths crossing the equator run nearer 6%, and the LUF is an estimate rather than a measurement.
+                    Checked against VOACAP — the government's own HF engine — at sites the app was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5%. Where it is weaker it says so: paths crossing the equator run nearer 6%, Arctic paths about 5.5%, and the LUF is an estimate rather than a measurement.
                   </div>
                 </div>
                 <div style={{ color: T.textSec, fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 5 }}>
@@ -2179,13 +2179,14 @@ function AboutBanner() {
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Both halves of the prediction are our own measured tables rather than rules of thumb — the ionosphere from 30,240 VOACAP runs, the path geometry from 12,960 more. Critical frequency is accurate to about 1% and MUF to about 4%, checked at sites the tables were never built from.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to under 5%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  194 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  200 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

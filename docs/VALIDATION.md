@@ -18,6 +18,7 @@ Own-built foF2 lookup table: August 2026 (app v1.20.0)
 Geometry / M-factor rebuild: August 2026 (app v1.21.0)
 Transequatorial fix and uncertainty audit: August 2026 (app v1.22.0)
 Browser tests for the state the operator touches: August 2026 (app v1.23.0)
+High-latitude / polar measurement: August 2026 (app v1.24.0)
 
 ---
 
@@ -1425,6 +1426,107 @@ bugs were all found on one. Chromium on a desktop has no magnetometer (the
 compass test feeds the app synthetic `deviceorientationabsolute` events), no
 touch input, and no mobile browser's memory pressure. Real-device testing
 remains manual.
+
+## Part 19 — What happens above 60 degrees (v1.24.0)
+
+Every accuracy figure this study had published was mid-latitude (Part 2,
+4.4%), a latitude sweep that stopped at 60° (Part 3), or transequatorial
+(Part 17, 6.0%). **Nothing stated the error at high latitude**, and the app
+plans paths that bounce there without comment: an Alaska-to-Norway circuit
+reflects at 72°N, 86°N and 77°N.
+
+`run_polar_study.py` measures it. 15 paths × 12 conditions = 180 VOACAP runs,
+4,320 comparison rows. The design isolates latitude: an identical 1,500 km
+due-east path at 35°N (the mid-latitude control, directly comparable to
+Part 2) and at 55/60/65/70/75/80°N, mirrored to 55/65/75°S, plus five real
+transpolar circuits. Four months to catch both solstices and both equinoxes,
+three solar levels.
+
+### What it found
+
+The headline number was **7.15% above 60° against a 3.67% mid-latitude
+control** — roughly twice the error, which on its own would just be a figure
+to disclose. The breakdown is what mattered:
+
+| Source that served the row | rows | mean error | bias |
+|---|---|---|---|
+| lookup table | 4085 (95%) | 5.28% | +0.31% |
+| coefficient map | 40 (1%) | 7.77% | −5.50% |
+| **physical model** | **195 (5%)** | **46.16%** | **−46.16%** |
+
+Mean absolute error and mean signed bias are *the same number* on the physics
+rows. That is only possible if every single one of those 195 rows was low —
+by an average of 46%.
+
+### The cause
+
+The app took three sources in order: lookup table, coefficient map, physical
+model. Every source above the physical model was checked *against* the
+physical model, and if they disagreed by more than `MAP_SANITY_FACTOR` (1.8),
+the physics won. The stated reasoning was that a corrupted asset must never
+put a Marine on a frequency that cannot work.
+
+That reasoning is sound for the **map**, which is a fitted polynomial: hand it
+an input off the end of its training envelope and it can return anything at
+all. It is exactly backwards for the **table**. The table is measured at 1.2%
+held-out; the physical model is measured at 16.9%. Above the auroral oval and
+through polar night — where the sun never rises, so a zenith-angle model
+predicts almost no ionisation while the real ionosphere is still there — it is
+the *model* that disagrees with the table, not the other way round. The guard
+was firing, discarding a measured value, and returning a number less than half
+the truth.
+
+Worse, it fired precisely where it did the most damage. Polar night rows:
+15.34% mean, −10.56% bias.
+
+### The fix, and what it cost
+
+The guard was removed for the table and kept for the map. The table is now
+checked only against a physical band — `TABLE_FOF2_MIN` 0.5 MHz to
+`TABLE_FOF2_MAX` 20 MHz — which rejects a number that is not an foF2 at all
+while making no claim about whether the model agrees. The table is a bounded
+interpolation between measured values and cannot extrapolate, so a corrupt
+asset is the only failure mode left, and the binary's `HFT1` magic header and
+self-describing geometry already catch a truncated or misparsed one upstream.
+
+| | before | after |
+|---|---|---|
+| all polar rows | 7.15% | **5.36%** |
+| above 60° | 7.89% | **5.50%** |
+| polar night | 15.34% | **5.90%** |
+| rows the old guard rejected | 46.19% | **6.73%** |
+| Alaska–Norway (bounces at 80.7°) | 14.78% | **8.19%** |
+| **mid-latitude control** | **3.67%** | **3.67%** |
+
+The mid-latitude control is unchanged to two decimal places, because at
+mid-latitude the guard almost never fired. This was not a trade-off.
+
+Re-running the other studies confirms nothing else moved: mid-latitude MUF
+4.4% mean / 2.4% median (Part 2, unchanged), interhemispheric 6.0% (Part 17,
+unchanged), seasonal 4.8% → 4.7%.
+
+### What is still true above 60 degrees
+
+- **It is still the worst region.** 5.50% above 60° against 3.67% at 35°.
+  Better than the transequatorial 6.0%, worse than mid-latitude, and now
+  stated rather than unmeasured.
+- **Above 80° is the weakest case**, 8.19%, with a +4.0% bias — the app runs
+  slightly high there. The Alaska–Norway circuit is the single worst path
+  measured anywhere in this document.
+- **There is still no auroral-zone term and no polar-cap-absorption term.**
+  What improved is that the foF2 table's own high-latitude structure now
+  actually reaches the output. Absorption events driven by particle
+  precipitation are not modelled at all, which is a LUF-side gap, and the LUF
+  remains the uncalibrated number it has been since Part 8.
+- **Polar day is now the harder of the two**, 7.21% against polar night's
+  5.90% — the reverse of before the fix. Unmeasured why; flagged rather than
+  guessed at.
+
+Six unit tests in `src/fof2Guard.test.js` pin the new behaviour: that the
+table wins when it disagrees violently with the model in either direction,
+that a value outside the physical band is still rejected, and that the map
+kept its chaperone. They live in their own file because they install a
+synthetic table, and module state is per-file under `node --test`.
 
 ## Limitations
 

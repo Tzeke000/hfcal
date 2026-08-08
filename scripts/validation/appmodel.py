@@ -340,22 +340,26 @@ def table_fof2(lat, lon, month, utc_hour, ssn):
     return v if v > 0 else None
 
 
+TABLE_FOF2_MIN = 0.5
+TABLE_FOF2_MAX = 20.0
+
+
 def bounce_fof2(ssn, utc_hour, month, b):
-    """b = (lat, lon, mag_lat, modip). Table, then map, then physics."""
+    """b = (lat, lon, mag_lat, modip). Table, then map, then physics.
+
+    The table is guarded only by a physical band, not against the physical
+    model - see the comment on bounceFoF2 in src/freqAdvisor.js and Part 19.
+    """
     lst = local_solar_time(utc_hour, b[1])
     phys = est_fof2(ssn, lst, month, b[2], b[0])
 
-    def trusted(v):
-        return (v is not None and v > 0
-                and v <= phys * MAP_SANITY_FACTOR
-                and v * MAP_SANITY_FACTOR >= phys)
-
     tv = table_fof2(b[0], b[1], month, utc_hour, ssn)
-    if trusted(tv):
+    if tv is not None and TABLE_FOF2_MIN <= tv <= TABLE_FOF2_MAX:
         return tv
     if len(b) >= 4 and b[3] is not None:
         m = _map_eval(b[3], lst, month, ssn, b[1])
-        if trusted(m):
+        if (m is not None and m > 0 and m <= phys * MAP_SANITY_FACTOR
+                and m * MAP_SANITY_FACTOR >= phys):
             return m
     return phys
 

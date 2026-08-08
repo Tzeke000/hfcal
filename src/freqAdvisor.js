@@ -411,25 +411,41 @@ export function minOrderCorrection(k, sigma) {
 //      available, fully explainable, and the thing that keeps the other two
 //      honest.
 //
-// Every source above the physical model is checked against it: if they
-// disagree by more than MAP_SANITY_FACTOR the physics wins. That is what
-// stops a corrupted asset or a botched regeneration from putting a Marine on
-// a frequency that cannot work. A wrong number is worse than a rougher one.
+// The MAP is checked against the physical model: if they disagree by more
+// than MAP_SANITY_FACTOR the physics wins. The map is a polynomial fit, and a
+// polynomial handed an input off the end of its training envelope can return
+// anything at all, so it needs a chaperone.
+//
+// The TABLE is NOT checked that way, and that is deliberate. It used to be,
+// and the polar study (docs/VALIDATION.md Part 19) measured what that cost:
+// above the auroral oval and through polar night the physical model
+// under-predicts foF2 badly, so it was the MODEL that disagreed with the
+// table, not the other way round. The guard then threw away a measured value
+// and returned the physics — which on those rows was low by 46%, every single
+// time. Guarding a 1.2%-accurate table with a 16.9%-accurate model gets the
+// argument backwards.
+//
+// The table is a bounded interpolation between measured VOACAP values; unlike
+// the map it cannot extrapolate, so the only thing worth defending against is
+// a corrupt or misparsed asset. TABLE_FOF2_MIN/MAX do that: they reject a
+// number that is not physically an foF2 at all, and nothing else. Measured
+// cost of the change at mid-latitude: none (3.67% before and after).
+export const TABLE_FOF2_MIN = 0.5;        // MHz — below this it is not an foF2
+export const TABLE_FOF2_MAX = 20.0;       // MHz — above this it is not either
+
 export function bounceFoF2(ssn, utcHour, month, b) {
   var lst = localSolarTime(utcHour, b.lon);
   var phys = estimateFoF2(ssn, lst, month, b.magLatDeg, b.lat);
 
-  function trusted(v) {
-    return v !== null && isFinite(v) && v > 0
-      && v <= phys * MAP_SANITY_FACTOR && v * MAP_SANITY_FACTOR >= phys;
-  }
-
   var t = tableFoF2(b.lat, b.lon, month, utcHour, ssn);
-  if (trusted(t)) return t;
+  if (t !== null && isFinite(t) && t >= TABLE_FOF2_MIN && t <= TABLE_FOF2_MAX) return t;
 
   if (typeof b.modipDeg === 'number' && isFinite(b.modipDeg)) {
     var mapped = mapFoF2(b.modipDeg, lst, month, ssn, b.lon);
-    if (trusted(mapped)) return mapped;
+    if (mapped !== null && isFinite(mapped) && mapped > 0
+        && mapped <= phys * MAP_SANITY_FACTOR && mapped * MAP_SANITY_FACTOR >= phys) {
+      return mapped;
+    }
   }
   return phys;
 }
