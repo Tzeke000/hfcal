@@ -172,8 +172,14 @@ def run():
             subprocess.run(['voacapl', ITSHFBC], capture_output=True, timeout=180)
             for hour, vmuf in sorted(parse_muf(os.path.join(RUN_DIR, 'voacapx.out')).items()):
                 # (a) what the app ships: every bounce, weakest governs
+                _lst = lst_of(hour, mid[1])
+                _m = sec
+                _mt = appmodel.m_factor_lookup(dist, _lst, month, ssn)
+                if _mt is not None and _mt <= sec * appmodel.MAP_SANITY_FACTOR \
+                        and _mt * appmodel.MAP_SANITY_FACTOR >= sec:
+                    _m = _mt
                 app_mid = appmodel.path_fof2(ssn, hour, month, bounces,
-                                             mid[1], mid[0], mid_ml) * sec
+                                             mid[1], mid[0], mid_ml) * _m
                 # (b) no season term at all, for reference
                 app_plain = est_fof2(ssn, lst_of(hour, mid[1])) * sec
                 # (c) IONCAP-style: lowest control-point MUF along the path

@@ -15,6 +15,7 @@ Takeoff-angle and FOT studies: August 2026 (app v1.17.0)
 Fine FOT re-measurement and uncertainty audit: August 2026 (app v1.18.0)
 Global grid and coefficient map: August 2026 (app v1.19.0)
 Own-built foF2 lookup table: August 2026 (app v1.20.0)
+Geometry / M-factor rebuild: August 2026 (app v1.21.0)
 
 ---
 
@@ -1212,6 +1213,99 @@ month axis, but the input guard rejected any month above 12, so the
 December-to-January seam was unreachable. The domain is now the continuous
 year [1, 13).
 
+## Part 16 — Fixing the geometry (v1.21.0)
+
+Part 15 left foF2 at 1.2% and the end-to-end MUF at 5–6.5%, which meant the
+remaining error was all geometry. That geometry was a chain of assumptions —
+hop count from a fixed maximum hop, takeoff angle from curved-earth geometry at
+a fixed 360 km virtual height, the secant law at that same height, and a 3°
+clamp. With foF2 accurate, the whole chain became measurable:
+
+> M = MUF_voacap / foF2 &nbsp;&nbsp; — read straight off, across distance
+
+### A parser bug that had corrupted an earlier conclusion
+
+Before any of that: VOACAP pads single-character layer names, so an E-layer
+mode is written **`1 E`** with an internal space while F2 is written `1F2`. The
+mode regex required the digit and letter to be adjacent, so **any line
+containing an E or F1 mode was rejected outright** — 53% of mode rows.
+
+That is how Part 4 concluded "VOACAP served F2 in every cell". It does not.
+With correct parsing the split is **F2 98%, E 2%, F1 0.3%** — the app's
+F2-always assumption is sound in practice, but Part 4's stated basis for it was
+an artifact of the parser, and its sample count was 2,177 where it should have
+been 5,568. Mode parsing now lives in one place, `appmodel.parse_mode_row`.
+
+### Three separate faults, all real
+
+| Fault | Effect |
+|---|---|
+| The 3° takeoff clamp applied inside the MUF | Caps M at 3.06 where VOACAP reaches 3.25 — every long path under-predicted 3–6% |
+| Hard hop switch at 4186 km | **−21.8%** error right at the transition; VOACAP moves between one and two hops gradually |
+| Fixed 360 km virtual height | The effective height runs 397 km short-range down to 326 km long, and 331 km at SSN 10 against 368 km at SSN 100 |
+
+**Part 13 tested that clamp and called it immaterial** (13.19% vs 13.20%). That
+was true *then*: foF2 error was 17% and swamped a 3–6% geometry effect. At 1.2%
+it shows. A test that says "immaterial" is only valid at the noise level of the
+day, and this one needed re-running once the noise dropped.
+
+### The fix: measure M instead of deriving it
+
+Inverting each sample for the height that reproduces its M exactly gives an
+error of **0.0–0.2%** — so the secant law's *shape* is right and only the height
+was wrong. But rather than model a varying height, the cleaner move is to
+tabulate the quantity all of it exists to produce.
+
+M is indexed by **total path distance**, which removes hop counting from the
+MUF altogether: the table simply knows what M is for a 4200 km path, so there
+is no transition to get wrong.
+
+Axes: distance × local solar time (3 h bins) × month × solar activity.
+5760 cells, 37 KB, inlined so it needs no async load.
+
+**Training had to be fixed once.** The first build shot every path **due east**
+and regressed the interhemispheric set (5.6% → 6.3%). M itself is nearly
+azimuth-independent — it is geometry — but the foF2 *reference* it is fitted
+against is the weakest bounce, and a north-south path's bounces span far more
+latitude and day/night than an east-west one at the same distance. Retraining
+across three bearings (90°, 0°, 45°) fixed the bias.
+
+**Physical rejection, not averaging.** M = 1/cos φ cannot exceed about 3.7 for
+the F2 layer, yet raw ratios reached 10.6 — concentrated at 10,000–13,000 km
+and low solar activity, where a multi-hop path has bounces in deep night and
+the weakest-bounce foF2 is unrepresentative. Those are bad references, not
+exotic propagation, and they are rejected rather than averaged in. Cells use the
+**median**, not the mean.
+
+### Results
+
+| | Shipped secant | **Table** |
+|---|---|---|
+| M-factor, held-out sites | 7.35% | **4.82%** |
+
+End-to-end MUF:
+
+| Study | v1.20.0 | **v1.21.0** |
+|---|---|---|
+| Mid-latitude (288) | 5.4% | **4.4%** — median 2.4%, 97% within 20%, 100% within 30% |
+| Six-latitude seasonal (3456) | 6.5% | **4.8%** — every site 3.4–6.0% |
+| Interhemispheric (576) | 5.6% | 6.4% |
+| **Sample-weighted** | **6.31%** | **4.99%** |
+
+The 10° N tropics site — 25.2% when this project started — is now **3.4%**.
+
+**The honest debit:** the interhemispheric set went 5.6% → 6.4% with a +4.0%
+bias. Adding azimuth diversity to the training improved it but did not close it.
+Transequatorial paths remain the one regime where the derived secant law was
+better than the measured table, and they are the app's weakest case.
+
+### Where the error is now
+
+foF2 is 1.2% and M is 4.8%, so the geometry is *still* the larger term — but
+it is now measured rather than assumed, and the dominant residual is the
+ambiguity in what "the" foF2 of a multi-hop path even is. That is a modelling
+question, not a calibration one.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
@@ -1222,10 +1316,16 @@ year [1, 13).
   from the ionosphere. They inherit every limitation VOACAP has — monthly
   medians, no storms, no sporadic-E. A 1.2% agreement with VOACAP is not a
   1.2% agreement with tomorrow's sky.
-- **The geometry is now the dominant error.** foF2 is accurate to 1.2% but
-  end-to-end MUF is 5-6.5%; the difference is the takeoff-angle model, the
-  secant law and the fixed 360 km virtual height. Further accuracy work
-  belongs there, not in the ionospheric model.
+- The geometry is measured rather than derived since v1.21.0 (M-factor table,
+  4.8% held-out) but is still the larger error term. The dominant residual is
+  the ambiguity in what "the" foF2 of a multi-hop path is — a modelling
+  question rather than a calibration one.
+- **Transequatorial paths are the weakest case.** The measured M table
+  regressed them from 5.6% to 6.4% with a +4% bias where it improved every
+  other regime; the derived secant law happened to suit them better.
+- Part 4's claim that VOACAP never offers an E-layer mode was wrong — an
+  artifact of a mode-parsing regex that rejected any row containing "1 E".
+  Corrected in Part 16: F2 98%, E 2%, F1 0.3%.
 - The table is sampled at three solar levels (SSN 10 / 70 / 150) and
   interpolated linearly between. Solar activity above 150 is clamped.
 - The map is clamped to |modip| <= 72 deg and SSN <= 165. Beyond those it

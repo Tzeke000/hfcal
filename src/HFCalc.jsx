@@ -557,6 +557,8 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
     // Pure path geometry, no terrain — what the MUF must be computed from.
     // takeoffDeg above is antenna advice and may differ; see propagation.js.
     geoTakeoffDeg: toa.geoDeg,
+    // ...and without the 3 degree antenna floor, for the secant law.
+    mufTakeoffDeg: toa.mufDeg,
     antennaType:  antennaType,
     whichWay:     whichWay,
     physGeometry: physGeometry,
@@ -1679,7 +1681,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
   var assess = null;
   if (results && pathCtx) {
     assess = assessFrequency({
-      takeoffDeg: results.directive.geoTakeoffDeg,
+      takeoffDeg: results.directive.mufTakeoffDeg,
       layerKm: HOP.F2.hKm,
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
@@ -1688,6 +1690,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
       ends: pathCtx.ends,
       bounces: pathCtx.bounces,
       hops: pathCtx.hops,
+      distKm: results.geo.distKm,
       txWatts: txWatts,
       month: month,
       utcHour: utcHour,
@@ -2167,14 +2170,14 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  The ionosphere is carried as our own lookup table, built from 30,240 VOACAP runs — critical frequency accurate to about 1%, and MUF to about 5%, checked at 314 worldwide sites the table was never built from.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Both halves of the prediction are our own measured tables rather than rules of thumb — the ionosphere from 30,240 VOACAP runs, the path geometry from 12,960 more. Critical frequency is accurate to about 1% and MUF to about 4%, checked at sites the tables were never built from.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to 14%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  183 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  191 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2975,7 +2978,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
   if (results && pathCtx) {
     var now = new Date();
     blocks = frequencyForecast({
-      takeoffDeg: results.directive.geoTakeoffDeg,
+      takeoffDeg: results.directive.mufTakeoffDeg,
       layerKm: HOP.F2.hKm,
       midLon: pathCtx.midLon,
       latDeg: pathCtx.midLat,
@@ -2984,6 +2987,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
       ends: pathCtx.ends,
       bounces: pathCtx.bounces,
       hops: pathCtx.hops,
+      distKm: results.geo.distKm,
       txWatts: txWatts,
       month: month,
       sfi: cachedSFI(),
@@ -3553,7 +3557,7 @@ export default function HFCalc() {
                          legEndM: legEndHeight, takeoffDeg: results.directive.takeoffDeg })
       : null;
     var _fc = assessFrequency({
-      takeoffDeg: results.directive.geoTakeoffDeg, layerKm: HOP.F2.hKm,
+      takeoffDeg: results.directive.mufTakeoffDeg, layerKm: HOP.F2.hKm,
       midLon: pathCtx ? pathCtx.midLon : 0,
       latDeg: pathCtx ? pathCtx.midLat : null,
       magLatDeg: pathCtx ? pathCtx.magLatDeg : null,
@@ -3561,6 +3565,7 @@ export default function HFCalc() {
       ends: pathCtx ? pathCtx.ends : null,
       bounces: pathCtx ? pathCtx.bounces : null,
       hops: pathCtx ? pathCtx.hops : 1,
+      distKm: results.geo.distKm,
       txWatts: txWatts,
       month: month,
       utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,

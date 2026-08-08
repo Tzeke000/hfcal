@@ -72,6 +72,10 @@ import {
   FOF2_MAP_COEFFS, FOF2_MAP_HELDOUT_PCT,
 } from './fof2Map.js';
 import { tableFoF2, foF2TableReady } from './fof2Table.js';
+import {
+  MFACTOR_DISTANCES, MFACTOR_SSNS, MFACTOR_NLST, MFACTOR_SCALE,
+  MFACTOR_TABLE, MFACTOR_HELDOUT_PCT,
+} from './mfactorTable.js';
 
 var R_EARTH = 6371;
 var DEG = Math.PI / 180;
@@ -431,8 +435,56 @@ export function pathFoF2(ssn, utcHour, month, bounces, midLon, midLat, midMagLat
     { lon: midLon, lat: midLat, magLatDeg: midMagLat, modipDeg: midModip });
 }
 
+// ── M-FACTOR ──────────────────────────────────────────────────────────────────
+// MUF = foF2 x M. M used to be DERIVED — hop count from a fixed maximum hop,
+// takeoff angle from curved-earth geometry at a fixed 360 km virtual height,
+// the secant law at that height, and a 3 degree clamp. Measured against
+// VOACAP, all three were wrong in different ways (docs/VALIDATION.md Part 16):
+// the clamp capped M at 3.06 where VOACAP reaches 3.25, the hop switch at
+// 4186 km was off by 22% right at the transition, and the effective height is
+// neither 360 km nor constant.
+//
+// So M is now looked up rather than derived, indexed by TOTAL path distance —
+// which takes hop counting out of the MUF altogether, since the table simply
+// knows what M is for a 4200 km path.
+export const MFACTOR_ACCURACY_PCT = MFACTOR_HELDOUT_PCT;
+export const MFACTOR_MIN = 1.0;
+export const MFACTOR_MAX = 3.7;   // 1/cos(phi) at a grazing launch; a hard ceiling
+
+// Linear interpolation on distance and solar activity; local solar time and
+// month are binned. Returns null if the inputs are unusable.
+export function mFactorLookup(distKm, localHour, month, ssn) {
+  if (typeof distKm !== 'number' || !isFinite(distKm) || distKm <= 0) return null;
+  if (typeof month !== 'number' || !isFinite(month) || month < 1 || month >= 13) return null;
+  var D = MFACTOR_DISTANCES, S = MFACTOR_SSNS, NL = MFACTOR_NLST;
+
+  var d = Math.max(D[0], Math.min(D[D.length - 1], distKm));
+  var i0 = 0;
+  while (i0 < D.length - 2 && d > D[i0 + 1]) i0++;
+  var wd = (d - D[i0]) / (D[i0 + 1] - D[i0]);
+
+  var h = (typeof localHour === 'number' && isFinite(localHour)) ? localHour : 12;
+  var j = Math.floor((((h % 24) + 24) % 24) / 3) % NL;
+  var k = Math.max(0, Math.min(11, Math.floor(month - 1)));
+
+  var sv = (typeof ssn === 'number' && isFinite(ssn)) ? ssn : S[Math.floor(S.length / 2)];
+  sv = Math.max(S[0], Math.min(S[S.length - 1], sv));
+  var l0 = 0;
+  while (l0 < S.length - 2 && sv > S[l0 + 1]) l0++;
+  var ws = (sv - S[l0]) / (S[l0 + 1] - S[l0]);
+
+  function cell(di, li) {
+    return MFACTOR_TABLE[((di * NL + j) * 12 + k) * S.length + li] * MFACTOR_SCALE;
+  }
+  var v = (1 - wd) * ((1 - ws) * cell(i0, l0) + ws * cell(i0, l0 + 1))
+        + wd * ((1 - ws) * cell(i0 + 1, l0) + ws * cell(i0 + 1, l0 + 1));
+  if (!isFinite(v) || v <= 0) return null;
+  return Math.max(MFACTOR_MIN, Math.min(MFACTOR_MAX, v));
+}
+
 // Oblique-incidence multiplier (the "M factor") for a takeoff angle, given
-// the reflection height. sin φ = R·cos α /(R+h);  M = 1/cos φ.
+// the reflection height. sin φ = R·cos α /(R+h);  M = 1/cos φ. Retained as the
+// physical model and as the guard on the table above.
 export function secantFactor(takeoffDeg, layerKm) {
   var sinPhi = R_EARTH * Math.cos(takeoffDeg * DEG) / (R_EARTH + layerKm);
   if (sinPhi >= 1) sinPhi = 0.999999;
@@ -541,7 +593,16 @@ export function assessFrequency(params) {
   } else {
     daylight = diurnalFactor(lst);
   }
-  var m = secantFactor(takeoffDeg, layerKm);
+  // M from the measured table where possible, from the secant law otherwise —
+  // and the secant law still guards the table, as elsewhere.
+  var mPhys = secantFactor(takeoffDeg, layerKm);
+  var m = mPhys;
+  if (typeof params.distKm === 'number' && isFinite(params.distKm)) {
+    var mTab = mFactorLookup(params.distKm, lst, params.month, ssn);
+    if (mTab !== null && mTab <= mPhys * MAP_SANITY_FACTOR && mTab * MAP_SANITY_FACTOR >= mPhys) {
+      m = mTab;
+    }
+  }
   var muf = foF2 * m;
   var fot = FOT_RATIO * muf;
   var luf = estimateLUF(daylight, params.txWatts, params.hops);
@@ -580,6 +641,7 @@ export function assessFrequency(params) {
     daylight: daylight,
     foF2: foF2,
     mFactor: m,
+    mFactorSource: (m === mPhys) ? 'secant' : 'table',
     muf: muf,
     fot: fot,
     luf: luf,
@@ -622,6 +684,7 @@ export function frequencyForecast(params) {
       bounces: params.bounces,
       txWatts: params.txWatts,
       hops: params.hops,
+      distKm: params.distKm,
     });
     if (!r) return null;
     var now = params.nowUtcHour;

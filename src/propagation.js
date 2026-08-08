@@ -224,6 +224,13 @@ export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
     // shifted the MUF by up to 8% on terrain paths and did not match anything
     // that was ever validated. See docs/VALIDATION.md Part 10.
     geoDeg:      +Math.max(3, Math.min(85, baseDeg)).toFixed(1),
+    // The same geometry with NO 3 degree floor. That floor is an antenna
+    // constraint — no field wire radiates at the horizon — and applying it
+    // inside the MUF caps the secant factor at 3.06 where VOACAP measures up
+    // to 3.25, under-predicting every long path by 3-6%. Part 13 tested the
+    // clamp and called it immaterial, but that was measured when foF2 error
+    // was 17% and swamped it; at 1.2% it shows. See docs/VALIDATION.md Part 16.
+    mufDeg:      +Math.max(0, Math.min(85, baseDeg)).toFixed(2),
     adjustments: adjustments,
     chordal:     chordal,
   };

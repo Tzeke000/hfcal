@@ -142,7 +142,11 @@ def app_muf(ssn, lst, month=None, mag_lat=None, lat=None, site=None):
         b = _BOUNCE_CACHE[site][0]
         # lst was computed at the midpoint longitude; recover the UTC hour.
         utc = (lst - b[1] / 15.0) % 24
-        return appmodel.bounce_fof2(ssn, utc, month, b) * appmodel.path_secant(PATH_KM)
+        mp = appmodel.path_secant(PATH_KM)
+        mt = appmodel.m_factor_lookup(PATH_KM, lst, month, ssn)
+        if mt is not None and mt <= mp * appmodel.MAP_SANITY_FACTOR and mt * appmodel.MAP_SANITY_FACTOR >= mp:
+            mp = mt
+        return appmodel.bounce_fof2(ssn, utc, month, b) * mp
     return appmodel.est_fof2(ssn, lst, month, mag_lat, lat) * appmodel.path_secant(PATH_KM)
 
 

@@ -21,6 +21,7 @@ Project signature: HFCALC-AG-EZK-USMC-v1
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 
@@ -53,12 +54,13 @@ def max_hop_km(h_km):
     return 2 * EARTH_R * math.acos(EARTH_R / (EARTH_R + h_km))
 
 
-def takeoff_deg(dist_km, layer_km=F2_HEIGHT_KM):
+def takeoff_deg(dist_km, layer_km=F2_HEIGHT_KM, floor_deg=0.0):
+    """floor_deg=3 is the ANTENNA floor; the MUF must use 0 (Part 16)."""
     hops = max(1, math.ceil(dist_km / max_hop_km(layer_km)))
     theta = (dist_km / hops) / (2 * EARTH_R)
     a = math.degrees(math.atan2(
         math.cos(theta) - EARTH_R / (EARTH_R + layer_km), math.sin(theta)))
-    return max(3.0, min(85.0, max(0.0, a)))
+    return max(floor_deg, min(85.0, max(0.0, a)))
 
 
 def secant_factor(takeoff, layer_km=F2_HEIGHT_KM):
@@ -89,6 +91,16 @@ def path_midpoint(la1, lo1, la2, lo2):
                      math.sqrt((math.cos(p1) + bx) ** 2 + by ** 2))
     lon = math.radians(lo1) + math.atan2(by, math.cos(p1) + bx)
     return math.degrees(lat), ((math.degrees(lon) + 540) % 360) - 180
+
+
+def destination(lat, lon, dist_km, bearing_deg):
+    """Great-circle destination at an arbitrary bearing."""
+    d = dist_km / EARTH_R
+    la1, br = math.radians(lat), math.radians(bearing_deg)
+    la2 = math.asin(math.sin(la1) * math.cos(d) + math.cos(la1) * math.sin(d) * math.cos(br))
+    lo2 = math.radians(lon) + math.atan2(math.sin(br) * math.sin(d) * math.cos(la1),
+                                         math.cos(d) - math.sin(la1) * math.sin(la2))
+    return math.degrees(la2), ((math.degrees(lo2) + 540) % 360) - 180
 
 
 def destination_east(lat, lon, dist_km):
@@ -350,11 +362,70 @@ def path_fof2(ssn, utc_hour, month, bounces, mid_lon, mid_lat, mid_mag_lat):
     return est_fof2(ssn, local_solar_time(utc_hour, mid_lon), month, mid_mag_lat, mid_lat)
 
 
+_MTAB = None
+
+
+def _load_mtable():
+    """Read src/mfactorTable.js exactly as freqAdvisor.js uses it."""
+    global _MTAB
+    if _MTAB is not None:
+        return _MTAB
+    path = os.path.join(ROOT, 'src', 'mfactorTable.js')
+    if not os.path.exists(path):
+        _MTAB = False
+        return _MTAB
+    txt = open(path).read()
+
+    def grab(name):
+        m = re.search(name + r'\s*=\s*\[([^\]]*)\]', txt)
+        return [float(x) for x in m.group(1).split(',') if x.strip()]
+
+    body = txt[txt.index('MFACTOR_TABLE = new Uint16Array([') + 33:]
+    body = body[:body.index('])')]
+    _MTAB = {'d': grab('MFACTOR_DISTANCES'), 's': grab('MFACTOR_SSNS'),
+             'nl': int(re.search(r'MFACTOR_NLST = (\d+)', txt).group(1)),
+             'scale': 1e-4,
+             't': [int(x) for x in body.replace('\n', '').split(',') if x.strip()]}
+    return _MTAB
+
+
+def m_factor_lookup(dist_km, local_hour, month, ssn):
+    t = _load_mtable()
+    if not t:
+        return None
+    D, S, NL = t['d'], t['s'], t['nl']
+    d = max(D[0], min(D[-1], dist_km))
+    i0 = 0
+    while i0 < len(D) - 2 and d > D[i0 + 1]:
+        i0 += 1
+    wd = (d - D[i0]) / (D[i0 + 1] - D[i0])
+    j = int(((local_hour % 24) + 24) % 24 // 3) % NL
+    k = max(0, min(11, int(month) - 1))
+    sv = max(S[0], min(S[-1], ssn))
+    l0 = 0
+    while l0 < len(S) - 2 and sv > S[l0 + 1]:
+        l0 += 1
+    ws = (sv - S[l0]) / (S[l0 + 1] - S[l0])
+
+    def cell(di, li):
+        return t['t'][((di * NL + j) * 12 + k) * len(S) + li] * t['scale']
+
+    v = ((1 - wd) * ((1 - ws) * cell(i0, l0) + ws * cell(i0, l0 + 1))
+         + wd * ((1 - ws) * cell(i0 + 1, l0) + ws * cell(i0 + 1, l0 + 1)))
+    return max(1.0, min(3.7, v)) if v > 0 else None
+
+
 def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat=None, lat=None, bounces=None):
-    if bounces:
-        return path_fof2(ssn, utc_hour, month, bounces, mid_lon, lat, mag_lat) * path_secant(dist_km)
     lst = local_solar_time(utc_hour, mid_lon)
-    return est_fof2(ssn, lst, month, mag_lat, lat) * path_secant(dist_km)
+    m_phys = path_secant(dist_km)
+    m = m_phys
+    if month is not None:
+        mt = m_factor_lookup(dist_km, lst, month, ssn)
+        if mt is not None and mt <= m_phys * MAP_SANITY_FACTOR and mt * MAP_SANITY_FACTOR >= m_phys:
+            m = mt
+    if bounces:
+        return path_fof2(ssn, utc_hour, month, bounces, mid_lon, lat, mag_lat) * m
+    return est_fof2(ssn, lst, month, mag_lat, lat) * m
 
 
 def modips(points):
@@ -364,6 +435,33 @@ def modips(points):
            % (ROOT, json.dumps([list(p) for p in points])))
     out = subprocess.run(['node', '-e', src], capture_output=True, text=True, cwd=ROOT)
     return json.loads(out.stdout.strip())
+
+
+# ── VOACAP MODE PARSING ──────────────────────────────────────────────────────
+# VOACAP pads single-character layer names, so an E-layer mode is written "1 E"
+# with an internal space while F2 is written "1F2". A token regex that required
+# the digit and letter to be adjacent silently rejected the WHOLE LINE whenever
+# any E or F1 mode appeared — 53% of mode rows — which is how the layer study
+# in docs/VALIDATION.md Part 4 concluded that VOACAP never offers an E mode.
+# It does. Parse with this, not by splitting on whitespace.
+_MODE_TOKEN = re.compile(r'(\d)\s?(E|F)s?(\d?)')
+
+
+def parse_mode_row(line):
+    """All propagation modes on a VOACAP MODE row, e.g. ['1F2', '1E', '2F2']."""
+    tail = line.rstrip()
+    if not tail.endswith('MODE'):
+        return []
+    body = line[:tail.rfind('MODE')]
+    return [a + b + c for a, b, c in _MODE_TOKEN.findall(body)]
+
+
+def dominant_mode(line):
+    """The most common mode on a row, or None."""
+    ms = parse_mode_row(line)
+    if not ms:
+        return None
+    return max(set(ms), key=ms.count)
 
 
 def mag_latitudes(points):

@@ -439,3 +439,19 @@ test('calcTakeoffAngle: a chordal path does not distort the ray geometry', funct
   assert.equal(t.geoDeg, calcTakeoffAngle(3500, 14, HOP.F2.hKm, null).geoDeg);
   assert.ok(t.finalDeg < t.geoDeg, 'the antenna angle should still be reduced');
 });
+
+
+test('calcTakeoffAngle: mufDeg drops the 3 degree antenna floor', function() {
+  // geoDeg carries the antenna floor; mufDeg must not, because that floor caps
+  // the secant factor at 3.06 where VOACAP measures 3.25 (Part 16).
+  var t = calcTakeoffAngle(HOP.F2.maxHopKm, 14, HOP.F2.hKm, null);
+  assert.equal(t.geoDeg, 3, 'the antenna angle still floors at 3');
+  assert.ok(t.mufDeg < 1, 'the MUF angle must be free to approach the horizon');
+  // Away from the limit the two agree.
+  var mid = calcTakeoffAngle(1500, 14, HOP.F2.hKm, null);
+  assert.ok(Math.abs(mid.geoDeg - mid.mufDeg) < 0.06);
+  // And terrain must not touch either.
+  var terr = calcTakeoffAngle(1500, 14, HOP.F2.hKm,
+    { oceanFrac: 0.9, landFrac: 0.1, mountainFrac: 0, desertFrac: 0 });
+  assert.equal(terr.mufDeg, mid.mufDeg);
+});

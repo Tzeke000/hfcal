@@ -14,6 +14,7 @@ import {
   FOT_RATIO, MUF_DAYS_IN_10, FOT_DAYS_IN_10,
   mapFoF2, bounceFoF2, MAP_FOF2_MIN, MAP_FOF2_MAX, MAP_MODIP_LIMIT,
   MAP_SANITY_FACTOR, MAP_HELDOUT_PCT,
+  mFactorLookup, MFACTOR_MIN, MFACTOR_MAX, MFACTOR_ACCURACY_PCT,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -868,4 +869,83 @@ test('bounceFoF2: stays physical everywhere on Earth, all year', function() {
 test('the map reports the accuracy it was measured at', function() {
   assert.ok(MAP_HELDOUT_PCT > 0 && MAP_HELDOUT_PCT < 12,
     'held-out accuracy should be recorded and single-digit: ' + MAP_HELDOUT_PCT);
+});
+
+
+// ── M-FACTOR TABLE ───────────────────────────────────────────────────────────
+// The geometry half of the MUF, measured rather than derived. Indexed by TOTAL
+// path distance, which removes hop counting from the MUF entirely.
+// See docs/VALIDATION.md Part 16.
+
+test('mFactorLookup: physical at every distance, hour, month and solar level', function() {
+  for (var d = 100; d <= 20000; d += 700) {
+    for (var h = 0; h < 24; h += 4) {
+      for (var m = 1; m <= 12; m += 3) {
+        for (var s = 0; s <= 300; s += 100) {
+          var v = mFactorLookup(d, h, m, s);
+          assert.ok(v !== null && isFinite(v) && v >= MFACTOR_MIN && v <= MFACTOR_MAX,
+            'M out of range at ' + [d, h, m, s] + ': ' + v);
+        }
+      }
+    }
+  }
+});
+
+test('mFactorLookup: M rises with distance then levels off', function() {
+  // Physically M climbs from 1 at vertical incidence toward its grazing
+  // ceiling. It must never fall as the path lengthens through the single-hop
+  // range, which is what the old hard hop switch did at 4186 km.
+  var prev = 0;
+  for (var d = 250; d <= 3800; d += 250) {
+    var v = mFactorLookup(d, 12, 6, 70);
+    assert.ok(v >= prev - 0.02, 'M dipped between ' + (d - 250) + ' and ' + d + ' km');
+    prev = v;
+  }
+  assert.ok(mFactorLookup(250, 12, 6, 70) < 1.4, 'near-vertical M should be close to 1');
+  assert.ok(mFactorLookup(3500, 12, 6, 70) > 2.5, 'a long path should be strongly oblique');
+});
+
+test('mFactorLookup: no cliff at the old hop transition', function() {
+  // The hard switch at 4186 km used to put a 22% step in the MUF. Indexing by
+  // total distance means there is nothing to step.
+  var prev = mFactorLookup(3800, 12, 6, 70);
+  for (var d = 3900; d <= 5000; d += 100) {
+    var v = mFactorLookup(d, 12, 6, 70);
+    assert.ok(Math.abs(v - prev) < 0.35,
+      'jump of ' + (v - prev).toFixed(2) + ' in M between ' + (d - 100) + ' and ' + d + ' km');
+    prev = v;
+  }
+});
+
+test('mFactorLookup: clamps beyond the tabulated envelope, never extrapolates', function() {
+  var near = mFactorLookup(250, 12, 6, 70);
+  assert.equal(mFactorLookup(10, 12, 6, 70), near, 'short distances clamp');
+  var far = mFactorLookup(12000, 12, 6, 70);
+  assert.equal(mFactorLookup(40000, 12, 6, 70), far, 'long distances clamp');
+  assert.equal(mFactorLookup(3000, 12, 6, 5000), mFactorLookup(3000, 12, 6, 150),
+    'solar activity clamps to the tabulated top');
+});
+
+test('mFactorLookup: rejects bad input rather than guessing', function() {
+  assert.equal(mFactorLookup(NaN, 12, 6, 70), null);
+  assert.equal(mFactorLookup(-100, 12, 6, 70), null);
+  assert.equal(mFactorLookup(3000, 12, 0, 70), null);
+  assert.equal(mFactorLookup(3000, 12, 13, 70), null);
+});
+
+test('assessFrequency: uses the table when given a distance, secant when not', function() {
+  var base = { takeoffDeg: 6, layerKm: 360, midLon: 0, latDeg: 35, magLatDeg: 40,
+               month: 6, utcHour: 12, sfi: null, hops: 1 };
+  var without = assessFrequency(base);
+  var withD = assessFrequency(Object.assign({}, base, { distKm: 3000 }));
+  assert.equal(without.mFactorSource, 'secant');
+  assert.equal(withD.mFactorSource, 'table');
+  assert.ok(withD.muf > 0 && isFinite(withD.muf));
+  // Same foF2 either way — only the geometry differs.
+  assert.ok(Math.abs(withD.foF2 - without.foF2) < 1e-9);
+});
+
+test('the M table reports the accuracy it was measured at', function() {
+  assert.ok(MFACTOR_ACCURACY_PCT > 0 && MFACTOR_ACCURACY_PCT < 8,
+    'held-out M accuracy should be recorded and single-digit: ' + MFACTOR_ACCURACY_PCT);
 });
