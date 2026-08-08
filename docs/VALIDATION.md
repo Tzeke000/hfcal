@@ -11,6 +11,7 @@ Solar-geometry model rebuild: August 2026 (app v1.14.0)
 Terminator and path-sampling study: August 2026 (app v1.14.1)
 LUF and transmit-power study: August 2026 (app v1.15.0)
 Per-bounce multi-hop study: August 2026 (app v1.16.0)
+Takeoff-angle and FOT studies: August 2026 (app v1.17.0)
 
 ---
 
@@ -762,6 +763,99 @@ the path. On a long shot an operator can see that the reason they cannot close
 is a bounce three thousand kilometres away, in the dark, in the other
 hemisphere's winter.
 
+## Part 10 — Which angle the MUF is computed from (v1.17.0)
+
+A discrepancy between what was validated and what the app actually ran.
+
+`calcTakeoffAngle` produces two numbers. `baseDeg` is pure curved-earth
+geometry — the angle a ray must leave at to reach the target. `finalDeg` adds
+terrain: +3° for a ridgeline, −1.5 to −3° over ocean, +2° across desert, ×0.7
+on a chordal path. Every validation study from Part 1 onward used the
+**geometric** angle with no terrain. The app was feeding the **terrain-adjusted**
+one into the secant law.
+
+| Path | Terrain | Geometric | Adjusted | MUF error |
+|---|---|---|---|---|
+| 800 km | 90% ocean | 39.4° | 36.4° | +5.3% |
+| 1500 km | 90% ocean | 21.6° | 18.6° | **+7.5%** |
+| 1500 km | 60% desert | 21.6° | 23.6° | −4.6% |
+| 1500 km | mountains | 21.6° | 24.6° | **−6.8%** |
+
+Up to ±8%, which is a substantial slice of the model's 12–13% total error, and
+it appeared only on paths with terrain — so no study ever saw it.
+
+**Why the geometric angle is the right one.** Terrain adjustments answer "what
+can I build here?" If a ridgeline forces you 3° steeper, the ray does not
+politely arrive at the same target with a lower MUF — it lands short. Terrain
+changes what you can launch, not where the ionosphere is or how far away the
+target is. The MUF for a path follows from the geometry that actually reaches
+it.
+
+`calcTakeoffAngle` now returns `geoDeg` alongside `finalDeg`, and the two are
+used for different jobs: `geoDeg` for the MUF, `finalDeg` for the antenna
+build, the comm card and the apex-height plan. Three tests pin that ocean,
+desert and chordal terrain move the antenna angle and leave the ray geometry
+untouched.
+
+## Part 11 — The FOT was aiming too high (v1.17.0)
+
+The FOT — Frequency of Optimum Traffic — is the number in the app's middle
+column and the one the operator is told to aim at. It had always come from the
+textbook rule of thumb, **0.85 × MUF**, and had never been checked.
+
+It is checkable. VOACAP reports **MUFday** for every frequency: the fraction of
+days in the month it stays below the path MUF, i.e. the fraction of days it
+works. Two things follow:
+
+- At the MUF itself MUFday should be **0.50**, because the MUF is a *median* —
+  it works half the days. Measured: 0.50. That is a free check that the method
+  is sound.
+- The FOT is *defined* as the frequency good **90%** of days. So the true FOT
+  ratio is just where MUFday crosses 0.90, over the MUF.
+
+**Method.** Four distances (500–6000 km) × two seasons × two solar levels ×
+24 hours, MUFday interpolated to the 0.90 crossing. 361 usable samples (94% of
+the matrix). Reproduce with `python3 scripts/validation/run_fot_study.py`.
+
+**Result.**
+
+| | Ratio |
+|---|---|
+| p10 | 0.551 |
+| p25 | 0.700 |
+| **median** | **0.740** |
+| p75 | 0.779 |
+| p90 | 0.830 |
+| **app assumed** | **0.850** |
+
+And the direct consequence, measured: **0.85 × MUF delivers 76% of days, not
+90%.** A link planned on the textbook figure fails roughly **one day in four**
+instead of one in ten.
+
+The ratio is remarkably flat with distance — 0.728 at 500 km, 0.747 at
+1500 km, 0.750 at 3000 km, 0.751 at 6000 km — which is why a single constant
+is defensible. It does vary with illumination (0.665 daylight, 0.744 night),
+but adding an illumination term improved the ratio fit by only 5%, so it did
+not earn the extra parameter. A constant 0.740 cuts the ratio error from
+0.1348 to 0.0719, a **47% improvement**.
+
+**Verdict bands re-anchored.** The old bands were round fractions of the MUF:
+GOOD from 0.6 to 0.9 × MUF. But 0.9 × MUF is far above the 9-in-10 frequency,
+so the app was labelling ~70%-reliable frequencies GOOD. The bands now hang
+off the FOT itself — above the FOT is `MARGINAL — ABOVE FOT`, since by
+definition you are below 90% reliability there.
+
+**A reliability curve was tried and rejected.** Day-to-day foF2 is roughly
+log-normal, so REL(f) = Φ(ln(MUF/f)/σ) should give the fraction of days any
+frequency works — a genuinely useful number to show. But the σ implied by the
+measured FOT ratio (0.235) and the σ that best fits the whole MUFday curve
+(0.150) disagree badly: the log-normal fits the bulk but not the tail, and the
+tail is exactly where the FOT lives. Reporting "works X% of days" from it would
+be off by ~8 points in the region that matters. **Not shipped.** What *is*
+shipped is the two directly-measured anchors: the UI now labels the MUF
+"only 5 days in 10" and the FOT "works 9 days in 10", because both of those are
+measured rather than modelled.
+
 ## Limitations
 
 - The frequency advisor's season/latitude term is a smooth global fit, not
@@ -797,6 +891,13 @@ hemisphere's winter.
 - The de-bias correction assumes the per-bounce errors are independent. They
   are not entirely: neighbouring bounces share solar conditions, so the true
   correction is somewhat smaller than applied.
+- The FOT ratio is a single constant. It genuinely varies with illumination
+  (0.665 in daylight against 0.744 at night) and that variation is NOT
+  modelled, so the FOT is slightly optimistic in strong daylight.
+- The app reports no continuous reliability figure. A log-normal curve was
+  fitted and rejected (Part 11) because it cannot match both the bulk and the
+  tail of VOACAP's MUFday. Only the two measured anchors — 5-in-10 at the MUF,
+  9-in-10 at the FOT — are claimed.
 - **The equatorial ionization anomaly is not modelled.** The latitude term
   peaks at the magnetic equator, whereas the real ionosphere has a trough
   there and crests near ±15° magnetic. Adding an anomaly term did not improve

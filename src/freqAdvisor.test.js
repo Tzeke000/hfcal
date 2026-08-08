@@ -11,6 +11,7 @@ import {
   solarDeclination, cosZenith, illuminationFactor,
   estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
   pathFoF2, minOrderCorrection, FOF2_POINT_SIGMA,
+  FOT_RATIO, MUF_DAYS_IN_10, FOT_DAYS_IN_10,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -84,7 +85,7 @@ test('assessFrequency: NVIS midday, assigned frequency in the window', function(
   approx(r.mFactor, 1.0, 1e-6);
   approx(r.muf, r.foF2, 1e-9);
   assert.ok(r.muf > 10 && r.muf < 12, 'NVIS MUF near foF2 at SSN 100: ' + r.muf);
-  approx(r.fot, 0.85 * r.muf, 1e-9);
+  approx(r.fot, FOT_RATIO * r.muf, 1e-9);
   assert.equal(r.verdict.ok, true);
   assert.equal(r.usingDefaultSolar, false);
 });
@@ -140,7 +141,7 @@ test('frequencyForecast: six 4-hour blocks covering the whole day', function() {
   assert.equal(f[5].endZ, 0, 'last block wraps to 00Z');
   f.forEach(function(b) {
     assert.ok(b.muf > 0 && b.fot > 0 && b.luf > 0, 'finite values');
-    approx(b.fot, 0.85 * b.muf, 1e-9);
+    approx(b.fot, FOT_RATIO * b.muf, 1e-9);
     assert.ok(b.verdict, 'verdict present when a frequency is supplied');
   });
 });
@@ -682,4 +683,50 @@ test('assessFrequency: bounces never change the LUF, only the MUF', function() {
     bounces: [{ lat: 35, lon: 0, magLatDeg: 38 }, { lat: 5, lon: 0, magLatDeg: 5 }] }));
   assert.equal(a.luf, b.luf, 'the LUF is set at the terminals, not the bounces');
   assert.ok(b.muf !== a.muf, 'the MUF is set at the bounces');
+});
+
+
+// ── FOT ──────────────────────────────────────────────────────────────────────
+// The FOT is DEFINED as the frequency good 90% of days, not as a fixed
+// fraction of the MUF. Measured against VOACAP's MUFday output over 361
+// samples it sits at 0.740 x MUF; the textbook 0.85 delivers only 76%.
+// See docs/VALIDATION.md Part 11.
+
+test('FOT_RATIO: is the measured value, not the textbook rule of thumb', function() {
+  assert.ok(Math.abs(FOT_RATIO - 0.74) < 1e-9);
+  assert.ok(FOT_RATIO < 0.85, 'the textbook 0.85 was measured to give only 76% of days');
+  assert.equal(MUF_DAYS_IN_10, 5, 'the MUF is a median by definition');
+  assert.equal(FOT_DAYS_IN_10, 9);
+});
+
+test('classifyFrequency: the bands hang off the FOT, not round fractions of MUF', function() {
+  var muf = 12, luf = 3, fot = FOT_RATIO * muf;
+  // Just under the FOT is GOOD; just over it is no longer 9-in-10.
+  assert.equal(classifyFrequency(fot * 0.999, muf, luf).code, 'good');
+  assert.equal(classifyFrequency(fot * 1.001, muf, luf).code, 'near_muf');
+  // The old model called everything up to 0.9 x MUF "good". It is not.
+  assert.equal(classifyFrequency(0.88 * muf, muf, luf).code, 'near_muf',
+    '0.88 x MUF is well above the 9-in-10 frequency and must not read GOOD');
+  // Ends of the range still behave.
+  assert.equal(classifyFrequency(muf * 1.01, muf, luf).code, 'above_muf');
+  assert.equal(classifyFrequency(luf * 0.99, muf, luf).code, 'below_luf');
+  assert.equal(classifyFrequency(fot * 0.7, muf, luf).code, 'low');
+});
+
+test('classifyFrequency: every band is reachable and ordered by frequency', function() {
+  var muf = 20, luf = 3, seen = [];
+  for (var f = 2; f <= 22; f += 0.25) {
+    var c = classifyFrequency(f, muf, luf).code;
+    if (!seen.length || seen[seen.length - 1] !== c) seen.push(c);
+  }
+  assert.deepEqual(seen, ['below_luf', 'low', 'good', 'near_muf', 'above_muf'],
+    'bands must appear once each, in ascending frequency order — got ' + seen.join(','));
+});
+
+test('assessFrequency: the suggested frequency is the FOT when it fits', function() {
+  var r = assessFrequency({ takeoffDeg: 20, layerKm: 360, midLon: 0, latDeg: 35,
+    magLatDeg: 40, month: 6, utcHour: 12, sfi: null, txWatts: 20, hops: 1 });
+  approx(r.fot, FOT_RATIO * r.muf, 1e-9);
+  assert.ok(r.suggestedMHz <= r.muf && r.suggestedMHz >= r.luf);
+  if (r.fot > r.luf) approx(r.suggestedMHz, r.fot, 1e-9);
 });

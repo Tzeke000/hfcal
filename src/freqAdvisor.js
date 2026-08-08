@@ -24,9 +24,13 @@
 //    classic ~3.0-3.5x factor at low angles. This reuses the same curved-earth
 //    takeoff angle already validated against VOACAP (docs/VALIDATION.md).
 //
-// 3. FOT (Frequency of Optimum Traffic) = 0.85 * MUF — the standard planning
-//    figure: high enough for low absorption, low enough to survive normal
-//    ionospheric variation.
+// 3. FOT (Frequency of Optimum Traffic) — the planning figure the operator
+//    actually aims at, DEFINED as the frequency good 90% of days. The
+//    textbook rule of thumb is 0.85 * MUF, and it is wrong: measured against
+//    VOACAP's own MUFday output over 361 samples, 0.85 * MUF delivers only
+//    76% of days, and the real 90% frequency sits at 0.74 * MUF. Aiming at
+//    the textbook figure means the link fails about one day in four instead
+//    of one in ten. See docs/VALIDATION.md Part 11.
 //
 // 4. LUF (Lowest Usable Frequency) is set by D-layer absorption, which tracks
 //    daylight AND transmit power — unlike the MUF, which no amount of power
@@ -316,9 +320,27 @@ export function secantFactor(takeoffDeg, layerKm) {
   return 1 / cosPhi;
 }
 
-// Verdict thresholds, expressed as a fraction of MUF.
-// Above MUF the signal punches through; near MUF it is unstable; well below
-// FOT absorption climbs; below LUF the D layer eats it.
+// ── FOT ───────────────────────────────────────────────────────────────────────
+// Measured, not assumed: the frequency VOACAP says works 90% of days, over
+// the MUF, across 4 distances x 2 seasons x 2 solar levels x 24 hours. Median
+// 0.740, and remarkably flat with distance (0.728 at 500 km to 0.751 at
+// 6000 km). An illumination-dependent version was tried and improved the fit
+// by only 5%, so it did not earn the extra term.
+export const FOT_RATIO = 0.74;
+
+// Two anchors the operator can reason about, both directly measured:
+//   at the MUF  — works 5 days in 10 (the MUF is a MEDIAN, by definition)
+//   at the FOT  — works 9 days in 10
+export const MUF_DAYS_IN_10 = 5;
+export const FOT_DAYS_IN_10 = 9;
+
+// Verdict thresholds. Anchored to the FOT rather than to round fractions of
+// the MUF: above the FOT you are, by definition, below 90% reliability, and
+// the old "good up to 0.9 x MUF" band was calling ~70%-reliable frequencies
+// GOOD.
+export const NEAR_MUF_FRACTION_OF_FOT = 1.0;   // above the FOT = under 9-in-10
+export const HIGH_ABSORPTION_FRACTION_OF_FOT = 0.8;
+
 export function classifyFrequency(freqMHz, muf, luf) {
   if (freqMHz > muf) {
     return { code: 'above_muf', label: 'ABOVE MUF', ok: false,
@@ -328,11 +350,12 @@ export function classifyFrequency(freqMHz, muf, luf) {
     return { code: 'below_luf', label: 'BELOW LUF', ok: false,
       note: 'D-layer absorption is likely to swallow this frequency at current power levels. Go higher.' };
   }
-  if (freqMHz > 0.9 * muf) {
-    return { code: 'near_muf', label: 'MARGINAL — NEAR MUF', ok: true,
-      note: 'Close to the maximum usable frequency: workable but unstable, and it will drop out first if conditions dip.' };
+  var fot = FOT_RATIO * muf;
+  if (freqMHz > fot * NEAR_MUF_FRACTION_OF_FOT) {
+    return { code: 'near_muf', label: 'MARGINAL — ABOVE FOT', ok: true,
+      note: 'Above the frequency that works 9 days in 10. It will carry on a good day, but it is the first thing to drop out when the ionosphere sits below its monthly median — and at the MUF itself you are down to 5 days in 10.' };
   }
-  if (freqMHz < 0.6 * muf) {
+  if (freqMHz < fot * HIGH_ABSORPTION_FRACTION_OF_FOT) {
     return { code: 'low', label: 'USABLE — HIGH ABSORPTION', ok: true,
       note: 'Below the optimum. It will propagate, but with more absorption and noise than a frequency nearer the FOT.' };
   }
@@ -390,7 +413,7 @@ export function assessFrequency(params) {
   }
   var m = secantFactor(takeoffDeg, layerKm);
   var muf = foF2 * m;
-  var fot = 0.85 * muf;
+  var fot = FOT_RATIO * muf;
   var luf = estimateLUF(daylight, params.txWatts, params.hops);
 
   var verdict = null;

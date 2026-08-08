@@ -52,6 +52,10 @@ coordinates and a frequency into a complete, buildable antenna solution:
   corroborated against VOACAP. The MUF correctly does not move: more power
   never gets you above it. Warns outright when the LUF exceeds the MUF and no
   frequency will close the path at the selected power.
+- **Aims at a frequency that actually holds** — the FOT is defined as the
+  frequency good 9 days in 10, and the textbook shortcut for it (85% of the
+  MUF) measurably delivers only 76%, so a plan built on it fails one day in
+  four. Measured against VOACAP's own day-by-day statistics and corrected.
 - **Frequency check** — given the path, time of day and month, estimates
   MUF / FOT / LUF offline and rules on whether the assigned frequency will
   close the link, with an alternate to request if it will not. The
@@ -102,7 +106,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (156 tests
+- **Engineered, not improvised:** automated physics test suite (163 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

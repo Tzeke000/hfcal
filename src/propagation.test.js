@@ -398,3 +398,44 @@ test('reflectionPoints: symmetric and defensive', function() {
   assert.equal(reflectionPoints(0, 0, 0, 10, 0).length, 1, 'zero hops floors at one');
   assert.equal(reflectionPoints(0, 0, 0, 10).length, 1, 'missing hop count floors at one');
 });
+
+
+// ── GEOMETRIC vs ANTENNA ANGLE ───────────────────────────────────────────────
+// calcTakeoffAngle returns two different things and they must not be confused.
+// geoDeg is what the RAY needs to reach the target and is what the MUF is
+// computed from; finalDeg is advice for the ANTENNA and carries terrain.
+
+test('calcTakeoffAngle: geoDeg ignores terrain, finalDeg does not', function() {
+  var ocean = { oceanFrac: 0.9, landFrac: 0.1, mountainFrac: 0, desertFrac: 0 };
+  var desert = { oceanFrac: 0, landFrac: 1, mountainFrac: 0, desertFrac: 0.6 };
+  [500, 1500, 3000].forEach(function(d) {
+    var plain = calcTakeoffAngle(d, 14, HOP.F2.hKm, null);
+    var o = calcTakeoffAngle(d, 14, HOP.F2.hKm, ocean);
+    var de = calcTakeoffAngle(d, 14, HOP.F2.hKm, desert);
+    assert.equal(o.geoDeg, plain.geoDeg, 'ocean must not move the ray geometry at ' + d + ' km');
+    assert.equal(de.geoDeg, plain.geoDeg, 'desert must not move the ray geometry at ' + d + ' km');
+    // ...but it does move the antenna advice.
+    assert.ok(o.finalDeg < plain.finalDeg, 'ocean should flatten the antenna angle');
+    assert.ok(de.finalDeg > plain.finalDeg, 'desert should steepen it');
+  });
+});
+
+test('calcTakeoffAngle: geoDeg is the clamped pure geometry', function() {
+  [250, 800, 1500, 3000, 4000].forEach(function(d) {
+    var t = calcTakeoffAngle(d, 14, HOP.F2.hKm, null);
+    approx(t.geoDeg, Math.max(3, Math.min(85, t.baseDeg)), 0.051);
+    assert.equal(t.geoDeg, t.finalDeg, 'with no terrain the two must agree');
+  });
+  // At and beyond the hop limit the geometry floors and the clamp takes over.
+  assert.equal(calcTakeoffAngle(HOP.F2.maxHopKm, 14, HOP.F2.hKm, null).geoDeg, 3);
+});
+
+test('calcTakeoffAngle: a chordal path does not distort the ray geometry', function() {
+  // The chordal rule multiplies the ANTENNA angle by 0.7. That must not leak
+  // into the MUF: a 30% angle change moves the secant factor a long way.
+  var terr = { oceanFrac: 0.9, landFrac: 0.1, mountainFrac: 0, desertFrac: 0 };
+  var t = calcTakeoffAngle(3500, 14, HOP.F2.hKm, terr);
+  assert.ok(t.chordal, 'this case should trigger the chordal rule');
+  assert.equal(t.geoDeg, calcTakeoffAngle(3500, 14, HOP.F2.hKm, null).geoDeg);
+  assert.ok(t.finalDeg < t.geoDeg, 'the antenna angle should still be reduced');
+});

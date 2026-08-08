@@ -212,6 +212,18 @@ export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
   return {
     baseDeg:     +baseDeg.toFixed(1),
     finalDeg:    +finalDeg.toFixed(1),
+    // The angle the RAY actually needs in order to reach the target: pure
+    // curved-earth geometry, clamped to the operational window, with no
+    // terrain applied. This is the one the ionosphere sees, and therefore the
+    // one the MUF must be computed from.
+    //
+    // finalDeg is a different thing — advice for the ANTENNA. If a ridgeline
+    // forces you 3 deg steeper, the ray does not politely arrive at the same
+    // target with a lower MUF; it lands short. Terrain changes what you can
+    // build, not where the ionosphere is. Feeding finalDeg into the secant law
+    // shifted the MUF by up to 8% on terrain paths and did not match anything
+    // that was ever validated. See docs/VALIDATION.md Part 10.
+    geoDeg:      +Math.max(3, Math.min(85, baseDeg)).toFixed(1),
     adjustments: adjustments,
     chordal:     chordal,
   };
