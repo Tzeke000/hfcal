@@ -2818,6 +2818,13 @@ function clearCachedLocs() {
 }
 
 var SHOTS_KEY = 'hfcalc_shots_v1';
+// Date.now() alone collides when two saves land in the same millisecond, and
+// a colliding id makes filter() delete both rows and React keys duplicate.
+var shotSeq = 0;
+function newShotId() {
+  shotSeq += 1;
+  return 'shot_' + Date.now() + '_' + shotSeq + '_' + Math.random().toString(36).slice(2, 8);
+}
 var SHOTS_MAX = 25;
 
 function loadShots() {
@@ -2859,21 +2866,34 @@ function SavedShots({ currentShot, onClearStored }) {
   var [open, setOpen] = useState(false);
   var [flash, setFlash] = useState(null);
 
+  // Persist as a effect of the list changing, never alongside each setState.
+  // Writing inside the click handlers meant a handler working from a stale
+  // closure could persist an out-of-date list — which is how deleting one
+  // shot could resurrect an earlier one.
+  useEffect(function() { persistShots(shots); }, [shots]);
+
   function note(msg) {
     setFlash(msg);
     setTimeout(function() { setFlash(null); }, 1800);
   }
   function saveCurrent() {
     if (!currentShot) return;
-    var next = [currentShot].concat(shots).slice(0, SHOTS_MAX);
-    setShots(next); persistShots(next); setOpen(true); note('SAVED');
+    // Stamp the id and DTG at SAVE time. currentShot is rebuilt during the
+    // parent's render, and saving does not necessarily re-render the parent,
+    // so reusing its id let two saves share one id — after which deleting
+    // either removed both and the React keys collided.
+    var stamped = Object.assign({}, currentShot, { id: newShotId(), dtg: dtg(new Date()) });
+    setShots(function(cur) { return [stamped].concat(cur).slice(0, SHOTS_MAX); });
+    setOpen(true); note('SAVED');
   }
   function doExport(shot) {
     exportText(formatCommCard(shot), commCardFilename(shot), note);
   }
   function remove(id) {
-    var next = shots.filter(function(s) { return s.id !== id; });
-    setShots(next); persistShots(next);
+    // Functional update: always filter the CURRENT list, never the one this
+    // handler happened to close over. Rapid taps used to each work from the
+    // same pre-delete snapshot.
+    setShots(function(cur) { return cur.filter(function(s) { return s.id !== id; }); });
   }
 
   var btn = { border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '6px 12px', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer' };
@@ -2938,7 +2958,7 @@ function SavedShots({ currentShot, onClearStored }) {
           </div>
           <button
             onClick={function() {
-              setShots([]); persistShots([]);
+              setShots([]);
               clearCachedLocs();
               if (onClearStored) onClearStored();
               note('CLEARED');
