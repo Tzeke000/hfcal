@@ -1722,7 +1722,7 @@ function AboutBanner() {
 
   var tabBtn = function(label, idx) {
     return (
-      <button onClick={function() { setTab(idx); }} style={{ flex: 1, padding: '7px 2px', background: tab === idx ? T.oliveDim : '#0a0e08', color: tab === idx ? T.textPrim : T.textMute, border: '1px solid #2a3a1a', borderRadius: 3, fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.03em' }}>
+      <button onClick={function() { setTab(idx); }} style={{ flex: 1, padding: '10px 2px', background: tab === idx ? T.accent : T.bg, color: tab === idx ? '#0e1409' : T.textSec, border: '1.5px solid ' + (tab === idx ? T.accent : T.borderHi), borderRadius: 5, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
         {label}
       </button>
     );
@@ -1804,10 +1804,24 @@ function AboutBanner() {
 
           {tab === 1 && (
             <div>
-              <div style={{ ...box, borderLeft: '3px solid ' + T.accent }}>
-                <div style={boxLabel}>What this is for</div>
-                <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6 }}>
-                  Building a working HF wire antenna in the field, fast, with whatever wire you have — and knowing whether the frequency you were assigned will actually close the path. Everything runs on the device with no signal.
+              <div style={{ ...box, borderLeft: '3px solid ' + T.accent, padding: '12px 14px' }}>
+                <div style={{ ...boxLabel, color: T.accentText, fontSize: '0.64rem' }}>What this is for</div>
+                <div style={{ color: T.textPrim, fontSize: '0.82rem', fontWeight: 700, lineHeight: 1.5, marginBottom: 7 }}>
+                  Built for the Marine standing at the wire with no signal, no laptop, and no time.
+                </div>
+                <div style={{ color: T.textBody, fontSize: '0.77rem', lineHeight: 1.6, marginBottom: 9 }}>
+                  When SATCOM is denied, HF is the fallback — and HF lives or dies on the antenna. A wire cut wrong or hung at the wrong height is the difference between comms and silence. This puts that knowledge in your pocket and runs it entirely on the phone.
+                </div>
+                <div style={{ color: T.textSec, fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 5 }}>
+                  ALL YOU NEED IS THREE THINGS:
+                </div>
+                <div style={{ color: T.textBody, fontSize: '0.77rem', lineHeight: 1.7, marginBottom: 9 }}>
+                  <div>{'1.  Your frequency'}</div>
+                  <div>{'2.  Where you are'}</div>
+                  <div>{'3.  Where you need the signal to land'}</div>
+                </div>
+                <div style={{ color: T.textBody, fontSize: '0.77rem', lineHeight: 1.6 }}>
+                  Put those in and you get the antenna to build, every cut length for the wire you actually have, how high to hang it, which way to point it, and whether that frequency will even make the trip. <strong style={{ color: T.accentText }}>Airplane mode the whole time.</strong> No account, no signal, no reachback.
                 </div>
               </div>
 
@@ -1833,6 +1847,35 @@ function AboutBanner() {
               {feat('Saved shots', 'keep the day\u2019s link plans on the device.', 'f13')}
               {feat('Comm-card export', 'any plan as a plain-text card — DTG, grids, distance, bearing, wire, geometry, frequency window.', 'f14')}
               {feat('Works with the radio off', 'installs to the home screen and runs with no account, no telemetry and no connection.', 'f15')}
+
+              <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8, color: T.accentText, fontSize: '0.64rem' }}>Where the math comes from</div>
+              <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6, marginBottom: 9 }}>
+                None of this is invented. Every formula is standard published radio theory, and the sources are named so you can check the work rather than take it on faith.
+              </div>
+
+              <div style={box}>
+                <div style={{ color: T.textSec, fontSize: '0.73rem', lineHeight: 1.65 }}>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Wire lengths</strong> — λ = c ÷ f, scaled by velocity factor. Gauge correction from the ARRL Antenna Book empirical K-factor table (14 AWG baseline, ~0.3–0.5% per gauge step). The familiar 468/f rule is this same formula with bare copper assumed.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Takeoff angle</strong> — curved-earth reflection geometry, α = atan[(cos θ − R/(R+h)) ÷ sin θ]. Davies, <em>Ionospheric Radio</em>; the same geometry behind the ARRL skip-distance treatment.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Antenna height</strong> — first elevation lobe at H = λ ÷ (4·sin α), then checked against whether your legs can physically reach it.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>MUF</strong> — the secant law at oblique incidence with Earth curvature, MUF = foF2 ÷ cos φ. FOT = 0.85 × MUF, the standard planning convention.</div>
+                  <div style={{ marginBottom: 6 }}><strong style={{ color: T.textPrim }}>Ionosphere</strong> — E, F1 and F2 layer heights and hop limits from published values; foF2 day/night behaviour fitted to VOACAP output and cross-checked to stay inside published mid-latitude ionosonde ranges.</div>
+                  <div><strong style={{ color: T.textPrim }}>Space weather</strong> — solar flux and planetary K-index from NOAA's Space Weather Prediction Center, when a connection exists.</div>
+                </div>
+              </div>
+
+              <div style={{ ...box, borderLeft: '3px solid ' + T.accent }}>
+                <div style={{ ...boxLabel, color: T.accentText }}>How it was checked</div>
+                <div style={{ color: T.textBody, fontSize: '0.75rem', lineHeight: 1.6 }}>
+                  Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
+                  <div style={{ marginTop: 7, marginBottom: 7 }}>
+                    <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  MUF within about 15% across 288 hourly samples.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  85 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                  </div>
+                  The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
+                </div>
+              </div>
 
               <div style={{ ...box, marginTop: 12, borderLeft: '3px solid ' + T.warn }}>
                 <div style={{ ...boxLabel, color: T.warn }}>What it is not</div>
@@ -1892,7 +1935,7 @@ function DAGRInstructions() {
 
   var tabBtn = function(label, idx) {
     return (
-      <button onClick={function() { setTab(idx); }} style={{ flex: 1, padding: '6px 0', background: tab === idx ? T.oliveDim : '#0a0e08', color: tab === idx ? T.textPrim : T.textMute, border: '1px solid #2a3a1a', borderRadius: 3, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em' }}>
+      <button onClick={function() { setTab(idx); }} style={{ flex: 1, padding: '10px 2px', background: tab === idx ? T.accent : T.bg, color: tab === idx ? '#0e1409' : T.textSec, border: '1.5px solid ' + (tab === idx ? T.accent : T.borderHi), borderRadius: 5, fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
         {label}
       </button>
     );
