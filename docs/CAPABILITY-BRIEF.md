@@ -110,7 +110,7 @@ coordinates and a frequency into a complete, buildable antenna solution:
   across latitudes, 13.4% transequatorial) rather than accurate only where it
   was originally tuned. The docs are equally candid about what is *not*
   validated — the LUF has never been checked against anything.
-- **Engineered, not improvised:** automated physics test suite (191 tests
+- **Engineered, not improvised:** automated physics test suite (194 tests
   pinning the formulas to published theory), versioned releases,
   self-updating deployment with stale-install notification.
 

@@ -2096,6 +2096,14 @@ function AboutBanner() {
                 <div style={{ color: T.textBody, fontSize: '0.77rem', lineHeight: 1.6, marginBottom: 9 }}>
                   When SATCOM is denied, HF is the fallback — and HF lives or dies on the antenna. A wire cut wrong or hung at the wrong height is the difference between comms and silence. This puts that knowledge in your pocket and runs it entirely on the phone.
                 </div>
+                <div style={{ background: T.surfaceHi, border: '1px solid ' + T.borderHi, borderRadius: 5, padding: '8px 10px', marginBottom: 9 }}>
+                  <div style={{ color: T.accentText, fontSize: '0.72rem', fontWeight: 700, marginBottom: 3 }}>
+                    How close is it?
+                  </div>
+                  <div style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.55 }}>
+                    Checked against VOACAP — the government's own HF engine — at sites the app was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5%. Where it is weaker it says so: paths crossing the equator run nearer 6%, and the LUF is an estimate rather than a measurement.
+                  </div>
+                </div>
                 <div style={{ color: T.textSec, fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 5 }}>
                   ALL YOU NEED IS THREE THINGS:
                 </div>
@@ -2177,7 +2185,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, and the LUF (lowest usable frequency) has never been validated — treat it as the softest number here.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  191 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  194 automated tests pin every formula so the physics cannot drift as the app changes.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2202,10 +2210,13 @@ function AboutBanner() {
               </div>
 
               {cmp('VOACAP', 'The government-standard HF prediction engine since the 1980s. Accurate and trusted.',
-                'Desktop software for a trained analyst. Nobody runs VOACAP kneeling next to a wire spool. This app\u2019s takeoff angles agree with VOACAP within about 1\u00b0 across 250\u20136000 km, and its MUF within about 12% at mid-latitude and 14% worldwide \u2014 offline, on a phone. Study and reproduction scripts ship with the source.', 'c1')}
+                'Desktop software for a trained analyst. Nobody runs VOACAP kneeling next to a wire spool. This app agrees with VOACAP to about 1\u00b0 on takeoff angle across 250\u20136000 km, 1% on critical frequency and 4\u20135% on MUF \u2014 offline, on a phone, in milliseconds. Every study and every reproduction script ships with the source, so the claim is checkable rather than asserted.', 'c1')}
 
               {cmp('Comm planning suites', 'Planner-grade propagation and link tools at the S-6 level.',
                 'Laptop tools for planners. Their output reaches the operator as a frequency assignment \u2014 not as \u201ccut 19 ft 8 in per leg, apex at 16 ft.\u201d', 'c2')}
+
+              {cmp('Rules of thumb in the field', 'The shortcuts everyone actually uses \u2014 \u201caim at 85% of the MUF\u201d, \u201cF2 tops out around 4000 km\u201d.',
+                'Measured against VOACAP, several of them are wrong in ways that cost you a link. 85% of the MUF works about 82 days in 100, not 90 \u2014 the real 9-in-10 frequency is 77%. This app carries the measured figures and shows what they mean in days.', 'c5')}
 
               {cmp('The Antenna Handbook', 'The doctrinal antenna reference. Excellent theory.',
                 'A static book of formulas and generic figures \u2014 \u201c468/f\u201d, \u201c30\u201340 ft\u201d. No path-specific computation, no wire-material correction, no check that what it tells you to build is physically buildable. This app is that math, executed for your exact path and your exact wire.', 'c3')}

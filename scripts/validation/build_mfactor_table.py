@@ -244,6 +244,17 @@ def export_js():
     """
     import statistics as st
     rows = json.load(open(os.path.join(OUT_DIR, 'mfactor-rows.json')))
+
+    # CONSISTENCY. The rows hold M = MUF / min(foF2 at the bounces), the RAW
+    # minimum. The app does not use the raw minimum: it applies the min-order
+    # de-bias first (pathFoF2), so it computes MUF = min * correction * M. If
+    # the table were fitted against the raw minimum the correction would be
+    # applied twice, over-predicting every multi-hop path — which is what the
+    # transequatorial +4% bias in Part 16 was. Divide it out here so both sides
+    # use the same reference.
+    for r in rows:
+        hops = max(1, math.ceil(r['dist_km'] / appmodel.max_hop_km(appmodel.F2_HEIGHT_KM)))
+        r['m'] = r['m'] / appmodel.min_order_correction(hops)
     NL = 8
     CAP = 3.6
     tr = [r for r in rows if not r['test'] and r['m'] <= CAP]

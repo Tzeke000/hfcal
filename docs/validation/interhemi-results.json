@@ -214,28 +214,28 @@
   ],
   "summary": {
     "CherryPt-Argentina": {
-      "no_season": 14.4,
-      "bounces": 7.3,
-      "control_points": 11.5
+      "no_season": 14.2,
+      "bounces": 4.7,
+      "control_points": 11.3
     },
     "Finland-SouthAfrica": {
       "no_season": 18.1,
-      "bounces": 6.6,
+      "bounces": 7.2,
       "control_points": 12.0
     },
     "Japan-Australia": {
-      "no_season": 19.1,
-      "bounces": 5.8,
-      "control_points": 13.9
+      "no_season": 18.8,
+      "bounces": 5.1,
+      "control_points": 13.5
     },
     "Hawaii-NewZealand": {
-      "no_season": 16.3,
-      "bounces": 6.4,
-      "control_points": 11.3
+      "no_season": 16.1,
+      "bounces": 6.9,
+      "control_points": 11.0
     },
     "CherryPt-Brazil": {
       "no_season": 16.9,
-      "bounces": 5.5,
+      "bounces": 5.4,
       "control_points": 12.6
     },
     "Panama-Peru": {
@@ -245,9 +245,9 @@
     }
   },
   "overall": {
-    "no_season": 18.1,
-    "bounces": 6.4,
-    "control_points": 12.7
+    "no_season": 18.0,
+    "bounces": 6.0,
+    "control_points": 12.5
   },
   "rows": [
     {
@@ -257,9 +257,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 13.9,
-      "app_mid": 14.12,
-      "app_plain": 13.16,
-      "app_cp": 17.72
+      "app_mid": 13.13,
+      "app_plain": 13.3,
+      "app_cp": 17.9
     },
     {
       "path": "CherryPt-Argentina",
@@ -268,9 +268,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 13.4,
-      "app_mid": 13.94,
-      "app_plain": 12.03,
-      "app_cp": 16.44
+      "app_mid": 12.99,
+      "app_plain": 12.16,
+      "app_cp": 16.62
     },
     {
       "path": "CherryPt-Argentina",
@@ -279,9 +279,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 13.4,
-      "app_mid": 14.15,
-      "app_plain": 11.31,
-      "app_cp": 15.35
+      "app_mid": 13.18,
+      "app_plain": 11.43,
+      "app_cp": 15.51
     },
     {
       "path": "CherryPt-Argentina",
@@ -290,9 +290,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 13.6,
-      "app_mid": 14.12,
-      "app_plain": 10.96,
-      "app_cp": 14.43
+      "app_mid": 13.16,
+      "app_plain": 11.07,
+      "app_cp": 14.58
     },
     {
       "path": "CherryPt-Argentina",
@@ -301,9 +301,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.3,
-      "app_mid": 14.79,
-      "app_plain": 10.86,
-      "app_cp": 13.63
+      "app_mid": 13.76,
+      "app_plain": 10.98,
+      "app_cp": 13.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -312,9 +312,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 15.2,
-      "app_mid": 15.23,
-      "app_plain": 10.88,
-      "app_cp": 12.94
+      "app_mid": 14.17,
+      "app_plain": 10.99,
+      "app_cp": 13.08
     },
     {
       "path": "CherryPt-Argentina",
@@ -323,9 +323,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.7,
-      "app_mid": 14.32,
-      "app_plain": 11.05,
-      "app_cp": 12.36
+      "app_mid": 13.32,
+      "app_plain": 11.17,
+      "app_cp": 12.49
     },
     {
       "path": "CherryPt-Argentina",
@@ -334,9 +334,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 11.7,
-      "app_mid": 12.53,
-      "app_plain": 11.54,
-      "app_cp": 11.86
+      "app_mid": 11.66,
+      "app_plain": 11.66,
+      "app_cp": 11.98
     },
     {
       "path": "CherryPt-Argentina",
@@ -345,9 +345,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.5,
-      "app_mid": 12.19,
-      "app_plain": 12.42,
-      "app_cp": 11.42
+      "app_mid": 11.34,
+      "app_plain": 12.55,
+      "app_cp": 11.54
     },
     {
       "path": "CherryPt-Argentina",
@@ -356,9 +356,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.7,
-      "app_mid": 12.58,
-      "app_plain": 13.7,
-      "app_cp": 11.05
+      "app_mid": 11.71,
+      "app_plain": 13.84,
+      "app_cp": 11.17
     },
     {
       "path": "CherryPt-Argentina",
@@ -367,9 +367,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 14.3,
-      "app_mid": 16.02,
-      "app_plain": 15.34,
-      "app_cp": 10.73
+      "app_mid": 14.99,
+      "app_plain": 15.5,
+      "app_cp": 10.84
     },
     {
       "path": "CherryPt-Argentina",
@@ -378,9 +378,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 19.9,
-      "app_mid": 21.15,
-      "app_plain": 17.21,
-      "app_cp": 19.33
+      "app_mid": 19.79,
+      "app_plain": 17.39,
+      "app_cp": 19.53
     },
     {
       "path": "CherryPt-Argentina",
@@ -389,9 +389,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 25.0,
-      "app_mid": 25.58,
-      "app_plain": 19.15,
-      "app_cp": 22.2
+      "app_mid": 23.93,
+      "app_plain": 19.35,
+      "app_cp": 22.43
     },
     {
       "path": "CherryPt-Argentina",
@@ -400,9 +400,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 22.7,
-      "app_mid": 25.6,
-      "app_plain": 20.99,
-      "app_cp": 23.87
+      "app_mid": 23.96,
+      "app_plain": 21.21,
+      "app_cp": 24.12
     },
     {
       "path": "CherryPt-Argentina",
@@ -411,9 +411,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 21.4,
-      "app_mid": 25.33,
-      "app_plain": 22.52,
-      "app_cp": 24.97
+      "app_mid": 23.71,
+      "app_plain": 22.76,
+      "app_cp": 25.24
     },
     {
       "path": "CherryPt-Argentina",
@@ -422,9 +422,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 24.9,
-      "app_mid": 25.98,
-      "app_plain": 23.6,
-      "app_cp": 25.69
+      "app_mid": 24.31,
+      "app_plain": 23.85,
+      "app_cp": 25.96
     },
     {
       "path": "CherryPt-Argentina",
@@ -433,9 +433,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 24.1,
-      "app_mid": 26.95,
-      "app_plain": 24.11,
-      "app_cp": 26.09
+      "app_mid": 25.34,
+      "app_plain": 24.36,
+      "app_cp": 26.36
     },
     {
       "path": "CherryPt-Argentina",
@@ -444,9 +444,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 23.6,
-      "app_mid": 26.87,
-      "app_plain": 23.99,
-      "app_cp": 26.18
+      "app_mid": 25.27,
+      "app_plain": 24.24,
+      "app_cp": 26.46
     },
     {
       "path": "CherryPt-Argentina",
@@ -455,9 +455,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 23.5,
-      "app_mid": 26.52,
-      "app_plain": 23.25,
-      "app_cp": 25.97
+      "app_mid": 24.94,
+      "app_plain": 23.5,
+      "app_cp": 26.25
     },
     {
       "path": "CherryPt-Argentina",
@@ -466,9 +466,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 23.6,
-      "app_mid": 26.27,
-      "app_plain": 21.98,
-      "app_cp": 25.45
+      "app_mid": 24.52,
+      "app_plain": 22.21,
+      "app_cp": 25.72
     },
     {
       "path": "CherryPt-Argentina",
@@ -477,9 +477,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.8,
-      "app_mid": 25.88,
-      "app_plain": 20.31,
-      "app_cp": 24.57
+      "app_mid": 24.16,
+      "app_plain": 20.52,
+      "app_cp": 24.83
     },
     {
       "path": "CherryPt-Argentina",
@@ -488,9 +488,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.3,
-      "app_mid": 23.87,
-      "app_plain": 18.41,
-      "app_cp": 23.14
+      "app_mid": 22.28,
+      "app_plain": 18.6,
+      "app_cp": 23.38
     },
     {
       "path": "CherryPt-Argentina",
@@ -499,9 +499,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 18.5,
-      "app_mid": 19.53,
-      "app_plain": 16.47,
-      "app_cp": 21.01
+      "app_mid": 18.15,
+      "app_plain": 16.64,
+      "app_cp": 21.23
     },
     {
       "path": "CherryPt-Argentina",
@@ -510,9 +510,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 14.4,
-      "app_mid": 15.9,
-      "app_plain": 14.67,
-      "app_cp": 19.19
+      "app_mid": 14.78,
+      "app_plain": 14.83,
+      "app_cp": 19.39
     },
     {
       "path": "CherryPt-Argentina",
@@ -521,9 +521,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 19.4,
-      "app_mid": 19.82,
-      "app_plain": 17.37,
-      "app_cp": 21.38
+      "app_mid": 18.42,
+      "app_plain": 17.55,
+      "app_cp": 21.6
     },
     {
       "path": "CherryPt-Argentina",
@@ -532,9 +532,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 17.0,
-      "app_mid": 17.84,
-      "app_plain": 15.88,
-      "app_cp": 19.84
+      "app_mid": 16.59,
+      "app_plain": 16.04,
+      "app_cp": 20.05
     },
     {
       "path": "CherryPt-Argentina",
@@ -543,9 +543,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 16.1,
-      "app_mid": 16.99,
-      "app_plain": 14.92,
-      "app_cp": 18.52
+      "app_mid": 15.8,
+      "app_plain": 15.08,
+      "app_cp": 18.71
     },
     {
       "path": "CherryPt-Argentina",
@@ -554,9 +554,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 16.4,
-      "app_mid": 16.96,
-      "app_plain": 14.46,
-      "app_cp": 17.41
+      "app_mid": 15.78,
+      "app_plain": 14.61,
+      "app_cp": 17.6
     },
     {
       "path": "CherryPt-Argentina",
@@ -565,9 +565,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 16.7,
-      "app_mid": 17.06,
-      "app_plain": 14.34,
-      "app_cp": 16.45
+      "app_mid": 15.86,
+      "app_plain": 14.49,
+      "app_cp": 16.62
     },
     {
       "path": "CherryPt-Argentina",
@@ -576,9 +576,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 16.3,
-      "app_mid": 16.25,
-      "app_plain": 14.36,
-      "app_cp": 15.61
+      "app_mid": 15.11,
+      "app_plain": 14.51,
+      "app_cp": 15.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -587,9 +587,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 15.3,
-      "app_mid": 15.37,
-      "app_plain": 14.59,
-      "app_cp": 14.92
+      "app_mid": 14.29,
+      "app_plain": 14.74,
+      "app_cp": 15.08
     },
     {
       "path": "CherryPt-Argentina",
@@ -598,9 +598,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 14.0,
-      "app_mid": 13.97,
-      "app_plain": 15.23,
-      "app_cp": 14.31
+      "app_mid": 13.02,
+      "app_plain": 15.39,
+      "app_cp": 14.46
     },
     {
       "path": "CherryPt-Argentina",
@@ -609,9 +609,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 12.6,
-      "app_mid": 13.13,
-      "app_plain": 16.39,
-      "app_cp": 13.78
+      "app_mid": 12.23,
+      "app_plain": 16.56,
+      "app_cp": 13.92
     },
     {
       "path": "CherryPt-Argentina",
@@ -620,9 +620,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 13.0,
-      "app_mid": 13.88,
-      "app_plain": 18.08,
-      "app_cp": 13.33
+      "app_mid": 12.93,
+      "app_plain": 18.27,
+      "app_cp": 13.48
     },
     {
       "path": "CherryPt-Argentina",
@@ -631,9 +631,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 18.3,
-      "app_mid": 18.76,
-      "app_plain": 20.24,
-      "app_cp": 12.94
+      "app_mid": 17.62,
+      "app_plain": 20.45,
+      "app_cp": 13.08
     },
     {
       "path": "CherryPt-Argentina",
@@ -642,9 +642,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.6,
-      "app_mid": 27.06,
-      "app_plain": 22.71,
-      "app_cp": 23.32
+      "app_mid": 25.42,
+      "app_plain": 22.95,
+      "app_cp": 23.57
     },
     {
       "path": "CherryPt-Argentina",
@@ -653,9 +653,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 32.5,
-      "app_mid": 32.97,
-      "app_plain": 25.28,
-      "app_cp": 26.79
+      "app_mid": 30.96,
+      "app_plain": 25.54,
+      "app_cp": 27.07
     },
     {
       "path": "CherryPt-Argentina",
@@ -664,9 +664,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 27.0,
-      "app_mid": 32.64,
-      "app_plain": 27.7,
-      "app_cp": 28.8
+      "app_mid": 30.64,
+      "app_plain": 27.99,
+      "app_cp": 29.11
     },
     {
       "path": "CherryPt-Argentina",
@@ -675,9 +675,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.1,
-      "app_mid": 32.85,
-      "app_plain": 29.73,
-      "app_cp": 30.14
+      "app_mid": 30.84,
+      "app_plain": 30.04,
+      "app_cp": 30.45
     },
     {
       "path": "CherryPt-Argentina",
@@ -686,9 +686,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 26.8,
-      "app_mid": 34.27,
-      "app_plain": 31.15,
-      "app_cp": 31.0
+      "app_mid": 32.17,
+      "app_plain": 31.48,
+      "app_cp": 31.33
     },
     {
       "path": "CherryPt-Argentina",
@@ -697,9 +697,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 34.1,
-      "app_mid": 34.49,
-      "app_plain": 31.82,
-      "app_cp": 31.48
+      "app_mid": 32.28,
+      "app_plain": 32.15,
+      "app_cp": 31.81
     },
     {
       "path": "CherryPt-Argentina",
@@ -708,9 +708,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 33.1,
-      "app_mid": 34.46,
-      "app_plain": 31.66,
-      "app_cp": 31.59
+      "app_mid": 32.25,
+      "app_plain": 31.99,
+      "app_cp": 31.92
     },
     {
       "path": "CherryPt-Argentina",
@@ -719,9 +719,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 32.5,
-      "app_mid": 34.05,
-      "app_plain": 30.69,
-      "app_cp": 31.34
+      "app_mid": 31.87,
+      "app_plain": 31.01,
+      "app_cp": 31.67
     },
     {
       "path": "CherryPt-Argentina",
@@ -730,9 +730,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 32.7,
-      "app_mid": 33.6,
-      "app_plain": 29.01,
-      "app_cp": 30.72
+      "app_mid": 31.3,
+      "app_plain": 29.31,
+      "app_cp": 31.04
     },
     {
       "path": "CherryPt-Argentina",
@@ -741,9 +741,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 33.1,
-      "app_mid": 33.3,
-      "app_plain": 26.8,
-      "app_cp": 29.64
+      "app_mid": 31.02,
+      "app_plain": 27.08,
+      "app_cp": 29.96
     },
     {
       "path": "CherryPt-Argentina",
@@ -752,9 +752,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 31.3,
-      "app_mid": 30.99,
-      "app_plain": 24.3,
-      "app_cp": 27.92
+      "app_mid": 28.87,
+      "app_plain": 24.55,
+      "app_cp": 28.21
     },
     {
       "path": "CherryPt-Argentina",
@@ -763,9 +763,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 27.3,
-      "app_mid": 26.85,
-      "app_plain": 21.74,
-      "app_cp": 25.35
+      "app_mid": 24.96,
+      "app_plain": 21.97,
+      "app_cp": 25.61
     },
     {
       "path": "CherryPt-Argentina",
@@ -774,9 +774,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 22.9,
-      "app_mid": 22.99,
-      "app_plain": 19.36,
-      "app_cp": 23.15
+      "app_mid": 21.37,
+      "app_plain": 19.57,
+      "app_cp": 23.4
     },
     {
       "path": "CherryPt-Argentina",
@@ -785,9 +785,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 19.2,
-      "app_mid": 19.64,
-      "app_plain": 13.16,
-      "app_cp": 16.06
+      "app_mid": 18.3,
+      "app_plain": 13.3,
+      "app_cp": 16.23
     },
     {
       "path": "CherryPt-Argentina",
@@ -796,9 +796,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 16.4,
-      "app_mid": 18.35,
-      "app_plain": 12.03,
-      "app_cp": 14.97
+      "app_mid": 17.06,
+      "app_plain": 12.16,
+      "app_cp": 15.13
     },
     {
       "path": "CherryPt-Argentina",
@@ -807,9 +807,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 15.6,
-      "app_mid": 17.0,
-      "app_plain": 11.31,
-      "app_cp": 14.04
+      "app_mid": 15.8,
+      "app_plain": 11.43,
+      "app_cp": 14.18
     },
     {
       "path": "CherryPt-Argentina",
@@ -818,9 +818,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 14.6,
-      "app_mid": 15.73,
-      "app_plain": 10.96,
-      "app_cp": 13.22
+      "app_mid": 14.63,
+      "app_plain": 11.07,
+      "app_cp": 13.36
     },
     {
       "path": "CherryPt-Argentina",
@@ -829,9 +829,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.9,
-      "app_mid": 14.68,
-      "app_plain": 10.86,
-      "app_cp": 12.53
+      "app_mid": 13.66,
+      "app_plain": 10.98,
+      "app_cp": 12.66
     },
     {
       "path": "CherryPt-Argentina",
@@ -840,9 +840,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.1,
-      "app_mid": 13.85,
-      "app_plain": 10.88,
-      "app_cp": 11.94
+      "app_mid": 12.89,
+      "app_plain": 10.99,
+      "app_cp": 12.06
     },
     {
       "path": "CherryPt-Argentina",
@@ -851,9 +851,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.0,
-      "app_mid": 12.43,
-      "app_plain": 11.05,
-      "app_cp": 11.42
+      "app_mid": 11.56,
+      "app_plain": 11.17,
+      "app_cp": 11.54
     },
     {
       "path": "CherryPt-Argentina",
@@ -862,9 +862,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 10.2,
-      "app_mid": 10.88,
-      "app_plain": 11.54,
-      "app_cp": 10.97
+      "app_mid": 10.12,
+      "app_plain": 11.66,
+      "app_cp": 11.08
     },
     {
       "path": "CherryPt-Argentina",
@@ -873,9 +873,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 8.6,
-      "app_mid": 9.59,
-      "app_plain": 12.42,
-      "app_cp": 10.52
+      "app_mid": 8.92,
+      "app_plain": 12.55,
+      "app_cp": 10.63
     },
     {
       "path": "CherryPt-Argentina",
@@ -884,9 +884,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 9.2,
-      "app_mid": 10.8,
-      "app_plain": 13.7,
-      "app_cp": 10.13
+      "app_mid": 10.04,
+      "app_plain": 13.84,
+      "app_cp": 10.24
     },
     {
       "path": "CherryPt-Argentina",
@@ -895,9 +895,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 15.0,
-      "app_mid": 15.8,
-      "app_plain": 15.34,
-      "app_cp": 15.78
+      "app_mid": 14.73,
+      "app_plain": 15.5,
+      "app_cp": 15.95
     },
     {
       "path": "CherryPt-Argentina",
@@ -906,9 +906,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 17.3,
-      "app_mid": 19.81,
-      "app_plain": 17.21,
-      "app_cp": 19.22
+      "app_mid": 18.46,
+      "app_plain": 17.39,
+      "app_cp": 19.42
     },
     {
       "path": "CherryPt-Argentina",
@@ -917,9 +917,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 18.3,
-      "app_mid": 21.09,
-      "app_plain": 19.15,
-      "app_cp": 20.34
+      "app_mid": 19.65,
+      "app_plain": 19.35,
+      "app_cp": 20.55
     },
     {
       "path": "CherryPt-Argentina",
@@ -928,9 +928,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 20.4,
-      "app_mid": 20.97,
-      "app_plain": 20.99,
-      "app_cp": 20.94
+      "app_mid": 19.52,
+      "app_plain": 21.21,
+      "app_cp": 21.16
     },
     {
       "path": "CherryPt-Argentina",
@@ -939,9 +939,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 20.2,
-      "app_mid": 21.88,
-      "app_plain": 22.52,
-      "app_cp": 21.28
+      "app_mid": 20.37,
+      "app_plain": 22.76,
+      "app_cp": 21.51
     },
     {
       "path": "CherryPt-Argentina",
@@ -950,9 +950,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 21.7,
-      "app_mid": 23.74,
-      "app_plain": 23.6,
-      "app_cp": 21.47
+      "app_mid": 22.1,
+      "app_plain": 23.85,
+      "app_cp": 21.69
     },
     {
       "path": "CherryPt-Argentina",
@@ -961,9 +961,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 23.9,
-      "app_mid": 25.86,
-      "app_plain": 24.11,
-      "app_cp": 21.56
+      "app_mid": 24.05,
+      "app_plain": 24.36,
+      "app_cp": 21.78
     },
     {
       "path": "CherryPt-Argentina",
@@ -972,9 +972,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 23.8,
-      "app_mid": 26.7,
-      "app_plain": 23.99,
-      "app_cp": 21.58
+      "app_mid": 24.82,
+      "app_plain": 24.24,
+      "app_cp": 21.8
     },
     {
       "path": "CherryPt-Argentina",
@@ -983,9 +983,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 24.6,
-      "app_mid": 27.45,
-      "app_plain": 23.25,
-      "app_cp": 21.53
+      "app_mid": 25.52,
+      "app_plain": 23.5,
+      "app_cp": 21.76
     },
     {
       "path": "CherryPt-Argentina",
@@ -994,9 +994,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 25.0,
-      "app_mid": 27.34,
-      "app_plain": 21.98,
-      "app_cp": 21.41
+      "app_mid": 25.43,
+      "app_plain": 22.21,
+      "app_cp": 21.64
     },
     {
       "path": "CherryPt-Argentina",
@@ -1005,9 +1005,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 24.6,
-      "app_mid": 26.57,
-      "app_plain": 20.31,
-      "app_cp": 21.18
+      "app_mid": 24.71,
+      "app_plain": 20.52,
+      "app_cp": 21.4
     },
     {
       "path": "CherryPt-Argentina",
@@ -1016,9 +1016,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.8,
-      "app_mid": 24.41,
-      "app_plain": 18.41,
-      "app_cp": 20.62
+      "app_mid": 22.7,
+      "app_plain": 18.6,
+      "app_cp": 20.83
     },
     {
       "path": "CherryPt-Argentina",
@@ -1027,9 +1027,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 20.8,
-      "app_mid": 21.89,
-      "app_plain": 16.47,
-      "app_cp": 18.85
+      "app_mid": 20.4,
+      "app_plain": 16.64,
+      "app_cp": 19.05
     },
     {
       "path": "CherryPt-Argentina",
@@ -1038,9 +1038,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 19.7,
-      "app_mid": 20.33,
-      "app_plain": 14.67,
-      "app_cp": 17.36
+      "app_mid": 18.95,
+      "app_plain": 14.83,
+      "app_cp": 17.54
     },
     {
       "path": "CherryPt-Argentina",
@@ -1049,9 +1049,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 26.2,
-      "app_mid": 28.29,
-      "app_plain": 17.37,
-      "app_cp": 19.38
+      "app_mid": 26.31,
+      "app_plain": 17.55,
+      "app_cp": 19.59
     },
     {
       "path": "CherryPt-Argentina",
@@ -1060,9 +1060,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 26.0,
-      "app_mid": 27.52,
-      "app_plain": 15.88,
-      "app_cp": 18.07
+      "app_mid": 25.59,
+      "app_plain": 16.04,
+      "app_cp": 18.26
     },
     {
       "path": "CherryPt-Argentina",
@@ -1071,9 +1071,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 25.2,
-      "app_mid": 25.76,
-      "app_plain": 14.92,
-      "app_cp": 16.94
+      "app_mid": 23.95,
+      "app_plain": 15.08,
+      "app_cp": 17.12
     },
     {
       "path": "CherryPt-Argentina",
@@ -1082,9 +1082,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 24.2,
-      "app_mid": 24.19,
-      "app_plain": 14.46,
-      "app_cp": 15.95
+      "app_mid": 22.49,
+      "app_plain": 14.61,
+      "app_cp": 16.12
     },
     {
       "path": "CherryPt-Argentina",
@@ -1093,9 +1093,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 23.1,
-      "app_mid": 22.61,
-      "app_plain": 14.34,
-      "app_cp": 15.12
+      "app_mid": 21.02,
+      "app_plain": 14.49,
+      "app_cp": 15.28
     },
     {
       "path": "CherryPt-Argentina",
@@ -1104,9 +1104,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 21.6,
-      "app_mid": 20.88,
-      "app_plain": 14.36,
-      "app_cp": 14.41
+      "app_mid": 19.41,
+      "app_plain": 14.51,
+      "app_cp": 14.56
     },
     {
       "path": "CherryPt-Argentina",
@@ -1115,9 +1115,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 19.5,
-      "app_mid": 18.66,
-      "app_plain": 14.59,
-      "app_cp": 13.78
+      "app_mid": 17.35,
+      "app_plain": 14.74,
+      "app_cp": 13.93
     },
     {
       "path": "CherryPt-Argentina",
@@ -1126,9 +1126,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 16.8,
-      "app_mid": 16.24,
-      "app_plain": 15.23,
-      "app_cp": 13.23
+      "app_mid": 15.09,
+      "app_plain": 15.39,
+      "app_cp": 13.37
     },
     {
       "path": "CherryPt-Argentina",
@@ -1137,9 +1137,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 14.3,
-      "app_mid": 14.28,
-      "app_plain": 16.39,
-      "app_cp": 12.69
+      "app_mid": 13.27,
+      "app_plain": 16.56,
+      "app_cp": 12.83
     },
     {
       "path": "CherryPt-Argentina",
@@ -1148,9 +1148,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 14.5,
-      "app_mid": 14.93,
-      "app_plain": 18.08,
-      "app_cp": 12.23
+      "app_mid": 13.88,
+      "app_plain": 18.27,
+      "app_cp": 12.35
     },
     {
       "path": "CherryPt-Argentina",
@@ -1159,9 +1159,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 19.7,
-      "app_mid": 20.91,
-      "app_plain": 20.24,
-      "app_cp": 19.04
+      "app_mid": 19.48,
+      "app_plain": 20.45,
+      "app_cp": 19.24
     },
     {
       "path": "CherryPt-Argentina",
@@ -1170,9 +1170,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 23.4,
-      "app_mid": 24.1,
-      "app_plain": 22.71,
-      "app_cp": 23.19
+      "app_mid": 22.46,
+      "app_plain": 22.95,
+      "app_cp": 23.44
     },
     {
       "path": "CherryPt-Argentina",
@@ -1181,9 +1181,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 25.1,
-      "app_mid": 25.95,
-      "app_plain": 25.28,
-      "app_cp": 24.54
+      "app_mid": 24.18,
+      "app_plain": 25.54,
+      "app_cp": 24.8
     },
     {
       "path": "CherryPt-Argentina",
@@ -1192,9 +1192,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 25.1,
-      "app_mid": 26.61,
-      "app_plain": 27.7,
-      "app_cp": 25.27
+      "app_mid": 24.81,
+      "app_plain": 27.99,
+      "app_cp": 25.54
     },
     {
       "path": "CherryPt-Argentina",
@@ -1203,9 +1203,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.0,
-      "app_mid": 28.49,
-      "app_plain": 29.73,
-      "app_cp": 25.68
+      "app_mid": 26.56,
+      "app_plain": 30.04,
+      "app_cp": 25.95
     },
     {
       "path": "CherryPt-Argentina",
@@ -1214,9 +1214,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 28.1,
-      "app_mid": 30.99,
-      "app_plain": 31.15,
-      "app_cp": 25.91
+      "app_mid": 28.89,
+      "app_plain": 31.48,
+      "app_cp": 26.18
     },
     {
       "path": "CherryPt-Argentina",
@@ -1225,9 +1225,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 30.0,
-      "app_mid": 33.36,
-      "app_plain": 31.82,
-      "app_cp": 26.01
+      "app_mid": 31.01,
+      "app_plain": 32.15,
+      "app_cp": 26.29
     },
     {
       "path": "CherryPt-Argentina",
@@ -1236,9 +1236,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 29.1,
-      "app_mid": 34.18,
-      "app_plain": 31.66,
-      "app_cp": 26.03
+      "app_mid": 31.77,
+      "app_plain": 31.99,
+      "app_cp": 26.31
     },
     {
       "path": "CherryPt-Argentina",
@@ -1247,9 +1247,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 29.5,
-      "app_mid": 34.57,
-      "app_plain": 30.69,
-      "app_cp": 25.98
+      "app_mid": 32.14,
+      "app_plain": 31.01,
+      "app_cp": 26.26
     },
     {
       "path": "CherryPt-Argentina",
@@ -1258,9 +1258,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 29.6,
-      "app_mid": 33.97,
-      "app_plain": 29.01,
-      "app_cp": 25.84
+      "app_mid": 31.6,
+      "app_plain": 29.31,
+      "app_cp": 26.11
     },
     {
       "path": "CherryPt-Argentina",
@@ -1269,9 +1269,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 28.8,
-      "app_mid": 32.9,
-      "app_plain": 26.8,
-      "app_cp": 25.55
+      "app_mid": 30.61,
+      "app_plain": 27.08,
+      "app_cp": 25.82
     },
     {
       "path": "CherryPt-Argentina",
@@ -1280,9 +1280,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.1,
-      "app_mid": 30.97,
-      "app_plain": 24.3,
-      "app_cp": 24.88
+      "app_mid": 28.81,
+      "app_plain": 24.55,
+      "app_cp": 25.14
     },
     {
       "path": "CherryPt-Argentina",
@@ -1291,9 +1291,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 25.8,
-      "app_mid": 29.04,
-      "app_plain": 21.74,
-      "app_cp": 22.75
+      "app_mid": 27.01,
+      "app_plain": 21.97,
+      "app_cp": 22.99
     },
     {
       "path": "CherryPt-Argentina",
@@ -1302,9 +1302,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 25.8,
-      "app_mid": 28.47,
-      "app_plain": 19.36,
-      "app_cp": 20.94
+      "app_mid": 26.48,
+      "app_plain": 19.57,
+      "app_cp": 21.16
     },
     {
       "path": "Finland-SouthAfrica",
@@ -1313,7 +1313,7 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 12.9,
-      "app_mid": 13.33,
+      "app_mid": 12.02,
       "app_plain": 10.98,
       "app_cp": 10.64
     },
@@ -1324,7 +1324,7 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 11.0,
-      "app_mid": 10.28,
+      "app_mid": 9.26,
       "app_plain": 11.52,
       "app_cp": 10.28
     },
@@ -1335,7 +1335,7 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 10.3,
-      "app_mid": 8.3,
+      "app_mid": 7.47,
       "app_plain": 12.46,
       "app_cp": 9.97
     },
@@ -1346,7 +1346,7 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 10.9,
-      "app_mid": 10.63,
+      "app_mid": 9.58,
       "app_plain": 13.8,
       "app_cp": 9.7
     },
@@ -1357,7 +1357,7 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.1,
-      "app_mid": 13.69,
+      "app_mid": 12.36,
       "app_plain": 15.47,
       "app_cp": 9.47
     },
@@ -1368,7 +1368,7 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 17.7,
-      "app_mid": 17.44,
+      "app_mid": 15.74,
       "app_plain": 17.34,
       "app_cp": 15.07
     },
@@ -1379,7 +1379,7 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 23.2,
-      "app_mid": 22.21,
+      "app_mid": 20.04,
       "app_plain": 19.26,
       "app_cp": 18.94
     },
@@ -1390,7 +1390,7 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 26.9,
-      "app_mid": 25.1,
+      "app_mid": 22.63,
       "app_plain": 21.03,
       "app_cp": 20.71
     },
@@ -1401,7 +1401,7 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 27.9,
-      "app_mid": 26.53,
+      "app_mid": 23.92,
       "app_plain": 22.48,
       "app_cp": 21.79
     },
@@ -1412,7 +1412,7 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 28.0,
-      "app_mid": 26.65,
+      "app_mid": 24.03,
       "app_plain": 23.46,
       "app_cp": 22.44
     },
@@ -1423,7 +1423,7 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 27.0,
-      "app_mid": 26.07,
+      "app_mid": 23.63,
       "app_plain": 23.85,
       "app_cp": 22.72
     },
@@ -1434,7 +1434,7 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 25.8,
-      "app_mid": 25.4,
+      "app_mid": 23.02,
       "app_plain": 23.62,
       "app_cp": 22.67
     },
@@ -1445,7 +1445,7 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 25.2,
-      "app_mid": 24.45,
+      "app_mid": 22.16,
       "app_plain": 22.79,
       "app_cp": 22.27
     },
@@ -1456,7 +1456,7 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 24.1,
-      "app_mid": 23.05,
+      "app_mid": 20.89,
       "app_plain": 21.46,
       "app_cp": 21.46
     },
@@ -1467,7 +1467,7 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 21.7,
-      "app_mid": 20.71,
+      "app_mid": 18.77,
       "app_plain": 19.75,
       "app_cp": 19.97
     },
@@ -1478,7 +1478,7 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 18.2,
-      "app_mid": 17.54,
+      "app_mid": 15.89,
       "app_plain": 17.85,
       "app_cp": 18.15
     },
@@ -1489,7 +1489,7 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 15.0,
-      "app_mid": 14.88,
+      "app_mid": 13.4,
       "app_plain": 15.95,
       "app_cp": 16.67
     },
@@ -1500,7 +1500,7 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 13.1,
-      "app_mid": 13.51,
+      "app_mid": 12.17,
       "app_plain": 14.21,
       "app_cp": 15.46
     },
@@ -1511,7 +1511,7 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 12.5,
-      "app_mid": 13.31,
+      "app_mid": 11.99,
       "app_plain": 12.78,
       "app_cp": 14.41
     },
@@ -1522,7 +1522,7 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.2,
-      "app_mid": 13.19,
+      "app_mid": 11.96,
       "app_plain": 11.73,
       "app_cp": 13.51
     },
@@ -1533,7 +1533,7 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 11.9,
-      "app_mid": 13.23,
+      "app_mid": 11.99,
       "app_plain": 11.09,
       "app_cp": 12.76
     },
@@ -1544,7 +1544,7 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 11.9,
-      "app_mid": 13.51,
+      "app_mid": 12.25,
       "app_plain": 10.8,
       "app_cp": 12.1
     },
@@ -1555,7 +1555,7 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 12.5,
-      "app_mid": 13.69,
+      "app_mid": 12.34,
       "app_plain": 10.73,
       "app_cp": 11.53
     },
@@ -1566,7 +1566,7 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 13.0,
-      "app_mid": 13.97,
+      "app_mid": 12.59,
       "app_plain": 10.76,
       "app_cp": 11.05
     },
@@ -1577,7 +1577,7 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 12.9,
-      "app_mid": 13.45,
+      "app_mid": 12.12,
       "app_plain": 14.49,
       "app_cp": 12.83
     },
@@ -1588,7 +1588,7 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 11.8,
-      "app_mid": 12.08,
+      "app_mid": 10.88,
       "app_plain": 15.21,
       "app_cp": 12.4
     },
@@ -1599,7 +1599,7 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 10.7,
-      "app_mid": 11.31,
+      "app_mid": 10.19,
       "app_plain": 16.45,
       "app_cp": 12.03
     },
@@ -1610,7 +1610,7 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 11.0,
-      "app_mid": 11.89,
+      "app_mid": 10.71,
       "app_plain": 18.21,
       "app_cp": 11.71
     },
@@ -1621,7 +1621,7 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 14.3,
-      "app_mid": 14.88,
+      "app_mid": 13.44,
       "app_plain": 20.41,
       "app_cp": 11.43
     },
@@ -1632,7 +1632,7 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 21.0,
-      "app_mid": 20.56,
+      "app_mid": 18.56,
       "app_plain": 22.88,
       "app_cp": 18.18
     },
@@ -1643,7 +1643,7 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 28.8,
-      "app_mid": 27.35,
+      "app_mid": 24.7,
       "app_plain": 25.41,
       "app_cp": 22.85
     },
@@ -1654,7 +1654,7 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 24.4,
-      "app_mid": 30.47,
+      "app_mid": 27.51,
       "app_plain": 27.76,
       "app_cp": 24.99
     },
@@ -1665,7 +1665,7 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.0,
-      "app_mid": 32.41,
+      "app_mid": 29.26,
       "app_plain": 29.67,
       "app_cp": 26.3
     },
@@ -1676,7 +1676,7 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 33.4,
-      "app_mid": 34.04,
+      "app_mid": 30.73,
       "app_plain": 30.96,
       "app_cp": 27.07
     },
@@ -1687,7 +1687,7 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 32.2,
-      "app_mid": 34.71,
+      "app_mid": 31.63,
       "app_plain": 31.48,
       "app_cp": 27.42
     },
@@ -1698,7 +1698,7 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 31.5,
-      "app_mid": 33.93,
+      "app_mid": 30.92,
       "app_plain": 31.17,
       "app_cp": 27.36
     },
@@ -1709,7 +1709,7 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 30.9,
-      "app_mid": 32.66,
+      "app_mid": 29.76,
       "app_plain": 30.08,
       "app_cp": 26.88
     },
@@ -1720,7 +1720,7 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 29.5,
-      "app_mid": 29.33,
+      "app_mid": 26.73,
       "app_plain": 28.32,
       "app_cp": 25.9
     },
@@ -1731,7 +1731,7 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 26.8,
-      "app_mid": 26.19,
+      "app_mid": 23.86,
       "app_plain": 26.07,
       "app_cp": 24.1
     },
@@ -1742,7 +1742,7 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 22.9,
-      "app_mid": 22.3,
+      "app_mid": 20.32,
       "app_plain": 23.56,
       "app_cp": 21.9
     },
@@ -1753,7 +1753,7 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 18.9,
-      "app_mid": 18.15,
+      "app_mid": 16.35,
       "app_plain": 21.05,
       "app_cp": 20.12
     },
@@ -1764,7 +1764,7 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.0,
-      "app_mid": 15.62,
+      "app_mid": 14.07,
       "app_plain": 18.76,
       "app_cp": 18.66
     },
@@ -1775,7 +1775,7 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 14.5,
-      "app_mid": 14.33,
+      "app_mid": 12.91,
       "app_plain": 16.87,
       "app_cp": 17.39
     },
@@ -1786,7 +1786,7 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 13.4,
-      "app_mid": 13.82,
+      "app_mid": 12.45,
       "app_plain": 15.49,
       "app_cp": 16.31
     },
@@ -1797,7 +1797,7 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 12.5,
-      "app_mid": 13.35,
+      "app_mid": 12.03,
       "app_plain": 14.64,
       "app_cp": 15.39
     },
@@ -1808,7 +1808,7 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 12.2,
-      "app_mid": 13.56,
+      "app_mid": 12.23,
       "app_plain": 14.25,
       "app_cp": 14.6
     },
@@ -1819,7 +1819,7 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 12.7,
-      "app_mid": 13.86,
+      "app_mid": 12.49,
       "app_plain": 14.17,
       "app_cp": 13.91
     },
@@ -1830,7 +1830,7 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 13.2,
-      "app_mid": 13.89,
+      "app_mid": 12.51,
       "app_plain": 14.21,
       "app_cp": 13.34
     },
@@ -1841,7 +1841,7 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 9.0,
-      "app_mid": 9.59,
+      "app_mid": 8.66,
       "app_plain": 10.98,
       "app_cp": 10.49
     },
@@ -1852,7 +1852,7 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 7.8,
-      "app_mid": 8.43,
+      "app_mid": 7.59,
       "app_plain": 11.52,
       "app_cp": 10.07
     },
@@ -1863,7 +1863,7 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 6.6,
-      "app_mid": 7.6,
+      "app_mid": 6.84,
       "app_plain": 12.46,
       "app_cp": 9.71
     },
@@ -1874,7 +1874,7 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 8.5,
-      "app_mid": 9.69,
+      "app_mid": 8.73,
       "app_plain": 13.8,
       "app_cp": 9.41
     },
@@ -1885,7 +1885,7 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.2,
-      "app_mid": 15.2,
+      "app_mid": 13.84,
       "app_plain": 15.47,
       "app_cp": 14.71
     },
@@ -1896,7 +1896,7 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 20.2,
-      "app_mid": 20.46,
+      "app_mid": 18.62,
       "app_plain": 17.34,
       "app_cp": 18.34
     },
@@ -1907,7 +1907,7 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 20.4,
-      "app_mid": 22.0,
+      "app_mid": 20.02,
       "app_plain": 19.26,
       "app_cp": 18.81
     },
@@ -1918,7 +1918,7 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 20.4,
-      "app_mid": 22.37,
+      "app_mid": 20.16,
       "app_plain": 21.03,
       "app_cp": 19.01
     },
@@ -1929,7 +1929,7 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 20.7,
-      "app_mid": 22.75,
+      "app_mid": 20.49,
       "app_plain": 22.48,
       "app_cp": 19.1
     },
@@ -1940,7 +1940,7 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 21.1,
-      "app_mid": 22.95,
+      "app_mid": 20.68,
       "app_plain": 23.46,
       "app_cp": 19.14
     },
@@ -1951,7 +1951,7 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 21.0,
-      "app_mid": 22.35,
+      "app_mid": 20.21,
       "app_plain": 23.85,
       "app_cp": 19.15
     },
@@ -1962,7 +1962,7 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 20.4,
-      "app_mid": 21.73,
+      "app_mid": 19.65,
       "app_plain": 23.62,
       "app_cp": 19.15
     },
@@ -1973,7 +1973,7 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 19.9,
-      "app_mid": 21.28,
+      "app_mid": 19.24,
       "app_plain": 22.79,
       "app_cp": 19.13
     },
@@ -1984,7 +1984,7 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 19.6,
-      "app_mid": 21.01,
+      "app_mid": 19.07,
       "app_plain": 21.46,
       "app_cp": 19.08
     },
@@ -1995,7 +1995,7 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 19.7,
-      "app_mid": 21.01,
+      "app_mid": 19.07,
       "app_plain": 19.75,
       "app_cp": 18.97
     },
@@ -2006,7 +2006,7 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 19.9,
-      "app_mid": 21.3,
+      "app_mid": 19.33,
       "app_plain": 17.85,
       "app_cp": 18.72
     },
@@ -2017,7 +2017,7 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 19.8,
-      "app_mid": 19.23,
+      "app_mid": 17.34,
       "app_plain": 15.95,
       "app_cp": 17.59
     },
@@ -2028,7 +2028,7 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 17.5,
-      "app_mid": 16.85,
+      "app_mid": 15.2,
       "app_plain": 14.21,
       "app_cp": 16.13
     },
@@ -2039,7 +2039,7 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 14.5,
-      "app_mid": 14.56,
+      "app_mid": 13.12,
       "app_plain": 12.78,
       "app_cp": 14.9
     },
@@ -2050,7 +2050,7 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.1,
-      "app_mid": 12.6,
+      "app_mid": 11.35,
       "app_plain": 11.73,
       "app_cp": 13.84
     },
@@ -2061,7 +2061,7 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 10.8,
-      "app_mid": 11.59,
+      "app_mid": 10.44,
       "app_plain": 11.09,
       "app_cp": 12.96
     },
@@ -2072,7 +2072,7 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 9.9,
-      "app_mid": 10.54,
+      "app_mid": 9.5,
       "app_plain": 10.8,
       "app_cp": 12.19
     },
@@ -2083,7 +2083,7 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 9.2,
-      "app_mid": 9.83,
+      "app_mid": 8.87,
       "app_plain": 10.73,
       "app_cp": 11.53
     },
@@ -2094,7 +2094,7 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 9.1,
-      "app_mid": 9.71,
+      "app_mid": 8.76,
       "app_plain": 10.76,
       "app_cp": 10.97
     },
@@ -2105,7 +2105,7 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 11.0,
-      "app_mid": 11.11,
+      "app_mid": 10.0,
       "app_plain": 14.49,
       "app_cp": 12.66
     },
@@ -2116,7 +2116,7 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 9.5,
-      "app_mid": 9.99,
+      "app_mid": 9.0,
       "app_plain": 15.21,
       "app_cp": 12.15
     },
@@ -2127,7 +2127,7 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 7.7,
-      "app_mid": 8.56,
+      "app_mid": 7.71,
       "app_plain": 16.45,
       "app_cp": 11.72
     },
@@ -2138,7 +2138,7 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 9.6,
-      "app_mid": 10.9,
+      "app_mid": 9.82,
       "app_plain": 18.21,
       "app_cp": 11.35
     },
@@ -2149,7 +2149,7 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 17.1,
-      "app_mid": 18.24,
+      "app_mid": 16.46,
       "app_plain": 20.41,
       "app_cp": 17.75
     },
@@ -2160,7 +2160,7 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 23.1,
-      "app_mid": 25.22,
+      "app_mid": 22.76,
       "app_plain": 22.88,
       "app_cp": 22.12
     },
@@ -2171,7 +2171,7 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 23.4,
-      "app_mid": 25.46,
+      "app_mid": 22.97,
       "app_plain": 25.41,
       "app_cp": 22.7
     },
@@ -2182,7 +2182,7 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 23.6,
-      "app_mid": 25.7,
+      "app_mid": 23.16,
       "app_plain": 27.76,
       "app_cp": 22.94
     },
@@ -2193,7 +2193,7 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 24.1,
-      "app_mid": 26.19,
+      "app_mid": 23.59,
       "app_plain": 29.67,
       "app_cp": 23.05
     },
@@ -2204,7 +2204,7 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 24.7,
-      "app_mid": 26.82,
+      "app_mid": 24.16,
       "app_plain": 30.96,
       "app_cp": 23.1
     },
@@ -2215,7 +2215,7 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 24.7,
-      "app_mid": 26.56,
+      "app_mid": 23.92,
       "app_plain": 31.48,
       "app_cp": 23.11
     },
@@ -2226,7 +2226,7 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.1,
-      "app_mid": 25.98,
+      "app_mid": 23.4,
       "app_plain": 31.17,
       "app_cp": 23.11
     },
@@ -2237,7 +2237,7 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 23.4,
-      "app_mid": 25.18,
+      "app_mid": 22.68,
       "app_plain": 30.08,
       "app_cp": 23.09
     },
@@ -2248,7 +2248,7 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 23.1,
-      "app_mid": 25.03,
+      "app_mid": 22.61,
       "app_plain": 28.32,
       "app_cp": 23.03
     },
@@ -2259,7 +2259,7 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 23.5,
-      "app_mid": 25.35,
+      "app_mid": 22.9,
       "app_plain": 26.07,
       "app_cp": 22.89
     },
@@ -2270,7 +2270,7 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 24.1,
-      "app_mid": 25.76,
+      "app_mid": 23.27,
       "app_plain": 23.56,
       "app_cp": 22.59
     },
@@ -2281,7 +2281,7 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 24.8,
-      "app_mid": 25.32,
+      "app_mid": 22.82,
       "app_plain": 21.05,
       "app_cp": 21.23
     },
@@ -2292,7 +2292,7 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 23.9,
-      "app_mid": 21.51,
+      "app_mid": 19.38,
       "app_plain": 18.76,
       "app_cp": 19.46
     },
@@ -2303,7 +2303,7 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 19.8,
-      "app_mid": 18.06,
+      "app_mid": 16.28,
       "app_plain": 16.87,
       "app_cp": 17.98
     },
@@ -2314,7 +2314,7 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 17.0,
-      "app_mid": 15.9,
+      "app_mid": 14.33,
       "app_plain": 15.49,
       "app_cp": 16.71
     },
@@ -2325,7 +2325,7 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 15.6,
-      "app_mid": 14.7,
+      "app_mid": 13.25,
       "app_plain": 14.64,
       "app_cp": 15.63
     },
@@ -2336,7 +2336,7 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 13.8,
-      "app_mid": 13.08,
+      "app_mid": 11.78,
       "app_plain": 14.25,
       "app_cp": 14.71
     },
@@ -2347,7 +2347,7 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 11.8,
-      "app_mid": 11.57,
+      "app_mid": 10.42,
       "app_plain": 14.17,
       "app_cp": 13.91
     },
@@ -2358,7 +2358,7 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 11.0,
-      "app_mid": 11.13,
+      "app_mid": 10.03,
       "app_plain": 14.21,
       "app_cp": 13.24
     },
@@ -2369,9 +2369,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 26.7,
-      "app_mid": 28.5,
-      "app_plain": 22.79,
-      "app_cp": 24.0
+      "app_mid": 26.69,
+      "app_plain": 23.01,
+      "app_cp": 24.23
     },
     {
       "path": "Japan-Australia",
@@ -2380,9 +2380,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 28.0,
-      "app_mid": 30.53,
-      "app_plain": 23.76,
-      "app_cp": 24.13
+      "app_mid": 28.59,
+      "app_plain": 23.99,
+      "app_cp": 24.36
     },
     {
       "path": "Japan-Australia",
@@ -2391,9 +2391,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 28.6,
-      "app_mid": 31.78,
-      "app_plain": 24.14,
-      "app_cp": 24.17
+      "app_mid": 29.89,
+      "app_plain": 24.37,
+      "app_cp": 24.41
     },
     {
       "path": "Japan-Australia",
@@ -2402,9 +2402,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 30.5,
-      "app_mid": 33.0,
-      "app_plain": 23.88,
-      "app_cp": 24.15
+      "app_mid": 31.04,
+      "app_plain": 24.11,
+      "app_cp": 24.38
     },
     {
       "path": "Japan-Australia",
@@ -2413,9 +2413,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 32.5,
-      "app_mid": 33.88,
-      "app_plain": 23.03,
-      "app_cp": 24.05
+      "app_mid": 31.86,
+      "app_plain": 23.25,
+      "app_cp": 24.28
     },
     {
       "path": "Japan-Australia",
@@ -2424,9 +2424,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 32.8,
-      "app_mid": 32.55,
-      "app_plain": 21.66,
-      "app_cp": 23.84
+      "app_mid": 30.39,
+      "app_plain": 21.87,
+      "app_cp": 24.07
     },
     {
       "path": "Japan-Australia",
@@ -2435,9 +2435,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 29.0,
-      "app_mid": 29.09,
-      "app_plain": 19.92,
-      "app_cp": 23.45
+      "app_mid": 27.15,
+      "app_plain": 20.11,
+      "app_cp": 23.68
     },
     {
       "path": "Japan-Australia",
@@ -2446,9 +2446,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 25.7,
-      "app_mid": 26.33,
-      "app_plain": 18.0,
-      "app_cp": 22.7
+      "app_mid": 24.58,
+      "app_plain": 18.17,
+      "app_cp": 22.91
     },
     {
       "path": "Japan-Australia",
@@ -2457,9 +2457,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 23.6,
-      "app_mid": 24.65,
-      "app_plain": 16.08,
-      "app_cp": 21.18
+      "app_mid": 22.92,
+      "app_plain": 16.23,
+      "app_cp": 21.39
     },
     {
       "path": "Japan-Australia",
@@ -2468,9 +2468,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 23.9,
-      "app_mid": 23.2,
-      "app_plain": 14.33,
-      "app_cp": 19.53
+      "app_mid": 21.58,
+      "app_plain": 14.47,
+      "app_cp": 19.72
     },
     {
       "path": "Japan-Australia",
@@ -2479,9 +2479,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 22.0,
-      "app_mid": 21.4,
-      "app_plain": 12.89,
-      "app_cp": 18.02
+      "app_mid": 19.9,
+      "app_plain": 13.02,
+      "app_cp": 18.19
     },
     {
       "path": "Japan-Australia",
@@ -2490,9 +2490,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 20.6,
-      "app_mid": 19.96,
-      "app_plain": 11.85,
-      "app_cp": 16.74
+      "app_mid": 18.59,
+      "app_plain": 11.96,
+      "app_cp": 16.9
     },
     {
       "path": "Japan-Australia",
@@ -2501,9 +2501,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 19.0,
-      "app_mid": 18.53,
-      "app_plain": 11.21,
-      "app_cp": 15.62
+      "app_mid": 17.27,
+      "app_plain": 11.31,
+      "app_cp": 15.77
     },
     {
       "path": "Japan-Australia",
@@ -2512,9 +2512,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 17.1,
-      "app_mid": 16.81,
-      "app_plain": 10.92,
-      "app_cp": 14.64
+      "app_mid": 15.66,
+      "app_plain": 11.03,
+      "app_cp": 14.78
     },
     {
       "path": "Japan-Australia",
@@ -2523,9 +2523,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 15.6,
-      "app_mid": 15.7,
-      "app_plain": 10.86,
-      "app_cp": 13.82
+      "app_mid": 14.62,
+      "app_plain": 10.97,
+      "app_cp": 13.95
     },
     {
       "path": "Japan-Australia",
@@ -2534,9 +2534,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 14.8,
-      "app_mid": 14.78,
-      "app_plain": 10.9,
-      "app_cp": 13.1
+      "app_mid": 13.75,
+      "app_plain": 11.0,
+      "app_cp": 13.23
     },
     {
       "path": "Japan-Australia",
@@ -2545,9 +2545,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 13.5,
-      "app_mid": 13.26,
-      "app_plain": 11.13,
-      "app_cp": 12.48
+      "app_mid": 12.34,
+      "app_plain": 11.23,
+      "app_cp": 12.6
     },
     {
       "path": "Japan-Australia",
@@ -2556,9 +2556,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 9.6,
-      "app_mid": 10.29,
-      "app_plain": 11.69,
-      "app_cp": 11.96
+      "app_mid": 9.58,
+      "app_plain": 11.8,
+      "app_cp": 12.08
     },
     {
       "path": "Japan-Australia",
@@ -2567,9 +2567,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 7.3,
-      "app_mid": 8.33,
-      "app_plain": 12.65,
-      "app_cp": 11.51
+      "app_mid": 7.75,
+      "app_plain": 12.77,
+      "app_cp": 11.62
     },
     {
       "path": "Japan-Australia",
@@ -2578,9 +2578,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 9.2,
-      "app_mid": 9.72,
-      "app_plain": 14.02,
-      "app_cp": 11.59
+      "app_mid": 9.04,
+      "app_plain": 14.15,
+      "app_cp": 11.71
     },
     {
       "path": "Japan-Australia",
@@ -2589,9 +2589,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 14.5,
-      "app_mid": 15.32,
-      "app_plain": 15.71,
-      "app_cp": 11.26
+      "app_mid": 14.34,
+      "app_plain": 15.86,
+      "app_cp": 11.37
     },
     {
       "path": "Japan-Australia",
@@ -2600,9 +2600,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 21.6,
-      "app_mid": 21.94,
-      "app_plain": 17.61,
-      "app_cp": 21.58
+      "app_mid": 20.53,
+      "app_plain": 17.78,
+      "app_cp": 21.78
     },
     {
       "path": "Japan-Australia",
@@ -2611,9 +2611,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 23.2,
-      "app_mid": 24.35,
-      "app_plain": 19.55,
-      "app_cp": 23.28
+      "app_mid": 22.79,
+      "app_plain": 19.74,
+      "app_cp": 23.51
     },
     {
       "path": "Japan-Australia",
@@ -2622,9 +2622,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 24.1,
-      "app_mid": 25.58,
-      "app_plain": 21.34,
-      "app_cp": 23.75
+      "app_mid": 23.96,
+      "app_plain": 21.54,
+      "app_cp": 23.98
     },
     {
       "path": "Japan-Australia",
@@ -2633,9 +2633,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 30.4,
-      "app_mid": 34.32,
-      "app_plain": 30.08,
-      "app_cp": 28.96
+      "app_mid": 32.26,
+      "app_plain": 30.37,
+      "app_cp": 29.24
     },
     {
       "path": "Japan-Australia",
@@ -2644,9 +2644,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 33.8,
-      "app_mid": 37.57,
-      "app_plain": 31.36,
-      "app_cp": 29.11
+      "app_mid": 35.32,
+      "app_plain": 31.66,
+      "app_cp": 29.4
     },
     {
       "path": "Japan-Australia",
@@ -2655,9 +2655,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.0,
-      "app_mid": 39.39,
-      "app_plain": 31.86,
-      "app_cp": 29.17
+      "app_mid": 36.93,
+      "app_plain": 32.16,
+      "app_cp": 29.45
     },
     {
       "path": "Japan-Australia",
@@ -2666,9 +2666,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 35.0,
-      "app_mid": 41.01,
-      "app_plain": 31.52,
-      "app_cp": 29.14
+      "app_mid": 38.45,
+      "app_plain": 31.82,
+      "app_cp": 29.42
     },
     {
       "path": "Japan-Australia",
@@ -2677,9 +2677,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 38.4,
-      "app_mid": 40.89,
-      "app_plain": 30.39,
-      "app_cp": 29.02
+      "app_mid": 38.33,
+      "app_plain": 30.68,
+      "app_cp": 29.3
     },
     {
       "path": "Japan-Australia",
@@ -2688,9 +2688,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 36.2,
-      "app_mid": 38.15,
-      "app_plain": 28.58,
-      "app_cp": 28.77
+      "app_mid": 35.56,
+      "app_plain": 28.86,
+      "app_cp": 29.05
     },
     {
       "path": "Japan-Australia",
@@ -2699,9 +2699,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 32.6,
-      "app_mid": 34.46,
-      "app_plain": 26.29,
-      "app_cp": 28.3
+      "app_mid": 32.13,
+      "app_plain": 26.55,
+      "app_cp": 28.57
     },
     {
       "path": "Japan-Australia",
@@ -2710,9 +2710,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 29.3,
-      "app_mid": 31.55,
-      "app_plain": 23.76,
-      "app_cp": 27.39
+      "app_mid": 29.41,
+      "app_plain": 23.99,
+      "app_cp": 27.65
     },
     {
       "path": "Japan-Australia",
@@ -2721,9 +2721,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 27.7,
-      "app_mid": 30.06,
-      "app_plain": 21.22,
-      "app_cp": 25.56
+      "app_mid": 27.95,
+      "app_plain": 21.42,
+      "app_cp": 25.81
     },
     {
       "path": "Japan-Australia",
@@ -2732,9 +2732,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 27.3,
-      "app_mid": 30.19,
-      "app_plain": 18.91,
-      "app_cp": 23.56
+      "app_mid": 28.07,
+      "app_plain": 19.09,
+      "app_cp": 23.79
     },
     {
       "path": "Japan-Australia",
@@ -2743,9 +2743,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 27.7,
-      "app_mid": 30.62,
-      "app_plain": 17.01,
-      "app_cp": 21.74
+      "app_mid": 28.48,
+      "app_plain": 17.18,
+      "app_cp": 21.95
     },
     {
       "path": "Japan-Australia",
@@ -2754,9 +2754,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 28.8,
-      "app_mid": 31.32,
-      "app_plain": 15.63,
-      "app_cp": 20.2
+      "app_mid": 29.14,
+      "app_plain": 15.78,
+      "app_cp": 20.4
     },
     {
       "path": "Japan-Australia",
@@ -2765,9 +2765,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 29.9,
-      "app_mid": 31.67,
-      "app_plain": 14.79,
-      "app_cp": 18.85
+      "app_mid": 29.46,
+      "app_plain": 14.93,
+      "app_cp": 19.03
     },
     {
       "path": "Japan-Australia",
@@ -2776,9 +2776,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 29.2,
-      "app_mid": 28.23,
-      "app_plain": 14.41,
-      "app_cp": 17.66
+      "app_mid": 26.26,
+      "app_plain": 14.55,
+      "app_cp": 17.83
     },
     {
       "path": "Japan-Australia",
@@ -2787,9 +2787,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 25.7,
-      "app_mid": 24.84,
-      "app_plain": 14.34,
-      "app_cp": 16.67
+      "app_mid": 23.1,
+      "app_plain": 14.47,
+      "app_cp": 16.83
     },
     {
       "path": "Japan-Australia",
@@ -2798,9 +2798,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 22.6,
-      "app_mid": 21.84,
-      "app_plain": 14.38,
-      "app_cp": 15.81
+      "app_mid": 20.31,
+      "app_plain": 14.52,
+      "app_cp": 15.96
     },
     {
       "path": "Japan-Australia",
@@ -2809,9 +2809,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 19.8,
-      "app_mid": 18.92,
-      "app_plain": 14.68,
-      "app_cp": 15.06
+      "app_mid": 17.59,
+      "app_plain": 14.82,
+      "app_cp": 15.2
     },
     {
       "path": "Japan-Australia",
@@ -2820,9 +2820,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.0,
-      "app_mid": 15.35,
-      "app_plain": 15.42,
-      "app_cp": 14.43
+      "app_mid": 14.3,
+      "app_plain": 15.57,
+      "app_cp": 14.57
     },
     {
       "path": "Japan-Australia",
@@ -2831,9 +2831,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 12.2,
-      "app_mid": 12.44,
-      "app_plain": 16.7,
-      "app_cp": 13.89
+      "app_mid": 11.59,
+      "app_plain": 16.86,
+      "app_cp": 14.02
     },
     {
       "path": "Japan-Australia",
@@ -2842,9 +2842,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 12.2,
-      "app_mid": 13.33,
-      "app_plain": 18.5,
-      "app_cp": 13.99
+      "app_mid": 12.42,
+      "app_plain": 18.68,
+      "app_cp": 14.12
     },
     {
       "path": "Japan-Australia",
@@ -2853,9 +2853,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 18.5,
-      "app_mid": 19.87,
-      "app_plain": 20.74,
-      "app_cp": 13.59
+      "app_mid": 18.65,
+      "app_plain": 20.94,
+      "app_cp": 13.72
     },
     {
       "path": "Japan-Australia",
@@ -2864,9 +2864,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 26.3,
-      "app_mid": 27.85,
-      "app_plain": 23.25,
-      "app_cp": 26.04
+      "app_mid": 26.13,
+      "app_plain": 23.47,
+      "app_cp": 26.29
     },
     {
       "path": "Japan-Australia",
@@ -2875,9 +2875,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 27.1,
-      "app_mid": 29.15,
-      "app_plain": 25.8,
-      "app_cp": 28.1
+      "app_mid": 27.35,
+      "app_plain": 26.05,
+      "app_cp": 28.37
     },
     {
       "path": "Japan-Australia",
@@ -2886,9 +2886,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 27.8,
-      "app_mid": 31.27,
-      "app_plain": 28.16,
-      "app_cp": 28.66
+      "app_mid": 29.4,
+      "app_plain": 28.43,
+      "app_cp": 28.93
     },
     {
       "path": "Japan-Australia",
@@ -2897,9 +2897,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 20.2,
-      "app_mid": 23.84,
-      "app_plain": 22.79,
-      "app_cp": 22.59
+      "app_mid": 22.19,
+      "app_plain": 23.01,
+      "app_cp": 22.81
     },
     {
       "path": "Japan-Australia",
@@ -2908,9 +2908,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 24.0,
-      "app_mid": 25.36,
-      "app_plain": 23.76,
-      "app_cp": 23.04
+      "app_mid": 23.6,
+      "app_plain": 23.99,
+      "app_cp": 23.26
     },
     {
       "path": "Japan-Australia",
@@ -2919,9 +2919,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 23.3,
-      "app_mid": 25.0,
-      "app_plain": 24.14,
-      "app_cp": 23.21
+      "app_mid": 23.25,
+      "app_plain": 24.37,
+      "app_cp": 23.44
     },
     {
       "path": "Japan-Australia",
@@ -2930,9 +2930,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 23.1,
-      "app_mid": 24.92,
-      "app_plain": 23.88,
-      "app_cp": 23.12
+      "app_mid": 23.17,
+      "app_plain": 24.11,
+      "app_cp": 23.34
     },
     {
       "path": "Japan-Australia",
@@ -2941,9 +2941,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 23.3,
-      "app_mid": 24.97,
-      "app_plain": 23.03,
-      "app_cp": 22.76
+      "app_mid": 23.22,
+      "app_plain": 23.25,
+      "app_cp": 22.98
     },
     {
       "path": "Japan-Australia",
@@ -2952,9 +2952,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 22.6,
-      "app_mid": 24.0,
-      "app_plain": 21.66,
-      "app_cp": 22.09
+      "app_mid": 22.33,
+      "app_plain": 21.87,
+      "app_cp": 22.31
     },
     {
       "path": "Japan-Australia",
@@ -2963,9 +2963,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 21.5,
-      "app_mid": 22.62,
-      "app_plain": 19.92,
-      "app_cp": 21.03
+      "app_mid": 21.05,
+      "app_plain": 20.11,
+      "app_cp": 21.23
     },
     {
       "path": "Japan-Australia",
@@ -2974,9 +2974,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 19.4,
-      "app_mid": 20.35,
-      "app_plain": 18.0,
-      "app_cp": 19.27
+      "app_mid": 18.94,
+      "app_plain": 18.17,
+      "app_cp": 19.45
     },
     {
       "path": "Japan-Australia",
@@ -2985,9 +2985,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 16.9,
-      "app_mid": 18.3,
-      "app_plain": 16.08,
-      "app_cp": 17.53
+      "app_mid": 17.06,
+      "app_plain": 16.23,
+      "app_cp": 17.69
     },
     {
       "path": "Japan-Australia",
@@ -2996,9 +2996,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 14.8,
-      "app_mid": 16.42,
-      "app_plain": 14.33,
-      "app_cp": 16.13
+      "app_mid": 15.31,
+      "app_plain": 14.47,
+      "app_cp": 16.29
     },
     {
       "path": "Japan-Australia",
@@ -3007,9 +3007,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 15.0,
-      "app_mid": 15.16,
-      "app_plain": 12.89,
-      "app_cp": 14.94
+      "app_mid": 14.13,
+      "app_plain": 13.02,
+      "app_cp": 15.08
     },
     {
       "path": "Japan-Australia",
@@ -3018,9 +3018,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 14.3,
-      "app_mid": 14.44,
-      "app_plain": 11.85,
-      "app_cp": 13.91
+      "app_mid": 13.43,
+      "app_plain": 11.96,
+      "app_cp": 14.04
     },
     {
       "path": "Japan-Australia",
@@ -3029,9 +3029,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 14.1,
-      "app_mid": 14.23,
-      "app_plain": 11.21,
-      "app_cp": 13.05
+      "app_mid": 13.23,
+      "app_plain": 11.31,
+      "app_cp": 13.18
     },
     {
       "path": "Japan-Australia",
@@ -3040,9 +3040,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 14.1,
-      "app_mid": 13.91,
-      "app_plain": 10.92,
-      "app_cp": 12.3
+      "app_mid": 12.94,
+      "app_plain": 11.03,
+      "app_cp": 12.42
     },
     {
       "path": "Japan-Australia",
@@ -3051,9 +3051,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 12.6,
-      "app_mid": 13.67,
-      "app_plain": 10.86,
-      "app_cp": 11.65
+      "app_mid": 12.72,
+      "app_plain": 10.97,
+      "app_cp": 11.76
     },
     {
       "path": "Japan-Australia",
@@ -3062,9 +3062,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 12.6,
-      "app_mid": 13.35,
-      "app_plain": 10.9,
-      "app_cp": 11.11
+      "app_mid": 12.42,
+      "app_plain": 11.0,
+      "app_cp": 11.22
     },
     {
       "path": "Japan-Australia",
@@ -3073,9 +3073,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 11.7,
-      "app_mid": 12.43,
-      "app_plain": 11.13,
-      "app_cp": 10.64
+      "app_mid": 11.56,
+      "app_plain": 11.23,
+      "app_cp": 10.74
     },
     {
       "path": "Japan-Australia",
@@ -3084,9 +3084,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 10.2,
-      "app_mid": 11.04,
-      "app_plain": 11.69,
-      "app_cp": 10.23
+      "app_mid": 10.28,
+      "app_plain": 11.8,
+      "app_cp": 10.32
     },
     {
       "path": "Japan-Australia",
@@ -3095,9 +3095,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 9.9,
-      "app_mid": 10.98,
-      "app_plain": 12.65,
-      "app_cp": 9.88
+      "app_mid": 10.22,
+      "app_plain": 12.77,
+      "app_cp": 9.98
     },
     {
       "path": "Japan-Australia",
@@ -3106,9 +3106,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 12.6,
-      "app_mid": 13.98,
-      "app_plain": 14.02,
-      "app_cp": 9.58
+      "app_mid": 13.0,
+      "app_plain": 14.15,
+      "app_cp": 9.67
     },
     {
       "path": "Japan-Australia",
@@ -3117,9 +3117,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 18.9,
-      "app_mid": 18.96,
-      "app_plain": 15.71,
-      "app_cp": 15.65
+      "app_mid": 17.67,
+      "app_plain": 15.86,
+      "app_cp": 15.8
     },
     {
       "path": "Japan-Australia",
@@ -3128,9 +3128,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.2,
-      "app_mid": 22.55,
-      "app_plain": 17.61,
-      "app_cp": 19.0
+      "app_mid": 21.01,
+      "app_plain": 17.78,
+      "app_cp": 19.19
     },
     {
       "path": "Japan-Australia",
@@ -3139,9 +3139,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.5,
-      "app_mid": 23.56,
-      "app_plain": 19.55,
-      "app_cp": 20.72
+      "app_mid": 21.96,
+      "app_plain": 19.74,
+      "app_cp": 20.92
     },
     {
       "path": "Japan-Australia",
@@ -3150,9 +3150,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 20.8,
-      "app_mid": 23.08,
-      "app_plain": 21.34,
-      "app_cp": 21.84
+      "app_mid": 21.49,
+      "app_plain": 21.54,
+      "app_cp": 22.05
     },
     {
       "path": "Japan-Australia",
@@ -3161,9 +3161,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 24.1,
-      "app_mid": 29.06,
-      "app_plain": 30.08,
-      "app_cp": 27.26
+      "app_mid": 27.1,
+      "app_plain": 30.37,
+      "app_cp": 27.52
     },
     {
       "path": "Japan-Australia",
@@ -3172,9 +3172,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 25.9,
-      "app_mid": 31.53,
-      "app_plain": 31.36,
-      "app_cp": 27.8
+      "app_mid": 29.4,
+      "app_plain": 31.66,
+      "app_cp": 28.07
     },
     {
       "path": "Japan-Australia",
@@ -3183,9 +3183,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.1,
-      "app_mid": 32.58,
-      "app_plain": 31.86,
-      "app_cp": 28.01
+      "app_mid": 30.29,
+      "app_plain": 32.16,
+      "app_cp": 28.28
     },
     {
       "path": "Japan-Australia",
@@ -3194,9 +3194,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 32.6,
-      "app_mid": 32.33,
-      "app_plain": 31.52,
-      "app_cp": 27.9
+      "app_mid": 30.06,
+      "app_plain": 31.82,
+      "app_cp": 28.17
     },
     {
       "path": "Japan-Australia",
@@ -3205,9 +3205,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 32.4,
-      "app_mid": 32.06,
-      "app_plain": 30.39,
-      "app_cp": 27.46
+      "app_mid": 29.81,
+      "app_plain": 30.68,
+      "app_cp": 27.73
     },
     {
       "path": "Japan-Australia",
@@ -3216,9 +3216,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 31.9,
-      "app_mid": 31.23,
-      "app_plain": 28.58,
-      "app_cp": 26.66
+      "app_mid": 29.07,
+      "app_plain": 28.86,
+      "app_cp": 26.92
     },
     {
       "path": "Japan-Australia",
@@ -3227,9 +3227,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 30.9,
-      "app_mid": 30.07,
-      "app_plain": 26.29,
-      "app_cp": 25.37
+      "app_mid": 27.98,
+      "app_plain": 26.55,
+      "app_cp": 25.62
     },
     {
       "path": "Japan-Australia",
@@ -3238,9 +3238,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 28.6,
-      "app_mid": 27.79,
-      "app_plain": 23.76,
-      "app_cp": 23.25
+      "app_mid": 25.86,
+      "app_plain": 23.99,
+      "app_cp": 23.47
     },
     {
       "path": "Japan-Australia",
@@ -3249,9 +3249,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.5,
-      "app_mid": 25.07,
-      "app_plain": 21.22,
-      "app_cp": 21.15
+      "app_mid": 23.32,
+      "app_plain": 21.42,
+      "app_cp": 21.35
     },
     {
       "path": "Japan-Australia",
@@ -3260,9 +3260,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 22.7,
-      "app_mid": 22.55,
-      "app_plain": 18.91,
-      "app_cp": 19.47
+      "app_mid": 20.98,
+      "app_plain": 19.09,
+      "app_cp": 19.66
     },
     {
       "path": "Japan-Australia",
@@ -3271,9 +3271,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.6,
-      "app_mid": 20.81,
-      "app_plain": 17.01,
-      "app_cp": 18.02
+      "app_mid": 19.36,
+      "app_plain": 17.18,
+      "app_cp": 18.2
     },
     {
       "path": "Japan-Australia",
@@ -3282,9 +3282,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 18.8,
-      "app_mid": 19.22,
-      "app_plain": 15.63,
-      "app_cp": 16.78
+      "app_mid": 17.88,
+      "app_plain": 15.78,
+      "app_cp": 16.94
     },
     {
       "path": "Japan-Australia",
@@ -3293,9 +3293,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 17.4,
-      "app_mid": 17.69,
-      "app_plain": 14.79,
-      "app_cp": 15.75
+      "app_mid": 16.45,
+      "app_plain": 14.93,
+      "app_cp": 15.9
     },
     {
       "path": "Japan-Australia",
@@ -3304,9 +3304,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 16.7,
-      "app_mid": 16.61,
-      "app_plain": 14.41,
-      "app_cp": 14.84
+      "app_mid": 15.44,
+      "app_plain": 14.55,
+      "app_cp": 14.99
     },
     {
       "path": "Japan-Australia",
@@ -3315,9 +3315,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 16.8,
-      "app_mid": 16.51,
-      "app_plain": 14.34,
-      "app_cp": 14.06
+      "app_mid": 15.35,
+      "app_plain": 14.47,
+      "app_cp": 14.2
     },
     {
       "path": "Japan-Australia",
@@ -3326,9 +3326,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 16.8,
-      "app_mid": 16.42,
-      "app_plain": 14.38,
-      "app_cp": 13.41
+      "app_mid": 15.27,
+      "app_plain": 14.52,
+      "app_cp": 13.54
     },
     {
       "path": "Japan-Australia",
@@ -3337,9 +3337,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 15.7,
-      "app_mid": 15.36,
-      "app_plain": 14.68,
-      "app_cp": 12.84
+      "app_mid": 14.29,
+      "app_plain": 14.82,
+      "app_cp": 12.96
     },
     {
       "path": "Japan-Australia",
@@ -3348,9 +3348,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 14.1,
-      "app_mid": 13.9,
-      "app_plain": 15.42,
-      "app_cp": 12.34
+      "app_mid": 12.92,
+      "app_plain": 15.57,
+      "app_cp": 12.46
     },
     {
       "path": "Japan-Australia",
@@ -3359,9 +3359,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 14.0,
-      "app_mid": 14.17,
-      "app_plain": 16.7,
-      "app_cp": 11.92
+      "app_mid": 13.17,
+      "app_plain": 16.86,
+      "app_cp": 12.04
     },
     {
       "path": "Japan-Australia",
@@ -3370,9 +3370,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 17.8,
-      "app_mid": 17.87,
-      "app_plain": 18.5,
-      "app_cp": 11.56
+      "app_mid": 16.62,
+      "app_plain": 18.68,
+      "app_cp": 11.67
     },
     {
       "path": "Japan-Australia",
@@ -3381,9 +3381,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 23.82,
-      "app_plain": 20.74,
-      "app_cp": 18.88
+      "app_mid": 22.2,
+      "app_plain": 20.94,
+      "app_cp": 19.06
     },
     {
       "path": "Japan-Australia",
@@ -3392,9 +3392,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 25.9,
-      "app_mid": 26.95,
-      "app_plain": 23.25,
-      "app_cp": 22.93
+      "app_mid": 25.12,
+      "app_plain": 23.47,
+      "app_cp": 23.15
     },
     {
       "path": "Japan-Australia",
@@ -3403,9 +3403,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.2,
-      "app_mid": 28.39,
-      "app_plain": 25.8,
-      "app_cp": 25.0
+      "app_mid": 26.46,
+      "app_plain": 26.05,
+      "app_cp": 25.24
     },
     {
       "path": "Japan-Australia",
@@ -3414,9 +3414,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 24.5,
-      "app_mid": 27.88,
-      "app_plain": 28.16,
-      "app_cp": 26.36
+      "app_mid": 26.0,
+      "app_plain": 28.43,
+      "app_cp": 26.61
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3425,9 +3425,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 26.1,
-      "app_mid": 30.39,
-      "app_plain": 23.9,
-      "app_cp": 23.63
+      "app_mid": 28.57,
+      "app_plain": 24.05,
+      "app_cp": 23.78
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3436,9 +3436,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 28.9,
-      "app_mid": 31.95,
-      "app_plain": 23.07,
-      "app_cp": 23.59
+      "app_mid": 30.04,
+      "app_plain": 23.21,
+      "app_cp": 23.74
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3447,9 +3447,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 30.2,
-      "app_mid": 30.69,
-      "app_plain": 21.72,
-      "app_cp": 23.49
+      "app_mid": 28.66,
+      "app_plain": 21.85,
+      "app_cp": 23.64
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3458,9 +3458,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 28.3,
-      "app_mid": 29.12,
-      "app_plain": 19.99,
-      "app_cp": 23.28
+      "app_mid": 27.19,
+      "app_plain": 20.12,
+      "app_cp": 23.42
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3469,9 +3469,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 26.2,
-      "app_mid": 27.56,
-      "app_plain": 18.07,
-      "app_cp": 22.88
+      "app_mid": 25.74,
+      "app_plain": 18.19,
+      "app_cp": 23.02
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3480,9 +3480,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 24.5,
-      "app_mid": 26.1,
-      "app_plain": 16.15,
-      "app_cp": 21.93
+      "app_mid": 24.29,
+      "app_plain": 16.25,
+      "app_cp": 22.06
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3491,9 +3491,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 22.9,
-      "app_mid": 24.93,
-      "app_plain": 14.39,
-      "app_cp": 20.16
+      "app_mid": 23.2,
+      "app_plain": 14.48,
+      "app_cp": 20.28
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3502,9 +3502,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 21.7,
-      "app_mid": 23.86,
-      "app_plain": 12.94,
-      "app_cp": 18.65
+      "app_mid": 22.2,
+      "app_plain": 13.02,
+      "app_cp": 18.76
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3513,9 +3513,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 21.3,
-      "app_mid": 23.21,
-      "app_plain": 11.88,
-      "app_cp": 17.37
+      "app_mid": 21.63,
+      "app_plain": 11.95,
+      "app_cp": 17.48
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3524,9 +3524,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 21.5,
-      "app_mid": 21.33,
-      "app_plain": 11.22,
-      "app_cp": 16.26
+      "app_mid": 19.87,
+      "app_plain": 11.29,
+      "app_cp": 16.36
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3535,9 +3535,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 18.9,
-      "app_mid": 18.43,
-      "app_plain": 10.93,
-      "app_cp": 15.21
+      "app_mid": 17.17,
+      "app_plain": 10.99,
+      "app_cp": 15.31
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3546,9 +3546,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 16.4,
-      "app_mid": 16.51,
-      "app_plain": 10.86,
-      "app_cp": 14.28
+      "app_mid": 15.39,
+      "app_plain": 10.93,
+      "app_cp": 14.37
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3557,9 +3557,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 14.8,
-      "app_mid": 14.7,
-      "app_plain": 10.89,
-      "app_cp": 13.47
+      "app_mid": 13.69,
+      "app_plain": 10.96,
+      "app_cp": 13.56
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3568,9 +3568,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 12.9,
-      "app_mid": 12.57,
-      "app_plain": 11.11,
-      "app_cp": 12.8
+      "app_mid": 11.71,
+      "app_plain": 11.18,
+      "app_cp": 12.88
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3579,9 +3579,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 10.0,
-      "app_mid": 9.3,
-      "app_plain": 11.66,
-      "app_cp": 12.21
+      "app_mid": 8.66,
+      "app_plain": 11.73,
+      "app_cp": 12.28
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3590,9 +3590,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 8.7,
-      "app_mid": 8.32,
-      "app_plain": 12.61,
-      "app_cp": 11.7
+      "app_mid": 7.74,
+      "app_plain": 12.68,
+      "app_cp": 11.77
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3601,9 +3601,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 12.6,
-      "app_mid": 12.75,
-      "app_plain": 13.96,
-      "app_cp": 11.27
+      "app_mid": 11.87,
+      "app_plain": 14.04,
+      "app_cp": 11.34
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3612,9 +3612,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 19.5,
-      "app_mid": 20.1,
-      "app_plain": 15.64,
-      "app_cp": 19.45
+      "app_mid": 18.8,
+      "app_plain": 15.74,
+      "app_cp": 19.57
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3623,9 +3623,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 23.2,
-      "app_mid": 23.71,
-      "app_plain": 17.54,
-      "app_cp": 21.54
+      "app_mid": 22.18,
+      "app_plain": 17.65,
+      "app_cp": 21.68
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3634,9 +3634,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 25.3,
-      "app_mid": 25.85,
-      "app_plain": 19.48,
-      "app_cp": 22.55
+      "app_mid": 24.18,
+      "app_plain": 19.6,
+      "app_cp": 22.69
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3645,9 +3645,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 25.4,
-      "app_mid": 26.06,
-      "app_plain": 21.27,
-      "app_cp": 23.1
+      "app_mid": 24.45,
+      "app_plain": 21.41,
+      "app_cp": 23.24
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3656,9 +3656,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 22.6,
-      "app_mid": 27.23,
-      "app_plain": 22.74,
-      "app_cp": 23.39
+      "app_mid": 25.55,
+      "app_plain": 22.89,
+      "app_cp": 23.54
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3667,9 +3667,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.6,
-      "app_mid": 27.66,
-      "app_plain": 23.73,
-      "app_cp": 23.55
+      "app_mid": 25.94,
+      "app_plain": 23.88,
+      "app_cp": 23.69
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3678,9 +3678,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 23.7,
-      "app_mid": 28.89,
-      "app_plain": 24.13,
-      "app_cp": 23.62
+      "app_mid": 27.16,
+      "app_plain": 24.28,
+      "app_cp": 23.76
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3689,9 +3689,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 29.4,
-      "app_mid": 36.82,
-      "app_plain": 31.55,
-      "app_cp": 28.51
+      "app_mid": 34.67,
+      "app_plain": 31.74,
+      "app_cp": 28.69
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3700,9 +3700,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 31.5,
-      "app_mid": 38.2,
-      "app_plain": 30.45,
-      "app_cp": 28.47
+      "app_mid": 35.96,
+      "app_plain": 30.63,
+      "app_cp": 28.65
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3711,9 +3711,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 33.2,
-      "app_mid": 35.76,
-      "app_plain": 28.66,
-      "app_cp": 28.35
+      "app_mid": 33.4,
+      "app_plain": 28.84,
+      "app_cp": 28.52
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3722,9 +3722,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 31.4,
-      "app_mid": 34.25,
-      "app_plain": 26.39,
-      "app_cp": 28.09
+      "app_mid": 31.99,
+      "app_plain": 26.55,
+      "app_cp": 28.27
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3733,9 +3733,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 30.0,
-      "app_mid": 32.93,
-      "app_plain": 23.85,
-      "app_cp": 27.6
+      "app_mid": 30.76,
+      "app_plain": 24.0,
+      "app_cp": 27.78
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3744,9 +3744,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 28.6,
-      "app_mid": 31.44,
-      "app_plain": 21.31,
-      "app_cp": 26.46
+      "app_mid": 29.26,
+      "app_plain": 21.44,
+      "app_cp": 26.62
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3755,9 +3755,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 27.2,
-      "app_mid": 30.38,
-      "app_plain": 18.99,
-      "app_cp": 24.32
+      "app_mid": 28.27,
+      "app_plain": 19.11,
+      "app_cp": 24.47
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3766,9 +3766,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 26.0,
-      "app_mid": 29.21,
-      "app_plain": 17.08,
-      "app_cp": 22.5
+      "app_mid": 27.18,
+      "app_plain": 17.18,
+      "app_cp": 22.64
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3777,9 +3777,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 25.7,
-      "app_mid": 28.99,
-      "app_plain": 15.68,
-      "app_cp": 20.96
+      "app_mid": 26.98,
+      "app_plain": 15.77,
+      "app_cp": 21.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3788,9 +3788,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 26.4,
-      "app_mid": 29.35,
-      "app_plain": 14.81,
-      "app_cp": 19.62
+      "app_mid": 27.31,
+      "app_plain": 14.91,
+      "app_cp": 19.74
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3799,9 +3799,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 26.9,
-      "app_mid": 27.76,
-      "app_plain": 14.42,
-      "app_cp": 18.36
+      "app_mid": 25.84,
+      "app_plain": 14.51,
+      "app_cp": 18.47
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3810,9 +3810,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 24.6,
-      "app_mid": 25.08,
-      "app_plain": 14.34,
-      "app_cp": 17.23
+      "app_mid": 23.34,
+      "app_plain": 14.43,
+      "app_cp": 17.34
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3821,9 +3821,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 22.4,
-      "app_mid": 22.42,
-      "app_plain": 14.38,
-      "app_cp": 16.26
+      "app_mid": 20.86,
+      "app_plain": 14.46,
+      "app_cp": 16.36
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3832,9 +3832,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 19.8,
-      "app_mid": 19.37,
-      "app_plain": 14.66,
-      "app_cp": 15.44
+      "app_mid": 18.02,
+      "app_plain": 14.76,
+      "app_cp": 15.54
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3843,9 +3843,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 16.0,
-      "app_mid": 15.34,
-      "app_plain": 15.39,
-      "app_cp": 14.73
+      "app_mid": 14.29,
+      "app_plain": 15.48,
+      "app_cp": 14.82
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3854,9 +3854,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 13.9,
-      "app_mid": 13.6,
-      "app_plain": 16.64,
-      "app_cp": 14.11
+      "app_mid": 12.67,
+      "app_plain": 16.74,
+      "app_cp": 14.2
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3865,9 +3865,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 17.3,
-      "app_mid": 17.43,
-      "app_plain": 18.42,
-      "app_cp": 13.6
+      "app_mid": 16.24,
+      "app_plain": 18.53,
+      "app_cp": 13.68
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3876,9 +3876,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 24.0,
-      "app_mid": 25.45,
-      "app_plain": 20.64,
-      "app_cp": 23.47
+      "app_mid": 23.84,
+      "app_plain": 20.77,
+      "app_cp": 23.62
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3887,9 +3887,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 27.2,
-      "app_mid": 28.62,
-      "app_plain": 23.15,
-      "app_cp": 26.0
+      "app_mid": 26.8,
+      "app_plain": 23.29,
+      "app_cp": 26.16
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3898,9 +3898,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 29.2,
-      "app_mid": 31.06,
-      "app_plain": 25.71,
-      "app_cp": 27.21
+      "app_mid": 29.09,
+      "app_plain": 25.87,
+      "app_cp": 27.38
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3909,9 +3909,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 29.6,
-      "app_mid": 32.67,
-      "app_plain": 28.08,
-      "app_cp": 27.87
+      "app_mid": 30.82,
+      "app_plain": 28.25,
+      "app_cp": 28.04
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3920,9 +3920,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.3,
-      "app_mid": 34.26,
-      "app_plain": 30.02,
-      "app_cp": 28.23
+      "app_mid": 32.32,
+      "app_plain": 30.2,
+      "app_cp": 28.4
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3931,9 +3931,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.9,
-      "app_mid": 35.4,
-      "app_plain": 31.32,
-      "app_cp": 28.41
+      "app_mid": 33.39,
+      "app_plain": 31.52,
+      "app_cp": 28.59
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3942,9 +3942,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 27.7,
-      "app_mid": 35.93,
-      "app_plain": 31.85,
-      "app_cp": 28.5
+      "app_mid": 33.83,
+      "app_plain": 32.05,
+      "app_cp": 28.67
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3953,9 +3953,9 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 23.8,
-      "app_mid": 22.63,
-      "app_plain": 23.9,
-      "app_cp": 22.52
+      "app_mid": 21.06,
+      "app_plain": 24.05,
+      "app_cp": 22.66
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3964,9 +3964,9 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 23.6,
-      "app_mid": 22.5,
-      "app_plain": 23.07,
-      "app_cp": 22.31
+      "app_mid": 20.94,
+      "app_plain": 23.21,
+      "app_cp": 22.45
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3975,9 +3975,9 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 23.1,
-      "app_mid": 22.14,
-      "app_plain": 21.72,
-      "app_cp": 21.81
+      "app_mid": 20.62,
+      "app_plain": 21.85,
+      "app_cp": 21.95
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3986,9 +3986,9 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 22.8,
-      "app_mid": 21.64,
-      "app_plain": 19.99,
-      "app_cp": 20.96
+      "app_mid": 20.15,
+      "app_plain": 20.12,
+      "app_cp": 21.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -3997,9 +3997,9 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 20.9,
-      "app_mid": 19.99,
-      "app_plain": 18.07,
-      "app_cp": 19.51
+      "app_mid": 18.62,
+      "app_plain": 18.19,
+      "app_cp": 19.64
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4008,9 +4008,9 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 17.8,
-      "app_mid": 17.51,
-      "app_plain": 16.15,
-      "app_cp": 17.68
+      "app_mid": 16.32,
+      "app_plain": 16.25,
+      "app_cp": 17.79
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4019,9 +4019,9 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 14.9,
-      "app_mid": 15.25,
-      "app_plain": 14.39,
-      "app_cp": 16.23
+      "app_mid": 14.21,
+      "app_plain": 14.48,
+      "app_cp": 16.33
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4030,9 +4030,9 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 13.1,
-      "app_mid": 13.78,
-      "app_plain": 12.94,
-      "app_cp": 15.0
+      "app_mid": 12.85,
+      "app_plain": 13.02,
+      "app_cp": 15.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4041,9 +4041,9 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.4,
-      "app_mid": 13.19,
-      "app_plain": 11.88,
-      "app_cp": 13.94
+      "app_mid": 12.27,
+      "app_plain": 11.95,
+      "app_cp": 14.03
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4052,9 +4052,9 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.4,
-      "app_mid": 13.29,
-      "app_plain": 11.22,
-      "app_cp": 13.06
+      "app_mid": 12.37,
+      "app_plain": 11.29,
+      "app_cp": 13.14
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4063,9 +4063,9 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 12.5,
-      "app_mid": 13.18,
-      "app_plain": 10.93,
-      "app_cp": 12.3
+      "app_mid": 12.26,
+      "app_plain": 10.99,
+      "app_cp": 12.37
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4074,9 +4074,9 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 12.8,
-      "app_mid": 13.1,
-      "app_plain": 10.86,
-      "app_cp": 11.63
+      "app_mid": 12.19,
+      "app_plain": 10.93,
+      "app_cp": 11.7
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4085,9 +4085,9 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 13.0,
-      "app_mid": 13.24,
-      "app_plain": 10.89,
-      "app_cp": 11.08
+      "app_mid": 12.33,
+      "app_plain": 10.96,
+      "app_cp": 11.14
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4096,9 +4096,9 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 12.9,
-      "app_mid": 12.86,
-      "app_plain": 11.11,
-      "app_cp": 10.59
+      "app_mid": 11.98,
+      "app_plain": 11.18,
+      "app_cp": 10.66
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4107,9 +4107,9 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 11.9,
-      "app_mid": 11.85,
-      "app_plain": 11.66,
-      "app_cp": 10.17
+      "app_mid": 11.04,
+      "app_plain": 11.73,
+      "app_cp": 10.24
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4118,9 +4118,9 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 10.5,
-      "app_mid": 10.79,
-      "app_plain": 12.61,
-      "app_cp": 9.82
+      "app_mid": 10.05,
+      "app_plain": 12.68,
+      "app_cp": 9.88
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4129,9 +4129,9 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 10.7,
-      "app_mid": 11.0,
-      "app_plain": 13.96,
-      "app_cp": 9.51
+      "app_mid": 10.25,
+      "app_plain": 14.04,
+      "app_cp": 9.57
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4140,9 +4140,9 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 13.6,
-      "app_mid": 13.93,
-      "app_plain": 15.64,
-      "app_cp": 9.24
+      "app_mid": 12.99,
+      "app_plain": 15.74,
+      "app_cp": 9.3
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4151,9 +4151,9 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 18.5,
-      "app_mid": 17.83,
-      "app_plain": 17.54,
-      "app_cp": 15.85
+      "app_mid": 16.63,
+      "app_plain": 17.65,
+      "app_cp": 15.94
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4162,9 +4162,9 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 20.2,
-      "app_mid": 21.59,
-      "app_plain": 19.48,
-      "app_cp": 18.85
+      "app_mid": 20.13,
+      "app_plain": 19.6,
+      "app_cp": 18.97
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4173,9 +4173,9 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 23.3,
-      "app_plain": 21.27,
-      "app_cp": 20.41
+      "app_mid": 21.7,
+      "app_plain": 21.41,
+      "app_cp": 20.54
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4184,9 +4184,9 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 23.0,
-      "app_mid": 23.61,
-      "app_plain": 22.74,
-      "app_cp": 21.43
+      "app_mid": 21.99,
+      "app_plain": 22.89,
+      "app_cp": 21.57
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4195,9 +4195,9 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 22.1,
-      "app_mid": 23.37,
-      "app_plain": 23.73,
-      "app_cp": 22.09
+      "app_mid": 21.77,
+      "app_plain": 23.88,
+      "app_cp": 22.23
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4206,9 +4206,9 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 24.5,
-      "app_mid": 23.01,
-      "app_plain": 24.13,
-      "app_cp": 22.44
+      "app_mid": 21.41,
+      "app_plain": 24.28,
+      "app_cp": 22.58
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4217,9 +4217,9 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 29.6,
-      "app_mid": 29.16,
-      "app_plain": 31.55,
-      "app_cp": 27.17
+      "app_mid": 27.13,
+      "app_plain": 31.74,
+      "app_cp": 27.34
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4228,9 +4228,9 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 29.4,
-      "app_mid": 29.03,
-      "app_plain": 30.45,
-      "app_cp": 26.93
+      "app_mid": 27.01,
+      "app_plain": 30.63,
+      "app_cp": 27.09
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4239,9 +4239,9 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 29.2,
-      "app_mid": 28.89,
-      "app_plain": 28.66,
-      "app_cp": 26.32
+      "app_mid": 26.92,
+      "app_plain": 28.84,
+      "app_cp": 26.49
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4250,9 +4250,9 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 28.7,
-      "app_mid": 28.16,
-      "app_plain": 26.39,
-      "app_cp": 25.29
+      "app_mid": 26.23,
+      "app_plain": 26.55,
+      "app_cp": 25.44
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4261,9 +4261,9 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 26.4,
-      "app_mid": 25.96,
-      "app_plain": 23.85,
-      "app_cp": 23.55
+      "app_mid": 24.18,
+      "app_plain": 24.0,
+      "app_cp": 23.69
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4272,9 +4272,9 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 23.0,
-      "app_mid": 22.73,
-      "app_plain": 21.31,
-      "app_cp": 21.33
+      "app_mid": 21.16,
+      "app_plain": 21.44,
+      "app_cp": 21.46
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4283,9 +4283,9 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 19.8,
-      "app_mid": 19.9,
-      "app_plain": 18.99,
-      "app_cp": 19.58
+      "app_mid": 18.52,
+      "app_plain": 19.11,
+      "app_cp": 19.7
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4294,9 +4294,9 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 17.3,
-      "app_mid": 17.71,
-      "app_plain": 17.08,
-      "app_cp": 18.1
+      "app_mid": 16.49,
+      "app_plain": 17.18,
+      "app_cp": 18.21
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4305,9 +4305,9 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 15.4,
-      "app_mid": 15.91,
-      "app_plain": 15.68,
-      "app_cp": 16.82
+      "app_mid": 14.81,
+      "app_plain": 15.77,
+      "app_cp": 16.93
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4316,9 +4316,9 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 14.4,
-      "app_mid": 15.09,
-      "app_plain": 14.81,
-      "app_cp": 15.76
+      "app_mid": 14.05,
+      "app_plain": 14.91,
+      "app_cp": 15.86
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4327,9 +4327,9 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 14.3,
-      "app_mid": 14.87,
-      "app_plain": 14.42,
-      "app_cp": 14.84
+      "app_mid": 13.84,
+      "app_plain": 14.51,
+      "app_cp": 14.93
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4338,9 +4338,9 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 14.6,
-      "app_mid": 14.89,
-      "app_plain": 14.34,
-      "app_cp": 14.04
+      "app_mid": 13.86,
+      "app_plain": 14.43,
+      "app_cp": 14.12
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4349,9 +4349,9 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 14.7,
-      "app_mid": 14.89,
-      "app_plain": 14.38,
-      "app_cp": 13.37
+      "app_mid": 13.86,
+      "app_plain": 14.46,
+      "app_cp": 13.45
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4360,9 +4360,9 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 14.3,
-      "app_mid": 14.38,
-      "app_plain": 14.66,
-      "app_cp": 12.78
+      "app_mid": 13.38,
+      "app_plain": 14.76,
+      "app_cp": 12.86
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4371,9 +4371,9 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 13.2,
-      "app_mid": 13.33,
-      "app_plain": 15.39,
-      "app_cp": 12.27
+      "app_mid": 12.4,
+      "app_plain": 15.48,
+      "app_cp": 12.35
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4382,9 +4382,9 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 11.8,
-      "app_mid": 12.37,
-      "app_plain": 16.64,
-      "app_cp": 11.85
+      "app_mid": 11.51,
+      "app_plain": 16.74,
+      "app_cp": 11.92
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4393,9 +4393,9 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 12.1,
-      "app_mid": 12.8,
-      "app_plain": 18.42,
-      "app_cp": 11.48
+      "app_mid": 11.91,
+      "app_plain": 18.53,
+      "app_cp": 11.55
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4404,9 +4404,9 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 16.2,
-      "app_mid": 16.81,
-      "app_plain": 20.64,
-      "app_cp": 11.15
+      "app_mid": 15.68,
+      "app_plain": 20.77,
+      "app_cp": 11.22
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4415,9 +4415,9 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 23.9,
-      "app_mid": 23.21,
-      "app_plain": 23.15,
-      "app_cp": 19.12
+      "app_mid": 21.65,
+      "app_plain": 23.29,
+      "app_cp": 19.24
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4426,9 +4426,9 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 31.4,
-      "app_mid": 29.3,
-      "app_plain": 25.71,
-      "app_cp": 22.74
+      "app_mid": 27.33,
+      "app_plain": 25.87,
+      "app_cp": 22.88
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4437,9 +4437,9 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 24.6,
-      "app_mid": 30.38,
-      "app_plain": 28.08,
-      "app_cp": 24.63
+      "app_mid": 28.35,
+      "app_plain": 28.25,
+      "app_cp": 24.79
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4448,9 +4448,9 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 34.6,
-      "app_mid": 30.93,
-      "app_plain": 30.02,
-      "app_cp": 25.86
+      "app_mid": 28.86,
+      "app_plain": 30.2,
+      "app_cp": 26.02
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4459,9 +4459,9 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 32.5,
-      "app_mid": 29.9,
-      "app_plain": 31.32,
-      "app_cp": 26.66
+      "app_mid": 27.89,
+      "app_plain": 31.52,
+      "app_cp": 26.82
     },
     {
       "path": "Hawaii-NewZealand",
@@ -4470,9 +4470,9 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 30.6,
-      "app_mid": 29.44,
-      "app_plain": 31.85,
-      "app_cp": 27.08
+      "app_mid": 27.4,
+      "app_plain": 32.05,
+      "app_cp": 27.25
     },
     {
       "path": "CherryPt-Brazil",
@@ -4481,7 +4481,7 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 12.3,
-      "app_mid": 13.15,
+      "app_mid": 12.25,
       "app_plain": 11.76,
       "app_cp": 15.9
     },
@@ -4492,7 +4492,7 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 11.7,
-      "app_mid": 12.61,
+      "app_mid": 11.75,
       "app_plain": 10.96,
       "app_cp": 14.83
     },
@@ -4503,7 +4503,7 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 11.6,
-      "app_mid": 12.39,
+      "app_mid": 11.55,
       "app_plain": 10.54,
       "app_cp": 13.91
     },
@@ -4514,7 +4514,7 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 11.9,
-      "app_mid": 12.61,
+      "app_mid": 11.75,
       "app_plain": 10.4,
       "app_cp": 13.14
     },
@@ -4525,7 +4525,7 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 13.1,
-      "app_mid": 13.43,
+      "app_mid": 12.51,
       "app_plain": 10.4,
       "app_cp": 12.47
     },
@@ -4536,7 +4536,7 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.1,
-      "app_mid": 12.1,
+      "app_mid": 11.28,
       "app_plain": 10.51,
       "app_cp": 11.88
     },
@@ -4547,7 +4547,7 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 10.8,
-      "app_mid": 9.26,
+      "app_mid": 8.63,
       "app_plain": 10.88,
       "app_cp": 11.39
     },
@@ -4558,7 +4558,7 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 8.8,
-      "app_mid": 8.42,
+      "app_mid": 7.85,
       "app_plain": 11.62,
       "app_cp": 10.97
     },
@@ -4569,7 +4569,7 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 10.4,
-      "app_mid": 11.87,
+      "app_mid": 11.06,
       "app_plain": 12.75,
       "app_cp": 10.6
     },
@@ -4580,7 +4580,7 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 12.7,
-      "app_mid": 13.76,
+      "app_mid": 12.86,
       "app_plain": 14.23,
       "app_cp": 10.29
     },
@@ -4591,7 +4591,7 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 17.4,
-      "app_mid": 16.6,
+      "app_mid": 15.52,
       "app_plain": 15.97,
       "app_cp": 14.89
     },
@@ -4602,7 +4602,7 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 23.2,
-      "app_mid": 20.8,
+      "app_mid": 19.45,
       "app_plain": 17.83,
       "app_cp": 19.93
     },
@@ -4613,7 +4613,7 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 27.0,
-      "app_mid": 21.97,
+      "app_mid": 20.51,
       "app_plain": 19.63,
       "app_cp": 21.94
     },
@@ -4624,7 +4624,7 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 28.1,
-      "app_mid": 23.35,
+      "app_mid": 21.79,
       "app_plain": 21.2,
       "app_cp": 23.21
     },
@@ -4635,7 +4635,7 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 26.5,
-      "app_mid": 23.32,
+      "app_mid": 21.76,
       "app_plain": 22.36,
       "app_cp": 24.04
     },
@@ -4646,7 +4646,7 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 25.3,
-      "app_mid": 24.01,
+      "app_mid": 22.63,
       "app_plain": 22.99,
       "app_cp": 24.54
     },
@@ -4657,7 +4657,7 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 25.1,
-      "app_mid": 24.23,
+      "app_mid": 22.84,
       "app_plain": 23.04,
       "app_cp": 24.74
     },
@@ -4668,7 +4668,7 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 25.1,
-      "app_mid": 24.16,
+      "app_mid": 22.77,
       "app_plain": 22.48,
       "app_cp": 24.65
     },
@@ -4679,7 +4679,7 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 24.6,
-      "app_mid": 24.5,
+      "app_mid": 22.86,
       "app_plain": 21.39,
       "app_cp": 24.26
     },
@@ -4690,7 +4690,7 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 23.5,
-      "app_mid": 23.68,
+      "app_mid": 22.1,
       "app_plain": 19.88,
       "app_cp": 23.53
     },
@@ -4701,7 +4701,7 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.0,
-      "app_mid": 22.76,
+      "app_mid": 21.25,
       "app_plain": 18.1,
       "app_cp": 22.35
     },
@@ -4712,7 +4712,7 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 21.2,
-      "app_mid": 20.86,
+      "app_mid": 19.44,
       "app_plain": 16.24,
       "app_cp": 20.41
     },
@@ -4723,7 +4723,7 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 17.8,
-      "app_mid": 17.86,
+      "app_mid": 16.64,
       "app_plain": 14.47,
       "app_cp": 18.62
     },
@@ -4734,7 +4734,7 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 14.3,
-      "app_mid": 14.93,
+      "app_mid": 13.91,
       "app_plain": 12.94,
       "app_cp": 17.13
     },
@@ -4745,7 +4745,7 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 16.0,
-      "app_mid": 16.8,
+      "app_mid": 15.66,
       "app_plain": 15.52,
       "app_cp": 19.19
     },
@@ -4756,7 +4756,7 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 13.9,
-      "app_mid": 14.65,
+      "app_mid": 13.65,
       "app_plain": 14.47,
       "app_cp": 17.9
     },
@@ -4767,7 +4767,7 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 13.2,
-      "app_mid": 13.73,
+      "app_mid": 12.79,
       "app_plain": 13.91,
       "app_cp": 16.78
     },
@@ -4778,7 +4778,7 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 13.6,
-      "app_mid": 13.87,
+      "app_mid": 12.92,
       "app_plain": 13.73,
       "app_cp": 15.85
     },
@@ -4789,7 +4789,7 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 14.4,
-      "app_mid": 14.39,
+      "app_mid": 13.4,
       "app_plain": 13.72,
       "app_cp": 15.04
     },
@@ -4800,7 +4800,7 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 14.7,
-      "app_mid": 14.59,
+      "app_mid": 13.6,
       "app_plain": 13.87,
       "app_cp": 14.34
     },
@@ -4811,7 +4811,7 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 13.4,
-      "app_mid": 13.46,
+      "app_mid": 12.54,
       "app_plain": 14.36,
       "app_cp": 13.75
     },
@@ -4822,7 +4822,7 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 10.7,
-      "app_mid": 12.16,
+      "app_mid": 11.33,
       "app_plain": 15.33,
       "app_cp": 13.23
     },
@@ -4833,7 +4833,7 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 11.0,
-      "app_mid": 12.06,
+      "app_mid": 11.23,
       "app_plain": 16.82,
       "app_cp": 12.79
     },
@@ -4844,7 +4844,7 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 13.5,
-      "app_mid": 14.31,
+      "app_mid": 13.37,
       "app_plain": 18.78,
       "app_cp": 12.41
     },
@@ -4855,7 +4855,7 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.8,
-      "app_mid": 19.16,
+      "app_mid": 17.9,
       "app_plain": 21.08,
       "app_cp": 17.97
     },
@@ -4866,7 +4866,7 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 30.1,
-      "app_mid": 26.27,
+      "app_mid": 24.55,
       "app_plain": 23.54,
       "app_cp": 24.04
     },
@@ -4877,7 +4877,7 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 35.6,
-      "app_mid": 28.67,
+      "app_mid": 26.75,
       "app_plain": 25.91,
       "app_cp": 26.47
     },
@@ -4888,7 +4888,7 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 35.8,
-      "app_mid": 30.39,
+      "app_mid": 28.35,
       "app_plain": 27.97,
       "app_cp": 28.0
     },
@@ -4899,7 +4899,7 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 33.0,
-      "app_mid": 29.93,
+      "app_mid": 27.92,
       "app_plain": 29.51,
       "app_cp": 29.01
     },
@@ -4910,7 +4910,7 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 31.2,
-      "app_mid": 30.9,
+      "app_mid": 28.85,
       "app_plain": 30.35,
       "app_cp": 29.61
     },
@@ -4921,7 +4921,7 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 30.5,
-      "app_mid": 31.12,
+      "app_mid": 29.06,
       "app_plain": 30.41,
       "app_cp": 29.85
     },
@@ -4932,7 +4932,7 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 29.9,
-      "app_mid": 30.7,
+      "app_mid": 28.66,
       "app_plain": 29.68,
       "app_cp": 29.74
     },
@@ -4943,7 +4943,7 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 28.8,
-      "app_mid": 30.37,
+      "app_mid": 28.3,
       "app_plain": 28.23,
       "app_cp": 29.27
     },
@@ -4954,7 +4954,7 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 28.5,
-      "app_mid": 29.65,
+      "app_mid": 27.63,
       "app_plain": 26.24,
       "app_cp": 28.4
     },
@@ -4965,7 +4965,7 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 28.3,
-      "app_mid": 28.91,
+      "app_mid": 26.94,
       "app_plain": 23.89,
       "app_cp": 26.96
     },
@@ -4976,7 +4976,7 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 26.7,
-      "app_mid": 26.64,
+      "app_mid": 24.82,
       "app_plain": 21.43,
       "app_cp": 24.63
     },
@@ -4987,7 +4987,7 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 23.3,
-      "app_mid": 23.5,
+      "app_mid": 21.9,
       "app_plain": 19.1,
       "app_cp": 22.47
     },
@@ -4998,7 +4998,7 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 19.3,
-      "app_mid": 19.76,
+      "app_mid": 18.41,
       "app_plain": 17.08,
       "app_cp": 20.67
     },
@@ -5009,7 +5009,7 @@
       "ssn": 30,
       "utc": 1,
       "voacap_muf": 18.4,
-      "app_mid": 19.33,
+      "app_mid": 18.01,
       "app_plain": 11.76,
       "app_cp": 15.39
     },
@@ -5020,7 +5020,7 @@
       "ssn": 30,
       "utc": 2,
       "voacap_muf": 17.8,
-      "app_mid": 18.69,
+      "app_mid": 17.41,
       "app_plain": 10.96,
       "app_cp": 14.34
     },
@@ -5031,7 +5031,7 @@
       "ssn": 30,
       "utc": 3,
       "voacap_muf": 16.5,
-      "app_mid": 17.61,
+      "app_mid": 16.41,
       "app_plain": 10.54,
       "app_cp": 13.42
     },
@@ -5042,7 +5042,7 @@
       "ssn": 30,
       "utc": 4,
       "voacap_muf": 15.2,
-      "app_mid": 15.7,
+      "app_mid": 14.64,
       "app_plain": 10.4,
       "app_cp": 12.58
     },
@@ -5053,7 +5053,7 @@
       "ssn": 30,
       "utc": 5,
       "voacap_muf": 14.2,
-      "app_mid": 14.62,
+      "app_mid": 13.64,
       "app_plain": 10.4,
       "app_cp": 11.84
     },
@@ -5064,7 +5064,7 @@
       "ssn": 30,
       "utc": 6,
       "voacap_muf": 13.6,
-      "app_mid": 13.89,
+      "app_mid": 12.95,
       "app_plain": 10.51,
       "app_cp": 11.23
     },
@@ -5075,7 +5075,7 @@
       "ssn": 30,
       "utc": 7,
       "voacap_muf": 12.8,
-      "app_mid": 12.93,
+      "app_mid": 12.04,
       "app_plain": 10.88,
       "app_cp": 10.69
     },
@@ -5086,7 +5086,7 @@
       "ssn": 30,
       "utc": 8,
       "voacap_muf": 12.0,
-      "app_mid": 12.22,
+      "app_mid": 11.39,
       "app_plain": 11.62,
       "app_cp": 10.23
     },
@@ -5097,7 +5097,7 @@
       "ssn": 30,
       "utc": 9,
       "voacap_muf": 12.5,
-      "app_mid": 12.52,
+      "app_mid": 11.67,
       "app_plain": 12.75,
       "app_cp": 9.83
     },
@@ -5108,7 +5108,7 @@
       "ssn": 30,
       "utc": 10,
       "voacap_muf": 14.8,
-      "app_mid": 15.75,
+      "app_mid": 14.69,
       "app_plain": 14.23,
       "app_cp": 15.0
     },
@@ -5119,7 +5119,7 @@
       "ssn": 30,
       "utc": 11,
       "voacap_muf": 17.7,
-      "app_mid": 18.51,
+      "app_mid": 17.26,
       "app_plain": 15.97,
       "app_cp": 17.91
     },
@@ -5130,7 +5130,7 @@
       "ssn": 30,
       "utc": 12,
       "voacap_muf": 19.5,
-      "app_mid": 20.12,
+      "app_mid": 18.77,
       "app_plain": 17.83,
       "app_cp": 19.15
     },
@@ -5141,7 +5141,7 @@
       "ssn": 30,
       "utc": 13,
       "voacap_muf": 18.7,
-      "app_mid": 19.35,
+      "app_mid": 18.08,
       "app_plain": 19.63,
       "app_cp": 19.81
     },
@@ -5152,7 +5152,7 @@
       "ssn": 30,
       "utc": 14,
       "voacap_muf": 18.1,
-      "app_mid": 19.58,
+      "app_mid": 18.29,
       "app_plain": 21.2,
       "app_cp": 20.19
     },
@@ -5163,7 +5163,7 @@
       "ssn": 30,
       "utc": 15,
       "voacap_muf": 18.8,
-      "app_mid": 20.68,
+      "app_mid": 19.32,
       "app_plain": 22.36,
       "app_cp": 20.39
     },
@@ -5174,7 +5174,7 @@
       "ssn": 30,
       "utc": 16,
       "voacap_muf": 20.2,
-      "app_mid": 21.72,
+      "app_mid": 20.24,
       "app_plain": 22.99,
       "app_cp": 20.5
     },
@@ -5185,7 +5185,7 @@
       "ssn": 30,
       "utc": 17,
       "voacap_muf": 21.0,
-      "app_mid": 22.45,
+      "app_mid": 20.92,
       "app_plain": 23.04,
       "app_cp": 20.54
     },
@@ -5196,7 +5196,7 @@
       "ssn": 30,
       "utc": 18,
       "voacap_muf": 21.3,
-      "app_mid": 22.61,
+      "app_mid": 21.07,
       "app_plain": 22.48,
       "app_cp": 20.52
     },
@@ -5207,7 +5207,7 @@
       "ssn": 30,
       "utc": 19,
       "voacap_muf": 21.7,
-      "app_mid": 23.02,
+      "app_mid": 21.47,
       "app_plain": 21.39,
       "app_cp": 20.44
     },
@@ -5218,7 +5218,7 @@
       "ssn": 30,
       "utc": 20,
       "voacap_muf": 22.5,
-      "app_mid": 23.5,
+      "app_mid": 21.92,
       "app_plain": 19.88,
       "app_cp": 20.28
     },
@@ -5229,7 +5229,7 @@
       "ssn": 30,
       "utc": 21,
       "voacap_muf": 23.4,
-      "app_mid": 24.21,
+      "app_mid": 22.58,
       "app_plain": 18.1,
       "app_cp": 19.97
     },
@@ -5240,7 +5240,7 @@
       "ssn": 30,
       "utc": 22,
       "voacap_muf": 24.2,
-      "app_mid": 25.17,
+      "app_mid": 23.45,
       "app_plain": 16.24,
       "app_cp": 19.4
     },
@@ -5251,7 +5251,7 @@
       "ssn": 30,
       "utc": 23,
       "voacap_muf": 23.6,
-      "app_mid": 24.63,
+      "app_mid": 22.95,
       "app_plain": 14.47,
       "app_cp": 18.0
     },
@@ -5262,7 +5262,7 @@
       "ssn": 30,
       "utc": 24,
       "voacap_muf": 20.0,
-      "app_mid": 21.52,
+      "app_mid": 20.05,
       "app_plain": 12.94,
       "app_cp": 16.6
     },
@@ -5273,7 +5273,7 @@
       "ssn": 100,
       "utc": 1,
       "voacap_muf": 24.6,
-      "app_mid": 26.03,
+      "app_mid": 24.25,
       "app_plain": 15.52,
       "app_cp": 18.58
     },
@@ -5284,7 +5284,7 @@
       "ssn": 100,
       "utc": 2,
       "voacap_muf": 23.7,
-      "app_mid": 25.07,
+      "app_mid": 23.36,
       "app_plain": 14.47,
       "app_cp": 17.3
     },
@@ -5295,7 +5295,7 @@
       "ssn": 100,
       "utc": 3,
       "voacap_muf": 23.0,
-      "app_mid": 24.03,
+      "app_mid": 22.38,
       "app_plain": 13.91,
       "app_cp": 16.19
     },
@@ -5306,7 +5306,7 @@
       "ssn": 100,
       "utc": 4,
       "voacap_muf": 21.9,
-      "app_mid": 23.01,
+      "app_mid": 21.44,
       "app_plain": 13.73,
       "app_cp": 15.18
     },
@@ -5317,7 +5317,7 @@
       "ssn": 100,
       "utc": 5,
       "voacap_muf": 20.5,
-      "app_mid": 21.54,
+      "app_mid": 20.07,
       "app_plain": 13.72,
       "app_cp": 14.29
     },
@@ -5328,7 +5328,7 @@
       "ssn": 100,
       "utc": 6,
       "voacap_muf": 19.1,
-      "app_mid": 20.28,
+      "app_mid": 18.89,
       "app_plain": 13.87,
       "app_cp": 13.55
     },
@@ -5339,7 +5339,7 @@
       "ssn": 100,
       "utc": 7,
       "voacap_muf": 18.0,
-      "app_mid": 18.83,
+      "app_mid": 17.54,
       "app_plain": 14.36,
       "app_cp": 12.9
     },
@@ -5350,7 +5350,7 @@
       "ssn": 100,
       "utc": 8,
       "voacap_muf": 17.9,
-      "app_mid": 17.2,
+      "app_mid": 16.02,
       "app_plain": 15.33,
       "app_cp": 12.34
     },
@@ -5361,7 +5361,7 @@
       "ssn": 100,
       "utc": 9,
       "voacap_muf": 17.1,
-      "app_mid": 17.29,
+      "app_mid": 16.1,
       "app_plain": 16.82,
       "app_cp": 11.87
     },
@@ -5372,7 +5372,7 @@
       "ssn": 100,
       "utc": 10,
       "voacap_muf": 18.6,
-      "app_mid": 19.61,
+      "app_mid": 18.28,
       "app_plain": 18.78,
       "app_cp": 18.1
     },
@@ -5383,7 +5383,7 @@
       "ssn": 100,
       "utc": 11,
       "voacap_muf": 20.8,
-      "app_mid": 21.79,
+      "app_mid": 20.31,
       "app_plain": 21.08,
       "app_cp": 21.61
     },
@@ -5394,7 +5394,7 @@
       "ssn": 100,
       "utc": 12,
       "voacap_muf": 22.5,
-      "app_mid": 23.63,
+      "app_mid": 22.03,
       "app_plain": 23.54,
       "app_cp": 23.1
     },
@@ -5405,7 +5405,7 @@
       "ssn": 100,
       "utc": 13,
       "voacap_muf": 22.4,
-      "app_mid": 23.2,
+      "app_mid": 21.62,
       "app_plain": 25.91,
       "app_cp": 23.91
     },
@@ -5416,7 +5416,7 @@
       "ssn": 100,
       "utc": 14,
       "voacap_muf": 22.4,
-      "app_mid": 23.98,
+      "app_mid": 22.34,
       "app_plain": 27.97,
       "app_cp": 24.36
     },
@@ -5427,7 +5427,7 @@
       "ssn": 100,
       "utc": 15,
       "voacap_muf": 23.5,
-      "app_mid": 25.26,
+      "app_mid": 23.54,
       "app_plain": 29.51,
       "app_cp": 24.61
     },
@@ -5438,7 +5438,7 @@
       "ssn": 100,
       "utc": 16,
       "voacap_muf": 25.2,
-      "app_mid": 26.62,
+      "app_mid": 24.8,
       "app_plain": 30.35,
       "app_cp": 24.74
     },
@@ -5449,7 +5449,7 @@
       "ssn": 100,
       "utc": 17,
       "voacap_muf": 26.1,
-      "app_mid": 27.44,
+      "app_mid": 25.57,
       "app_plain": 30.41,
       "app_cp": 24.78
     },
@@ -5460,7 +5460,7 @@
       "ssn": 100,
       "utc": 18,
       "voacap_muf": 26.2,
-      "app_mid": 27.45,
+      "app_mid": 25.57,
       "app_plain": 29.68,
       "app_cp": 24.76
     },
@@ -5471,7 +5471,7 @@
       "ssn": 100,
       "utc": 19,
       "voacap_muf": 26.2,
-      "app_mid": 27.98,
+      "app_mid": 26.07,
       "app_plain": 28.23,
       "app_cp": 24.67
     },
@@ -5482,7 +5482,7 @@
       "ssn": 100,
       "utc": 20,
       "voacap_muf": 26.6,
-      "app_mid": 28.11,
+      "app_mid": 26.19,
       "app_plain": 26.24,
       "app_cp": 24.47
     },
@@ -5493,7 +5493,7 @@
       "ssn": 100,
       "utc": 21,
       "voacap_muf": 26.9,
-      "app_mid": 28.26,
+      "app_mid": 26.33,
       "app_plain": 23.89,
       "app_cp": 24.1
     },
@@ -5504,7 +5504,7 @@
       "ssn": 100,
       "utc": 22,
       "voacap_muf": 27.1,
-      "app_mid": 28.16,
+      "app_mid": 26.27,
       "app_plain": 21.43,
       "app_cp": 23.42
     },
@@ -5515,7 +5515,7 @@
       "ssn": 100,
       "utc": 23,
       "voacap_muf": 26.6,
-      "app_mid": 27.89,
+      "app_mid": 26.01,
       "app_plain": 19.1,
       "app_cp": 21.72
     },
@@ -5526,7 +5526,7 @@
       "ssn": 100,
       "utc": 24,
       "voacap_muf": 25.7,
-      "app_mid": 27.26,
+      "app_mid": 25.43,
       "app_plain": 17.08,
       "app_cp": 20.04
     },

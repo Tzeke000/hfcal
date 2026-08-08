@@ -16,6 +16,7 @@ Fine FOT re-measurement and uncertainty audit: August 2026 (app v1.18.0)
 Global grid and coefficient map: August 2026 (app v1.19.0)
 Own-built foF2 lookup table: August 2026 (app v1.20.0)
 Geometry / M-factor rebuild: August 2026 (app v1.21.0)
+Transequatorial fix and uncertainty audit: August 2026 (app v1.22.0)
 
 ---
 
@@ -1306,6 +1307,66 @@ it is now measured rather than assumed, and the dominant residual is the
 ambiguity in what "the" foF2 of a multi-hop path even is. That is a modelling
 question, not a calibration one.
 
+## Part 17 — Closing the transequatorial gap, and a ten-point audit (v1.22.0)
+
+### The transequatorial bias had two causes, both mine
+
+Part 16 left the interhemispheric set at 6.4% with a **+4.0% bias** — the one
+regime where the measured M table did worse than the secant law it replaced.
+Two compounding mistakes:
+
+**1. A de-bias constant that stopped tracking what it corrected for.** The
+min-order correction inflates the weakest-bounce foF2 to undo the fact that
+the minimum of several *noisy* estimates sits below the true minimum. Its size
+is proportional to the per-point error — and it was hardcoded at **0.13**, the
+physical model's error from Part 6, and left there when the lookup table cut
+per-point error to **0.012**. So it was inflating multi-hop foF2 by 7–11%
+where it should have been ~1%. Sigma now tracks whichever source is live.
+
+**2. The M table was fitted against the raw minimum while the app used the
+corrected minimum**, so the correction was applied twice. Both sides now use
+the same reference.
+
+| | Error | Bias |
+|---|---|---|
+| Part 16 | 6.4% | +4.0% |
+| **Part 17** | **6.0%** | **−2.4%** |
+
+Sample-weighted across all three studies: **4.99% → 4.93%**. The remaining gap
+to the secant law's 5.6% on this one regime is small and the bias has flipped
+sign and shrunk by 40%.
+
+### The audit
+
+Ten things I was least sure of, each answered with a measurement.
+
+| # | Question | Verdict |
+|---|---|---|
+| 1 | Is the de-bias sigma still right? | **No — fixed above** |
+| 2 | Is the M table's foF2 reference consistent with the app's? | **No — fixed above** |
+| 3 | Is linear interpolation across solar activity valid? | **Yes.** Midpoint deviates −0.04% from the line: noise, not curvature. Best warp (SSN^0.9) saves 0.03% — not worth a term |
+| 4 | Does M need a latitude axis? | **No.** 2.6% spread across sites at fixed distance |
+| 5 | Does M depend on path bearing? | **No** — 1.5%. It is geometry, as expected, once training covered three bearings |
+| 6 | Would finer time bins help? | **No.** 1.5 h bins score 4.89% against 4.82% for 3 h |
+| 7 | Which axis actually matters? | Solar activity. Dropping it costs 1.4 points; month and local time cost 0.1 each |
+| 8 | Is the operator-facing antenna angle still right? | **Yes** — max 1.2° against VOACAP TANGLE, unchanged since Part 2 |
+| 9 | Does the FOT ratio survive the model rebuild? | **Yes** — still 0.769, and flat across 500–6000 km |
+| 10 | How wrong is the app on E-layer cases? | 2% of samples, all 09–12 local solar time at 1400–3600 km, 10.1% error there against 5.0% for F2. Net contribution ~0.1% — documented, not modelled |
+
+Two of ten were real defects; both are fixed. Six were confirmed sound. Two
+are documented limits.
+
+### Still not validated, and now stated plainly
+
+- **The LUF.** Part 13 established it cannot be calibrated from VOACAP at all.
+  Its power dependence is measured; its level is anchored to the app's own
+  historical figure.
+- **The terrain adjustments** — ocean −1.5/−3°, desert +2°, mountain +3°,
+  chordal ×0.7. VOACAP models no terrain, so there is nothing to validate them
+  against. Since Part 10 they affect only the ANTENNA angle and never the MUF,
+  which bounds how much harm a wrong one can do, but they remain unmeasured
+  heuristics and are labelled as such.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
@@ -1320,9 +1381,14 @@ question, not a calibration one.
   4.8% held-out) but is still the larger error term. The dominant residual is
   the ambiguity in what "the" foF2 of a multi-hop path is — a modelling
   question rather than a calibration one.
-- **Transequatorial paths are the weakest case.** The measured M table
-  regressed them from 5.6% to 6.4% with a +4% bias where it improved every
-  other regime; the derived secant law happened to suit them better.
+- **Transequatorial paths remain the weakest case** at 6.0% against 4.4-4.8%
+  elsewhere, though Part 17 removed most of the bias (+4.0% to -2.4%). The
+  residual is the genuine ambiguity in what "the" foF2 of a multi-hop path is.
+- **The terrain adjustments have never been validated** and cannot be against
+  VOACAP, which models no terrain. They affect only the antenna angle, never
+  the MUF. Treat them as experience-based heuristics.
+- E-layer modes are 2% of cases (mid-morning, 1400-3600 km) and are not
+  modelled; the app assumes F2 always and runs about 10% off on those.
 - Part 4's claim that VOACAP never offers an E-layer mode was wrong — an
   artifact of a mode-parsing regex that rejected any row containing "1 E".
   Corrected in Part 16: F2 98%, E 2%, F1 0.3%.

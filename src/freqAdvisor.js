@@ -370,13 +370,34 @@ export function estimateLUF(illum, watts, hops) {
 // recovers the physics without inventing a tunable knob — sigma below is the
 // model's OWN measured per-point error (docs/VALIDATION.md Part 6), not a
 // fitted parameter.
-export const FOF2_POINT_SIGMA = 0.13;
+// Per-point error of whatever source is actually supplying foF2. This is NOT
+// a constant: the de-bias above is proportional to it, and the sources differ
+// by more than a factor of ten.
+//
+// It was hardcoded at 0.13 — the PHYSICAL MODEL's error from Part 6 — and left
+// there when the lookup table cut per-point error to 1.2%. That inflated
+// multi-hop foF2 by 7-11% instead of ~1%, which is precisely the +4% bias the
+// transequatorial set showed in Part 16. A correction for noise has to track
+// the noise it is correcting for.
+export const FOF2_SIGMA_TABLE = 0.012;    // lookup table, docs Part 15
+export const FOF2_SIGMA_MAP = 0.074;      // coefficient map, Part 14
+export const FOF2_SIGMA_PHYSICAL = 0.169; // solar-geometry model, Part 14
+export const FOF2_POINT_SIGMA = FOF2_SIGMA_PHYSICAL;   // legacy name
+
+export function foF2PointSigma() {
+  return foF2TableReady() ? FOF2_SIGMA_TABLE : FOF2_SIGMA_MAP;
+}
+
 var MIN_ORDER_BIAS = [0, 0, 0.5642, 0.8463, 1.0294, 1.1630];
 
-export function minOrderCorrection(k) {
+// The minimum of k noisy estimates sits below the true minimum by
+// sigma * E[min of k standard normals]. sigma defaults to whatever source is
+// live rather than to a stale constant.
+export function minOrderCorrection(k, sigma) {
   if (!(k > 1)) return 1;
+  var s = (typeof sigma === 'number' && isFinite(sigma)) ? sigma : foF2PointSigma();
   var c = MIN_ORDER_BIAS[Math.min(k, MIN_ORDER_BIAS.length - 1)] || 1.2;
-  return 1 + FOF2_POINT_SIGMA * c;
+  return 1 + s * c;
 }
 
 // foF2 at ONE bounce, from the best source available, in order:

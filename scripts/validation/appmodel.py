@@ -177,14 +177,20 @@ def est_fof2(ssn, local_hour, month=None, mag_lat=None, lat=None):
 # Mirrors minOrderCorrection() in src/freqAdvisor.js. The minimum of k noisy
 # estimates sits below the true minimum by sigma * E[min of k standard
 # normals]; sigma is the model's own measured per-point error, not a fit.
-FOF2_POINT_SIGMA = 0.13
+# Mirrors foF2PointSigma() in src/freqAdvisor.js: the de-bias is proportional
+# to the per-point error of whichever source is live, and the lookup table is
+# ten times better than the physical model it replaced.
+FOF2_SIGMA_TABLE = 0.012
+FOF2_SIGMA_MAP = 0.074
+FOF2_POINT_SIGMA = FOF2_SIGMA_TABLE
 _MIN_ORDER_BIAS = [0.0, 0.0, 0.5642, 0.8463, 1.0294, 1.1630]
 
 
-def min_order_correction(k):
+def min_order_correction(k, sigma=None):
     if k <= 1:
         return 1.0
-    return 1 + FOF2_POINT_SIGMA * _MIN_ORDER_BIAS[min(k, len(_MIN_ORDER_BIAS) - 1)]
+    s = FOF2_POINT_SIGMA if sigma is None else sigma
+    return 1 + s * _MIN_ORDER_BIAS[min(k, len(_MIN_ORDER_BIAS) - 1)]
 
 
 def interpolate_path(la1, lo1, la2, lo2, frac):

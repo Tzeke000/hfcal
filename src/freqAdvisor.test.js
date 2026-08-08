@@ -15,6 +15,7 @@ import {
   mapFoF2, bounceFoF2, MAP_FOF2_MIN, MAP_FOF2_MAX, MAP_MODIP_LIMIT,
   MAP_SANITY_FACTOR, MAP_HELDOUT_PCT,
   mFactorLookup, MFACTOR_MIN, MFACTOR_MAX, MFACTOR_ACCURACY_PCT,
+  foF2PointSigma, FOF2_SIGMA_TABLE, FOF2_SIGMA_MAP,
 } from './freqAdvisor.js';
 
 function approx(actual, expected, tol, msg) {
@@ -631,9 +632,10 @@ test('minOrderCorrection: no correction for one point, growing with more', funct
   assert.equal(minOrderCorrection(1), 1);
   assert.equal(minOrderCorrection(0), 1);
   assert.ok(minOrderCorrection(2) > 1 && minOrderCorrection(3) > minOrderCorrection(2));
-  // The correction is the model's own error times a known order statistic,
-  // not a tuned knob: min of 2 is biased low by 0.564 sigma.
-  assert.ok(Math.abs(minOrderCorrection(2) - (1 + FOF2_POINT_SIGMA * 0.5642)) < 1e-6);
+  // The correction is a known order statistic times the LIVE source's error,
+  // not a tuned knob: min of 2 is biased low by 0.564 sigma. It used to be
+  // pinned to a stale constant, which is what Part 17 fixed.
+  assert.ok(Math.abs(minOrderCorrection(2) - (1 + foF2PointSigma() * 0.5642)) < 1e-9);
 });
 
 test('pathFoF2: a single bounce is exactly the midpoint answer', function() {
@@ -948,4 +950,35 @@ test('assessFrequency: uses the table when given a distance, secant when not', f
 test('the M table reports the accuracy it was measured at', function() {
   assert.ok(MFACTOR_ACCURACY_PCT > 0 && MFACTOR_ACCURACY_PCT < 8,
     'held-out M accuracy should be recorded and single-digit: ' + MFACTOR_ACCURACY_PCT);
+});
+
+
+// ── DE-BIAS TRACKS THE LIVE SOURCE ───────────────────────────────────────────
+// The min-order correction is proportional to the per-point error of whatever
+// is supplying foF2. It was hardcoded at the physical model's 0.13 and left
+// there when the lookup table cut that to 0.012, inflating multi-hop foF2 by
+// 7-11% instead of ~1% — the +4% transequatorial bias of Part 16.
+
+test('foF2PointSigma: reports the error of the source actually in use', function() {
+  var s = foF2PointSigma();
+  assert.ok(s === FOF2_SIGMA_TABLE || s === FOF2_SIGMA_MAP,
+    'sigma must come from a real source, got ' + s);
+  assert.ok(FOF2_SIGMA_TABLE < FOF2_SIGMA_MAP, 'the table must be the better source');
+  assert.ok(FOF2_SIGMA_TABLE < 0.03, 'table per-point error should be a couple of percent');
+});
+
+test('minOrderCorrection: scales with sigma, and vanishes as sigma does', function() {
+  assert.equal(minOrderCorrection(2, 0), 1, 'a perfect source needs no de-bias');
+  assert.equal(minOrderCorrection(3, 0), 1);
+  assert.ok(minOrderCorrection(2, 0.012) < 1.01, 'with the table it is under 1%');
+  assert.ok(minOrderCorrection(2, 0.13) > 1.07, 'with the physical model it is 7%+');
+  // Monotonic in both arguments.
+  assert.ok(minOrderCorrection(3, 0.05) > minOrderCorrection(2, 0.05));
+  assert.ok(minOrderCorrection(2, 0.10) > minOrderCorrection(2, 0.05));
+  assert.equal(minOrderCorrection(1, 0.13), 1, 'one bounce is never de-biased');
+});
+
+test('minOrderCorrection: an explicit sigma overrides the live source', function() {
+  assert.ok(Math.abs(minOrderCorrection(2, 0.13) - (1 + 0.13 * 0.5642)) < 1e-9);
+  assert.notEqual(minOrderCorrection(2, 0.13), minOrderCorrection(2, 0.012));
 });
