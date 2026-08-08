@@ -122,13 +122,19 @@ You **may not**:
 
 For commercial licensing, derivative works, or other inquiries, [open an issue](https://github.com/Tzeke000/hfcal/issues).
 
+**Independently created.** This work was developed entirely off duty, on the
+author's own equipment and networks, from publicly published sources, and was
+never directed by the author's chain of command. See
+[`docs/legal/PROVENANCE.md`](docs/legal/PROVENANCE.md) for the full statement
+and the evidence supporting it.
+
 ---
 
 ## For developers
 
 - Built with React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows desktop) + vite-plugin-pwa
 - Single `src/HFCalc.jsx` component, fully self-contained
-- All 24 antenna deployment images embedded as base64 (no external requests)
+- Antenna deployment images ship as asset files, not base64 — no external requests either way
 - Production builds use Terser with aggressive minification + variable mangling
 - AI integration layer exposes `window.HFCalc.*`, postMessage, and URL parameters
 
