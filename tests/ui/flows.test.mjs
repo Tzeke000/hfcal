@@ -247,6 +247,26 @@ describe('frequency check', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  // Added v1.28. foF2Source() had existed since v1.20 with a comment saying it
+  // was "surfaced so the UI can say so rather than quietly varying in accuracy"
+  // — and it was wired to nothing. The app ran at 1.2% or 7.4% on the critical
+  // frequency depending on whether a 709 KB asset had loaded, and never said
+  // which. This asserts the operator is now told.
+  test('the panel states which ionospheric data source is live', async () => {
+    const page = await newPage(browser);
+    await openFreqCheck(page);
+    const note = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('div')].find(e =>
+        e.children.length === 0 && /ionospheric table loaded|built-in fallback model/.test(e.textContent));
+      return el ? el.textContent.trim() : null;
+    });
+    assert.ok(note, 'the panel never says which data source it is using');
+    // dist/ precaches the table, so the built app must report the good one.
+    assert.match(note, /Full ionospheric table loaded/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
   // Turn the power right down on a long path and the floor should cross the
   // ceiling. When it does the operator must be told outright, not left to
   // compare two numbers.

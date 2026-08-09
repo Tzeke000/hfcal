@@ -22,6 +22,7 @@ High-latitude / polar measurement: August 2026 (app v1.24.0)
 LUF calibrated against VOACAP loss curves: August 2026 (app v1.25.0)
 Component split and terrain tests: August 2026 (app v1.26.0)
 PATH CLOSED false-closure check: August 2026 (app v1.27.0)
+Repository-wide sweep: August 2026 (app v1.28.0)
 
 ---
 
@@ -572,6 +573,12 @@ now averages illumination over the two endpoints while the MUF stays on the
 midpoint. On a Guam–Cherry Point path at 04Z the midpoint is dark but Guam is
 in full daylight, and the LUF correctly rises from 2.19 to 3.36 MHz.
 
+> **Superseded by Part 20 (v1.25.0).** The LUF's absorption law,
+> illumination dependence and obliquity were measured against VOACAP's loss
+> curves, which are uncensored where the reliability output used below is
+> not. Its absolute LEVEL is still an anchor. The reasoning below is kept as
+> the record of what was concluded at the time.
+
 This split is on **physical grounds only**. The LUF has never been validated
 against VOACAP and this change does not alter that. It is a better-shaped
 guess, not a measured improvement.
@@ -904,6 +911,13 @@ is not modelled and is stated in Limitations.
 Four things the model rested on that had never been checked.
 
 ### The LUF cannot be calibrated from VOACAP — and here is why
+
+> **Superseded by Part 20 (v1.25.0).** This conclusion was correct about
+> VOACAP's RELIABILITY output and wrong about VOACAP. The LOSS row is
+> printed at every frequency and hour whether or not the link closes, and
+> fitting it recovers the absorption constant directly. The censoring
+> argument below is sound; the leap from "this output cannot calibrate it"
+> to "VOACAP cannot calibrate it" was not.
 
 Part 8 shipped an explicitly uncalibrated LUF because its measurement was
 censored. Two further attempts were made.
@@ -1287,14 +1301,14 @@ exotic propagation, and they are rejected rather than averaged in. Cells use the
 
 | | Shipped secant | **Table** |
 |---|---|---|
-| M-factor, held-out sites | 7.35% | **4.82%** |
+| M-factor, held-out sites | 7.35% | **4.84%** |
 
 End-to-end MUF:
 
 | Study | v1.20.0 | **v1.21.0** |
 |---|---|---|
 | Mid-latitude (288) | 5.4% | **4.4%** — median 2.4%, 97% within 20%, 100% within 30% |
-| Six-latitude seasonal (3456) | 6.5% | **4.8%** — every site 3.4–6.0% |
+| Six-latitude seasonal (3456) | 6.5% | **4.7%** — every site 3.4–5.8% |
 | Interhemispheric (576) | 5.6% | 6.4% |
 | **Sample-weighted** | **6.31%** | **4.99%** |
 
@@ -1352,7 +1366,7 @@ Ten things I was least sure of, each answered with a measurement.
 | 3 | Is linear interpolation across solar activity valid? | **Yes.** Midpoint deviates −0.04% from the line: noise, not curvature. Best warp (SSN^0.9) saves 0.03% — not worth a term |
 | 4 | Does M need a latitude axis? | **No.** 2.6% spread across sites at fixed distance |
 | 5 | Does M depend on path bearing? | **No** — 1.5%. It is geometry, as expected, once training covered three bearings |
-| 6 | Would finer time bins help? | **No.** 1.5 h bins score 4.89% against 4.82% for 3 h |
+| 6 | Would finer time bins help? | **No.** 1.5 h bins score 4.89% against 4.82% for 3 h (the audit's own rebuild — the shipped interpolated figure is 4.84%) |
 | 7 | Which axis actually matters? | Solar activity. Dropping it costs 1.4 points; month and local time cost 0.1 each |
 | 8 | Is the operator-facing antenna angle still right? | **Yes** — max 1.2° against VOACAP TANGLE, unchanged since Part 2 |
 | 9 | Does the FOT ratio survive the model rebuild? | **Yes** — still 0.769, and flat across 500–6000 km |
@@ -1768,6 +1782,81 @@ carry ground-reflection loss that contaminates the fit — which is precisely
 why Part 20 excluded them. **Recorded as tested and unresolved rather than
 tuned.** Getting a real answer needs ground-reflection loss separated out,
 which this method cannot do.
+
+## Part 23 — One sweep instead of one thing at a time (v1.28.0)
+
+Every time the project was asked "anything else?", something else turned up.
+That is a symptom of looking narrowly each time, so this is the result of one
+deliberate pass over the whole repository: claims, dead code, test coverage,
+docs consistency, hygiene, accessibility.
+
+**First, what was checked and found CORRECT**, because a sweep that only
+reports problems is not a sweep:
+
+- "the ionosphere from 30,240 VOACAP runs" — 35 lat × 24 lon × 12 months
+  × 3 SSN = 30,240. Correct.
+- "the path geometry from 12,960 more" — 6 sites × 3 bearings × 20 distances
+  × 12 months × 3 SSN = 12,960. Correct. This one was nearly "fixed" on a bad
+  count that forgot the bearings; verifying first is the only reason it wasn't.
+- `localStorage` and `JSON.parse` are guarded everywhere they are used.
+- The version is single-sourced from `package.json`.
+- Every test file on disk is registered in `npm test`.
+- The only `console.log` calls are the deliberate authorship banner.
+
+**Then, the seven things that were wrong:**
+
+**1. Two different accuracy figures for the same thing.** The Frequency Check
+panel said "±12% vs VOACAP" and the 24-Hour Forecast said "±15%". Pooled
+across the mid-latitude, polar and transequatorial sets — 5,184 comparisons —
+the p90 is **11.0%**. Both now say "within about 11% nine times out of ten".
+
+**2. The M-factor accuracy was three different numbers.** `src/mfactorTable.js`
+shipped 4.84%, this document said 4.82%, and `mfactor-table-meta.json` said
+5.65% under a field called `heldout_pct`. The last is a *different metric* —
+nearest-cell rather than interpolated — under a name that looked like the
+shipped one. Fields renamed to `heldout_pct_nearest_cell` and
+`heldout_pct_secant_model`, with a note saying which figure actually ships;
+the document now says 4.84% where it means the shipped number.
+
+**3. The app never said which ionosphere it was using.** `foF2Source()` has
+existed since v1.20, carrying the comment *"surfaced so the UI can say so
+rather than quietly varying in accuracy"* — and it was wired to nothing. The
+app runs at **1.2%** on the critical frequency with the 709 KB table loaded and
+**7.4%** on the fallback coefficient map before it arrives, and an operator had
+no way to tell which they were looking at. The Frequency Check panel now states
+it, in amber when running on the fallback, with what to do about it. Pinned by
+a browser test.
+
+**4. Superseded conclusions left standing.** Part 8 still asserted "the LUF has
+never been validated" and Part 13 was headed "The LUF cannot be calibrated from
+VOACAP" — both overturned by Part 20. A reader who stops before Part 20 was
+being told something this project no longer believes. Both now carry a
+forward-pointer, with the original reasoning kept as the record of what was
+concluded at the time. Part 13's error is worth naming precisely: it was right
+that VOACAP's *reliability output* cannot calibrate the LUF, and wrong to
+generalise that to *VOACAP*.
+
+**5. Seventeen symbols exported that nothing outside their own file uses.**
+Most came from the v1.26 split, where `export` was added mechanically to
+everything that moved. A module's exports are its contract; a wider one than
+the code needs is a claim about stability nobody intended to make.
+
+**6. The two GENERATED data modules had no tests at all.** `src/fof2Map.js` and
+`src/mfactorTable.js` are the only source files nobody hand-edits, which makes
+them exactly the ones that can be silently truncated, exported at the wrong
+precision, or written with their axes reordered — none of which crashes. Both
+failure modes have already happened here once: coefficients at 7 significant
+figures cost 0.4% against the Python mirror (Part 14), and the M table was once
+fitted on raw minima while the app fed it corrected ones (Part 16). Nine tests
+in `src/generatedData.test.js` now check declared geometry against actual
+length, that every cell decodes to a physically possible value, that the axes
+are sorted, that outputs stay in band across the whole input space, and that
+the coefficients still carry full double precision.
+
+**7. The delete control was a bare glyph** with a `title` and no accessible
+name. It now carries an `aria-label` naming the shot it deletes.
+
+221 unit tests and 12 browser tests.
 
 ## Limitations
 

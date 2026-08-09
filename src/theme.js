@@ -31,9 +31,9 @@ export const T = {
   oliveDim:    '#192413',
 };
 
-export const FONT_BASE = import.meta.env.BASE_URL + 'fonts/';
+const FONT_BASE = import.meta.env.BASE_URL + 'fonts/';
 
-export const USMC_CSS = [
+const USMC_CSS = [
   // Inter is served from public/fonts/ rather than Google Fonts. The remote
   // @import fired on every page load, which both leaked usage to a third
   // party (an EMCON/telemetry concern for a field tool) and left the app

@@ -185,7 +185,7 @@ export function illuminationFactor(latDeg, localHour, month) {
 // model by more than a factor the physical model wins. A wrong frequency is
 // worse than a slightly less accurate one.
 export const MAP_MODIP_LIMIT = 72;        // trained envelope, degrees
-export const MAP_SSN_LIMIT = 165;         // trained to SSN 150
+const MAP_SSN_LIMIT = 165;         // trained to SSN 150
 export const MAP_FOF2_MIN = 1.0;          // physical window, MHz
 export const MAP_FOF2_MAX = 20.0;
 export const MAP_SANITY_FACTOR = 1.8;     // vs the physical model
@@ -438,7 +438,7 @@ export function estimateLUF(illum, watts, hops, distKm) {
 // the noise it is correcting for.
 export const FOF2_SIGMA_TABLE = 0.012;    // lookup table, docs Part 15
 export const FOF2_SIGMA_MAP = 0.074;      // coefficient map, Part 14
-export const FOF2_SIGMA_PHYSICAL = 0.169; // solar-geometry model, Part 14
+const FOF2_SIGMA_PHYSICAL = 0.169; // solar-geometry model, Part 14
 export const FOF2_POINT_SIGMA = FOF2_SIGMA_PHYSICAL;   // legacy name
 
 export function foF2PointSigma() {
@@ -614,8 +614,8 @@ export const FOT_DAYS_IN_10 = 9;
 // the MUF: above the FOT you are, by definition, below 90% reliability, and
 // the old "good up to 0.9 x MUF" band was calling ~70%-reliable frequencies
 // GOOD.
-export const NEAR_MUF_FRACTION_OF_FOT = 1.0;   // above the FOT = under 9-in-10
-export const HIGH_ABSORPTION_FRACTION_OF_FOT = 0.8;
+const NEAR_MUF_FRACTION_OF_FOT = 1.0;   // above the FOT = under 9-in-10
+const HIGH_ABSORPTION_FRACTION_OF_FOT = 0.8;
 
 export function classifyFrequency(freqMHz, muf, luf) {
   if (freqMHz > muf) {

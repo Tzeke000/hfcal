@@ -142,8 +142,8 @@ export function toLengths(meters) {
 
 export const F2_HEIGHT_KM = 360;   // effective F2 virtual reflection height — matches HOP.F2.hKm
 export const F2_MAX_HOP_KM = 4500; // matches HOP.F2.maxHopKm
-export const MAX_LEG_SLOPE_DEG = 55;
-export const PRACTICAL_MAST_FT = 60; // beyond typical field mast/tree reach
+const MAX_LEG_SLOPE_DEG = 55;
+const PRACTICAL_MAST_FT = 60; // beyond typical field mast/tree reach
 
 var FT_PER_M = 3.28084;
 var DEG = Math.PI / 180;

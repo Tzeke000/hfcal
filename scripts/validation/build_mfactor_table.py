@@ -217,10 +217,17 @@ def main():
     np.savez_compressed(os.path.join(OUT_DIR, 'mfactor-table.npz'),
                         table=tab, distances=np.array(DISTANCES),
                         ssns=np.array(SSNS), n_lst=NL)
+    # NAME THESE PRECISELY. 'heldout_pct' used to hold the NEAREST-CELL error
+    # (5.65%) while the shipped JS constant holds the INTERPOLATED error
+    # (4.84%) — two different numbers under names that looked interchangeable,
+    # which is how the docs ended up quoting a third.
     json.dump({'sites': SITES, 'test_sites': sorted(TEST_SITES),
                'distances': DISTANCES, 'n_lst': NL, 'ssns': SSNS,
-               'heldout_pct': round(err(te, lookup), 2),
-               'shipped_pct': round(err(te, shipped), 2)},
+               'heldout_pct_nearest_cell': round(err(te, lookup), 2),
+               'heldout_pct_secant_model': round(err(te, shipped), 2),
+               'note': ('the SHIPPED figure is the interpolated lookup, written '
+                        'into MFACTOR_HELDOUT_PCT in src/mfactorTable.js; these '
+                        'two are diagnostics, not the shipped accuracy')},
               open(os.path.join(OUT_DIR, 'mfactor-table-meta.json'), 'w'))
     print('wrote docs/validation/mfactor-table.npz')
 

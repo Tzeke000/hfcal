@@ -28,10 +28,10 @@ export const LOCS_KEY = 'hfcalc_locs_v1';
 // and 3-inch leg-end defaults: MCAS Cherry Point, Havelock NC. Used until the
 // operator runs a calculation from somewhere else, after which the last
 // known-good pair is remembered instead.
-export const DEFAULT_STATION = '34.9008,-76.8806';   // MCAS Cherry Point, NC
+const DEFAULT_STATION = '34.9008,-76.8806';   // MCAS Cherry Point, NC
 export const DEFAULT_LOC1 = DEFAULT_STATION;
 export const DEFAULT_LOC2 = DEFAULT_STATION;
-export function defaultLocs() { return { loc1: DEFAULT_LOC1, loc2: DEFAULT_LOC2 }; }
+function defaultLocs() { return { loc1: DEFAULT_LOC1, loc2: DEFAULT_LOC2 }; }
 export function loadCachedLocs() {
   try {
     var raw = localStorage.getItem(LOCS_KEY);
@@ -46,30 +46,30 @@ export function clearCachedLocs() {
   try { localStorage.removeItem(LOCS_KEY); } catch (e) {}
 }
 
-export const SHOTS_KEY = 'hfcalc_shots_v1';
+const SHOTS_KEY = 'hfcalc_shots_v1';
 // Date.now() alone collides when two saves land in the same millisecond, and
 // a colliding id makes filter() delete both rows and React keys duplicate.
 var shotSeq = 0;
-export function newShotId() {
+function newShotId() {
   shotSeq += 1;
   return 'shot_' + Date.now() + '_' + shotSeq + '_' + Math.random().toString(36).slice(2, 8);
 }
 var SHOTS_MAX = 25;
 
-export function loadShots() {
+function loadShots() {
   try {
     var raw = localStorage.getItem(SHOTS_KEY);
     var arr = raw ? JSON.parse(raw) : [];
     return Array.isArray(arr) ? arr : [];
   } catch (e) { return []; }
 }
-export function persistShots(list) {
+function persistShots(list) {
   try { localStorage.setItem(SHOTS_KEY, JSON.stringify(list.slice(0, SHOTS_MAX))); } catch (e) {}
 }
 
 // Copy text to the clipboard, falling back to a .txt download when the
 // clipboard API is missing or blocked (common in webviews / non-HTTPS).
-export function exportText(text, filename, onDone) {
+function exportText(text, filename, onDone) {
   function download() {
     try {
       var blob = new Blob([text], { type: 'text/plain' });
@@ -176,7 +176,8 @@ export function SavedShots({ currentShot, onClearStored }) {
                   <div style={{ color: T.textMute, fontSize: '0.64rem', marginTop: 2 }}>{s.dtg}</div>
                 </div>
                 <button onClick={function() { doExport(s); }} style={{ ...btn, background: T.surfaceHi, color: T.textPrim, flexShrink: 0 }}>EXPORT</button>
-                <button onClick={function() { remove(s.id); }} title="Delete"
+                <button onClick={function() { remove(s.id); }}
+                  title={'Delete ' + shotLabel(s)} aria-label={'Delete saved shot: ' + shotLabel(s)}
                   style={{ ...btn, background: 'transparent', color: T.textDim, borderColor: T.border, padding: '6px 9px', flexShrink: 0 }}>✕</button>
               </div>
             );

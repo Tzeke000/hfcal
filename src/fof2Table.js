@@ -29,7 +29,7 @@
 // Ezekiel S., USMC. Project signature: HFCALC-AG-EZK-USMC-v1
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const TABLE_URL = 'fof2-table.bin';
+const TABLE_URL = 'fof2-table.bin';
 export const TABLE_SCALE = 0.1;          // MHz per count
 
 // Filled in from the header the generator writes.

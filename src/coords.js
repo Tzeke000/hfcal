@@ -174,7 +174,7 @@ const _MGRS = (function() {
   return { toPoint: toPoint };
 })();
 
-export function parseMGRS(raw) {
+function parseMGRS(raw) {
   try {
     // Strip the trailing e/n markers DAGR prints ("11897e 53935n") — anchored
     // to a preceding DIGIT so a 100 km square such as "31U EN 12345 67890"

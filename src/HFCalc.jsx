@@ -13,7 +13,7 @@ import {
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "./spacewx.js";
 import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS,
-         FOT_DAYS_IN_10, MUF_DAYS_IN_10 } from "./freqAdvisor.js";
+         FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source } from "./freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "./fof2Table.js";
 import { dtg } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
@@ -1545,7 +1545,22 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                 );
               })()}
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 6, lineHeight: 1.45 }}>
-                {'Aim at the FOT, not the MUF. The MUF is a MEDIAN — at it the path works only ' + MUF_DAYS_IN_10 + ' days in 10. MUF and FOT are measured against VOACAP (\u00b112%); the LUF is now measured too — its absorption law, its swing with daylight, and how much more a long shot absorbs than a short one all come from VOACAP\u2019s own loss curves. Its absolute level still rests on an assumed power margin, so treat it as a firm shape on a soft scale. Your SOI/JCEOI assignment governs.'}
+                {(function() {
+                  // Which ionosphere is actually behind this number. The
+                  // precached table is measured at 1.2%; the coefficient map
+                  // it falls back to before the asset arrives is 7.4%. The app
+                  // has silently used whichever was available since v1.20 —
+                  // foF2Source() existed for exactly this and was never wired.
+                  var full = foF2Source() === 'table';
+                  return (
+                    <div style={{ color: full ? T.textDim : T.warn, fontSize: '0.62rem', marginBottom: 6, lineHeight: 1.45 }}>
+                      {full
+                        ? 'Full ionospheric table loaded \u2014 critical frequency good to about 1%.'
+                        : 'Running on the built-in fallback model \u2014 critical frequency good to about 7% instead of 1%. The full table is a one-time download: open the app once with a connection and it is cached for good. Everything still works meanwhile.'}
+                    </div>
+                  );
+                })()}
+                {'Aim at the FOT, not the MUF. The MUF is a MEDIAN — at it the path works only ' + MUF_DAYS_IN_10 + ' days in 10. MUF and FOT are measured against VOACAP (within about 11% nine times out of ten); the LUF is now measured too — its absorption law, its swing with daylight, and how much more a long shot absorbs than a short one all come from VOACAP\u2019s own loss curves. Its absolute level still rests on an assumed power margin, so treat it as a firm shape on a soft scale. Your SOI/JCEOI assignment governs.'}
               </div>
             </div>
           )}
@@ -1857,7 +1872,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, and the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  212 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  221 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2530,7 +2545,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
               <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
                 {'Aim at FOT — the frequency that works ' + FOT_DAYS_IN_10 + ' days in 10. The MUF is a median: at it you get ' + MUF_DAYS_IN_10 + ' days in 10. Above the MUF the signal passes into space (more power will not help); below the LUF it is absorbed (more power does help — the LUF shown is for ' + txWatts + ' W). A block that is NOT flagged means the IONOSPHERE will carry a frequency there — it does not promise your radio and your wire have the strength to close the link. This app models the ionospheric window, not the link budget: it knows nothing about your antenna gain or your noise floor. On a long path at low power, plan the window here and then confirm on the radio. Blocks evaluated at their midpoint · '
                   + (usingDefault ? 'default solar activity — connect once to refine' : 'solar activity from NOAA')
-                  + ' · ±15% vs VOACAP.'}
+                  + ' · MUF within about 11% of VOACAP nine times out of ten.'}
               </div>
             </div>
           )}
