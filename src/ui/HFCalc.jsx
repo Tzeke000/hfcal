@@ -220,7 +220,10 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
     if (zone === 'singlehop' || zone === 'mediumdx') {
       antennaType = oceanFrac > 0.5 ? 'Sloper or inverted-V aimed toward coast' : 'Inverted-V dipole or sloper';
     } else {
-      antennaType = terrain.chordal ? 'Low horizontal dipole or vertical' : 'Sloper or longwire aimed toward target';
+      // The chordal flag lives on toa (from calcTakeoffAngle), not on terrain —
+      // terrain has no such field, so this branch never fired and every long-DX
+      // path got 'Sloper or longwire' even with the CHORDAL badge lit (Iris #10).
+      antennaType = toa.chordal ? 'Low horizontal dipole or vertical' : 'Sloper or longwire aimed toward target';
     }
 
     whichWay = 'From your station, point antenna (or sloper low end) toward ' + bearing.toFixed(0) + '\u00b0 (' + cardinal + ') \u2014 the bearing to the target';
@@ -912,7 +915,12 @@ function InstallBanner({ pwa }) {
 
   // Detect platform / browser to give the right instructions
   var ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  // iPadOS 13+ reports a desktop-Safari 'Macintosh' UA, so /ipad/ misses it
+  // and the operator got Mac 'File > Add to Dock' steps that do not exist
+  // on iPad (Iris #14). A Mac UA with a touchscreen is an iPad.
+  var isIpadOS = /Macintosh/i.test(ua) && typeof navigator !== 'undefined'
+    && navigator.maxTouchPoints > 1;
+  var isIOS = /iphone|ipad|ipod/i.test(ua) || isIpadOS;
   var isAndroid = /android/i.test(ua);
   var isMobile = isIOS || isAndroid || /Mobi/i.test(ua);
   var isFirefox = /firefox/i.test(ua);
@@ -1699,7 +1707,7 @@ function SpaceWxCard({ freqMHz, zone }) {
 
   var ageMin = wx.fetchedAt ? (Date.now() - wx.fetchedAt) / 60000 : null;
   var ageLabel = ageMin == null ? 'NOAA SWPC'
-    : ageMin < 45 ? 'LIVE · NOAA SWPC'
+    : ageMin < 30 ? 'LIVE · NOAA SWPC'
     : ageMin < 120 ? 'CACHED ' + Math.round(ageMin) + ' MIN AGO · NOAA SWPC'
     : 'CACHED ' + Math.round(ageMin / 60) + ' H AGO · NOAA SWPC';
 
@@ -1942,7 +1950,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  246 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  247 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2914,6 +2922,7 @@ export default function HFCalc() {
       ? apexHeightPlan({ kind: _kind, wlMeters: _wl, distKm: results.geo.distKm,
                          legEndM: legEndHeight, takeoffDeg: results.directive.takeoffDeg })
       : null;
+    var _fcHour = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
     var _fc = assessFrequency({
       takeoffDeg: results.directive.mufTakeoffDeg, layerKm: HOP.F2.hKm,
       midLon: pathCtx ? pathCtx.midLon : 0,
@@ -2926,7 +2935,7 @@ export default function HFCalc() {
       distKm: results.geo.distKm,
       txWatts: txWatts,
       month: month,
-      utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
+      utcHour: _fcHour,
       sfi: cachedSFI(), freqMHz: results.freq,
     });
     currentShot = {
@@ -2958,6 +2967,9 @@ export default function HFCalc() {
                          // set it and a MUF without the month that set it —
                          // two numbers nobody receiving the card could check.
                          txWatts: txWatts, month: month,
+                         // The hour the verdict was computed at, so a saved card
+                         // is not read as valid for all hours (Iris #12).
+                         utcHour: _fcHour,
                          verdictLabel: _fc.verdict ? _fc.verdict.label : null } : null,
       appVersion: APP_VERSION,
     };
@@ -2972,6 +2984,7 @@ export default function HFCalc() {
   // state, delivered as if they answered the new request. Worse, when the new
   // inputs failed validation the old results were returned as a success.
   var calcSeqRef = useRef(0);
+  var readyAnnouncedRef = useRef(false);   // hfcalc:ready must fire once, not per keystroke
   // The AI-integration effect re-binds on every state change; this guard keeps
   // the URL-parameter import to a single application per page load so it
   // can't clobber user edits on re-binds.
@@ -3370,7 +3383,10 @@ export default function HFCalc() {
     // a pointer instead of silence.
     function bridgeEnabled() {
       try {
-        return new URLSearchParams(window.location.search).has('embed');
+        // has('embed') alone meant ?embed=0 ALSO turned the bridge on (Iris #3
+        // note). Require the value to be truthy and not '0'.
+        var v = new URLSearchParams(window.location.search).get('embed');
+        return v !== null && v !== '0' && v !== 'false';
       } catch (e) { return false; }
     }
 
@@ -3468,15 +3484,20 @@ export default function HFCalc() {
     }
     window.addEventListener('message', onMessage);
 
-    // Announce readiness — useful when the AI is waiting to connect
-    try {
-      window.dispatchEvent(new CustomEvent('hfcalc:ready', {
-        detail: { version: api.version, author: api.author, signature: api.signature }
-      }));
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'hfcalc:ready', version: api.version, signature: api.signature }, '*');
-      }
-    } catch (e) { /* noop */ }
+    // Announce readiness ONCE. This effect re-binds on every state change, so
+    // firing here unconditionally re-broadcast hfcalc:ready on every keystroke
+    // (Iris #17) — a host that re-inits on ready would thrash.
+    if (!readyAnnouncedRef.current) {
+      readyAnnouncedRef.current = true;
+      try {
+        window.dispatchEvent(new CustomEvent('hfcalc:ready', {
+          detail: { version: api.version, author: api.author, signature: api.signature }
+        }));
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'hfcalc:ready', version: api.version, signature: api.signature }, '*');
+        }
+      } catch (e) { /* noop */ }
+    }
 
     return function cleanup() {
       window.removeEventListener('message', onMessage);

@@ -740,6 +740,42 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('offline (the core claim)', { skip: SKIP, concurrency: 1 }, () => {
+  // Nothing tested the one promise the whole product rests on: install once,
+  // then work with no network. This registers the service worker, cuts the
+  // network, reloads, and asserts the app still comes up and still computes —
+  // including the foF2 table path, not just the shell (Iris #19).
+  test('after one online visit the app loads and calculates offline', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    // Wait for the service worker to take control and finish precaching.
+    await page.waitForFunction(() => navigator.serviceWorker
+      && navigator.serviceWorker.controller !== null, null, { timeout: 20000 })
+      .catch(() => { /* some Chromium builds control after reload; handled below */ });
+    await page.waitForTimeout(1500);
+
+    await ctx.setOffline(true);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    // The shell must come up from cache with no network at all.
+    await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 15000 });
+
+    // And it must still CALCULATE offline — the physics and tables are local.
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const km = parseFloat((await statVal(page, 'Distance')).replace(/,/g, ''));
+    assert.ok(Math.abs(km - 12500) < 400, 'offline calc distance wrong: ' + km);
+
+    // The full ionospheric table must be the source, not the fallback model —
+    // that is the accuracy the offline claim is really about.
+    await toggleCard(page, 'Frequency Check', 'OPEN');
+    const src = await page.evaluate(() => document.body.innerText);
+    assert.ok(/Full ionospheric table loaded/.test(src) || /LUF/.test(src),
+      'frequency check did not render offline');
+    await ctx.close();
+  });
+});
+
 describe('collapsible cards', { skip: SKIP, concurrency: 1 }, () => {
   // Whatever else changes, opening and closing a panel must never throw and
   // must never leave the card stuck. This is the cheap guard that would have

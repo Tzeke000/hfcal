@@ -10,7 +10,9 @@ import { ErrorBoundary } from './ui/ErrorBoundary.js';
 if (typeof window !== 'undefined') {
   registerSW({
     onNeedRefresh() {
-      // A new version is available; it will activate on next launch.
+      // A new version is waiting. It does NOT auto-activate (registerType is
+      // 'prompt'), so it cannot purge the running session's lazy chunks; the
+      // in-app UpdateBanner applies it when the operator chooses.
     },
     onOfflineReady() {
       // The app is ready to work offline.

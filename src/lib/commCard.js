@@ -67,8 +67,8 @@ export function formatCommCard(shot) {
   if (shot.antenna) {
     var a = shot.antenna;
     row('ANTENNA', a.name);
-    if (a.legFtIn) row('EACH LEG', a.legFtIn + '  (' + a.legM.toFixed(2) + ' m)');
-    if (a.totalFtIn) row('TOTAL', a.totalFtIn + '  (' + a.totalM.toFixed(2) + ' m)');
+    if (a.legFtIn) row('EACH LEG', a.legFtIn + (typeof a.legM === 'number' ? '  (' + a.legM.toFixed(2) + ' m)' : ''));
+    if (a.totalFtIn) row('TOTAL', a.totalFtIn + (typeof a.totalM === 'number' ? '  (' + a.totalM.toFixed(2) + ' m)' : ''));
     if (typeof a.apexFt === 'number') {
       row('APEX', a.apexFt.toFixed(0) + ' ft (' + a.apexM.toFixed(1) + ' m)'
         + (a.feasible === false ? '  [buildable max]' : ''));
@@ -91,7 +91,14 @@ export function formatCommCard(shot) {
         && shot.freqCheck.month >= 1 && shot.freqCheck.month <= 12) {
       row('MONTH', MONTHS[shot.freqCheck.month - 1] + '  (sets the MUF)');
     }
-    if (shot.freqCheck.verdictLabel) row('CHECK', shot.freqCheck.verdictLabel);
+    if (shot.freqCheck.verdictLabel) {
+      // Name the hour the verdict is for — MUF/LUF move through the day, so a
+      // card that just says GOOD is misread as good at all hours (Iris #12).
+      var _h = shot.freqCheck.utcHour;
+      var _hz = (typeof _h === 'number' && isFinite(_h))
+        ? ' @ ' + String(Math.floor(((_h % 24) + 24) % 24)).padStart(2, '0') + 'Z' : '';
+      row('CHECK', shot.freqCheck.verdictLabel + _hz);
+    }
   }
   if (shot.note) {
     L.push('-'.repeat(46));
@@ -104,6 +111,7 @@ export function formatCommCard(shot) {
 
 // Short one-line label for the saved-shots list.
 export function shotLabel(shot) {
+  if (!shot || typeof shot !== 'object') return 'unnamed shot';
   // Rendered per row in the Saved Shots list. A shot saved by an older app
   // version can be missing distKm or freqMHz, and a throw here takes the whole
   // list down, not just this row — same failure mode formatCommCard was

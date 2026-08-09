@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/**'
       - 'src-tauri/**'
+      - 'public/**'
       - 'index.html'
       - 'package.json'
       - 'package-lock.json'

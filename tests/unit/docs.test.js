@@ -86,3 +86,15 @@ test('the app-icon badge matches package.json', function() {
     'icon badge was generated at v' + baked + ' but the app is v' + pkg.version
     + ' — run python3 scripts/assets/generate-icons.py');
 });
+
+
+test('the Tauri installer version matches package.json', function() {
+  // The Windows installer and Add/Remove Programs read src-tauri/tauri.conf.json,
+  // which sat frozen at 1.0.0 while the app advanced to v1.39 — stale installers
+  // were indistinguishable from current (Iris #21). This keeps them in step.
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+  const tauri = JSON.parse(readFileSync(join(ROOT, 'src-tauri', 'tauri.conf.json'), 'utf8'));
+  const v = (tauri.package && tauri.package.version) || tauri.version;
+  assert.equal(v, pkg.version,
+    'tauri.conf.json version ' + v + ' != package.json ' + pkg.version);
+});

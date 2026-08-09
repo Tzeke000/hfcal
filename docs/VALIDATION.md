@@ -33,6 +33,7 @@ Found-but-unfixed cleanup and icon badge: August 2026 (app v1.37.0)
 Remaining ledger cleared: August 2026 (app v1.38.0)
 Hooks lint, dep-contract fixes: August 2026 (app v1.39.0)
 External-review defects: August 2026 (app v1.40.0)
+Full external review, Tier 2/3: August 2026 (app v1.41.0)
 
 ---
 
@@ -2512,6 +2513,74 @@ list, or the report itself, would let them be worked the same way: verify
 against source, fix, test.
 
 246 unit tests, 34 browser tests, lint clean.
+
+## Part 34 — The rest of Iris's review (v1.41.0)
+
+Part 33 fixed Tier 1 (findings 1–6) from a paraphrase. The full report then
+arrived: three independent passes (UI / physics / build-offline-CI), every
+finding verified by reading the code and running the modules. Tier 1 held.
+This part works Tier 2 and Tier 3 — and a review that good deserves the same
+discipline it showed: fix what is real, say plainly what was left and why.
+
+**Tier 2 — breaks or misleads in realistic conditions**
+
+- **#7 Compass latched permanent "unsupported" on a quick open/close.** The
+  2.5 s "no reading" timer was never cleared on close, so a mis-tap fired the
+  verdict against a closed card and every later open early-returned. Timer is
+  cleared in `detach()` (done in v1.40); v1.41 also lets `unsupported`
+  re-probe on reopen rather than staying stuck.
+- **#8 One malformed saved shot white-screened the app at every launch.**
+  Fixed three ways: `loadShots` drops non-object elements, `shotLabel` and the
+  comm-card exporter tolerate missing fields, and an ErrorBoundary
+  (`src/ui/ErrorBoundary.js`) is the backstop for anything else.
+- **#9 autoUpdate could kill the DAGR scan mid-session.** `registerType`
+  changed from `autoUpdate` to `prompt`, so a new service worker waits instead
+  of skip-waiting and purging the lazy tesseract chunk out from under an
+  offline session. The in-app UpdateBanner drives the swap deliberately.
+- **#10 Chordal antenna advice read `terrain.chordal`, a field that never
+  exists** — so it never fired and every long-DX path got "Sloper or longwire"
+  even with the CHORDAL badge lit. The flag is on `toa.chordal`.
+
+**Tier 3 — fixed**
+
+- **#11** Verdict now classifies on the 0.1 MHz values the UI displays, so it
+  can't say "MARGINAL — ABOVE FOT" next to "FOT 10.0" for a 10.0 MHz input.
+- **#12** The comm card prints the Zulu hour its verdict was computed at, so a
+  saved GOOD is not read as good at every hour.
+- **#13** A leading sign together with a hemisphere letter (`-34 … N`) is now
+  rejected as contradictory instead of silently keeping +34.
+- **#14** iPadOS (which reports a Mac UA) is detected via touch and shown the
+  iPad install steps, not the non-existent "File → Add to Dock".
+- **#17** `hfcalc:ready` fires once per load, not on every keystroke.
+- **#18** The browser-test static server now 404s a missing asset instead of
+  serving index.html for it, and the console collector no longer filters
+  same-origin resource failures — so a deleted font/photo/table fails the
+  suite instead of shipping green.
+- **#19** A Playwright test now covers the core claim: install, go offline,
+  reload, and confirm the app loads AND calculates from the cached tables.
+- **#20** The Windows build watches `public/**`, so a regenerated foF2 table
+  reaches the `.exe`, not just Pages/Android/iOS.
+- **#21** `tauri.conf.json` version is synced to `package.json` and a unit test
+  keeps them in step, so installers stop claiming 1.0.0.
+- **#22** The space-weather "LIVE" label now matches the 30-minute refresh
+  window it implies.
+
+**Left unfixed, with reasons**
+
+- **#15 Forecast local-time labels can be off by an hour across a DST
+  boundary.** A correct fix needs per-block timezone/DST resolution the app
+  has no library for offline; the Zulu labels (which operators actually plan
+  on) are correct, and the local labels are a convenience. Accepted, not
+  hidden.
+- **#16 The compass ignores screen orientation** — 90° off in a rotated
+  browser tab. Mitigated by the manifest's portrait lock when installed and
+  the AID-ONLY framing, and correcting it needs screen-orientation plumbing
+  that the lensatic-compass fallback makes low-value. Accepted.
+
+Every fix above has a test that fails against the prior code, except the two
+CI-workflow changes (#20, #21's sync step), which are verified by the version
+guard test and by reading the workflow. 247 unit tests, 35 browser tests,
+lint clean, Python mirror exact.
 
 ## Limitations
 

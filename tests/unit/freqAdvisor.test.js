@@ -749,16 +749,19 @@ test('FOT_RATIO: is the measured value, not the textbook rule of thumb', functio
 });
 
 test('classifyFrequency: the bands hang off the FOT, not round fractions of MUF', function() {
-  var muf = 12, luf = 3, fot = FOT_RATIO * muf;
-  // Just under the FOT is GOOD; just over it is no longer 9-in-10.
-  assert.equal(classifyFrequency(fot * 0.999, muf, luf).code, 'good');
-  assert.equal(classifyFrequency(fot * 1.001, muf, luf).code, 'near_muf');
+  var muf = 12, luf = 3, fot = FOT_RATIO * muf;   // FOT = 9.24 -> displays 9.2
+  // Classification is now done at the 0.1 MHz the UI displays (Iris #11), so
+  // distinctions finer than that deliberately collapse — a frequency AT the
+  // displayed FOT reads GOOD, and one clearly above it reads near_muf. (This
+  // used to test fot*0.999 vs fot*1.001, which now round to the same 9.2.)
+  assert.equal(classifyFrequency(9.2, muf, luf).code, 'good');
+  assert.equal(classifyFrequency(9.7, muf, luf).code, 'near_muf');
   // The old model called everything up to 0.9 x MUF "good". It is not.
   assert.equal(classifyFrequency(0.88 * muf, muf, luf).code, 'near_muf',
     '0.88 x MUF is well above the 9-in-10 frequency and must not read GOOD');
   // Ends of the range still behave.
   assert.equal(classifyFrequency(muf * 1.01, muf, luf).code, 'above_muf');
-  assert.equal(classifyFrequency(luf * 0.99, muf, luf).code, 'below_luf');
+  assert.equal(classifyFrequency(2.5, muf, luf).code, 'below_luf');   // clearly under LUF 3.0 at 0.1 MHz resolution
   assert.equal(classifyFrequency(fot * 0.7, muf, luf).code, 'low');
 });
 

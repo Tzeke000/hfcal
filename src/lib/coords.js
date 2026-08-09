@@ -222,6 +222,13 @@ export function parseCoords(raw) {
 
   if (looksLikeMGRS(s)) return parseMGRS(s);
 
+  // A leading sign together with a hemisphere letter is contradictory input —
+  // "-34 ... N" cannot be both. The unanchored DMS patterns below used to keep
+  // the +34 and drop the minus silently (Iris #13). Reject instead of guess.
+  if (/^[-+]/.test(s) && /[NSEW]/i.test(s)) {
+    return { lat: NaN, lon: NaN, error: 'Contradictory sign and hemisphere — use one or the other' };
+  }
+
   // DAGR DMS: N 39:11:24.3 W 077:30:15.0  or  N 39:11:24.3 E 236:50:10.0
   var m = s.match(/^([NS])\s*(\d+):(\d+):(\d+\.?\d*)\s+([EW])\s*(\d+):(\d+):(\d+\.?\d*)$/i);
   if (m) {

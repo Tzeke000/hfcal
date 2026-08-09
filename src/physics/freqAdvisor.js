@@ -619,6 +619,11 @@ const NEAR_MUF_FRACTION_OF_FOT = 1.0;   // above the FOT = under 9-in-10
 const HIGH_ABSORPTION_FRACTION_OF_FOT = 0.8;
 
 export function classifyFrequency(freqMHz, muf, luf) {
+  // Classify on the values as DISPLAYED (0.1 MHz), not the raw floats. The
+  // operator acts on the printed numbers; a verdict computed against 9.995
+  // while the screen says "FOT 10.0" reads as a contradiction (Iris #11).
+  var r1 = function(x) { return Math.round(x * 10) / 10; };
+  freqMHz = r1(freqMHz); muf = r1(muf); luf = r1(luf);
   if (freqMHz > muf) {
     return { code: 'above_muf', label: 'ABOVE MUF', ok: false,
       note: 'Signal will likely pass through the ionosphere instead of reflecting — the path probably will not close on this frequency.' };
@@ -627,7 +632,7 @@ export function classifyFrequency(freqMHz, muf, luf) {
     return { code: 'below_luf', label: 'BELOW LUF', ok: false,
       note: 'D-layer absorption is likely to swallow this frequency at current power levels. Go higher.' };
   }
-  var fot = FOT_RATIO * muf;
+  var fot = r1(FOT_RATIO * muf);
   if (freqMHz > fot * NEAR_MUF_FRACTION_OF_FOT) {
     return { code: 'near_muf', label: 'MARGINAL — ABOVE FOT', ok: true,
       note: 'Above the frequency that works 9 days in 10. It will carry on a good day, but it is the first thing to drop out when the ionosphere sits below its monthly median — and at the MUF itself you are down to 5 days in 10.' };

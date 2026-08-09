@@ -60,7 +60,10 @@ function loadShots() {
   try {
     var raw = localStorage.getItem(SHOTS_KEY);
     var arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
+    // Drop anything that is not a real shot object. A partial write or a
+    // corrupt element (e.g. [null]) used to reach render and throw with no
+    // ErrorBoundary — a white screen on every launch (Iris #8).
+    return Array.isArray(arr) ? arr.filter(function(s) { return s && typeof s === 'object'; }) : [];
   } catch (e) { return []; }
 }
 // Returns false when the write did not happen. It used to swallow the failure

@@ -123,7 +123,14 @@ export async function startServer() {
     const rel = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
     let file = join(DIST, rel);
     if (!file.startsWith(DIST)) { res.writeHead(403).end(); return; }
-    if (!existsSync(file) || statSync(file).isDirectory()) file = join(DIST, 'index.html');
+    var missing = !existsSync(file) || statSync(file).isDirectory();
+    if (missing) {
+      // SPA fallback ONLY for navigations (no file extension). A missing asset
+      // with an extension is a genuine 404 — the old blanket fallback served
+      // index.html for a deleted font/photo/table so it shipped green (Iris #18).
+      if (extname(rel)) { res.writeHead(404).end(); return; }
+      file = join(DIST, 'index.html');
+    }
     res.writeHead(200, {
       'Content-Type': MIME[extname(file)] || 'application/octet-stream',
       'Cache-Control': 'no-store',
@@ -160,7 +167,13 @@ export async function newPage(browser) {
   page.on('console', m => {
     if (m.type() !== 'error' && m.type() !== 'warning') return;
     const t = m.text();
-    if (/Failed to load resource|net::ERR_|ERR_TUNNEL/.test(t)) return;
+    // Expected external failures only: the space-weather feed and the
+    // agent proxy are meant to fail offline, and that is the whole point.
+    // A same-origin resource failure (a missing font, photo, or the fof2
+    // table) must NOT be filtered — that was how a deleted asset shipped
+    // green (Iris #18).
+    if (/ERR_TUNNEL|services\.swpc\.noaa\.gov|__agentproxy/.test(t)) return;
+    if (/Failed to load resource|net::ERR_/.test(t) && !/127\.0\.0\.1|localhost/.test(t)) return;
     // Chromium emits this whenever a file input is clicked programmatically
     // rather than by a human. It is an artifact of driving the page from a
     // script, not something the app did wrong, and it only shows up on some

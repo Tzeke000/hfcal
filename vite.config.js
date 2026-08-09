@@ -32,7 +32,12 @@ export default defineConfig({
     react(),
     emitVersionJson,
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt', not 'autoUpdate': autoUpdate skipWaiting+clientsClaims the
+      // moment a new SW installs, purging old hashed chunks mid-session — so
+      // the first offline DAGR scan afterward fails to import the (now gone)
+      // tesseract chunk (Iris #9). With 'prompt' the new SW waits and the
+      // in-app UpdateBanner drives the swap deliberately.
+      registerType: 'prompt',
       includeAssets: ['icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'HF Field Antenna Calc — by Cpl Angeles-Gonzalez',

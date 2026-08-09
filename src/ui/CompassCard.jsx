@@ -136,7 +136,11 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
       // Always re-arm on open. Closing detaches the listeners, so without this
       // a re-opened card kept rendering its last heading — a compass frozen
       // pointing wherever you happened to be standing when you closed it.
-      if (status === 'denied' || status === 'unsupported') return;
+      // 'unsupported' is retryable: it may have been a spurious verdict, and
+      // re-probing costs one 2.5 s timer. Only a hard permission 'denied'
+      // stays sticky.
+      if (status === 'denied') return;
+      if (status === 'unsupported') setStatus('idle');
       if (grantedRef.current) attach(); else start();
     } else {
       detach();
