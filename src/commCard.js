@@ -7,9 +7,11 @@
 // Ezekiel S., USMC. Project signature: HFCALC-AG-EZK-USMC-v1
 // ─────────────────────────────────────────────────────────────────────────────
 
+var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
 // DDHHMMZ MON YY — the standard military date-time group.
 export function dtg(date) {
-  var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  var months = MONTHS;
   function pad(n) { return String(n).padStart(2, '0'); }
   return pad(date.getUTCDate()) + pad(date.getUTCHours()) + pad(date.getUTCMinutes()) + 'Z '
     + months[date.getUTCMonth()] + ' ' + String(date.getUTCFullYear()).slice(-2);
@@ -33,10 +35,19 @@ export function formatCommCard(shot) {
 
   L.push('HF ANTENNA PLAN  ' + (shot.dtg || ''));
   L.push('='.repeat(46));
-  row('FROM', fmtLatLon(shot.p1.lat, shot.p1.lon));
-  row('TO', fmtLatLon(shot.p2.lat, shot.p2.lon));
-  row('DIST', shot.distKm.toFixed(1) + ' km / ' + shot.distMi.toFixed(1) + ' mi');
-  row('BEARING', shot.bearing.toFixed(1) + ' deg ' + (shot.cardinal || '') + '  (you -> target)');
+  // Saved shots outlive the app version that wrote them: loadShots() will
+  // return anything that parsed as an array, so a plan saved before a field
+  // existed used to make EXPORT throw and the operator lost the card with
+  // nothing on screen to say why. Every field is now optional to PRINT; a
+  // missing one prints as unknown rather than taking the card down with it.
+  function num(v, digits, suffix) {
+    return (typeof v === 'number' && isFinite(v))
+      ? v.toFixed(digits) + (suffix || '') : '--';
+  }
+  row('FROM', shot.p1 ? fmtLatLon(shot.p1.lat, shot.p1.lon) : '--');
+  row('TO', shot.p2 ? fmtLatLon(shot.p2.lat, shot.p2.lon) : '--');
+  row('DIST', num(shot.distKm, 1, ' km') + ' / ' + num(shot.distMi, 1, ' mi'));
+  row('BEARING', num(shot.bearing, 1, ' deg') + ' ' + (shot.cardinal || '') + '  (you -> target)');
   if (typeof shot.magBearing === 'number') {
     // The number to set on a lensatic compass — true bearing corrected for
     // local magnetic declination.
@@ -48,11 +59,11 @@ export function formatCommCard(shot) {
   if (typeof shot.backBearing === 'number') {
     row('BACK AZ', shot.backBearing.toFixed(1) + ' deg ' + (shot.backCardinal || '') + '  (target -> you)');
   }
-  row('FREQ', shot.freqMHz + ' MHz');
+  row('FREQ', (shot.freqMHz != null ? shot.freqMHz : '--') + ' MHz');
   row('MODE', shot.zoneName || '');
   if (typeof shot.takeoffDeg === 'number') row('TAKEOFF', '~' + shot.takeoffDeg.toFixed(0) + ' deg');
   L.push('-'.repeat(46));
-  row('WIRE', (shot.wireLabel || '') + '  VF ' + shot.vf.toFixed(3));
+  row('WIRE', (shot.wireLabel || '') + '  VF ' + num(shot.vf, 3));
   if (shot.antenna) {
     var a = shot.antenna;
     row('ANTENNA', a.name);
@@ -68,8 +79,18 @@ export function formatCommCard(shot) {
   }
   if (shot.freqCheck) {
     L.push('-'.repeat(46));
-    row('LUF/MUF', shot.freqCheck.luf.toFixed(1) + ' - ' + shot.freqCheck.muf.toFixed(1) + ' MHz');
-    row('FOT', shot.freqCheck.fot.toFixed(1) + ' MHz');
+    row('LUF/MUF', num(shot.freqCheck.luf, 1) + ' - ' + num(shot.freqCheck.muf, 1, ' MHz'));
+    row('FOT', num(shot.freqCheck.fot, 1, ' MHz'));
+    // The LUF moves with transmit power and the MUF moves with the month.
+    // Quoting either without the setting that produced it hands the next
+    // operator a number they cannot reproduce or check.
+    if (typeof shot.freqCheck.txWatts === 'number') {
+      row('POWER', shot.freqCheck.txWatts + ' W  (sets the LUF)');
+    }
+    if (typeof shot.freqCheck.month === 'number'
+        && shot.freqCheck.month >= 1 && shot.freqCheck.month <= 12) {
+      row('MONTH', MONTHS[shot.freqCheck.month - 1] + '  (sets the MUF)');
+    }
     if (shot.freqCheck.verdictLabel) row('CHECK', shot.freqCheck.verdictLabel);
   }
   if (shot.note) {

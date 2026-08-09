@@ -108,3 +108,41 @@ test('shotLabel and filename', function() {
   assert.equal(shotLabel(SHOT), '11.104 MHz · 770 km · INVERTED-V DIPOLE');
   assert.equal(commCardFilename(SHOT), 'HFPLAN_271430ZJUL26_11.104MHz.txt');
 });
+
+
+// ── Robustness against shots written by older app versions ──────────────────
+// loadShots() returns anything that parsed as an array out of localStorage, so
+// a plan saved months ago by an older build reaches the exporter with fields
+// that did not exist then. It used to throw on the first missing one, and the
+// operator lost the card with nothing on screen explaining why.
+
+test('a shot from an older app version still exports', function() {
+  const old = {
+    p1: { lat: 34.9, lon: -76.88 }, p2: { lat: 26.35, lon: 127.77 },
+    distKm: 12500, bearing: 310, freq: 7.3,
+    // no distMi, no vf, no freqMHz, no freqCheck — none of these existed yet
+  };
+  const card = formatCommCard(old);
+  assert.ok(typeof card === 'string' && card.length > 0);
+  assert.match(card, /FROM/);
+  assert.match(card, /12500\.0 km/);
+  assert.match(card, /--/, 'missing fields should print as unknown, not vanish');
+});
+
+test('a completely empty shot does not take the exporter down', function() {
+  const card = formatCommCard({});
+  assert.ok(typeof card === 'string' && card.length > 0);
+});
+
+test('the card carries the settings its frequencies depend on', function() {
+  // The LUF moves with transmit power and the MUF with the month. A card
+  // quoting either without the setting behind it cannot be checked by whoever
+  // receives it.
+  const card = formatCommCard({
+    p1: { lat: 34.9, lon: -76.88 }, p2: { lat: 26.35, lon: 127.77 },
+    distKm: 12500, distMi: 7767, bearing: 310, freqMHz: 7.3, vf: 0.95,
+    freqCheck: { luf: 6.2, muf: 18.4, fot: 14.2, txWatts: 20, month: 8 },
+  });
+  assert.match(card, /POWER\s+20 W/, 'the power that set the LUF must be on the card');
+  assert.match(card, /MONTH\s+AUG/, 'the month that set the MUF must be on the card');
+});

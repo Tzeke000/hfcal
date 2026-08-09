@@ -455,3 +455,27 @@ test('calcTakeoffAngle: mufDeg drops the 3 degree antenna floor', function() {
     { oceanFrac: 0.9, landFrac: 0.1, mountainFrac: 0, desertFrac: 0 });
   assert.equal(terr.mufDeg, mid.mufDeg);
 });
+
+
+// ── One copy of each physical constant ──────────────────────────────────────
+// Earth radius and the F2 reflection height each used to exist in three
+// modules, every copy carrying a comment promising it matched the others. A
+// promise is not a constraint, and this project has already shipped a release
+// where the MUF used a different takeoff angle from every validation run
+// (docs/VALIDATION.md Part 10). propagation.js now owns both.
+
+test('the F2 height used by the hop table is the exported constant', async function() {
+  const { F2_HEIGHT_KM, EARTH_RADIUS_KM, HOP } = await import('./propagation.js');
+  assert.equal(HOP.F2.hKm, F2_HEIGHT_KM, 'the hop table forked its own F2 height');
+  assert.equal(EARTH_RADIUS_KM, 6371);
+});
+
+test('antennaMath and freqAdvisor use the same constants, not their own', async function() {
+  const p = await import('./propagation.js');
+  const a = await import('./antennaMath.js');
+  const f = await import('./freqAdvisor.js');
+  assert.equal(a.F2_HEIGHT_KM, p.F2_HEIGHT_KM);
+  assert.equal(a.EARTH_RADIUS_KM, p.EARTH_RADIUS_KM);
+  assert.equal(f.LUF_F2_HEIGHT_KM, p.F2_HEIGHT_KM,
+    'the LUF geometry forked from the layer height everything else uses');
+});

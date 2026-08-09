@@ -79,12 +79,13 @@ import {
   FOF2_MAP_COEFFS, FOF2_MAP_HELDOUT_PCT,
 } from './fof2Map.js';
 import { tableFoF2, foF2TableReady } from './fof2Table.js';
+import { EARTH_RADIUS_KM, F2_HEIGHT_KM } from './propagation.js';
 import {
   MFACTOR_DISTANCES, MFACTOR_SSNS, MFACTOR_NLST, MFACTOR_SCALE,
   MFACTOR_TABLE, MFACTOR_HELDOUT_PCT,
 } from './mfactorTable.js';
 
-var R_EARTH = 6371;
+var R_EARTH = EARTH_RADIUS_KM;
 var DEG = Math.PI / 180;
 
 // Solar activity assumed when the app has never seen a NOAA reading. Chosen
@@ -377,7 +378,7 @@ export const DEFAULT_TX_WATTS = 20;    // AN/PRC-160 GLOBAL — the manpack maxi
 // The ray does not reflect off the D layer, it PASSES THROUGH it on the way up
 // to F2, so this is the obliquity where it crosses 75 km — not a secant taken
 // at the D layer as if it bounced there.
-export const LUF_F2_HEIGHT_KM = 360;    // where the ray is headed
+export const LUF_F2_HEIGHT_KM = F2_HEIGHT_KM;   // where the ray is headed
 export function dLayerObliquity(hopDistKm) {
   if (typeof hopDistKm !== 'number' || !isFinite(hopDistKm) || hopDistKm <= 0) return 1;
   // Elevation angle at the ground for a hop of this length off F2 — the same

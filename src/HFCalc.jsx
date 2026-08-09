@@ -12,12 +12,13 @@ import {
   parseFluxPayload, parseKIndexPayload,
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "./spacewx.js";
-import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS,
+import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAULT_SSN,
          FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source } from "./freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "./fof2Table.js";
 import { dtg } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
-import { declination, magneticLatitude, modip, trueToMagnetic } from "./magnetic.js";
+import { declination, magneticLatitude, modip, trueToMagnetic,
+         isDeclinationModelCurrent } from "./magnetic.js";
 // Single source of truth for the app version (also drives the icon badge —
 // regenerate icons with scripts/generate-icons.py after bumping it).
 import { version as APP_VERSION } from "../package.json";
@@ -1620,7 +1621,26 @@ function SpaceWxCard({ freqMHz, zone }) {
     return function() { cancelled = true; document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
-  if (!wx || (wx.sfi == null && wx.kp == null)) return null;
+  // With no reading this used to render NOTHING — no card, no explanation. On
+  // an app whose whole premise is working offline, the one card that depends on
+  // the network silently vanishing is the wrong answer: the operator never
+  // learns the feature exists, or that the advisor is running on an assumed
+  // solar figure rather than a measured one. Say so instead.
+  if (!wx || (wx.sfi == null && wx.kp == null)) {
+    return (
+      <div className="usmc-card" style={{ marginBottom: 14, borderLeft: '3px solid ' + T.border }}>
+        <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.84rem', letterSpacing: '0.04em' }}>
+          Space Weather
+        </div>
+        <div style={{ color: T.textMute, fontSize: '0.72rem', marginTop: 2 }}>NO READING — OFFLINE</div>
+        <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55, marginTop: 8 }}>
+          {'Running on an assumed mid-cycle solar figure (SSN ' + DEFAULT_SSN + '), which is what keeps '
+            + 'every number on this screen working with no connection. Connect once and the app '
+            + 'stores the real figure for later — it never needs the network again to use it.'}
+        </div>
+      </div>
+    );
+  }
 
   var sfiInfo = wx.sfi != null ? interpretSFI(wx.sfi) : null;
   var kpInfo = wx.kp != null ? interpretKp(wx.kp) : null;
@@ -1872,7 +1892,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  221 automated tests pin every formula so the physics cannot drift as the app changes, plus 19 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  226 automated tests pin every formula so the physics cannot drift as the app changes, plus 23 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2857,6 +2877,10 @@ export default function HFCalc() {
         feasible: _plan && _plan.kind === 'apex' ? _plan.feasible : null,
       },
       freqCheck: _fc ? { luf: _fc.luf, muf: _fc.muf, fot: _fc.fot,
+                         // The card used to quote a LUF without the power that
+                         // set it and a MUF without the month that set it —
+                         // two numbers nobody receiving the card could check.
+                         txWatts: txWatts, month: month,
                          verdictLabel: _fc.verdict ? _fc.verdict.label : null } : null,
       appVersion: APP_VERSION,
     };
@@ -2869,6 +2893,8 @@ export default function HFCalc() {
   // the URL-parameter import to a single application per page load so it
   // can't clobber user edits on re-binds.
   var urlAppliedRef = useRef(false);
+  // True once a location has been set from the URL rather than typed.
+  var urlSuppliedLocsRef = useRef(false);
 
   // Build the full results object from already-validated inputs. Shared by the
   // CALCULATE button and the live auto-recompute effect so both stay in sync.
@@ -2918,7 +2944,10 @@ export default function HFCalc() {
 
   // Remember the last known-good station pair (see LOCS_KEY above).
   useEffect(function() {
-    if (results) saveCachedLocs(loc1, loc2);
+    // Only remember locations the OPERATOR entered. Locations that arrived
+    // from a ?from=/?to= link belong to whoever sent the link, and caching
+    // them silently overwrote the operator's own last known-good pair.
+    if (results && !urlSuppliedLocsRef.current) saveCachedLocs(loc1, loc2);
   }, [results]);
 
   // Live auto-recompute: once the user has calculated once, any change to the
@@ -2962,8 +2991,8 @@ export default function HFCalc() {
       var qWire = url.searchParams.get('wire');
       var qAuto = url.searchParams.get('auto');
       var didSet = false;
-      if (qFrom) { setLoc1(qFrom); didSet = true; }
-      if (qTo) { setLoc2(qTo); didSet = true; }
+      if (qFrom) { setLoc1(qFrom); didSet = true; urlSuppliedLocsRef.current = true; }
+      if (qTo) { setLoc2(qTo); didSet = true; urlSuppliedLocsRef.current = true; }
       if (qFreq) { setFreq(qFreq); didSet = true; }
       if (qWire === 'copper' || qWire === 'steel') {
         setWireType(qWire);
@@ -3338,7 +3367,7 @@ export default function HFCalc() {
           <LocationInput
             label="Your Location"
             value={loc1}
-            onChange={setLoc1}
+            onChange={function(v) { urlSuppliedLocsRef.current = false; setLoc1(v); }}
             parsed={parsed1}
             error={errors.loc1}
           />
@@ -3349,7 +3378,7 @@ export default function HFCalc() {
           <LocationInput
             label="Target Location"
             value={loc2}
-            onChange={setLoc2}
+            onChange={function(v) { urlSuppliedLocsRef.current = false; setLoc2(v); }}
             parsed={parsed2}
             error={errors.loc2}
           />
@@ -3504,9 +3533,13 @@ export default function HFCalc() {
                       // A lensatic compass reads MAGNETIC — hand the operator the
                       // number they actually dial, not just the true bearing.
                       var d = declination(results.p1.lat, results.p1.lon);
-                      return typeof d === 'number'
-                        ? 'SET ' + trueToMagnetic(results.geo.bearing, d).toFixed(0) + '° ON COMPASS (mag)'
-                        : '';
+                      if (typeof d !== 'number') return '';
+                      var line = 'SET ' + trueToMagnetic(results.geo.bearing, d).toFixed(0) + '° ON COMPASS (mag)';
+                      // The world magnetic model expires. Past that date
+                      // declination() clamps to the last valid day and quietly
+                      // returns a frozen value — say so rather than let the
+                      // operator dial a stale number.
+                      return isDeclinationModelCurrent() ? line : line + '  · MAG MODEL EXPIRED';
                     })()}
                   </div>
                   <div style={{ color: T.textMute, fontSize: '0.62rem', marginTop: 3 }}>

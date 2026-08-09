@@ -24,6 +24,7 @@ Component split and terrain tests: August 2026 (app v1.26.0)
 PATH CLOSED false-closure check: August 2026 (app v1.27.0)
 Repository-wide sweep: August 2026 (app v1.28.0)
 postMessage coordinate-leak fix: August 2026 (app v1.29.0)
+Ten-item sweep, mostly new ground: August 2026 (app v1.30.0)
 
 ---
 
@@ -1958,6 +1959,85 @@ and its worked example passes a real target origin instead of `'*'`.
   the sensitive part.
 - `CLEAR SAVED DATA` in the Saved Shots card wipes the location cache, and is
   the operator's own control over all of this.
+
+## Part 25 — Ten more, walking mostly new ground (v1.30.0)
+
+Asked for ten. Some of this is new ground, some is old ground with a different
+question.
+
+**Verified and found correct first**, because three times in two sweeps a
+check has stopped me "fixing" something that was already right:
+
+- The space weather card **does** report its own age — `LIVE`, `CACHED n MIN
+  AGO`, `CACHED n H AGO`. I had it on the list as missing.
+- `isDeclinationModelCurrent()` **is** wired up — in the Compass card.
+- The coordinate parser and the 1–30 MHz frequency guard both hold (Part 24).
+
+**The ten:**
+
+**1. The comm card omitted the settings its own numbers depend on.** It
+printed LUF/MUF/FOT but not the transmit power or the month — and the LUF moves
+with power, the MUF with the month. A card handed to another operator quoted
+figures they could not reproduce or check. `POWER` and `MONTH` rows added.
+
+**2. Exporting a shot saved by an older app version crashed.** `loadShots()`
+returns anything that parsed as an array out of `localStorage`, so a plan saved
+months ago reaches the exporter missing fields that did not exist then.
+`formatCommCard` threw on the first one and the operator lost the card with
+nothing on screen to explain it. Every field is now optional to *print* — a
+missing one shows `--`.
+
+**3. The magnetic bearing in Link Analysis had no model-expiry guard.** The
+Compass card checks `isDeclinationModelCurrent()`; the `SET nnn° ON COMPASS`
+line did not. Past 2029-11-13 `declination()` silently clamps to the last valid
+date and returns a frozen value, so the operator would dial a quietly stale
+bearing. It now says `MAG MODEL EXPIRED` on that line.
+
+**4. "SAVED" appeared before anything knew the write had happened.**
+`persistShots` swallowed quota failures and returned nothing. A full or blocked
+storage produced a cheerful confirmation and a shot that was gone at the next
+launch. It now reports failure, and the card shows a red panel saying the shots
+are not on the device and to export what matters now.
+
+**5. The 25-shot cap dropped the oldest silently.** Saving a 26th shot quietly
+discarded one. The flash now reads `SAVED — OLDEST DROPPED`, and the card warns
+when it is holding the maximum.
+
+**6. Earth radius and F2 height each existed in three modules.**
+`propagation.js`, `antennaMath.js` and `freqAdvisor.js` all carried their own
+copy, every one with a comment promising it matched the others. A promise is
+not a constraint, and **this project has already shipped a release where the
+MUF used a different takeoff angle from every validation run** (Part 10).
+`propagation.js` now owns both; the other two import them, and a test asserts
+they are the same object.
+
+**7. Locations from a shared link were written into the remembered-location
+cache.** Opening someone else's `?from=…&to=…` link silently overwrote where
+the operator had actually been. Only locations the operator typed are
+remembered now; typing in either field hands ownership back.
+
+**8. Five cards had no test at any level** — space weather, the antenna image
+carousel, the inverted-V geometry calculator, and the install and update
+banners. That is exactly the React state the compass bug lived in, and the
+compass bug is why the browser suite exists. Four new tests, including a blunt
+one that clicks every control on the page and fails on any thrown error.
+
+**9. Offline, the space weather card rendered nothing at all.** It returned
+`null` with no reading — no card, no explanation. On an app whose entire
+premise is working with no connection, the one network-dependent card silently
+vanishing is the wrong answer: the operator never learns the feature exists, or
+that the advisor is running on an assumed solar figure rather than a measured
+one. It now says so.
+
+**10. The delete control's label named nothing.** Part 23 gave it an
+`aria-label`; this pass made that label name the shot being deleted rather than
+saying "delete" into the void.
+
+226 unit tests, 23 browser tests. Two of the four failures during this work
+were **my tests being wrong, not the code** — the space weather card only
+mounts once there is a path to report on, and a `postMessage` probe referenced
+the wrong variable. Recorded because a suite that has only ever agreed with its
+author is not evidence.
 
 ## Limitations
 

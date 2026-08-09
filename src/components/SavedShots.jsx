@@ -63,8 +63,14 @@ function loadShots() {
     return Array.isArray(arr) ? arr : [];
   } catch (e) { return []; }
 }
+// Returns false when the write did not happen. It used to swallow the failure
+// and return nothing, so a full storage quota produced a cheerful "SAVED" and
+// a shot that was gone at the next launch.
 function persistShots(list) {
-  try { localStorage.setItem(SHOTS_KEY, JSON.stringify(list.slice(0, SHOTS_MAX))); } catch (e) {}
+  try {
+    localStorage.setItem(SHOTS_KEY, JSON.stringify(list.slice(0, SHOTS_MAX)));
+    return true;
+  } catch (e) { return false; }
 }
 
 // Copy text to the clipboard, falling back to a .txt download when the
@@ -99,7 +105,8 @@ export function SavedShots({ currentShot, onClearStored }) {
   // Writing inside the click handlers meant a handler working from a stale
   // closure could persist an out-of-date list — which is how deleting one
   // shot could resurrect an earlier one.
-  useEffect(function() { persistShots(shots); }, [shots]);
+  var [persistFailed, setPersistFailed] = useState(false);
+  useEffect(function() { setPersistFailed(!persistShots(shots)); }, [shots]);
 
   function note(msg) {
     setFlash(msg);
@@ -112,8 +119,14 @@ export function SavedShots({ currentShot, onClearStored }) {
     // so reusing its id let two saves share one id — after which deleting
     // either removed both and the React keys collided.
     var stamped = Object.assign({}, currentShot, { id: newShotId(), dtg: dtg(new Date()) });
-    setShots(function(cur) { return [stamped].concat(cur).slice(0, SHOTS_MAX); });
-    setOpen(true); note('SAVED');
+    var dropped = false;
+    setShots(function(cur) {
+      var next = [stamped].concat(cur);
+      dropped = next.length > SHOTS_MAX;   // the oldest is about to fall off
+      return next.slice(0, SHOTS_MAX);
+    });
+    setOpen(true);
+    note(dropped ? 'SAVED \u2014 OLDEST DROPPED' : 'SAVED');
   }
   function doExport(shot) {
     exportText(formatCommCard(shot), commCardFilename(shot), note);
@@ -159,6 +172,20 @@ export function SavedShots({ currentShot, onClearStored }) {
           {!currentShot && (
             <div style={{ color: T.textMute, fontSize: '0.72rem', marginBottom: 12 }}>
               Run a calculation to enable saving and exporting the current plan.
+            </div>
+          )}
+
+          {persistFailed && (
+            <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderRadius: 6, padding: '9px 11px', marginBottom: 10, color: '#ffd9d0', fontSize: '0.74rem', lineHeight: 1.5 }}>
+              <strong style={{ color: '#ff9b86' }}>NOT SAVED TO THIS DEVICE.</strong>{' '}
+              Storage is full or blocked, so these shots will be gone when you close the app.
+              Export the ones you need now, or clear saved data to make room.
+            </div>
+          )}
+
+          {shots.length >= SHOTS_MAX && (
+            <div style={{ color: T.warn, fontSize: '0.72rem', marginBottom: 10, lineHeight: 1.5 }}>
+              {'Holding the maximum ' + SHOTS_MAX + ' shots \u2014 saving another drops the oldest.'}
             </div>
           )}
 

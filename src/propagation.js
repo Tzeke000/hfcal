@@ -18,6 +18,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const EARTH_RADIUS_KM = 6371;
+// Effective F2 virtual reflection height. THE single copy — antennaMath.js
+// and freqAdvisor.js import it rather than declaring their own.
+export const F2_HEIGHT_KM = 360;
 
 // Initial great-circle bearing FROM point 1 TO point 2, degrees true (0-360).
 // Direction convention for the whole app: point 1 is always YOUR station,
@@ -274,7 +277,7 @@ export var HOP = {
   // VOACAP's own virtual-height output (295–466 km) across the validation
   // matrix; see docs/VALIDATION.md. The `height` string still describes
   // the true layer.
-  F2: { hKm: 360,  maxHopKm: maxHopKm(360), label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
+  F2: { hKm: F2_HEIGHT_KM,  maxHopKm: maxHopKm(F2_HEIGHT_KM), label: 'F2 Layer', height: '250–400 km', note: 'Day & night. Primary DX.' },
 };
 
 export function calcHops(distKm, freqMHz, terrain) {

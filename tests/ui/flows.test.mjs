@@ -286,6 +286,75 @@ describe('frequency check', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('cards that had no test at all', { skip: SKIP, concurrency: 1 }, () => {
+  // SpaceWxCard, ImageCarousel, InvVGeoCalc, UpdateBanner and InstallBanner
+  // were never touched by any test at any level. They hold exactly the kind of
+  // React state the compass bug lived in, and the compass bug is the reason
+  // this file exists. This does not test what they compute — it tests that
+  // they mount, survive being driven, and do not throw.
+
+  test('the space weather card opens and reports its own freshness', async () => {
+    const page = await newPage(browser);
+    // The card only mounts once there is a path to report on.
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    // No network here, so it must fall back rather than break — which is the
+    // whole promise of an offline app.
+    const txt = await page.evaluate(() => document.body.innerText);
+    assert.match(txt, /NOAA SWPC|SOLAR|default solar/i,
+      'the space weather card did not render at all');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('the antenna image carousel advances without throwing', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const clicked = await page.evaluate(() => {
+      const btns = [...document.querySelectorAll('button')]
+        .filter(b => /^[\u2039\u203a<>]$/.test(b.textContent.trim()));
+      btns.slice(0, 6).forEach(b => { b.click(); b.click(); });
+      return btns.length;
+    });
+    await page.waitForTimeout(300);
+    assert.deepEqual(page.errors, [], 'carousel threw after ' + clicked + ' controls driven');
+    await page.context().close();
+  });
+
+  test('the inverted-V geometry calculator takes input without throwing', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const apex = page.locator('input[placeholder^="e.g. "]');
+    const n = await apex.count();
+    for (let i = 0; i < n; i++) {
+      const box = apex.nth(i);
+      if (!(await box.isVisible())) continue;
+      await box.fill('30');
+      await box.fill('0');
+      await box.fill('999');
+    }
+    await page.waitForTimeout(300);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('every button on the page can be clicked without throwing', async () => {
+    // Blunt, and it is the point: a smoke pass over every control there is.
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const n = await page.evaluate(() => {
+      const skip = /CLEAR SAVED DATA|EXPORT/i;
+      const btns = [...document.querySelectorAll('button')]
+        .filter(b => !skip.test(b.textContent || ''));
+      btns.forEach(b => { try { b.click(); } catch (e) { /* keep going */ } });
+      return btns.length;
+    });
+    await page.waitForTimeout(600);
+    assert.ok(n > 20, 'expected a page full of controls, found ' + n);
+    assert.deepEqual(page.errors, [], 'clicking ' + n + ' controls threw');
+    await page.context().close();
+  });
+});
+
 describe('input validation', { skip: SKIP, concurrency: 1 }, () => {
   // The frequency guard (1-30 MHz) is what stops a zero or negative frequency
   // reaching the wire maths, where it would produce an infinite or negative

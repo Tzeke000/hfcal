@@ -1,3 +1,4 @@
+import { EARTH_RADIUS_KM, F2_HEIGHT_KM } from './propagation.js';
 // ── ANTENNA MATH ──────────────────────────────────────────────────────────────
 // Pure physics/math for the HF Field Antenna Calculator: wire velocity-factor
 // model, wavelength, length formatting, and apex-height planning.
@@ -140,7 +141,10 @@ export function toLengths(meters) {
 // (55° = steepest recommended leg slope — apex angle 70°, the same threshold
 // the geometry planner warns at.)
 
-export const F2_HEIGHT_KM = 360;   // effective F2 virtual reflection height — matches HOP.F2.hKm
+// Re-exported from propagation.js rather than redeclared. Three modules used
+// to carry their own copy of each of these with a comment promising they
+// matched; a promise is not a constraint.
+export { F2_HEIGHT_KM, EARTH_RADIUS_KM } from './propagation.js';
 export const F2_MAX_HOP_KM = 4500; // matches HOP.F2.maxHopKm
 const MAX_LEG_SLOPE_DEG = 55;
 const PRACTICAL_MAST_FT = 60; // beyond typical field mast/tree reach
@@ -179,7 +183,7 @@ export function apexHeightPlan(params) {
     // baseline in propagation.js): α = atan[(cosθ − R/(R+h)) / sinθ],
     // θ = hopDist/2R. Clamped to the same 3–85° operational window so the
     // first-lobe height H = λ/(4·sinα) stays finite near the hop limit.
-    var R = 6371; // matches EARTH_RADIUS_KM in propagation.js
+    var R = EARTH_RADIUS_KM;
     var theta = (distKm / hops) / (2 * R);
     takeoffDeg = Math.atan2(Math.cos(theta) - R / (R + F2_HEIGHT_KM), Math.sin(theta)) / DEG;
     takeoffDeg = Math.max(3, Math.min(85, takeoffDeg));
