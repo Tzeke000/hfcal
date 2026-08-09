@@ -8,6 +8,7 @@ const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
         BorderStyle, Table, TableRow, TableCell, WidthType, ShadingType,
         LevelFormat, convertInchesToTwip } = require('docx');
 const fs = require('fs');
+const path = require('path');
 
 const SERIF = 'Times New Roman';
 
@@ -143,6 +144,10 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then(b => {
-  fs.writeFileSync('/home/user/hfcal/docs/legal/Statement-of-Independent-Creation.docx', b);
+  // Resolve against the repo, not against one machine's home directory —
+// this was hardcoded to /home/user/hfcal and worked nowhere else.
+  var OUT = path.join(__dirname, '..', '..', 'docs', 'legal',
+                      'Statement-of-Independent-Creation.docx');
+  fs.writeFileSync(OUT, b);
   console.log('written');
 });

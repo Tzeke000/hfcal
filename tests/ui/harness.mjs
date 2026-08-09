@@ -48,9 +48,17 @@ function isDir(p) {
 }
 
 export function browserAvailable() {
-  try { require.resolve('playwright-core'); } catch { return 'playwright-core is not installed'; }
-  if (!findChromium()) return 'no Chromium binary found (set HFCALC_CHROMIUM)';
-  return null;
+  var why = null;
+  try { require.resolve('playwright-core'); } catch { why = 'playwright-core is not installed'; }
+  if (!why && !findChromium()) why = 'no Chromium binary found (set HFCALC_CHROMIUM)';
+  // Skipping is the right default on a developer box with no browser. It is the
+  // WRONG default in CI, where a silent skip reports success for work that did
+  // not happen — the same defect as a validation mirror quietly falling back to
+  // a rougher model. CI sets HFCALC_REQUIRE_BROWSER=1 and this turns fatal.
+  if (why && process.env.HFCALC_REQUIRE_BROWSER === '1') {
+    throw new Error('browser tests are required here but cannot run: ' + why);
+  }
+  return why;
 }
 
 // ── Serving the built app ─────────────────────────────────────────────────────

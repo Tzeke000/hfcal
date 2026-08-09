@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate all app icons from scripts/icon-source.png with a version badge.
+"""Regenerate all app icons from scripts/assets/icon-source.png with a version badge.
 
 Reads the version from package.json (single source of truth), composites a
 "v<major>.<minor>" pill onto the artwork, and writes:
@@ -22,7 +22,7 @@ import json, os, sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SOURCE = os.path.join(ROOT, 'scripts', 'icon-source.png')
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 

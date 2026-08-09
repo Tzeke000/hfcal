@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""One-time migration: pull base64 antenna photos out of src/ui/HFCalc.jsx.
+"""ALREADY RUN in v1.7 — kept as the record of how the artwork left the
+bundle. Nothing calls it; do not run it again.
+
+One-time migration: pull base64 antenna photos out of src/ui/HFCalc.jsx.
 
 Before v1.7 the nine antennas' reference photos (27 JPEGs, ~1.7 MB) were
 embedded as base64 data URIs directly in the source, which meant the JS
@@ -20,8 +23,8 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSX = os.path.join(ROOT, 'src', 'HFCalc.jsx')
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+JSX = os.path.join(ROOT, 'src', 'ui', 'HFCalc.jsx')
 OUT_DIR = os.path.join(ROOT, 'public', 'antenna')
 
 ENTRY_RE = re.compile(

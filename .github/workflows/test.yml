@@ -1,0 +1,60 @@
+# Nothing ran the tests before this file existed. Four workflows built Android,
+# iOS, Windows and the Pages deploy, and not one of them executed npm test — so
+# 228 unit tests and 25 browser tests only ever ran on somebody's laptop, and
+# the site could deploy with a regression in it.
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_call:            # so deploy-pages can require this to pass first
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx --yes playwright@1.62.1 install --with-deps chromium
+      - name: Run the browser suite
+        # HFCALC_REQUIRE_BROWSER makes a missing browser FAIL rather than skip.
+        # A suite that quietly skips in CI reports success for work it did not do.
+        env:
+          HFCALC_REQUIRE_BROWSER: '1'
+        run: npm run test:ui
+
+  mirror:
+    name: Python mirror matches the JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      # Every VOACAP study computes the app's answer through appmodel.py. If it
+      # drifts from the shipped JavaScript, every published accuracy figure is
+      # measuring something the app does not do.
+      - run: python3 scripts/validation/appmodel.py --check

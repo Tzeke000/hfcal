@@ -26,6 +26,7 @@ Repository-wide sweep: August 2026 (app v1.28.0)
 postMessage coordinate-leak fix: August 2026 (app v1.29.0)
 Ten-item sweep, mostly new ground: August 2026 (app v1.30.0)
 Built-but-unwired sweep: August 2026 (app v1.31.0)
+Repository reorganisation and CI: August 2026 (app v1.32.0-1.33.0)
 
 ---
 
@@ -2096,6 +2097,81 @@ new About-card test clicked "Vs. Fielded Tools" when the sentence it was
 checking lives under "What It Does". Third self-inflicted failure in three
 sweeps — which is roughly the rate I would expect, and the reason each of these
 is run before it is believed.
+
+## Part 27 — The repository move, and what it caught (v1.32.0 / v1.33.0)
+
+`src/` was 25 flat files with tests interleaved alphabetically;
+`scripts/validation/` mixed the Python mirror, the slow table builders and the
+studies. Reorganised into `src/{physics,data,lib,ui}`, `tests/{unit,ui}`,
+`scripts/{assets,validation/{build,studies}}`, all with `git mv` so history
+follows the files, and a README in `src/` and `scripts/validation/`.
+
+Tidying is not validation, so this section is about the **five defects the move
+exposed** — every one of them a path assumption that nothing checked.
+
+### 1. The Python mirror fell back silently, and a study lied about it
+
+`appmodel.py` locates the shipped data files by path. Its loaders did this:
+
+```python
+if not os.path.exists(path):
+    _MTAB = False
+    return _MTAB
+```
+
+Moving `mfactorTable.js` into `src/data/` left that path stale. Nothing
+complained. `run_muf_study.py` ran to completion and reported **5.4% mean error
+against a known 4.4%**, having quietly fallen back to the physical secant model
+instead of the M-factor table. **It was caught only because somebody remembered
+the old number.**
+
+Silent fallback is *right* for the app — that is what keeps it working offline.
+It is wrong for the mirror, whose entire job is to reproduce what ships: a quiet
+fallback makes a study report the fallback's accuracy while claiming to have
+measured the shipped path. `appmodel.py` now refuses to start on a missing
+asset, naming which one and why it will not guess. Verified both ways: the
+guard fires when the path is wrong, and with it fixed the MUF study is back to
+4.4% / 2.4%.
+
+### 2. Nothing ran the tests in CI
+
+Four workflows — Android, iOS, Windows and the Pages deploy — and **not one
+executed `npm test`.** 228 unit tests and 25 browser tests only ever ran on a
+developer's machine, and the site could deploy to GitHub Pages with a
+regression in it. That is the whole test suite providing no protection at all
+to anyone but the person who happened to run it.
+
+Added `.github/workflows/test.yml` with three jobs — unit, browser, and a check
+that the Python mirror still matches the JavaScript — and made
+`deploy-pages.yml` require it. The site can no longer ship ahead of its tests.
+
+### 3. A skipping suite reports success for work it did not do
+
+The browser harness skips when it cannot find Chromium, which is right on a
+laptop without one and **wrong in CI**, where a silent skip is the same defect
+as the silent fallback in §1. `HFCALC_REQUIRE_BROWSER=1` now turns the skip
+into a hard failure, and CI sets it.
+
+### 4. A build script hardcoded one machine's home directory
+
+`make-statement.cjs` wrote to `/home/user/hfcal/docs/legal/…`. It worked on
+exactly one computer. Now resolved against the repository.
+
+### 5. Two asset scripts climbed the wrong number of directories
+
+`generate-icons.py` and `extract-images.py` compute their root by walking up
+from `__file__`; moving them into `scripts/assets/` left both one level short,
+so the icon generator would have written into `scripts/public/`.
+`extract-images.py` is also now labelled as already-run, since it is a v1.7
+migration that nothing calls.
+
+### The pattern
+
+Four of these five are the same shape as Parts 25 and 26: **a fact stated in
+two places, where only one got updated.** There the fact was a physical
+constant; here it is a file path. The fix is the same in kind — one source of
+truth, and a loud failure when the assumption breaks instead of a quiet
+substitution.
 
 ## Limitations
 

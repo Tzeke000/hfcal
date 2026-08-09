@@ -16,7 +16,12 @@ permissions:
   id-token: write
 
 jobs:
+  # The site must not deploy ahead of its own tests. Before this, it could.
+  tests:
+    uses: ./.github/workflows/test.yml
+
   build:
+    needs: tests
     runs-on: ubuntu-latest
 
     steps:
