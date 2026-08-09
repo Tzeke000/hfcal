@@ -11,7 +11,8 @@
 
 import { useState, useEffect } from 'react';
 import { T } from './theme.js';
-import { dtg, formatCommCard, shotLabel, commCardFilename } from '../lib/commCard.js';
+import { dtg, formatCommCard, shotLabel, commCardFilename, shareUrl } from '../lib/commCard.js';
+import QRCode from 'qrcode';
 
 // ── SAVED SHOTS ───────────────────────────────────────────────────────────────
 // Field workflow: you plan several links in a day. Save each one, export any
@@ -78,7 +79,7 @@ function persistShots(list) {
 
 // Copy text to the clipboard, falling back to a .txt download when the
 // clipboard API is missing or blocked (common in webviews / non-HTTPS).
-function exportText(text, filename, onDone) {
+export function exportText(text, filename, onDone) {
   function download() {
     try {
       var blob = new Blob([text], { type: 'text/plain' });
@@ -103,6 +104,23 @@ export function SavedShots({ currentShot, onClearStored }) {
   var [shots, setShots] = useState(loadShots);
   var [open, setOpen] = useState(false);
   var [flash, setFlash] = useState(null);
+  // QR of the current plan's share URL — scanning it opens the calculator
+  // pre-filled on another operator's phone, no typing grids in the field.
+  // qrArm is the trigger (a token, or null when hidden); qrData is the result.
+  // Kept separate so the effect never depends on its own output.
+  var [qrArm, setQrArm] = useState(null);
+  var [qrData, setQrData] = useState(null);
+  useEffect(function() {
+    if (!qrArm || !currentShot) { setQrData(null); return; }
+    var alive = true;
+    var url = shareUrl(currentShot, (typeof window !== 'undefined' && window.location)
+      ? window.location.origin + window.location.pathname : undefined);
+    QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 1, width: 320,
+      color: { dark: '#0e1409', light: '#e8f0e0' } })
+      .then(function(d) { if (alive) setQrData({ src: d, url: url }); },
+            function() { if (alive) setQrData({ src: null, url: url }); });
+    return function() { alive = false; };
+  }, [qrArm, currentShot]);
 
   // Persist as a effect of the list changing, never alongside each setState.
   // Writing inside the click handlers meant a handler working from a stale
@@ -171,7 +189,21 @@ export function SavedShots({ currentShot, onClearStored }) {
               style={{ ...btn, flex: 1, minWidth: 130, padding: '10px 12px', background: T.surfaceHi, color: currentShot ? T.textPrim : T.textDim, opacity: currentShot ? 1 : 0.6 }}>
               EXPORT CURRENT
             </button>
+            <button onClick={function() { if (currentShot) setQrArm(qrArm ? null : Date.now()); }} disabled={!currentShot}
+              style={{ ...btn, flex: 1, minWidth: 130, padding: '10px 12px', background: qrArm ? T.accentDim : T.surfaceHi, color: currentShot ? T.textPrim : T.textDim, opacity: currentShot ? 1 : 0.6 }}>
+              {qrArm ? 'HIDE QR' : 'SHOW QR'}
+            </button>
           </div>
+          {qrArm && currentShot && (
+            <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
+              {qrData && qrData.src
+                ? <img src={qrData.src} alt="Scan to load this plan" style={{ width: 220, height: 220, maxWidth: '100%', imageRendering: 'pixelated' }} />
+                : <div style={{ color: T.textMute, fontSize: '0.74rem' }}>Generating…</div>}
+              <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5, marginTop: 8 }}>
+                Point another phone's camera at this. Their app opens with this plan already loaded — no network, no typing grids.
+              </div>
+            </div>
+          )}
           {!currentShot && (
             <div style={{ color: T.textMute, fontSize: '0.72rem', marginBottom: 12 }}>
               Run a calculation to enable saving and exporting the current plan.

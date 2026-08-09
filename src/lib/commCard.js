@@ -127,3 +127,23 @@ export function commCardFilename(shot) {
   var f = (shot.freqMHz != null) ? shot.freqMHz : 'X';
   return 'HFPLAN_' + (d || 'SHOT') + '_' + f + 'MHz.txt';
 }
+
+
+// The app's own share URL for a shot — the ?from/?to/?freq params the URL
+// channel already reads (src/ui/HFCalc.jsx). Encoding THIS in a QR means
+// scanning it opens the calculator pre-filled on the other operator's phone,
+// no typing grids under a poncho. base is the deployed origin+path.
+export function shareUrl(shot, base) {
+  shot = shot || {};
+  var b = base || 'https://tzeke000.github.io/hfcal/';
+  var p = [];
+  function add(k, v) { if (v !== undefined && v !== null && v !== '') p.push(k + '=' + encodeURIComponent(v)); }
+  if (shot.p1) add('from', shot.p1.lat.toFixed(5) + ',' + shot.p1.lon.toFixed(5));
+  if (shot.p2) add('to', shot.p2.lat.toFixed(5) + ',' + shot.p2.lon.toFixed(5));
+  if (shot.freqMHz != null) add('freq', shot.freqMHz);
+  if (shot.wireCore) add('core', shot.wireCore);
+  if (shot.wireGauge) add('gauge', shot.wireGauge);
+  if (typeof shot.legEndM === 'number') add('legend', (shot.legEndM / 0.0254).toFixed(1));
+  add('auto', '1');
+  return b + (p.length ? '?' + p.join('&') : '');
+}

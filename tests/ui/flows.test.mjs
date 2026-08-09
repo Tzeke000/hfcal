@@ -830,6 +830,91 @@ describe('night mode and next-window (v1.43)', { skip: SKIP, concurrency: 1 }, (
   });
 });
 
+describe('field truth log (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
+  test('logging worked/didn\u2019t records entries and exports a report', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+
+    // Add a note, then log both outcomes.
+    await page.locator('input[placeholder^="optional note"]').fill('inverted-V over water');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /IT CLOSED/.test(b.textContent)).click());
+    await page.waitForTimeout(250);
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /IT DIDN/.test(b.textContent)).click());
+    await page.waitForTimeout(250);
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('hfcalc_truth_v1') || '[]'));
+    assert.equal(stored.length, 2, 'two outcomes should log two entries');
+    assert.ok(stored.some(e => e.outcome === 'worked') && stored.some(e => e.outcome === 'failed'));
+    assert.ok(stored[0].predicted && stored[0].predicted.verdict, 'prediction not captured');
+    assert.ok(stored.some(e => e.note === 'inverted-V over water'), 'note not saved');
+
+    // Distinct ids (the collision class), and they survive a reload.
+    assert.equal(new Set(stored.map(e => e.id)).size, 2);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    const rows = await page.evaluate(() =>
+      [...document.querySelectorAll('button')].filter(b => b.textContent.trim() === '✕').length);
+    assert.ok(rows >= 2, 'entries did not persist across reload');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('QR handoff (v1.44)', { skip: SKIP, concurrency: 1 }, () => {
+  test('SHOW QR renders a scannable code of the plan share URL', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'SHOW QR').click());
+    // Wait for the async toDataURL to resolve into an <img>.
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('img')].some(i => (i.src || '').startsWith('data:image')),
+      null, { timeout: 5000 });
+    const src = await page.evaluate(() =>
+      ([...document.querySelectorAll('img')].find(i => (i.src || '').startsWith('data:image')) || {}).src || '');
+    assert.ok(src.startsWith('data:image/'), 'no QR image rendered');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('SOI mode (v1.44)', { skip: SKIP, concurrency: 1 }, () => {
+  test('assigned frequencies persist and rank for the path', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'SOI — Assigned Frequencies', 'OPEN');
+
+    // Enter a spread of assigned frequencies.
+    for (const f of ['3.5', '7.2', '14.2', '28.5']) {
+      await page.locator('input[placeholder^="add MHz"]').fill(f);
+      await page.evaluate(() => [...document.querySelectorAll('button')]
+        .find(b => b.textContent.trim() === 'ADD').click());
+      await page.waitForTimeout(120);
+    }
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('hfcalc_soi_v1') || '[]'));
+    assert.deepEqual(stored, [3.5, 7.2, 14.2, 28.5], 'assigned list not stored sorted');
+
+    // The panel ranks them — each row shows NOW / OPENS / CLOSED.
+    const txt = await page.evaluate(() => document.body.innerText);
+    assert.ok(/NOW|OPENS|CLOSED ALL DAY/.test(txt), 'no ranking rendered');
+
+    // Persists across reload.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await toggleCard(page, 'SOI — Assigned Frequencies', 'OPEN');
+    const after = await page.evaluate(() => JSON.parse(localStorage.getItem('hfcalc_soi_v1') || '[]'));
+    assert.deepEqual(after, [3.5, 7.2, 14.2, 28.5], 'assigned list did not persist');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('collapsible cards', { skip: SKIP, concurrency: 1 }, () => {
   // Whatever else changes, opening and closing a panel must never throw and
   // must never leave the card stuck. This is the cheap guard that would have

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_SSN, sfiToSSN, localSolarTime, diurnalFactor, estimateFoF2,
-  secantFactor, classifyFrequency, assessFrequency,
+  secantFactor, classifyFrequency, assessFrequency, rankAssignedFrequencies,
   FOF2_PEAK_HOUR, FOF2_NIGHT_RATIO, seasonLatitudeFactor,
   frequencyForecast, bestBlocks,
   solarDeclination, cosZenith, illuminationFactor,
@@ -1045,4 +1045,41 @@ test('suggested frequency never leaves the 2-30 MHz band', function() {
     sfi: 60, distKm: 3000, hops: 1, txWatts: 2 });
   assert.ok(polarNight.suggestedMHz >= 2,
     'polar night suggested ' + polarNight.suggestedMHz + ' MHz — below the noise floor');
+});
+
+// ── SOI mode: ranking assigned frequencies (v1.44) ──────────────────────────
+// Operators are ISSUED a handful of frequencies, not free to pick. The real
+// question is which of the assigned set closes now, and which closes when.
+
+test('rankAssignedFrequencies puts usable-now first, then soonest-to-open', function() {
+  const base = { takeoffDeg: 8, layerKm: 360, midLon: 0, latDeg: 40, magLatDeg: 42,
+    modipDeg: 44, month: 6, distKm: 2500, hops: 1, txWatts: 20, sfi: 110 };
+  const ranked = rankAssignedFrequencies(base, [3.5, 7.2, 14.2, 21.3, 28.5], 14);
+  assert.equal(ranked.length, 5);
+  // Every usable-now entry precedes every not-usable-now entry.
+  let seenClosed = false;
+  for (const r of ranked) {
+    if (!r.usableNow) seenClosed = true;
+    else assert.equal(seenClosed, false, 'a usable freq ranked below a closed one');
+  }
+  // A GOOD freq outranks a merely-marginal one.
+  const good = ranked.find(r => r.verdict && r.verdict.code === 'good');
+  const near = ranked.find(r => r.verdict && r.verdict.code === 'near_muf');
+  if (good && near) {
+    assert.ok(ranked.indexOf(good) < ranked.indexOf(near));
+  }
+  // Closed entries carry when they open (or null for never), soonest first.
+  const closed = ranked.filter(r => !r.usableNow);
+  for (let i = 1; i < closed.length; i++) {
+    const a = closed[i - 1].next ? closed[i - 1].next.inHours : 999;
+    const b = closed[i].next ? closed[i].next.inHours : 999;
+    assert.ok(a <= b, 'closed freqs not ordered by soonest opening');
+  }
+});
+
+test('rankAssignedFrequencies ignores junk entries', function() {
+  const base = { takeoffDeg: 10, layerKm: 360, midLon: 0, latDeg: 30, magLatDeg: 30,
+    modipDeg: 30, month: 3, distKm: 1500, hops: 1, txWatts: 20, sfi: 90 };
+  const ranked = rankAssignedFrequencies(base, [14.2, NaN, -5, 0, 'x', 7.0], 12);
+  assert.equal(ranked.length, 2, 'only the two valid frequencies should survive');
 });

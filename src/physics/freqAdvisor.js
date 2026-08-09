@@ -768,6 +768,58 @@ export function assessFrequency(params) {
 // params: everything assessFrequency takes (minus utcHour), plus
 //   blockHours   size of each block in hours (default 4, must divide 24)
 //   nowUtcHour   current UTC hour, used to flag the active block
+// The next hour (UTC) at which a SPECIFIC frequency becomes usable on this
+// path, scanning forward from `fromUtcHour`. A frequency can be unusable now
+// for opposite reasons (above the MUF, or below the LUF) that resolve at
+// different times, so this is per-frequency, unlike nextOpenWindow. Returns
+// { utcHour, inHours } or null.
+export function nextUsableHour(params, freqMHz, fromUtcHour) {
+  var start = (typeof fromUtcHour === 'number' && isFinite(fromUtcHour)) ? fromUtcHour : 0;
+  for (var i = 1; i <= 24; i++) {
+    var h = (start + i) % 24;
+    var a = assessFrequency(Object.assign({}, params, { utcHour: h, freqMHz: freqMHz }));
+    if (a && a.verdict && a.verdict.ok) return { utcHour: h, inHours: i };
+  }
+  return null;
+}
+
+// Rank a list of ASSIGNED frequencies for a path at a given hour — the real
+// field question: of the handful I was issued, which closes now, and which
+// closes when? Best-first: usable now (GOOD before marginal), then those that
+// open later (soonest first), then never. Each entry carries its verdict now
+// and, if not usable now, the next hour it becomes usable.
+export function rankAssignedFrequencies(params, freqs, fromUtcHour) {
+  var start = (typeof fromUtcHour === 'number' && isFinite(fromUtcHour)) ? fromUtcHour : 12;
+  var rank = { good: 0, low: 1, near_muf: 2 };   // usable-now ordering
+  var out = (freqs || []).filter(function(f) {
+    return typeof f === 'number' && isFinite(f) && f > 0;
+  }).map(function(f) {
+    var a = assessFrequency(Object.assign({}, params, { utcHour: start, freqMHz: f }));
+    var ok = !!(a && a.verdict && a.verdict.ok);
+    return {
+      freqMHz: f,
+      verdict: a ? a.verdict : null,
+      muf: a ? a.muf : null, fot: a ? a.fot : null, luf: a ? a.luf : null,
+      usableNow: ok,
+      next: ok ? null : nextUsableHour(params, f, start),
+    };
+  });
+  out.sort(function(x, y) {
+    if (x.usableNow && y.usableNow) {
+      var rx = rank[x.verdict && x.verdict.code] != null ? rank[x.verdict.code] : 9;
+      var ry = rank[y.verdict && y.verdict.code] != null ? rank[y.verdict.code] : 9;
+      if (rx !== ry) return rx - ry;
+      return y.fot - x.fot;                 // among equal verdicts, higher FOT margin first
+    }
+    if (x.usableNow !== y.usableNow) return x.usableNow ? -1 : 1;
+    // both closed now: sooner-opening first, never-opening last
+    var xi = x.next ? x.next.inHours : 999;
+    var yi = y.next ? y.next.inHours : 999;
+    return xi - yi;
+  });
+  return out;
+}
+
 // The next hour (UTC) at which a currently-closed path opens, scanning forward
 // from `fromUtcHour`. Returns { utcHour, inHours } or null if it stays closed
 // all day. Used to turn a bare "PATH CLOSED" into "opens ~0430Z (in 3h40m)".

@@ -35,6 +35,7 @@ Hooks lint, dep-contract fixes: August 2026 (app v1.39.0)
 External-review defects: August 2026 (app v1.40.0)
 Full external review, Tier 2/3: August 2026 (app v1.41.0)
 Coastline bitmask replaces ocean boxes: August 2026 (app v1.42.0)
+Field features (next-window, night, QR, truth log, SOI): August 2026 (app v1.43.0-1.44.0)
 
 ---
 
@@ -2629,6 +2630,50 @@ change to the builder if island paths ever need it; 1° matches the resolution
 of everything else in the terrain model today.
 
 253 unit tests, 35 browser tests, lint clean.
+
+## Part 36 — Five field features (v1.43.0 / v1.44.0)
+
+Not defect fixes — the features an operator asked for, in their order of value.
+Each reuses machinery already validated; none touches the physics.
+
+**#3 Next window (v1.43).** A CLOSED path now says when it opens —
+"Opens ~0430Z — in about 3 hours at this power" — from a forward hourly scan
+(`nextOpenWindow`), instead of making the operator read the 24-hour table.
+
+**#5 Red-light night mode (v1.43).** A persisted header toggle that desaturates
+the app and multiplies a red veil over it (`data-night` on `<html>`, one CSS
+rule) — red-on-black that preserves dark adaptation, without touching the
+palette every component reads.
+
+**#4 QR handoff (v1.44).** SHOW QR renders the plan as a QR of the app's own
+share URL (`?from=&to=&freq=…`), so another operator scans it phone-to-phone
+and their app opens pre-filled — no network, no typing grids under a poncho.
+The QR encoder is bundled (`qrcode`), not fetched, so it works offline like
+everything else; rendered as a data-URL `<img>`, no innerHTML.
+
+**#6 Field truth log (v1.44).** One tap after a shot — it CLOSED, or it DIDN'T
+— records the app's prediction (MUF/FOT/LUF + verdict, power, month, hour)
+beside the real outcome and an optional note. Exported as a plain-text card the
+operator hands back. `scoreEntry` marks each as hit or surprise, and the report
+leads with the agreement rate. **This is the one feature that produces data no
+VOACAP study can: ground truth from real paths.** Over time a returned card is
+a validation set the model can be measured and tuned against.
+
+**#2 SOI mode (v1.44).** Operators are issued a handful of frequencies, not
+free to pick. Enter the assigned list once (persisted); for any path
+`rankAssignedFrequencies` ranks them — usable now (GOOD before marginal), then
+those that open later (soonest first), then never — each with its verdict and
+the hour it opens. This is the actual field question, answered from the
+existing per-frequency assessment.
+
+Every feature is covered: unit tests for the truth-log record/report/score and
+the SOI ranker; browser tests for night mode + persistence, the next-window
+line, the truth-log round trip, the QR image, and the SOI list. The whole
+suite runs under the hooks lint that makes stale-closure bugs a build failure,
+and the two data modules that persist (truth log, SOI list) use the same
+corrupt-tolerant loaders as saved shots.
+
+261 unit tests, 40 browser tests, lint clean, Python mirror exact.
 
 ## Limitations
 

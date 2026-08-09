@@ -64,6 +64,8 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 **The frequency answer**
 - **Frequency check** — MUF, FOT and LUF for this path at this hour, and a verdict on the frequency you were assigned, with an alternate to request if it will not propagate. Pick any of the 12 months (season at every bounce) and set the transmit power the way the radio is labelled — LOW / MED / HIGH / GLOBAL on an AN/PRC-160, VRC for the 150 W amp, or type your actual watts.
 - **24-hour forecast** — MUF / FOT / LUF in 4-hour Zulu blocks with your local time alongside, so comm windows can be planned instead of discovered.
+- **SOI mode** — enter your assigned frequencies once; for any path they're ranked: which closes now, which opens at what hour. The actual field question.
+- **Next window** — when a path is closed, the app says when it opens ("~0430Z, in 3h") instead of making you read the table.
 - **Every bounce checked** — a long shot reflects off the ionosphere several times, each at a different place, local time, and season; the weakest bounce caps the path and the app shows you which one it is.
 - **PATH CLOSED warning** — when absorption eats everything the ionosphere would reflect, it says so outright. Checked against VOACAP over 6,912 cases: it has never once fired on a path VOACAP could close.
 - **Live space weather** — NOAA solar flux and Kp when a connection exists, cached with its age shown; a stated mid-cycle default when it doesn't. Everything works either way.
@@ -74,6 +76,9 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 - **Optimal apex height** — computes the support height that puts the antenna's first lobe on your path's takeoff angle, checks it against what an inverted-V's legs can physically reach, and tells you when to just use the buildable maximum.
 
 **Field workflow**
+- **QR handoff** — show any plan as a QR code; another operator scans it phone-to-phone and their app opens pre-filled. No network, no typing grids.
+- **Field truth log** — one tap after a shot (closed / didn't) records the app's prediction beside reality; export the card to build a real validation set from your own paths.
+- **Red-light night mode** — a red-on-black theme that preserves dark adaptation.
 - **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator.
 - **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
 
@@ -99,7 +104,7 @@ The LUF's absorption law, daylight response and path-length dependence are measu
 
 **The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 32 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**255 unit tests** pin the physics so it cannot drift. **37 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**261 unit tests** pin the physics so it cannot drift. **40 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -163,8 +168,8 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 255 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 37 browser tests: builds dist/, drives it in Chromium
+npm test             # 261 unit tests over the physics, terrain and coordinate math
+npm run test:ui      # 40 browser tests: builds dist/, drives it in Chromium
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 
