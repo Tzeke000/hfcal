@@ -203,7 +203,10 @@ export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
   }
 
   // 4. Chordal hop
-  var chordal = distKm > 3000 && (terrain ? terrain.oceanFrac : 0) > 0.5 && freqMHz >= 10 && freqMHz <= 28;
+  // ONE definition of the condition, not two. This used to be spelled out
+  // again here alongside the exported chordalHopPossible() below, agreeing
+  // with it only by whoever edited them both last.
+  var chordal = chordalHopPossible(distKm, freqMHz, terrain ? terrain.oceanFrac : 0);
   if (chordal) {
     finalDeg *= 0.7; // shallower — signal stays in ionosphere
     finalDeg = Math.max(3, finalDeg);

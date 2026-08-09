@@ -479,3 +479,35 @@ test('antennaMath and freqAdvisor use the same constants, not their own', async 
   assert.equal(f.LUF_F2_HEIGHT_KM, p.F2_HEIGHT_KM,
     'the LUF geometry forked from the layer height everything else uses');
 });
+
+
+// ── Nothing computed twice ─────────────────────────────────────────────────
+// The chordal-hop condition used to be spelled out inline inside
+// calcTakeoffAngle AND exported as chordalHopPossible, agreeing only by
+// whoever edited both last. Same class as the Earth-radius triplication.
+
+test('calcTakeoffAngle uses the exported chordal predicate, not a copy', async function() {
+  const { calcTakeoffAngle, chordalHopPossible } = await import('./propagation.js');
+  const cases = [
+    [5000, 14.2, 0.9], [5000, 14.2, 0.1], [2000, 14.2, 0.9],
+    [5000, 7.0, 0.9], [5000, 29.0, 0.9], [3001, 10.0, 0.51],
+    [3000, 10.0, 0.51], [8000, 21.0, 1.0],
+  ];
+  for (const [dist, freq, ocean] of cases) {
+    const toa = calcTakeoffAngle(dist, freq, 360, { oceanFrac: ocean });
+    assert.equal(toa.chordal, chordalHopPossible(dist, freq, ocean),
+      'the two chordal determinations disagree at ' + [dist, freq, ocean]);
+  }
+});
+
+test('groundWaveMultiplier is anchored to average land', async function() {
+  // It is now shown to the operator on ground-wave paths, so its scale is
+  // load-bearing: 1.0 must mean "average land", not an arbitrary reference.
+  const { groundWaveMultiplier } = await import('./propagation.js');
+  assert.ok(Math.abs(groundWaveMultiplier(3) - 1) < 1e-9, 'average land should be 1.0x');
+  assert.ok(groundWaveMultiplier(5000) > 5, 'salt water should be worth several times average land');
+  assert.ok(groundWaveMultiplier(0.1) < 0.5, 'dry sand should be a fraction of average land');
+  for (const c of [0, 0.001, 1, 3, 100, 5000]) {
+    assert.ok(isFinite(groundWaveMultiplier(c)) && groundWaveMultiplier(c) >= 0);
+  }
+});

@@ -5,7 +5,7 @@ import {
 } from "./antennaMath.js";
 import {
   geodesics, propagationZone, bearingToCardinal, HOP, calcHops,
-  pathMidpoint, reflectionPoints,
+  pathMidpoint, reflectionPoints, groundWaveMultiplier,
 } from "./propagation.js";
 import {
   SWPC_FLUX_URL, SWPC_KINDEX_URL,
@@ -13,7 +13,8 @@ import {
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "./spacewx.js";
 import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAULT_SSN,
-         FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source } from "./freqAdvisor.js";
+         FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source,
+         FOF2_SIGMA_TABLE, MFACTOR_ACCURACY_PCT } from "./freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "./fof2Table.js";
 import { dtg } from "./commCard.js";
 import { parseCoords, looksLikeMGRS } from "./coords.js";
@@ -198,7 +199,16 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
     antennaType = 'Low horizontal dipole or longwire';
     whichWay = 'Orient wire perpendicular to ' + cardinal + ' (broadside toward target)';
     physGeometry = 'Keep wire 3\u20136 ft above ground. No angle needed \u2014 ground wave follows surface.';
-    whyAngle = 'Ground wave \u2014 signal travels along the Earth surface. Height and angle are irrelevant; maximize wire length and minimize height.';
+    // What the ground under the wire is worth. On a ground-wave shot this is
+    // the biggest single factor in how far you get, and the app has always
+    // known the conductivity along the path without ever saying so.
+    var gwMult = groundWaveMultiplier(terrain.condMSm);
+    var gwNote = gwMult >= 1.6
+      ? ' The ground here is wet or salt \u2014 about ' + gwMult.toFixed(1) + '\u00d7 the range you would get over average dry land. Get the wire as close to the water as you can.'
+      : gwMult <= 0.7
+        ? ' The ground here is dry and poor \u2014 roughly ' + gwMult.toFixed(1) + '\u00d7 the range of average land. Move toward damp ground, a stream or a coast if you can, or lay out more radials.'
+        : '';
+    whyAngle = 'Ground wave \u2014 signal travels along the Earth surface. Height and angle are irrelevant; maximize wire length and minimize height.' + gwNote;
   } else if (zone === 'nvis') {
     antennaType = 'NVIS horizontal dipole';
     whichWay = 'Wire orientation does not matter \u2014 NVIS is omnidirectional';
@@ -1884,7 +1894,7 @@ function AboutBanner() {
                   Measured against <strong style={{ color: T.textPrim }}>VOACAP</strong> — the U.S. government's own HF prediction engine, the standard since the 1980s:
                   <div style={{ marginTop: 7, marginBottom: 7 }}>
                     <div>{'▸  Takeoff angles within about 1° of the VOACAP median from 250 to 6000 km — inside VOACAP\u2019s own day, season and solar spread at every distance tested.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Both halves of the prediction are our own measured tables rather than rules of thumb — the ionosphere from 30,240 VOACAP runs, the path geometry from 12,960 more. Critical frequency is accurate to about 1% and MUF to about 4% at mid-latitude — 5% pooled across every path type measured, worst case 11% nine times out of ten — checked at sites the tables were never built from.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Both halves of the prediction are our own measured tables rather than rules of thumb — the ionosphere from 30,240 VOACAP runs, the path geometry from 12,960 more. Critical frequency is accurate to about ' + (FOF2_SIGMA_TABLE * 100).toFixed(0) + '% and the path geometry to about ' + MFACTOR_ACCURACY_PCT.toFixed(1) + '%, giving a MUF good to about 4% at mid-latitude — 5% pooled across every path type measured, worst case 11% nine times out of ten — checked at sites the tables were never built from.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Season and latitude checked over six sites from 60° N to 44° S across all twelve months — worldwide MUF error cut from 18% to under 5%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Layer heights and single-hop limits checked against closed-form geometry and against which modes VOACAP itself offers, distance by distance.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Sunrise, sunset and day length checked in BOTH hemispheres — 34° north in June matches 34° south in December exactly.'}</div>
@@ -1892,7 +1902,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  226 automated tests pin every formula so the physics cannot drift as the app changes, plus 23 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  228 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

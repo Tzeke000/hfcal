@@ -406,6 +406,43 @@ describe('input validation', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('wired-up physics reaches the screen', { skip: SKIP, concurrency: 1 }, () => {
+  // v1.31. These were real physics the app computed (or could) and never
+  // showed anyone. A capability nobody can reach is not a capability.
+
+  test('a ground-wave path over water tells the operator what the ground is worth', async () => {
+    const page = await newPage(browser);
+    // ~40 km across open water off the North Carolina coast.
+    await calculate(page, 'N 34:30:00 W 076:20:00', 'N 34:45:00 W 076:00:00');
+    const txt = await page.evaluate(() => document.body.innerText);
+    assert.match(txt, /Ground wave/i, 'not classified as a ground-wave path');
+    assert.match(txt, /\u00d7 the range|average dry land|average land/i,
+      'the app knew the ground conductivity and said nothing about it');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('the About card reads its accuracy from the data, not from prose', async () => {
+    // The numbers here used to be typed by hand, which is how three different
+    // M-factor figures ended up in three places.
+    const page = await newPage(browser);
+    await page.getByRole('button', { name: 'ABOUT', exact: true }).click();
+    await page.waitForTimeout(250);
+    await page.evaluate(() => {
+      [...document.querySelectorAll('button')]
+        .find(b => b.textContent.trim() === 'What It Does').click();
+    });
+    await page.waitForTimeout(250);
+    const txt = await page.evaluate(() => document.body.innerText);
+    assert.match(txt, /Critical frequency is accurate to about \d/,
+      'the accuracy sentence did not render');
+    assert.match(txt, /path geometry to about \d/,
+      'the path-geometry accuracy is not being read from the table');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
   // v1.29 security fix. Before it, any page could iframe the app and read the
   // operator's cached coordinates straight out of getInputs — the location

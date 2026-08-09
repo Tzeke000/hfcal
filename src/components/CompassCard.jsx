@@ -13,7 +13,7 @@ import { useState, useRef, useEffect } from 'react';
 import { T } from '../theme.js';
 import {
   declination, trueToMagnetic, norm360, relativeTurn, formatDeclination,
-  isDeclinationModelCurrent,
+  isDeclinationModelCurrent, WMM_VALID_UNTIL,
 } from '../magnetic.js';
 
 // ── COMPASS ───────────────────────────────────────────────────────────────────
@@ -251,7 +251,8 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
               </div>
               {!isDeclinationModelCurrent() && (
                 <div style={{ color: T.warn, fontSize: '0.7rem', marginTop: 5 }}>
-                  Magnetic model is past its epoch — declination may be off by a degree or more. Update the app.
+                  {'Magnetic model expired ' + WMM_VALID_UNTIL.toISOString().slice(0, 10)
+                    + ' — declination may be off by a degree or more, and it will drift further. Update the app.'}
                 </div>
               )}
             </div>

@@ -25,6 +25,7 @@ PATH CLOSED false-closure check: August 2026 (app v1.27.0)
 Repository-wide sweep: August 2026 (app v1.28.0)
 postMessage coordinate-leak fix: August 2026 (app v1.29.0)
 Ten-item sweep, mostly new ground: August 2026 (app v1.30.0)
+Built-but-unwired sweep: August 2026 (app v1.31.0)
 
 ---
 
@@ -2038,6 +2039,63 @@ were **my tests being wrong, not the code** — the space weather card only
 mounts once there is a path to report on, and a `postMessage` probe referenced
 the wrong variable. Recorded because a suite that has only ever agreed with its
 author is not evidence.
+
+## Part 26 — Built but never connected (v1.31.0)
+
+`foF2Source()` was the tell. It shipped in v1.20 carrying a comment saying it
+existed *"so the UI can say so rather than quietly varying in accuracy"*, and
+nothing ever called it (Part 23). That is a distinct defect class from a wrong
+number: a capability that exists, works, is tested, and cannot be reached by
+the person it was written for. This part sweeps for the rest.
+
+**1. Ground conductivity was computed and never mentioned.**
+`groundWaveMultiplier(condMSm)` had no caller anywhere. On a ground-wave shot
+the ground under the wire is the single biggest factor in how far the signal
+gets, the app samples conductivity along the whole path already, and it said
+nothing. Now, on a ground-wave path, it tells the operator what the ground is
+worth against average land and what to do about it — get closer to the water,
+or move off the dry sand and lay out more radials.
+
+**2. The chordal-hop condition was written out twice.** `calcTakeoffAngle`
+spelled the test out inline, and `chordalHopPossible()` exported the identical
+expression from the same file. They agreed only because whoever last edited one
+remembered the other. `calcTakeoffAngle` now calls the predicate, and a test
+drives eight cases either side of every boundary asserting the two agree —
+including the exact `distKm > 3000` and `oceanFrac > 0.5` edges.
+
+This is the same class as the Earth-radius triplication fixed in Part 25, and
+it is worth naming: **this project's recurring failure mode is not bad physics,
+it is the same quantity computed in two places.** Part 10 shipped a MUF using a
+different takeoff angle from every validation run for exactly this reason.
+
+**3. The app's stated accuracy was hand-typed prose.** The About card quoted
+"about 1%" and "about 4%" as literal text while `FOF2_SIGMA_TABLE` and
+`MFACTOR_ACCURACY_PCT` sat in the source holding the measured values. That is
+precisely how three different M-factor figures ended up in three places
+(Part 23). The card now reads both from the data, so the claim cannot drift
+from the measurement again without a test noticing.
+
+**4. The magnetic-model expiry warning never said when.** `WMM_VALID_UNTIL` was
+exported and unused; the Compass card said the model was "past its epoch" with
+no date. An operator cannot plan around a date they are not told. It now prints
+it.
+
+### Checked and deliberately left alone
+
+- `magneticToTrue()` — the inverse of the conversion the app already does.
+  Operators need true → magnetic (the number to dial); the reverse has no
+  place on any screen here. Kept as a tested export for the API layer.
+- `foF2TableMeta()`, `parseFoF2Table`, `installFoF2Table` — module plumbing and
+  the seam the guard tests install a synthetic table through. Not operator
+  features.
+- `initialBearing`, `fmtLatLon`, `F2_MAX_HOP_KM`, `TABLE_SCALE` — consumed
+  inside their own modules or by tests. Unused-looking, not unused.
+
+228 unit tests, 25 browser tests. One more of my own test bugs to record: the
+new About-card test clicked "Vs. Fielded Tools" when the sentence it was
+checking lives under "What It Does". Third self-inflicted failure in three
+sweeps — which is roughly the rate I would expect, and the reason each of these
+is run before it is believed.
 
 ## Limitations
 
