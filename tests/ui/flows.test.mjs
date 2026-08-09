@@ -446,6 +446,54 @@ describe('wired-up physics reaches the screen', { skip: SKIP, concurrency: 1 }, 
   });
 });
 
+describe('AI integration layer', { skip: SKIP, concurrency: 1 }, () => {
+  // window.HFCalc.calculate() used to poll getResults() and resolve on the
+  // first truthy answer — which was the PREVIOUS calculation still in state.
+  // Two back-to-back calls could hand the first call's numbers back for the
+  // second. Fixed with a monotonic calc_seq (v1.36).
+  test('calculate() resolves with THIS request, not the previous results', async () => {
+    const page = await newPage(browser);
+    // Prime with a short NVIS path, then ask for a long one.
+    const first = await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:00:00 W 118:00:00', to: 'N 36:00:00 W 118:00:00', freq: '5.0' }));
+    const second = await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:00:00 W 118:00:00', to: 'N 35:00:00 E 010:00:00', freq: '14.0' }));
+    assert.ok(second.calc_seq > first.calc_seq, 'second call returned a stale sequence');
+    assert.ok(second.distance.km > 8000, 'got the short path back for the long request');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  // getResults() now carries the propagation verdict — the point of the tool.
+  test('getResults() exposes the MUF/FOT/LUF verdict', async () => {
+    const page = await newPage(browser);
+    const r = await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:54:03 W 076:52:50', to: 'N 26:21:00 E 127:46:00', freq: '14.2' }));
+    assert.ok(r.frequency_check, 'no frequency_check in the AI snapshot');
+    const fc = r.frequency_check;
+    for (const k of ['muf_mhz', 'fot_mhz', 'luf_mhz']) {
+      assert.ok(Number.isFinite(fc[k]) && fc[k] > 0, k + ' missing or non-positive');
+    }
+    assert.ok(fc.fot_mhz < fc.muf_mhz, 'FOT must sit below MUF');
+    assert.ok(fc.verdict && typeof fc.verdict.ok === 'boolean', 'no usable verdict');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  // A calculation with invalid inputs must REJECT, not resolve with the stale
+  // previous success.
+  test('calculate() rejects invalid inputs instead of returning stale results', async () => {
+    const page = await newPage(browser);
+    await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:54:03 W 076:52:50', to: 'N 26:21:00 E 127:46:00', freq: '14.2' }));
+    const outcome = await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'not a location', to: 'also junk', freq: '99' })
+      .then(() => 'resolved', (e) => 'rejected: ' + e.message));
+    assert.match(outcome, /^rejected/, 'invalid inputs resolved with stale results');
+    await page.context().close();
+  });
+});
+
 describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
   // v1.29 security fix. Before it, any page could iframe the app and read the
   // operator's cached coordinates straight out of getInputs — the location

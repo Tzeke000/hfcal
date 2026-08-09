@@ -87,3 +87,22 @@ test('spaceWxAdvice: NVIS punch-through warning at very low flux', function() {
   assert.ok(a[0].indexOf('critical frequency') !== -1);
   assert.equal(spaceWxAdvice({ sfi: 68, kp: 1, freqMHz: 6.0, zone: 'nvis' }).length, 0);
 });
+
+
+// ── A missing reading must not read as a crisis (v1.36) ──────────────────────
+// interpretSFI/interpretKp fell through every threshold on NaN and returned
+// the most alarming state — "VERY HIGH" flux, "SEVERE STORM" geomagnetics.
+
+test('interpretSFI reports UNKNOWN, not VERY HIGH, on a bad reading', function() {
+  for (const bad of [NaN, Infinity, undefined, null]) {
+    assert.equal(interpretSFI(bad).label, 'UNKNOWN', 'SFI ' + bad + ' misread');
+  }
+});
+
+test('interpretKp reports UNKNOWN and not-degraded on a bad reading', function() {
+  for (const bad of [NaN, Infinity, undefined, null]) {
+    const r = interpretKp(bad);
+    assert.equal(r.label, 'UNKNOWN', 'Kp ' + bad + ' misread');
+    assert.equal(r.degraded, false, 'a missing Kp must not read as degraded');
+  }
+});

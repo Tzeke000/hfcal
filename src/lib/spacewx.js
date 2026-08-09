@@ -80,6 +80,9 @@ export function parseKIndexPayload(json) {
 
 // 10.7 cm solar flux → operating interpretation.
 export function interpretSFI(sfi) {
+  if (typeof sfi !== 'number' || !isFinite(sfi)) {
+    return { label: 'UNKNOWN', note: 'No solar-flux reading available.' };
+  }
   if (sfi < 70)  return { label: 'VERY LOW',  note: 'Only lower bands reliable (2–10 MHz). 14 MHz marginal, above that mostly closed.' };
   if (sfi < 90)  return { label: 'LOW',       note: 'Lower bands solid; 14 MHz usable daytime; 18+ MHz unreliable.' };
   if (sfi < 120) return { label: 'MODERATE',  note: '14–18 MHz good daytime; 21 MHz opens on better days.' };
@@ -89,6 +92,9 @@ export function interpretSFI(sfi) {
 
 // Planetary K-index → geomagnetic interpretation (NOAA G-scale aligned).
 export function interpretKp(kp) {
+  if (typeof kp !== 'number' || !isFinite(kp)) {
+    return { label: 'UNKNOWN', degraded: false, note: 'No geomagnetic reading available.' };
+  }
   if (kp < 3)  return { label: 'QUIET',       degraded: false, note: 'Geomagnetic field quiet — normal HF conditions.' };
   if (kp < 5)  return { label: 'UNSETTLED',   degraded: false, note: 'Some fading/flutter possible, high-latitude paths first.' };
   if (kp < 7)  return { label: 'STORM (G1–G2)', degraded: true, note: 'HF degraded — absorption and fading, worst on polar/high-latitude paths.' };

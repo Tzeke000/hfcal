@@ -28,6 +28,7 @@ Ten-item sweep, mostly new ground: August 2026 (app v1.30.0)
 Built-but-unwired sweep: August 2026 (app v1.31.0)
 Repository reorganisation and CI: August 2026 (app v1.32.0-1.33.0)
 CI made to actually pass: August 2026 (app v1.34.0-1.35.0)
+Fresh-eyes bug hunt: August 2026 (app v1.36.0)
 
 ---
 
@@ -2228,6 +2229,51 @@ the logs rather than by reasoning about what should have happened.
   a real path and watching it name the file and the target.
 - A fresh `git clone` was checked end to end — build, 231 unit tests, and the
   Python mirror — to confirm the reorganisation left nothing uncommitted.
+
+## Part 29 — A fresh-eyes bug hunt (v1.36.0)
+
+A pass looking specifically for logic bugs, unwired capability, and wrong math,
+rather than re-walking known ground. Four genuine defects — reported as four,
+not padded to a round number, because that is what the code actually had.
+
+**1. The AI `calculate()` promise resolved with the PREVIOUS answer.** The
+`window.HFCalc.calculate()` bridge clicked CALCULATE, then polled
+`getResults()` and resolved on the first truthy value — which was the prior
+calculation's results, still sitting in state. Two back-to-back calls could
+hand the first call's numbers back as the answer to the second, and a call
+whose inputs failed validation resolved with the stale success instead of
+reporting the failure. Fixed with a monotonic `calc_seq` stamped into every
+result: the poll now snapshots the current sequence, clicks, and resolves only
+on a higher one — or rejects on timeout, naming the likely cause.
+
+**2. One legacy saved-shot crashed the whole Saved Shots list.**
+`formatCommCard` was hardened against shots from older app versions (Part 25),
+but `shotLabel` was not — and `shotLabel` is rendered per row, so a single shot
+missing `distKm` or `freqMHz` threw during render and took the entire card down
+with it. Same for `commCardFilename`. Both now degrade to `?` on a missing
+field.
+
+**3. A missing space-weather reading was reported as a severe storm.**
+`interpretSFI(NaN)` and `interpretKp(NaN)` fell through every threshold and
+returned the last branch — `VERY HIGH` flux and `SEVERE STORM` geomagnetics.
+The upstream parsers return `null` on junk, so this needed a genuinely
+NaN-but-numeric path to trigger, but the functions are exported and simply
+wrong: a missing reading is now `UNKNOWN`, and `interpretKp` reports
+`degraded: false` rather than flagging a storm that is not there.
+
+**4. The propagation verdict was not in the AI snapshot.** `getResults()`
+returned distance, bearing, wire and antenna geometry — but not the MUF, FOT,
+LUF or the frequency verdict, which is the entire point of the tool. An agent
+could read where to point the antenna but not whether the assigned frequency
+would close the path. Added `frequency_check` to the snapshot, computed exactly
+as the on-screen panels compute it.
+
+Three browser tests and five unit tests were added, each of which fails against
+the code as it stood before its fix. The rest of the sweep — the coordinate
+parser across fourteen formats, the foF2 table across the December/January,
+midnight and dateline seams, the compass turn math, the wire velocity factors,
+the terrain takeoff adjustments, the offline navigation fallback — was checked
+and found correct.
 
 ## Limitations
 

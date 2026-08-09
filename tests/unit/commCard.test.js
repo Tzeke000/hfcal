@@ -146,3 +146,26 @@ test('the card carries the settings its frequencies depend on', function() {
   assert.match(card, /POWER\s+20 W/, 'the power that set the LUF must be on the card');
   assert.match(card, /MONTH\s+AUG/, 'the month that set the MUF must be on the card');
 });
+
+
+// ── Legacy-shot robustness in the LIST, not just the exporter (v1.36) ────────
+// shotLabel is rendered per row in the Saved Shots card, so a throw here takes
+// the whole list down. A shot saved by an older app version can be missing
+// distKm or freqMHz.
+
+test('shotLabel survives a shot missing distKm and freqMHz', function() {
+  assert.doesNotThrow(function() { shotLabel({ antenna: { name: 'INVERTED-V' } }); });
+  const label = shotLabel({ antenna: { name: 'INVERTED-V' } });
+  assert.ok(typeof label === 'string' && label.length > 0);
+  assert.match(label, /INVERTED-V/);
+});
+
+test('shotLabel shows real values when present', function() {
+  assert.match(shotLabel({ freqMHz: 7.3, distKm: 1200, antenna: { name: 'DIPOLE' } }),
+    /7\.3 MHz · 1200 km · DIPOLE/);
+});
+
+test('commCardFilename survives a shot with no frequency', function() {
+  assert.doesNotThrow(function() { commCardFilename({}); });
+  assert.match(commCardFilename({ dtg: '091200Z AUG 26', freqMHz: 7.3 }), /7\.3MHz\.txt$/);
+});

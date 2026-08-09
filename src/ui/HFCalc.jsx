@@ -1902,7 +1902,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  231 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  236 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2899,6 +2899,12 @@ export default function HFCalc() {
   // Tracks whether the user has run a calculation at least once. After that,
   // results recompute live (debounced) as inputs change — see the effect below.
   var hasCalculatedRef = useRef(false);
+  // Monotonic calculation counter, stamped into results. The AI-layer
+  // calculate() promise used to poll getResults() and resolve on the FIRST
+  // truthy answer — which was the PREVIOUS calculation's results, still in
+  // state, delivered as if they answered the new request. Worse, when the new
+  // inputs failed validation the old results were returned as a success.
+  var calcSeqRef = useRef(0);
   // The AI-integration effect re-binds on every state change; this guard keeps
   // the URL-parameter import to a single application per page load so it
   // can't clobber user edits on re-binds.
@@ -2909,6 +2915,7 @@ export default function HFCalc() {
   // Build the full results object from already-validated inputs. Shared by the
   // CALCULATE button and the live auto-recompute effect so both stay in sync.
   function buildResults(p1, p2, fMHz) {
+    calcSeqRef.current += 1;
     var geo = geodesics(p1.lat, p1.lon, p2.lat, p2.lon);
     // Compute VF from selected core + gauge using new physics
     var vf = computeVF(wireCore, effectiveGauge);
@@ -2926,6 +2933,7 @@ export default function HFCalc() {
       directive.magBearing = trueToMagnetic(geo.bearing, declDeg);
     }
     return {
+      calcSeq: calcSeqRef.current,
       geo: geo, lengths: lengths, antennaData: antennaData,
       freq: fMHz, wireType: wireType,
       wireCore: wireCore, wireGauge: effectiveGauge, vf: vf,
@@ -3091,6 +3099,9 @@ export default function HFCalc() {
         // Returns a JSON-safe snapshot of the latest calculation, or null
         if (!results) return null;
         return JSON.parse(JSON.stringify({
+          // Which calculation produced this — external callers use it to tell a
+          // fresh answer from the previous one still in state.
+          calc_seq: results.calcSeq || 0,
           distance: { km: results.geo.distKm, mi: results.geo.distMi },
           bearing: { deg: results.geo.bearing, cardinal: bearingToCardinal(results.geo.bearing) },
           frequency_mhz: results.freq,
@@ -3113,6 +3124,31 @@ export default function HFCalc() {
             chordal_hop_possible: !!results.directive.chordal,
           },
           leg_end_height_m: legEndHeight,
+          // The propagation answer itself — the point of the whole tool. Absent
+          // until now: an agent could read the antenna geometry but not whether
+          // the assigned frequency would actually close the path. Computed the
+          // same way the Frequency Check and Forecast panels compute it.
+          frequency_check: (function() {
+            if (!pathCtx) return null;
+            var a = assessFrequency({
+              takeoffDeg: results.directive.mufTakeoffDeg, layerKm: HOP.F2.hKm,
+              midLon: pathCtx.midLon, latDeg: pathCtx.midLat,
+              magLatDeg: pathCtx.magLatDeg, modipDeg: pathCtx.modipDeg,
+              ends: pathCtx.ends, bounces: pathCtx.bounces, hops: pathCtx.hops,
+              distKm: results.geo.distKm, txWatts: txWatts, month: month,
+              utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
+              sfi: cachedSFI(), freqMHz: results.freq,
+            });
+            if (!a) return null;
+            return {
+              muf_mhz: a.muf, fot_mhz: a.fot, luf_mhz: a.luf,
+              suggested_mhz: a.suggestedMHz,
+              tx_watts: a.txWatts,
+              path_closed: a.pathClosed,
+              using_default_solar: a.usingDefaultSolar,
+              verdict: a.verdict ? { code: a.verdict.code, label: a.verdict.label, ok: a.verdict.ok } : null,
+            };
+          })(),
           recommended_antennas: results.antennaData.antennas.map(function(a) {
             // Same computation the antenna cards display (see apexHeightPlan)
             var kind = (a.imageKey === 'nvis_invertedv' || a.imageKey === 'nvis_dipole') ? 'nvis'
@@ -3165,8 +3201,15 @@ export default function HFCalc() {
               setCustomGauge(g);
             }
           }
-          // Wait for state to flush, then click CALCULATE, then poll for results
+          // Snapshot which calculation is currently showing, THEN click, THEN
+          // wait for a result with a NEWER sequence number. This used to
+          // resolve on the first truthy getResults() — i.e. the PREVIOUS
+          // calculation, handed back as the answer to this request; and when
+          // the new inputs failed validation, the stale success stood in for
+          // the failure entirely.
           setTimeout(function() {
+            var beforeR = (window.HFCalc && window.HFCalc.getResults) ? window.HFCalc.getResults() : null;
+            var beforeSeq = beforeR ? (beforeR.calc_seq || 0) : 0;
             var btns = document.querySelectorAll('button');
             var clicked = false;
             for (var i = 0; i < btns.length; i++) {
@@ -3177,16 +3220,16 @@ export default function HFCalc() {
               }
             }
             if (!clicked) { reject(new Error('Calculate button not found')); return; }
-            // Poll up to 1s for results to populate
             var tries = 0;
             var poll = setInterval(function() {
               tries++;
-              if (window.HFCalc && window.HFCalc.getResults && window.HFCalc.getResults()) {
+              var r = (window.HFCalc && window.HFCalc.getResults) ? window.HFCalc.getResults() : null;
+              if (r && (r.calc_seq || 0) > beforeSeq) {
                 clearInterval(poll);
-                resolve(window.HFCalc.getResults());
+                resolve(r);
               } else if (tries > 20) {
                 clearInterval(poll);
-                reject(new Error('Calculation did not produce results — check inputs'));
+                reject(new Error('Calculation did not produce a new result — check inputs (invalid location or frequency outside 1-30 MHz)'));
               }
             }, 50);
           }, 60);

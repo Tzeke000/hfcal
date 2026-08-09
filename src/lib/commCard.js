@@ -104,12 +104,18 @@ export function formatCommCard(shot) {
 
 // Short one-line label for the saved-shots list.
 export function shotLabel(shot) {
-  return shot.freqMHz + ' MHz · ' + shot.distKm.toFixed(0) + ' km · '
-    + (shot.antenna ? shot.antenna.name : 'no antenna');
+  // Rendered per row in the Saved Shots list. A shot saved by an older app
+  // version can be missing distKm or freqMHz, and a throw here takes the whole
+  // list down, not just this row — same failure mode formatCommCard was
+  // hardened against.
+  var f = (shot.freqMHz != null) ? shot.freqMHz : '?';
+  var d = (typeof shot.distKm === 'number' && isFinite(shot.distKm)) ? shot.distKm.toFixed(0) : '?';
+  return f + ' MHz · ' + d + ' km · ' + (shot.antenna ? shot.antenna.name : 'no antenna');
 }
 
 // Filename-safe export name.
 export function commCardFilename(shot) {
   var d = (shot.dtg || '').replace(/[^0-9A-Z]/gi, '');
-  return 'HFPLAN_' + (d || 'SHOT') + '_' + shot.freqMHz + 'MHz.txt';
+  var f = (shot.freqMHz != null) ? shot.freqMHz : 'X';
+  return 'HFPLAN_' + (d || 'SHOT') + '_' + f + 'MHz.txt';
 }

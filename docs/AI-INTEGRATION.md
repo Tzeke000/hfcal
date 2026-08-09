@@ -167,6 +167,9 @@ Clear all inputs and results.
 
 ```javascript
 {
+  calc_seq: 7,                        // NEW (v1.36): increments every calculation.
+                                      //   Poll this to tell a fresh answer from
+                                      //   the previous one still in state.
   distance: { km: 9068.4, mi: 5635.6 },
   bearing: { deg: 92.7, cardinal: 'E' },
   frequency_mhz: 14.2,
@@ -191,6 +194,17 @@ Clear all inputs and results.
   },
 
   leg_end_height_m: 0.0762,           // NEW: leg end height used by the apex optimizer
+
+  frequency_check: {                  // NEW (v1.36): the propagation verdict —
+    muf_mhz: 18.4,                    //   the point of the whole tool. null only
+    fot_mhz: 14.2,                    //   before the ionospheric context exists.
+    luf_mhz: 6.2,                     //   Same numbers the Frequency Check panel
+    suggested_mhz: 14.2,             //   shows, evaluated at the current UTC hour.
+    tx_watts: 20,
+    path_closed: false,              //   true when LUF > MUF: nothing will close it
+    using_default_solar: true,       //   true when no NOAA reading is cached
+    verdict: { code: 'good', label: 'GOOD', ok: true },
+  },
 
   recommended_antennas: [
     // height_plan is non-null for inverted-V / dipole / NVIS types on
