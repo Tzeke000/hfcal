@@ -25,19 +25,47 @@ function findChromium() {
   if (process.env.HFCALC_CHROMIUM) {
     return existsSync(process.env.HFCALC_CHROMIUM) ? process.env.HFCALC_CHROMIUM : null;
   }
-  const roots = [process.env.PLAYWRIGHT_BROWSERS_PATH, '/opt/pw-browsers',
-    join(process.env.HOME || '', '.cache/ms-playwright')].filter(Boolean);
-  for (const root of roots) {
-    if (!existsSync(root)) continue;
-    const direct = join(root, 'chromium');
-    if (existsSync(direct) && !isDir(direct)) return direct;
+  for (const root of browserRoots()) {
     for (const entry of readdirSync(root)) {
       if (!entry.startsWith('chromium')) continue;
-      for (const rel of ['chrome-linux/chrome', 'chrome-mac/Chromium.app/Contents/MacOS/Chromium',
-        'chrome-win/chrome.exe']) {
-        const p = join(root, entry, rel);
-        if (existsSync(p)) return p;
-      }
+      const found = findExecutable(join(root, entry), 3);
+      if (found) return found;
+    }
+    // A bare binary dropped straight into the root (how this sandbox does it).
+    const direct = join(root, 'chromium');
+    if (existsSync(direct) && !isDir(direct)) return direct;
+  }
+  return null;
+}
+
+function browserRoots() {
+  return [process.env.PLAYWRIGHT_BROWSERS_PATH, '/opt/pw-browsers',
+    join(process.env.HOME || '', '.cache/ms-playwright'),
+    join(process.env.LOCALAPPDATA || '', 'ms-playwright'),
+  ].filter(p => p && existsSync(p) && isDir(p));
+}
+
+// Playwright has changed this layout more than once — chrome-linux/chrome
+// became chrome-linux64/chrome when it moved to Chrome for Testing, which is
+// what broke CI on the first run of the test workflow: the download succeeded
+// and the harness looked in the old place. Searching for the executable beats
+// guessing where this version decided to put it.
+const EXE_NAMES = new Set(['chrome', 'chrome.exe', 'chromium', 'Chromium',
+  'headless_shell', 'chrome-headless-shell']);
+
+function findExecutable(dir, depth) {
+  if (depth < 0 || !existsSync(dir) || !isDir(dir)) return null;
+  let entries;
+  try { entries = readdirSync(dir); } catch { return null; }
+  for (const e of entries) {
+    const p = join(dir, e);
+    if (EXE_NAMES.has(e) && !isDir(p)) return p;
+  }
+  for (const e of entries) {
+    const p = join(dir, e);
+    if (isDir(p)) {
+      const hit = findExecutable(p, depth - 1);
+      if (hit) return hit;
     }
   }
   return null;
@@ -56,7 +84,13 @@ export function browserAvailable() {
   // not happen — the same defect as a validation mirror quietly falling back to
   // a rougher model. CI sets HFCALC_REQUIRE_BROWSER=1 and this turns fatal.
   if (why && process.env.HFCALC_REQUIRE_BROWSER === '1') {
-    throw new Error('browser tests are required here but cannot run: ' + why);
+    const seen = browserRoots().map(r => {
+      let ls = [];
+      try { ls = readdirSync(r); } catch { /* unreadable */ }
+      return '  ' + r + ' -> ' + (ls.join(', ') || '(empty)');
+    }).join('\n');
+    throw new Error('browser tests are required here but cannot run: ' + why
+      + '\nSearched:\n' + (seen || '  (no browser roots exist)'));
   }
   return why;
 }
