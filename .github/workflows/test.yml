@@ -21,6 +21,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      # Hooks-only lint: a missing dependency-array entry served stale state
+      # through the AI layer for two releases before a test caught it. This
+      # makes that whole defect class a build failure.
+      - run: npm run lint
       - run: npm test
 
   browser:

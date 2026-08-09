@@ -2966,7 +2966,11 @@ export default function HFCalc() {
 
   // Build the full results object from already-validated inputs. Shared by the
   // CALCULATE button and the live auto-recompute effect so both stay in sync.
-  function buildResults(p1, p2, fMHz) {
+  // useCallback so buildResults' OWN dependency list is the single checked
+  // contract for its free variables, instead of two downstream dep lists
+  // having to cover them by coincidence — the class that served stale
+  // month/power through the AI layer (Part 31).
+  var buildResults = useCallback(function(p1, p2, fMHz) {
     calcSeqRef.current += 1;
     var geo = geodesics(p1.lat, p1.lon, p2.lat, p2.lon);
     // Compute VF from selected core + gauge using new physics
@@ -2991,7 +2995,7 @@ export default function HFCalc() {
       wireCore: wireCore, wireGauge: effectiveGauge, vf: vf,
       p1: p1, p2: p2, terrain: terrain, directive: directive
     };
-  }
+  }, [wireType, wireCore, effectiveGauge]);
 
   var calculate = useCallback(function() {
     var errs = { loc1: '', loc2: '', freq: '' };
@@ -3010,7 +3014,7 @@ export default function HFCalc() {
     hasCalculatedRef.current = true;
     setResults(newResults);
     return newResults;
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge]);
+  }, [loc1, loc2, freq, buildResults]);
 
   // Remember the last known-good station pair (see LOCS_KEY above).
   useEffect(function() {
@@ -3018,6 +3022,13 @@ export default function HFCalc() {
     // from a ?from=/?to= link belong to whoever sent the link, and caching
     // them silently overwrote the operator's own last known-good pair.
     if (results && !urlSuppliedLocsRef.current) saveCachedLocs(loc1, loc2);
+    // Deps are [results] ON PURPOSE. The loc strings captured at the render
+    // where results changed are exactly the pair that PRODUCED those results.
+    // Listing loc1/loc2 would run this on every keystroke while `results` is
+    // still truthy from the previous calc — caching unvalidated garbage as
+    // the "known-good" pair. The rule is right that the lists differ; the
+    // difference is the point.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
 
   // Live auto-recompute: once the user has calculated once, any change to the
@@ -3037,7 +3048,7 @@ export default function HFCalc() {
       setResults(buildResults(p1, p2, fMHz));
     }, 250);
     return function() { clearTimeout(t); };
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge]);
+  }, [loc1, loc2, freq, buildResults]);
 
   // ── AI / EXTERNAL INTEGRATION LAYER ─────────────────────────────────────────
   // Lets external agents (Ava, Claude Code, browser-automation tools, or any
@@ -3441,7 +3452,7 @@ export default function HFCalc() {
   // and its contents disagreed, so getResults().frequency_check served stale
   // month/power to any external caller until some OTHER listed input changed.
   // The same class as every duplicated-fact bug in docs/VALIDATION.md Part 27.
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, legEndHeight, month, txWatts]);
+  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, pathCtx, legEndHeight, month, txWatts]);
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 calc(60px + env(safe-area-inset-bottom)) 0' }}>

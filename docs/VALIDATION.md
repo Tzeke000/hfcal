@@ -31,6 +31,7 @@ CI made to actually pass: August 2026 (app v1.34.0-1.35.0)
 Fresh-eyes bug hunt: August 2026 (app v1.36.0)
 Found-but-unfixed cleanup and icon badge: August 2026 (app v1.37.0)
 Remaining ledger cleared: August 2026 (app v1.38.0)
+Hooks lint, dep-contract fixes: August 2026 (app v1.39.0)
 
 ---
 
@@ -2396,6 +2397,46 @@ to fifteen decimal places, which is what found it.
   not an engineering task.
 
 238 unit tests, 31 browser tests.
+
+## Part 32 — Making the dep-list defect class a build failure (v1.39.0)
+
+Part 31 ended with a React dependency array whose contents disagreed with its
+closure — stale month and power served through the AI layer for two releases.
+That is an *instance*. The class is mechanically detectable, and this project
+had never run the detector.
+
+`eslint-plugin-react-hooks` now runs over `src/` with exactly two rules —
+`rules-of-hooks` and `exhaustive-deps`, both as errors, nothing else. This is
+deliberately not a style linter: style rules would bury the one signal this
+config exists to surface.
+
+**First run: five findings. Four were real, one was intentional.**
+
+- `buildResults` was a plain function whose free variables two downstream
+  dependency lists had to cover *by coincidence* — the same two-place contract
+  that broke in Part 31. It is now a `useCallback` whose own dependency list
+  is the single checked contract; the two consumers list `buildResults`
+  itself.
+- The API binding effect was missing `pathCtx` (covered indirectly through
+  `results`; now stated directly).
+- The compass card's `attach` handler could not be listed honestly in the two
+  effects that call it because its identity changed every render. The
+  sensor handlers are now `useCallback`s and both effects list `attach`.
+- The remembered-locations effect deliberately lists `[results]` without the
+  `loc1`/`loc2` its closure reads — because the pair captured at the render
+  where `results` changed is exactly the pair that *produced* those results,
+  while listing them would cache unvalidated keystrokes as the "known-good"
+  pair. That one carries an inline disable with the reason, which is the
+  honest shape for an intentional exception: visible, justified, and local.
+
+`npm run lint` is wired into the CI unit-test job, so the class is now a
+build failure rather than a Part 31 postscript.
+
+**CI verified rather than assumed** (the Part 28 rule): the test workflow is
+green on both of the last two pushes, and the Android build ran green *with*
+its new tests gate — the first gated run of the workflows Part 31 changed.
+
+238 unit tests, 31 browser tests, lint clean.
 
 ## Limitations
 

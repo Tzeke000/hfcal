@@ -9,7 +9,7 @@
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { T } from './theme.js';
 import {
   declination, trueToMagnetic, norm360, relativeTurn, formatDeclination,
@@ -61,16 +61,20 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     ? trueToMagnetic(targetBearingTrue, decl) : null;
   var turn = (liveHeading !== null && targetMag !== null) ? relativeTurn(liveHeading, targetMag) : null;
 
-  function detach() {
+  // useCallback so `attach` has a stable identity and can be listed honestly
+  // in the dependency arrays of the effects that use it (Part 32 — the hooks
+  // lint made every closure/dep-list mismatch an error after one of them
+  // served stale state through the AI layer for two releases).
+  var detach = useCallback(function() {
     if (handlerRef.current) {
       window.removeEventListener('deviceorientationabsolute', handlerRef.current);
       window.removeEventListener('deviceorientation', handlerRef.current);
       handlerRef.current = null;
     }
-  }
-  useEffect(function() { return detach; }, []);
+  }, []);
+  useEffect(function() { return detach; }, [detach]);
 
-  function onOrientation(e) {
+  var onOrientation = useCallback(function(e) {
     var h = null;
     if (typeof e.webkitCompassHeading === 'number' && isFinite(e.webkitCompassHeading)) {
       h = e.webkitCompassHeading;                  // iOS: already magnetic heading
@@ -83,12 +87,12 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
       setStale(false);
       setStatus('active');
     }
-  }
+  }, []);
 
   // Attach the sensor listeners. Separate from start() because re-opening the
   // card (or returning to the tab) must re-attach WITHOUT re-prompting for
   // permission — iOS only grants requestPermission() from a user gesture.
-  function attach() {
+  var attach = useCallback(function() {
     detach();
     handlerRef.current = onOrientation;
     window.addEventListener('deviceorientationabsolute', onOrientation);
@@ -99,7 +103,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
       // Nothing arrived at all -> there is no usable magnetometer here.
       if (!lastFixRef.current) setStatus(function(cur) { return cur === 'active' ? cur : 'unsupported'; });
     }, 2500);
-  }
+  }, [detach, onOrientation]);
 
   function start() {
     if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') {
@@ -154,7 +158,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     }
     document.addEventListener('visibilitychange', onVis);
     return function() { document.removeEventListener('visibilitychange', onVis); };
-  }, [open, status]);
+  }, [open, status, attach]);
 
   // ── dial ──
   var R = 86, CX = 100, CY = 100;

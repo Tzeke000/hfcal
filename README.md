@@ -149,6 +149,7 @@ and the evidence supporting it.
 npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
+npm run lint         # hooks-only lint: dependency-array bugs are build failures
 npm test             # 238 unit tests over the physics, terrain and coordinate math
 npm run test:ui      # 31 browser tests: builds dist/, drives it in Chromium
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
