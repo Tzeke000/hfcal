@@ -12,7 +12,7 @@ Reads the version from package.json (single source of truth), composites a
                                 corner text) fits the W3C maskable safe zone
                                 (central circle, radius 40% of icon width)
 
-Usage: python3 scripts/generate-icons.py   (run from the repo root)
+Usage: python3 scripts/assets/generate-icons.py   (run from the repo root)
 Requires: pillow  (pip install pillow)
 
 Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S. — USMC.
@@ -23,8 +23,19 @@ import json, os, sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SOURCE = os.path.join(ROOT, 'scripts', 'icon-source.png')
+SOURCE = os.path.join(ROOT, 'scripts', 'assets', 'icon-source.png')
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+
+def write_badge_record(version):
+    """docs a sidecar the test suite checks: icons must match package.json.
+
+    The badge sat at its v1.7-era value through thirty version bumps because
+    regeneration relied on somebody remembering a comment. A sidecar plus a
+    test turns forgetting into a failing build instead of a stale icon.
+    """
+    with open(os.path.join(ROOT, 'public', 'icon-badge-version.txt'), 'w') as fh:
+        fh.write(version + '\n')
+
 
 def main():
     version = json.load(open(os.path.join(ROOT, 'package.json')))['version']
@@ -76,6 +87,9 @@ def main():
 
     print(f'Icons regenerated with badge "{badge_text}" '
           f'(corner radius {corner_r_512}px, maskable bg {bg})')
+
+    write_badge_record(version)
+
 
 if __name__ == '__main__':
     main()

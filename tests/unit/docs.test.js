@@ -69,3 +69,20 @@ test('the npm scripts point at directories that exist', function() {
     }
   }
 });
+
+
+test('the app-icon badge matches package.json', function() {
+  // The icon badge is baked into PNGs by scripts/assets/generate-icons.py and
+  // sat at its v1.7-era value through thirty version bumps, because
+  // regeneration relied on somebody remembering a source comment. The
+  // generator now records what it baked; this asserts it matches the version
+  // that ships. When this fails: python3 scripts/assets/generate-icons.py
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+  const sidecar = join(ROOT, 'public', 'icon-badge-version.txt');
+  assert.ok(existsSync(sidecar),
+    'no icon-badge record — run python3 scripts/assets/generate-icons.py');
+  const baked = readFileSync(sidecar, 'utf8').trim();
+  assert.equal(baked, pkg.version,
+    'icon badge was generated at v' + baked + ' but the app is v' + pkg.version
+    + ' — run python3 scripts/assets/generate-icons.py');
+});

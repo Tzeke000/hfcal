@@ -34,11 +34,28 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
   var lastFixRef = useRef(0);
   var grantedRef = useRef(false);   // permission already granted this session
 
+  // Continuous (unwrapped) rotation for the dial. Feeding norm360 headings
+  // straight into an animated transform makes the card whirl 358 degrees the
+  // long way round every time the heading crosses north — precisely where an
+  // operator is most likely to be aiming. Accumulate the short-way delta
+  // instead. (Assigning the ref during render is safe here: after prev is set
+  // to the current heading, a repeated render adds exactly zero.)
+  var rotRef = useRef(0);
+  var prevHeadingRef = useRef(null);
+
   var decl = (typeof selfLat === 'number' && typeof selfLon === 'number')
     ? declination(selfLat, selfLon) : null;
   var hasDecl = typeof decl === 'number';
   // A stale reading is treated as no reading — never draw a needle that is not live.
   var liveHeading = (headingMag !== null && !stale) ? headingMag : null;
+  if (liveHeading !== null) {
+    if (prevHeadingRef.current !== null) {
+      rotRef.current += relativeTurn(prevHeadingRef.current, liveHeading);
+    } else {
+      rotRef.current = liveHeading;
+    }
+    prevHeadingRef.current = liveHeading;
+  }
   var headingTrue = (liveHeading !== null && hasDecl) ? norm360(liveHeading + decl) : null;
   var targetMag = (typeof targetBearingTrue === 'number' && hasDecl)
     ? trueToMagnetic(targetBearingTrue, decl) : null;
@@ -111,6 +128,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     } else {
       detach();
       setHeadingMag(null);   // nothing stale left to draw
+      prevHeadingRef.current = null;   // restart the unwrapped rotation cleanly
       setStale(false);
     }
   }
@@ -206,7 +224,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
                 {/* fixed index — the direction the phone is pointing */}
                 <polygon points={(CX - 9) + ',6 ' + (CX + 9) + ',6 ' + CX + ',20'} fill={T.warn} />
                 <circle cx={CX} cy={CY} r={R} fill={T.bg} stroke={T.borderHi} strokeWidth="2" />
-                <g transform={'rotate(' + (liveHeading === null ? 0 : -liveHeading) + ' ' + CX + ' ' + CY + ')'}
+                <g transform={'rotate(' + (liveHeading === null ? 0 : -rotRef.current) + ' ' + CX + ' ' + CY + ')'}
                    style={{ transition: 'transform 120ms linear', opacity: liveHeading === null ? 0.25 : 1 }}>
                   {ticks}{cards}{targetMark}
                 </g>

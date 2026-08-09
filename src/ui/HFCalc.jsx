@@ -14,7 +14,8 @@ import {
 } from "../lib/spacewx.js";
 import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAULT_SSN,
          FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source,
-         FOF2_SIGMA_TABLE, MFACTOR_ACCURACY_PCT } from "../physics/freqAdvisor.js";
+         FOF2_SIGMA_TABLE, MFACTOR_ACCURACY_PCT,
+         cosZenith, solarDeclination } from "../physics/freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "../data/fof2Table.js";
 import { dtg } from "../lib/commCard.js";
 import { parseCoords, looksLikeMGRS } from "../lib/coords.js";
@@ -882,7 +883,13 @@ function usePWA() {
   function install() {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function() { setDeferredPrompt(null); setIsInstalled(true); });
+      // userChoice resolves on BOTH outcomes. This used to mark the app
+      // installed when the user dismissed the prompt, hiding the install card
+      // after a "no".
+      deferredPrompt.userChoice.then(function(choice) {
+        setDeferredPrompt(null);
+        if (choice && choice.outcome === 'accepted') setIsInstalled(true);
+      });
     }
   }
 
@@ -1354,6 +1361,16 @@ function PowerSelector({ watts, onWatts }) {
 function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, onWatts }) {
   var [open, setOpen] = useState(false);
   var [hourMode, setHourMode] = useState('now');
+  // "Now" used to be captured at render and never refreshed — leave the panel
+  // open and the assessment silently ages while still saying "Now". Tick once
+  // a minute while the panel is open so the clock the numbers are computed
+  // from is the clock on the wall.
+  var [, setClockTick] = useState(0);
+  useEffect(function() {
+    if (!open || hourMode !== 'now') return;
+    var id = setInterval(function() { setClockTick(function(t) { return t + 1; }); }, 60000);
+    return function() { clearInterval(id); };
+  }, [open, hourMode]);
 
   var freqMHz = parseFloat(freqStr);
   var nowUTC = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
@@ -1477,7 +1494,9 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                   <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55 }}>{v.note}</div>
                   {!v.ok && (
                     <div style={{ color: T.accentText, fontSize: '0.76rem', marginTop: 5 }}>
-                      {'Best available right now: ≈' + assess.suggestedMHz.toFixed(1) + ' MHz. Request an alternate near this if the assigned frequency fails.'}
+                      {assess.pathClosed
+                        ? 'Nothing closes this path right now (see above). When conditions lift, ≈' + assess.suggestedMHz.toFixed(1) + ' MHz is the first frequency to try.'
+                        : 'Best available right now: ≈' + assess.suggestedMHz.toFixed(1) + ' MHz. Request an alternate near this if the assigned frequency fails.'}
                     </div>
                   )}
                 </div>
@@ -1492,7 +1511,9 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                     </div>
                     {assess.bounceDetail.map(function(b, i) {
                       var limiting = b === worst;
-                      var lit = b.localSolarHour >= 6 && b.localSolarHour < 18;
+                      // Sun actually above the horizon HERE, not a 6-to-18
+                      // clock rule — which showed daylight in polar night.
+                      var lit = cosZenith(b.lat, b.localSolarHour, solarDeclination(month)) > 0;
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6, padding: '3px 0', color: limiting ? T.warn : T.textMute, fontSize: '0.66rem' }}>
                           <span style={{ fontWeight: limiting ? 700 : 400 }}>
@@ -1515,10 +1536,14 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
 
               {assess.endSolarHours && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 8 }}>
-                  {[['YOU', assess.endSolarHours[0]],
-                    ['MIDPOINT', assess.localSolarHour],
-                    ['TARGET', assess.endSolarHours[1]]].map(function(e) {
-                    var lit = e[1] >= 6 && e[1] < 18;
+                  {[['YOU', assess.endSolarHours[0], pathCtx && pathCtx.ends ? pathCtx.ends[0].lat : null],
+                    ['MIDPOINT', assess.localSolarHour, pathCtx ? pathCtx.midLat : null],
+                    ['TARGET', assess.endSolarHours[1], pathCtx && pathCtx.ends ? pathCtx.ends[1].lat : null]].map(function(e) {
+                    // Real solar geometry, same as the physics — a fixed
+                    // 6-to-18 rule is wrong through polar night and midnight sun.
+                    var lit = typeof e[2] === 'number'
+                      ? cosZenith(e[2], e[1], solarDeclination(month)) > 0
+                      : (e[1] >= 6 && e[1] < 18);
                     return (
                       <div key={e[0]} style={{ ...cell, borderColor: lit ? '#5a6b3a' : T.border }}>
                         <div style={cellLbl}>{e[0]}</div>
@@ -1902,7 +1927,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  236 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  238 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2448,6 +2473,14 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
 // pattern as the DAGR and About cards. Fully offline.
 function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, onWatts }) {
   var [open, setOpen] = useState(false);
+  // Same staleness as the Frequency Check panel: the NOW band was pinned to
+  // whenever the card last rendered. Tick once a minute while open.
+  var [, setClockTick] = useState(0);
+  useEffect(function() {
+    if (!open) return;
+    var id = setInterval(function() { setClockTick(function(t) { return t + 1; }); }, 60000);
+    return function() { clearInterval(id); };
+  }, [open]);
   var freqMHz = parseFloat(freqStr);
   var hasFreq = !isNaN(freqMHz) && freqMHz > 0;
 
@@ -2480,6 +2513,13 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
   var offset = -new Date().getTimezoneOffset() / 60;
   function localOf(z) { return ((z + offset) % 24 + 24) % 24; }
   function hh(h) { return String(Math.floor(h)).padStart(2, '0'); }
+  // Half-hour and 45-minute zones exist (India, Iran, Newfoundland, Nepal…).
+  // Flooring the hour put every local label silently 30-45 minutes off there.
+  function hhLocal(h) {
+    var mins = Math.round((h % 1) * 60);
+    if (mins === 60) { mins = 0; h = h + 1; }
+    return String(Math.floor(h) % 24).padStart(2, '0') + (mins ? ':' + String(mins).padStart(2, '0') : '');
+  }
 
   var SHORT = { good: 'GOOD', near_muf: 'NEAR MUF', low: 'ABSORB', above_muf: 'ABOVE MUF', below_luf: 'BELOW LUF' };
   function vColor(c) {
@@ -2539,14 +2579,16 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
                         {hh(b.startZ) + '–' + hh(b.endZ) + 'Z'}
                       </div>
                       <div style={{ color: b.isNow ? T.accentText : T.textMute, fontSize: '0.6rem', fontWeight: b.isNow ? 700 : 400 }}>
-                        {b.isNow ? 'NOW · ' : ''}{hh(localOf(b.startZ)) + '–' + hh(localOf(b.endZ)) + 'L'}
+                        {b.isNow ? 'NOW · ' : ''}{hhLocal(localOf(b.startZ)) + '–' + hhLocal(localOf(b.endZ)) + 'L'}
                       </div>
                     </div>
                     <div style={{ ...cell, color: b.luf >= b.muf ? T.warn : T.textMute }}>{b.luf.toFixed(1)}</div>
                     <div style={{ ...cell, color: T.accentText }}>{b.fot.toFixed(1)}</div>
                     <div style={{ ...cell, color: T.textSec }}>{b.muf.toFixed(1)}</div>
                     <div style={{ textAlign: 'right' }}>
-                      {b.verdict
+                      {b.luf >= b.muf
+                        ? <span style={{ color: T.warn, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em' }}>CLOSED</span>
+                        : b.verdict
                         ? <span style={{ color: vColor(b.verdict.code), fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em' }}>{SHORT[b.verdict.code]}</span>
                         : <span style={{ color: T.textDim, fontSize: '0.6rem' }}>{'aim ' + b.suggestedMHz.toFixed(1)}</span>}
                     </div>

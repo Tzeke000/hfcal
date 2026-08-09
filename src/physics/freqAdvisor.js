@@ -707,10 +707,15 @@ export function assessFrequency(params) {
     verdict = classifyFrequency(params.freqMHz, muf, luf);
   }
 
-  // Suggested frequency: aim at FOT, but never below LUF or above MUF.
+  // Suggested frequency: aim at FOT, but never below LUF or above MUF —
+  // and never outside 2-30 MHz. At solar max on a long path the FOT itself
+  // can sit above 30 MHz, which an AN/PRC-160 cannot dial; in deep polar
+  // night the MUF can sit under the 2 MHz noise floor. A suggestion the
+  // radio cannot tune is not a suggestion.
   var suggested = fot;
   if (suggested < luf) suggested = Math.min(luf + 0.5, muf);
   if (suggested > muf) suggested = muf;
+  suggested = Math.max(2, Math.min(30, suggested));
 
   // Local solar time at each station, so an operator can see at a glance
   // whether the far end is in daylight while they are in the dark.

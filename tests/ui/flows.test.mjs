@@ -446,6 +446,41 @@ describe('wired-up physics reaches the screen', { skip: SKIP, concurrency: 1 }, 
   });
 });
 
+describe('solar geometry on screen', { skip: SKIP, concurrency: 1 }, () => {
+  // The sun/moon markers in the Frequency Check used a hardcoded 6-to-18
+  // clock rule — at 78N in December, noon LOCAL SOLAR showed "daylight" in
+  // the middle of polar night, on an app whose whole pitch is real solar
+  // geometry. Fixed in v1.37 with the zenith angle the physics already uses.
+  test('polar night at noon shows dark, not daylight', async () => {
+    const page = await newPage(browser);
+    // Two stations at 78N in January, 300 km apart. Local solar noon at
+    // 20E is about 10:40Z; select 11Z from the hour picker.
+    await calculate(page, 'N 78:00:00 E 020:00:00', 'N 78:00:00 E 032:00:00');
+    await toggleCard(page, 'Frequency Check', 'OPEN');
+    await page.evaluate(() => {
+      const m = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'JAN');
+      if (m) m.click();
+    });
+    await page.waitForTimeout(200);
+    await page.locator('select').first().selectOption('11');
+    await page.waitForTimeout(400);
+    const cells = await page.evaluate(() => {
+      const out = {};
+      for (const lbl of ['YOU', 'TARGET']) {
+        const hit = [...document.querySelectorAll('div')]
+          .find(e => e.children.length === 0 && e.textContent.trim() === lbl);
+        if (hit && hit.parentElement) out[lbl] = hit.parentElement.textContent;
+      }
+      return out;
+    });
+    assert.ok(cells.YOU, 'YOU cell not found');
+    assert.match(cells.YOU, /dark/, '78N in January at solar noon must be dark: ' + cells.YOU);
+    assert.match(cells.TARGET, /dark/, 'target is in the same polar night: ' + cells.TARGET);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('AI integration layer', { skip: SKIP, concurrency: 1 }, () => {
   // window.HFCalc.calculate() used to poll getResults() and resolve on the
   // first truthy answer — which was the PREVIOUS calculation still in state.

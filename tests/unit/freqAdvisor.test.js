@@ -1024,3 +1024,22 @@ test('minOrderCorrection: an explicit sigma overrides the live source', function
   assert.ok(Math.abs(minOrderCorrection(2, 0.13) - (1 + 0.13 * 0.5642)) < 1e-9);
   assert.notEqual(minOrderCorrection(2, 0.13), minOrderCorrection(2, 0.012));
 });
+
+
+// ── The suggestion must be dialable (v1.37) ──────────────────────────────────
+// At solar max on a long path the FOT itself can sit above 30 MHz — which an
+// AN/PRC-160 cannot tune — and in deep polar night the MUF can sit under the
+// 2 MHz floor. Both escaped into "aim ≈33.3 MHz" style advice.
+
+test('suggested frequency never leaves the 2-30 MHz band', function() {
+  const solarMax = assessFrequency({ takeoffDeg: 3, layerKm: 360, midLon: 0,
+    latDeg: 20, magLatDeg: 15, modipDeg: 18, month: 3, utcHour: 14,
+    sfi: 250, distKm: 3800, hops: 1, txWatts: 150 });
+  assert.ok(solarMax.suggestedMHz <= 30,
+    'solar max suggested ' + solarMax.suggestedMHz + ' MHz — the radio tops out at 30');
+  const polarNight = assessFrequency({ takeoffDeg: 5, layerKm: 360, midLon: 20,
+    latDeg: 78, magLatDeg: 76, modipDeg: 78, month: 1, utcHour: 2,
+    sfi: 60, distKm: 3000, hops: 1, txWatts: 2 });
+  assert.ok(polarNight.suggestedMHz >= 2,
+    'polar night suggested ' + polarNight.suggestedMHz + ' MHz — below the noise floor');
+});
