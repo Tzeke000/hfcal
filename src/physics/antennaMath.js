@@ -1,4 +1,4 @@
-import { EARTH_RADIUS_KM, F2_HEIGHT_KM } from './propagation.js';
+import { EARTH_RADIUS_KM, F2_HEIGHT_KM, maxHopKm } from './propagation.js';
 // ── ANTENNA MATH ──────────────────────────────────────────────────────────────
 // Pure physics/math for the HF Field Antenna Calculator: wire velocity-factor
 // model, wavelength, length formatting, and apex-height planning.
@@ -145,7 +145,11 @@ export function toLengths(meters) {
 // to carry their own copy of each of these with a comment promising they
 // matched; a promise is not a constraint.
 export { F2_HEIGHT_KM, EARTH_RADIUS_KM } from './propagation.js';
-export const F2_MAX_HOP_KM = 4500; // matches HOP.F2.maxHopKm
+// Derived, never typed: this drifted to a hardcoded 4500 while the real
+// maxHopKm(360) is ~4186, so the antenna card and the Hop Analysis card
+// disagreed on hop count on one screen. Same class as the Earth-radius
+// triplication (VALIDATION Part 25).
+export const F2_MAX_HOP_KM = maxHopKm(F2_HEIGHT_KM);
 const MAX_LEG_SLOPE_DEG = 55;
 const PRACTICAL_MAST_FT = 60; // beyond typical field mast/tree reach
 

@@ -481,6 +481,69 @@ describe('solar geometry on screen', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
+  // The update button deleted the service worker and every cache with no
+  // connectivity check. Offline, that strips the only copy of the app and the
+  // reload lands on nothing — a bricked install in the field.
+  test('UPDATE NOW refuses to wipe caches while offline', async () => {
+    const page = await newPage(browser);
+    // Force a newer remote version so the banner arms, then go offline.
+    await page.route('**/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"version":"99.0.0"}' }));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.context().setOffline(true);
+
+    let swCleared = false;
+    await page.exposeFunction('__markSWCleared', () => { swCleared = true; });
+    await page.evaluate(() => {
+      if (navigator.serviceWorker) {
+        const orig = navigator.serviceWorker.getRegistrations.bind(navigator.serviceWorker);
+        navigator.serviceWorker.getRegistrations = function () { window.__markSWCleared(); return orig(); };
+      }
+    });
+
+    const btn = page.locator('button', { hasText: 'UPDATE NOW' });
+    if (await btn.count()) {
+      await btn.first().click();
+      await page.waitForTimeout(400);
+      const warned = await page.evaluate(() => /offline/i.test(document.body.innerText));
+      assert.ok(warned, 'offline update should warn, not silently proceed');
+    }
+    assert.equal(swCleared, false, 'the app cleared its service worker while offline');
+    await page.context().setOffline(false);
+    await page.context().close();
+  });
+
+  // Corrupt saved-shot data must never white-screen the app. Two layers now
+  // stand between it and a blank screen: loadShots/shotLabel tolerate junk,
+  // and the ErrorBoundary is the backstop for anything they miss. The app
+  // must come up either way.
+  test('garbage saved-shot data does not white-screen the app', async () => {
+    for (const junk of [
+      '{ not valid json',                                   // unparseable
+      'null',                                               // parses, not an array
+      JSON.stringify([{ freqMHz: 7.3 }, { antenna: {} }]),  // shots missing fields
+      JSON.stringify(['not an object', 42, null]),          // wrong element types
+    ]) {
+      const page = await newPage(browser);
+      await page.evaluate((j) => localStorage.setItem('hfcalc_shots_v1', j), junk);
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(300);
+      const txt = await page.evaluate(() => document.body.innerText);
+      assert.ok(/CALCULATE/.test(txt) || /RECOVERY/.test(txt),
+        'white screen on saved-shot data: ' + junk.slice(0, 40));
+      // If it did come up normally, opening the Saved Shots card must not throw.
+      if (/CALCULATE/.test(txt)) {
+        await calculate(page, CHERRY_POINT, OKINAWA);
+        await toggleCard(page, 'Saved Shots & Export', 'OPEN').catch(() => {});
+        await page.waitForTimeout(150);
+      }
+      await page.context().close();
+    }
+  });
+});
+
 describe('AI integration layer', { skip: SKIP, concurrency: 1 }, () => {
   // window.HFCalc.calculate() used to poll getResults() and resolve on the
   // first truthy answer — which was the PREVIOUS calculation still in state.
@@ -634,6 +697,34 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
     assert.doesNotMatch(blob, /\d{2}\.\d+\s*,\s*-?\d/, 'ping must not carry coordinates');
     assert.ok(res.result.version, 'ping should still identify the build');
     await page.context().close();
+  });
+
+  test('a cross-origin iframe is refused even with ?embed=1 in its own src', async () => {
+    // The attack the ?embed gate did not stop: the hostile page controls the
+    // iframe src, so it supplies ?embed=1 itself. The real gate is that the app
+    // is running in a cross-origin frame, which the framer cannot fake.
+    const ctx = await browser.newContext();
+    const outer = await ctx.newPage();
+    // Serve a tiny attacker page from a DIFFERENT origin (data: URL is opaque,
+    // i.e. cross-origin to our http origin) that frames the app with ?embed=1
+    // and relays any reply it gets back.
+    const html = `<!doctype html><iframe id=f src="${BASE_URL}?embed=1"></iframe>`
+      + `<script>let got='none';addEventListener('message',e=>{`
+      + `if(e.data&&e.data.type==='hfcalc:response'){got=JSON.stringify(e.data);}});`
+      + `document.getElementById('f').addEventListener('load',()=>setTimeout(()=>{`
+      + `document.getElementById('f').contentWindow.postMessage(`
+      + `{type:'hfcalc:request',id:9,method:'getInputs'},'*');},300));`
+      + `window.__got=()=>got;</script>`;
+    await outer.goto('data:text/html,' + encodeURIComponent(html), { waitUntil: 'load' });
+    await outer.waitForTimeout(1500);
+    const got = await outer.evaluate(() => window.__got());
+    if (got !== 'none') {
+      const resp = JSON.parse(got);
+      assert.equal(resp.ok, false, 'a cross-origin frame got a successful getInputs reply');
+      assert.equal(resp.result, undefined, 'a refusal must not carry coordinates');
+    }
+    // 'none' (no reply at all) is also an acceptable refusal.
+    await ctx.close();
   });
 
   test('with ?embed=1 the documented integration still works', async () => {

@@ -26,6 +26,9 @@ export const TERRAIN_DB = [
   { t:'ocean', n:'North Atlantic',       latMin:  0,  latMax: 65,  lonMin:-80,   lonMax:  0   },
   { t:'ocean', n:'South Atlantic',       latMin:-60,  latMax:  0,  lonMin:-65,   lonMax: 20   },
   { t:'ocean', n:'North Pacific',        latMin:  0,  latMax: 65,  lonMin:-180,  lonMax:-100  },
+  // Open NW/central Pacific east of Japan and the Philippine Sea to the
+  // dateline — was defaulting to land, wrecking WESTPAC path physics.
+  { t:'ocean', n:'NW Pacific',           latMin:  0,  latMax: 65,  lonMin: 145,  lonMax: 180  },
   { t:'ocean', n:'South Pacific',        latMin:-60,  latMax:  0,  lonMin:-180,  lonMax: -70  },
   { t:'ocean', n:'Indian Ocean',         latMin:-60,  latMax: 30,  lonMin: 20,   lonMax: 110  },
   { t:'ocean', n:'Southern Ocean',       latMin:-90,  latMax:-60,  lonMin:-180,  lonMax: 180  },

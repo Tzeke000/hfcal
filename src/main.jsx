@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import HFCalc from './ui/HFCalc.jsx';
+import { ErrorBoundary } from './ui/ErrorBoundary.js';
 
 // Register the service worker so the app works offline after first load.
 // Auto-update strategy: when a new version is deployed, fetch it in the
@@ -18,4 +19,8 @@ if (typeof window !== 'undefined') {
 }
 
 const root = createRoot(document.getElementById('root'));
-root.render(<HFCalc />);
+root.render(
+  <ErrorBoundary>
+    <HFCalc />
+  </ErrorBoundary>
+);

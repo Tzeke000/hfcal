@@ -32,6 +32,7 @@ Fresh-eyes bug hunt: August 2026 (app v1.36.0)
 Found-but-unfixed cleanup and icon badge: August 2026 (app v1.37.0)
 Remaining ledger cleared: August 2026 (app v1.38.0)
 Hooks lint, dep-contract fixes: August 2026 (app v1.39.0)
+External-review defects: August 2026 (app v1.40.0)
 
 ---
 
@@ -2437,6 +2438,80 @@ green on both of the last two pushes, and the Android build ran green *with*
 its new tests gate — the first gated run of the workflows Part 31 changed.
 
 238 unit tests, 31 browser tests, lint clean.
+
+## Part 33 — Eight defects from an external review (v1.40.0)
+
+An outside review of the shipped app, several findings independently confirmed
+by more than one reviewer. Every one was verified against the source before it
+was touched; all eight are fixed, each with a test that fails against the code
+as it stood.
+
+**Safety-critical**
+
+**1. UPDATE NOW bricked the app offline.** The update button unregistered the
+service worker and deleted every cache with no connectivity check. Offline —
+the field, the whole point of the app — that strips the only copy of the app
+and the reload lands on nothing. Now refused while `navigator.onLine` is false,
+with the cached app left working and the update held until there is signal.
+
+**2. The `?embed=1` gate did not gate anything.** A hostile page controls the
+iframe `src`, so it simply supplies `?embed=1` itself and read the operator's
+cached coordinates through `getInputs`. The real, unspoofable invariant is
+whether the app is running in a *cross-origin* frame — reading a cross-origin
+parent's location throws, and an attacker cannot make their page share our
+origin. The bridge now refuses every coordinate-bearing method to any
+cross-origin framer regardless of URL params. Two reviewers found the leak
+independently.
+
+**3. No ErrorBoundary — one corrupt saved shot white-screened the app on every
+launch.** A shot from an older version, or storage truncated mid-write, could
+throw at first render, and with no boundary React unmounts everything.
+`src/ui/ErrorBoundary.js` now catches any render throw and offers the one
+recovery an offline app can: wipe this app's local keys and reload. The
+saved-shot data path was also hardened so ordinary junk never reaches it.
+
+**Silent large errors**
+
+**4. The western North Pacific was classified as LAND.** The North Pacific
+ocean box stopped at −100°, so everything from 145°E to the dateline fell
+through to the land default. Tokyo→Honolulu scored 48% ocean and got land
+ground-physics on a path that is almost all water. One box for the open NW
+Pacific fixes it; Tokyo→Honolulu now reads 100% ocean.
+
+**5. MGRS grids on a band's minimum northing jumped ~2000 km north.**
+`floor((min−n)/2e6 + 1)` over-adds a full 2,000,000 m window whenever the term
+is an exact integer — a grid landing on its latitude band's minimum. `18QAC…`
+decoded to 33.4°N instead of 15.3°N. `ceil((min−n)/2e6)` is the canonical form:
+identical for non-integers, correct at the edge.
+
+**6. `calcTakeoffAngle` was handed the per-hop distance but treated it as the
+full path.** The angle geometry wants the per-hop distance and had it right,
+but the chordal test and the obstacle-position math are properties of the whole
+path — so obstacle distances were off by a factor of `hops`, and a 2-hop ocean
+path tested chordal on its half-length leg and silently lost it. The function
+now takes the full length and hop count separately.
+
+**7. A stale 4,500 km constant in `antennaMath`.** `F2_MAX_HOP_KM` was a
+hardcoded 4500 whose comment claimed it matched `HOP.F2.maxHopKm`; the real
+`maxHopKm(360)` is ~4186. At 4,300 km the antenna card said 1 hop / ~95 m apex
+while Hop Analysis said 2 hops / ~24 m on the same screen. Now derived from the
+same geometry, so there is one number. (A unit test had itself encoded the
+stale 4500 and was corrected.)
+
+**8. The compass latched "unsupported" on a quick open/close.** The 2,500 ms
+"no magnetometer" verdict timer was never cancelled on close, so opening then
+closing before the first reading fired the verdict anyway and locked the card
+— on a phone with a working compass. The timer is now cleared on detach.
+
+### Note on the "~15 smaller items"
+
+The review reportedly lists about fifteen further items with fixes. Only the
+eight above were quoted in enough detail to verify and fix. The rest are not
+actioned here because acting on a paraphrase risks the wrong fix — the full
+list, or the report itself, would let them be worked the same way: verify
+against source, fix, test.
+
+246 unit tests, 34 browser tests, lint clean.
 
 ## Limitations
 

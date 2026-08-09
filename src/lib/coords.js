@@ -136,7 +136,10 @@ const _MGRS = (function() {
     var easting = sepEasting + east100k;
     var northing = sepNorthing + north100k;
     var minNorthing = getMinNorthing(zoneLetter);
-    northing += Math.floor((minNorthing - northing) / 2000000 + 1) * 2000000;
+    // ceil, not floor(x+1): the two differ only when the quotient is an
+    // exact integer — a grid on its band's minimum northing — where
+    // floor(x+1) added a spurious 2,000,000 m (~2000 km north).
+    northing += Math.ceil((minNorthing - northing) / 2000000) * 2000000;
     return { zoneNumber: zoneNumber, zoneLetter: zoneLetter, easting: easting, northing: northing };
   }
 

@@ -140,3 +140,26 @@ test('never returns a partially-parsed result', function() {
     }
   });
 });
+
+// ── MGRS band-minimum northing edge (v1.40) ─────────────────────────────────
+// A grid landing exactly on its latitude band's minimum northing used to jump
+// a full 2,000,000 m (~18° / ~2000 km) north: floor((min-n)/2e6 + 1) added a
+// spurious window at the integer edge where ceil((min-n)/2e6) does not.
+// 18QAC00000 00000 sits on that edge — it is at 15.3N, not 33.4N.
+
+test('MGRS on a band-minimum northing does not jump 2000 km north', function() {
+  const r = parseCoords('18QAC0000000000');
+  assert.equal(r.error, null);
+  assert.ok(Math.abs(r.lat - 15.35) < 0.5,
+    'edge grid jumped: expected ~15.3N, got ' + r.lat.toFixed(2) + 'N');
+  assert.ok(r.lat < 24 && r.lat >= 16 - 1,
+    'decoded latitude must stay inside band Q (16-24N): ' + r.lat.toFixed(2));
+});
+
+test('ordinary MGRS grids still resolve correctly', function() {
+  // Guard against the edge fix breaking the common case.
+  const a = parseCoords('18SUJ2337106519');   // Washington DC area
+  assert.ok(Math.abs(a.lat - 38.89) < 0.1 && Math.abs(a.lon + 77.04) < 0.1);
+  const b = parseCoords('33UXP0500044000');   // Vienna area
+  assert.ok(Math.abs(b.lat - 48.24) < 0.2 && Math.abs(b.lon - 16.41) < 0.2);
+});

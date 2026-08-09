@@ -146,3 +146,19 @@ test('a zero-length path does not divide by zero', function() {
   assert.ok(isFinite(r.condMSm) && r.condMSm > 0);
   assert.ok(Math.abs(Object.values(r.fracs).reduce((x, y) => x + y, 0) - 1) < 1e-9);
 });
+
+// ── WESTPAC ocean coverage (v1.40) ─────────────────────────────────────────
+// The open North Pacific east of Japan (145E..dateline, north of the equator)
+// had no ocean box and defaulted to LAND, so Tokyo->Honolulu scored ~48%
+// ocean and got land ground-physics on a path that is almost all water.
+
+test('the open western North Pacific is ocean, not land', function() {
+  // A point in the empty NW Pacific, well east of Japan, west of the dateline.
+  assert.equal(classifyPoint(38, 165).type, 'ocean', '38N 165E should be open ocean');
+  assert.equal(classifyPoint(20, 150).type, 'ocean', '20N 150E should be open ocean');
+});
+
+test('Tokyo to Honolulu reads as an ocean path', function() {
+  const r = pathTerrainAnalysis(35.7, 139.7, 21.3, -157.9, 32);
+  assert.ok(r.oceanFrac > 0.9, 'expected a near-all-ocean WESTPAC path, got ' + r.oceanFrac);
+});

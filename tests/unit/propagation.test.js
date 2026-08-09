@@ -511,3 +511,26 @@ test('groundWaveMultiplier is anchored to average land', async function() {
     assert.ok(isFinite(groundWaveMultiplier(c)) && groundWaveMultiplier(c) >= 0);
   }
 });
+
+// ── Takeoff angle: hop distance vs full path (v1.40) ────────────────────────
+// calcHops passes the PER-HOP distance for the angle geometry, but the chordal
+// test and the obstacle-position math are properties of the WHOLE path. Passing
+// only one number made a 2-hop ocean path test chordal on its half-length leg
+// and silently lose it, and put obstacles at the wrong distance from the TX.
+
+test('chordal survives a multi-hop ocean path when the full length is given', function() {
+  const ocean = { oceanFrac: 0.95, mountainFrac: 0, desertFrac: 0 };
+  const hop = 5000 / 2;   // per-hop distance of a 2-hop 5000 km path
+  const withoutFull = calcTakeoffAngle(hop, 14, 360, ocean);
+  const withFull = calcTakeoffAngle(hop, 14, 360, ocean, { fullDistKm: 5000, hops: 2 });
+  assert.equal(withoutFull.chordal, false, 'a 2500 km leg is correctly below the chordal threshold');
+  assert.equal(withFull.chordal, true, 'the 5000 km PATH should qualify for chordal propagation');
+});
+
+test('takeoff geometry still uses the per-hop distance', function() {
+  // The angle itself must come from the single-bounce geometry, so splitting a
+  // path into more hops raises the takeoff angle of each.
+  const oneHop = calcTakeoffAngle(2000, 14, 360, null);
+  const halfHop = calcTakeoffAngle(1000, 14, 360, null);
+  assert.ok(halfHop.baseDeg > oneHop.baseDeg, 'a shorter hop must launch steeper');
+});

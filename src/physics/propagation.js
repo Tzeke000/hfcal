@@ -151,8 +151,12 @@ export function bearingToCardinal(b) {
 //   4. CHORDAL HOP condition: distKm > 3000, oceanFrac > 0.5, freq 10-28 MHz
 //      => angle reduced by ~30% (signal stays in ionosphere between hops)
 //
-export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
-  var hopDistKm = distKm; // single-hop baseline
+export function calcTakeoffAngle(hopDistKm, freqMHz, layerKm, terrain, opts) {
+  // hopDistKm drives the angle geometry (one bounce). fullDistKm and hops
+  // are the WHOLE path — chordal propagation and obstacle positions are
+  // properties of the path, not of a single hop. Default to a single hop
+  // so callers that pass one number still get the old behaviour.
+  var fullDistKm = (opts && typeof opts.fullDistKm === 'number') ? opts.fullDistKm : hopDistKm;
   var theta = hopDistKm / (2 * EARTH_RADIUS_KM); // half-arc angle
   var baseRad = Math.atan2(
     Math.cos(theta) - EARTH_RADIUS_KM / (EARTH_RADIUS_KM + layerKm),
@@ -169,7 +173,7 @@ export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
   if (terrain && terrain.keyObstacle && terrain.keyObstacle.elev > 800) {
     var obs = terrain.keyObstacle;
     // Horizontal distance from TX to obstacle
-    var distToObsKm = obs.frac * distKm;
+    var distToObsKm = obs.frac * fullDistKm;   // obs.frac is along the FULL path
     if (distToObsKm < 200 && distToObsKm > 1) {
       // Near-field mountain — must aim OVER it
       var clearRad = Math.atan2(obs.elev / 1000, distToObsKm); // radians
@@ -206,7 +210,7 @@ export function calcTakeoffAngle(distKm, freqMHz, layerKm, terrain) {
   // ONE definition of the condition, not two. This used to be spelled out
   // again here alongside the exported chordalHopPossible() below, agreeing
   // with it only by whoever edited them both last.
-  var chordal = chordalHopPossible(distKm, freqMHz, terrain ? terrain.oceanFrac : 0);
+  var chordal = chordalHopPossible(fullDistKm, freqMHz, terrain ? terrain.oceanFrac : 0);
   if (chordal) {
     finalDeg *= 0.7; // shallower — signal stays in ionosphere
     finalDeg = Math.max(3, finalDeg);
@@ -293,7 +297,7 @@ export function calcHops(distKm, freqMHz, terrain) {
     if (hops < 1) hops = 1;
     var hopDist = distKm / hops;
 
-    var toa = calcTakeoffAngle(hopDist, freqMHz, layer.hKm, terrain);
+    var toa = calcTakeoffAngle(hopDist, freqMHz, layer.hKm, terrain, { fullDistKm: distKm, hops: hops });
     var reflectFracs = [];
     for (var i = 1; i < hops; i++) reflectFracs.push(i / hops);
 

@@ -1094,6 +1094,7 @@ function UpdateBanner() {
   var [remoteVer, setRemoteVer] = useState(null);
   var [stepsOpen, setStepsOpen] = useState(false);
   var [busy, setBusy] = useState(false);
+  var [offline, setOffline] = useState(false);
 
   useEffect(function() {
     var cancelled = false;
@@ -1115,6 +1116,15 @@ function UpdateBanner() {
 
   function doUpdate() {
     if (busy) return;
+    // Never nuke the caches while offline. Deleting the service worker and
+    // every cache with no network strips the only copy of the app and the
+    // reload has nothing to serve — a bricked install in the field. The
+    // cached app is fine; the update simply waits for a connection.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setOffline(true);
+      return;
+    }
+    setOffline(false);
     setBusy(true);
     var reload = function() { try { window.location.reload(); } catch (e) {} };
     try {
@@ -1164,6 +1174,11 @@ function UpdateBanner() {
             {stepsOpen ? 'HIDE STEPS' : 'STEPS'}
           </button>
         </div>
+        {offline && (
+          <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 8, lineHeight: 1.5, flexBasis: '100%' }}>
+            {'You\u2019re offline. Updating clears the app\u2019s stored copy, and with no connection there is nothing to reload — so it is held until you have signal. The version you have keeps working.'}
+          </div>
+        )}
       </div>
 
       {stepsOpen && (
@@ -1927,7 +1942,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  238 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  246 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3359,6 +3374,20 @@ export default function HFCalc() {
       } catch (e) { return false; }
     }
 
+    // The load-bearing check. ?embed=1 is attacker-controllable — a hostile
+    // page frames us with that param in the src and the old gate waved it
+    // through. This one cannot be spoofed: reading a cross-origin parent's
+    // location throws (same-origin policy), and an attacker cannot make their
+    // page share our origin. Not framed, or framed by a same-origin parent =>
+    // trusted. Framed by anyone else => it never sees operator data.
+    function isCrossOriginFramed() {
+      try {
+        if (window.top === window.self) return false;
+        void window.top.location.origin;   // throws iff cross-origin
+        return false;
+      } catch (e) { return true; }
+    }
+
     function onMessage(ev) {
       var data = ev.data;
       if (!data || typeof data !== 'object' || data.type !== 'hfcalc:request') return;
@@ -3388,6 +3417,13 @@ export default function HFCalc() {
       }
 
       if (method !== 'ping') {
+        if (isCrossOriginFramed()) {
+          reply(false, 'postMessage bridge refuses cross-origin frames: the reply '
+            + 'can carry the operator\u2019s cached coordinates, and a framing page '
+            + 'cannot be trusted with them. Use the URL-parameter channel or run '
+            + 'the app first-party. See docs/AI-INTEGRATION.md.');
+          return;
+        }
         if (!bridgeEnabled()) {
           reply(false, 'postMessage bridge is disabled. The embedding host must '
             + 'load the calculator with ?embed=1 to turn it on. This is deliberate: '

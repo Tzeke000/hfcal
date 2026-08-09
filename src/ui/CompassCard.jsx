@@ -32,6 +32,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
   var [stale, setStale] = useState(false);
   var handlerRef = useRef(null);
   var lastFixRef = useRef(0);
+  var unsupportedTimerRef = useRef(null);   // the 'no magnetometer' verdict timer
   var grantedRef = useRef(false);   // permission already granted this session
 
   // Continuous (unwrapped) rotation for the dial. Feeding norm360 headings
@@ -71,6 +72,13 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
       window.removeEventListener('deviceorientation', handlerRef.current);
       handlerRef.current = null;
     }
+    // Cancel the pending 'unsupported' verdict. Without this, a quick
+    // open->close before the first reading latched the card as unsupported
+    // forever, even on a phone with a working compass.
+    if (unsupportedTimerRef.current) {
+      clearTimeout(unsupportedTimerRef.current);
+      unsupportedTimerRef.current = null;
+    }
   }, []);
   useEffect(function() { return detach; }, [detach]);
 
@@ -99,7 +107,8 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     window.addEventListener('deviceorientation', onOrientation);
     lastFixRef.current = 0;
     setStale(false);
-    setTimeout(function() {
+    unsupportedTimerRef.current = setTimeout(function() {
+      unsupportedTimerRef.current = null;
       // Nothing arrived at all -> there is no usable magnetometer here.
       if (!lastFixRef.current) setStatus(function(cur) { return cur === 'active' ? cur : 'unsupported'; });
     }, 2500);

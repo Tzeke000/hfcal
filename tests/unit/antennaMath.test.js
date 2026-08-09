@@ -96,10 +96,12 @@ test('apexHeightPlan: supplied terrain-aware takeoff angle wins over fallback', 
 test('apexHeightPlan: long paths split into hops for the fallback angle', function() {
   var wl = wavelength(14.2, 0.95);
   var plan = apexHeightPlan({ kind: 'dipole', wlMeters: wl, distKm: 9000 });
-  assert.equal(plan.hops, 2);
-  // 4500 km per hop is at the geometric limit for h=360 — fallback clamps
-  // to the 3° floor so the first-lobe height stays finite (and impractical).
-  approx(plan.takeoffDeg, 3, 1e-9);
+  // 9000 km needs 3 hops, not 2: one hop is capped at maxHopKm(360) ~= 4186 km,
+  // so 4500 km/hop is beyond the geometric limit. This test previously asserted
+  // 2 because F2_MAX_HOP_KM was a stale hardcoded 4500 (VALIDATION Part 33).
+  assert.equal(plan.hops, 3);
+  assert.ok(plan.takeoffDeg > 3 && plan.takeoffDeg < 12,
+    'a 3000 km hop launches at a real low angle, not the 3 floor: ' + plan.takeoffDeg);
   assert.equal(plan.practical, false);
 });
 
