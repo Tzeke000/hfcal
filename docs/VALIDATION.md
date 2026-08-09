@@ -21,6 +21,7 @@ Browser tests for the state the operator touches: August 2026 (app v1.23.0)
 High-latitude / polar measurement: August 2026 (app v1.24.0)
 LUF calibrated against VOACAP loss curves: August 2026 (app v1.25.0)
 Component split and terrain tests: August 2026 (app v1.26.0)
+PATH CLOSED false-closure check: August 2026 (app v1.27.0)
 
 ---
 
@@ -1686,6 +1687,87 @@ of them failed on the first run and the **test** was wrong, not the code —
 `samplePath(n)` takes a segment count and returns n+1 points. Recorded because
 a test suite that has only ever confirmed the author's assumptions is not
 evidence of much.
+
+## Part 22 — Checking the one output that can tell a Marine "don't bother" (v1.27.0)
+
+Part 20 raised the LUF on long paths, in places by a lot: 2,500 km at noon
+went from 5.5 MHz to 12.4. That was the right correction to the physics. It
+also had a consequence Part 20 did not check.
+
+The app shows **PATH CLOSED AT THIS POWER** when its LUF exceeds its MUF. That
+banner tells an operator no frequency will work. **A false one is the worst
+output this app can produce** — worse than a wrong frequency, because it says
+"don't bother" about a path that would have carried traffic. Raising the LUF
+without measuring the false-closure rate was reckless, and this part fixes
+that omission.
+
+`run_luf_closure_study.py`: 8 distances (300–11,000 km, one hop through four)
+× 4 months × 3 solar levels × 3 powers × 24 hours = **6,912 cases**, 288
+VOACAP runs. Ground truth is VOACAP's reliability output — censored, which is
+exactly why Part 20 could not use it for calibration, but here the censoring
+*is* the signal: a condition where no frequency reaches 90% reliability is a
+closed path.
+
+### The result that matters
+
+| | app says closed | app says open |
+|---|---|---|
+| **VOACAP: closed** | agree | 58.8% |
+| **VOACAP: open** | **0.0%** | agree |
+
+**The false-closure rate is 0.0%. Not one case in 6,912.** At every distance,
+every power, every season and every solar level, the app never once told an
+operator the path was shut when VOACAP could close it. The v1.25 LUF increase
+did not cost that, which was the thing worth checking.
+
+### The result that needed a fix in the app's words, not its arithmetic
+
+The other cell is large — 58.8% overall, 90.7% at 20 W — and it is not a bug.
+The two sides are answering different questions:
+
+- **The app's PATH CLOSED** asks whether the ionosphere leaves a *window*
+  open: is there any frequency above the absorption floor and below the
+  reflection ceiling?
+- **VOACAP's "closed"** asks whether the *link budget* closes: does the signal
+  reach the required SNR at the required reliability, given the power and the
+  antennas?
+
+On the 4,064 disagreement rows the app's window is wide open — median LUF
+6.9 MHz against a median MUF of 17.1 MHz — and VOACAP still reaches a median
+44% reliability. The ionosphere is working. The link budget is what fails.
+The app models no link budget at all: it knows nothing about antenna gain or
+the noise floor, and never has. (VOACAP was also run with **isotropic**
+antennas at both ends, the conservative floor; a real field dipole adds
+several dB.)
+
+So the arithmetic is right and the *wording* was over-claiming, because an
+operator reading an unflagged block will reasonably conclude "this will work".
+Fixed in the app, not in the model: an unflagged block now states that it
+means the ionosphere will carry a frequency there, and does not promise the
+radio and the wire can close the link — plan the window here, confirm on the
+radio. The PATH CLOSED banner itself now cites the 6,912-case check, because a
+warning an operator can trust is worth saying is trustworthy.
+
+### `hops` as a linear multiplier — tested, inconclusive, NOT changed
+
+Part 20 calibrated absorption on one-hop paths only, to keep ground-reflection
+loss out of the fit, then applied `hops` as a plain linear multiplier. The
+same VOACAP runs above were used to test that, fitting A on the multi-hop
+paths exactly as Part 20 did:
+
+| path | hops | clean fits | A (VOACAP) | A (model) | model/VOACAP |
+|---|---|---|---|---|---|
+| 6000 km | 2 | 3 | 1536 | 2190 | 1.43 |
+| 8000 km | 2 | 9 | 1910 | 2636 | 1.38 |
+| 11000 km | 3 | 57 | 1494 | 980 | 0.68 |
+
+Over-charging by ~40% at two hops and under-charging by ~32% at three is not a
+correction, it is noise: three and nine clean fits are no basis for changing a
+shipped constant, the two rows disagree in direction, and multi-hop paths
+carry ground-reflection loss that contaminates the fit — which is precisely
+why Part 20 excluded them. **Recorded as tested and unresolved rather than
+tuned.** Getting a real answer needs ground-reflection loss separated out,
+which this method cannot do.
 
 ## Limitations
 
