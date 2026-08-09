@@ -2336,7 +2336,7 @@ function ImageCarousel({ imageKey }) {
 
 
 // ── INVERTED-V GEOMETRY CALCULATOR ────────────────────────────────────────────
-function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
+function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt, legEndM }) {
   // Apex height drives everything.
   // leg angle from horizontal = asin(apexH / legLen)
   // stake distance from pole base = cos(legAngle) * legLen
@@ -2348,7 +2348,11 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
   // Seed with the path-optimized apex when the card computed one, clamped
   // below the leg length so the planner starts in its valid range.
   if (typeof suggestedApexFt === 'number' && isFinite(suggestedApexFt) && suggestedApexFt > 0) {
-    defaultApexFt = Math.min(Math.round(suggestedApexFt), Math.floor(legFt - 1));
+    // Valid window is (leg-end height, leg-end height + leg length): the legs
+    // anchor at the end height, so both bounds shift up with it.
+    var _endFt0 = ((typeof legEndM === 'number' && isFinite(legEndM) && legEndM >= 0) ? legEndM : 0.0762) * 3.28084;
+    defaultApexFt = Math.min(Math.round(suggestedApexFt), Math.floor(_endFt0 + legFt - 1));
+    defaultApexFt = Math.max(defaultApexFt, Math.ceil(_endFt0 + 1));
   }
   var [apexFtStr, setApexFtStr] = useState(String(defaultApexFt));
   // Re-seed when the path-optimized apex changes (frequency/location edits
@@ -2365,9 +2369,15 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
 
   var apexFt = parseFloat(apexFtStr);
   var apexM = apexFt / 3.28084;
-  var valid = !isNaN(apexFt) && apexFt > 0 && apexFt < legFt;
+  // The legs anchor at the leg-end height, not at the ground. Measuring the
+  // slope from the ground overstated the leg angle — and disagreed with the
+  // Optimal Apex Height box on this same card, which gets it right.
+  var endM = (typeof legEndM === 'number' && isFinite(legEndM) && legEndM >= 0) ? legEndM : 0.0762;
+  var endFt = endM * 3.28084;
+  var riseM = apexM - endM;
+  var valid = !isNaN(apexFt) && riseM > 0 && riseM < legMeters;
 
-  var legAngleDeg = valid ? (Math.asin(apexM / legMeters) * 180 / Math.PI) : null;
+  var legAngleDeg = valid ? (Math.asin(riseM / legMeters) * 180 / Math.PI) : null;
   var apexAngleDeg = valid ? (180 - 2 * legAngleDeg) : null;
   var stakeFt = valid ? (Math.cos(legAngleDeg * Math.PI / 180) * legFt) : null;
   var stakeM = valid ? (Math.cos(legAngleDeg * Math.PI / 180) * legMeters) : null;
@@ -2418,7 +2428,7 @@ function InvVGeoCalc({ legMeters, isNVIS, suggestedApexFt }) {
         </div>
         {!valid && apexFtStr !== '' && (
           <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 5 }}>
-            {'Must be between 1 ft and ' + Math.floor(legFt) + ' ft (leg length)'}
+            {'Must be above the leg-end height (' + endFt.toFixed(1) + ' ft) and under ' + Math.floor(endFt + legFt) + ' ft (leg ends + leg length)'}
           </div>
         )}
       </div>
@@ -2758,7 +2768,7 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
       </div>
 
       {(antenna.imageKey === 'invertedv' || antenna.imageKey === 'nvis_invertedv') && (
-        <InvVGeoCalc legMeters={qw} isNVIS={antenna.imageKey === 'nvis_invertedv'} suggestedApexFt={apexInfo ? apexInfo.apexFt : null} />
+        <InvVGeoCalc legMeters={qw} isNVIS={antenna.imageKey === 'nvis_invertedv'} suggestedApexFt={apexInfo ? apexInfo.apexFt : null} legEndM={legEndHeight} />
       )}
 
       {antenna.imageKey === 'longwire' && (
@@ -3096,6 +3106,18 @@ export default function HFCalc() {
       setFromLocation: function(value) { setLoc1(String(value || '')); },
       setToLocation: function(value) { setLoc2(String(value || '')); },
       setFrequency: function(value) { setFreq(String(value)); },
+      // The two knobs that move the frequency answer — the month sets the MUF,
+      // the power sets the LUF — were the only calculator inputs an external
+      // agent could not reach: it could ask "will 14.2 close this path" but
+      // not "in December" or "at 2 watts".
+      setMonth: function(value) {
+        var m = Math.round(parseFloat(value));
+        if (!isNaN(m) && m >= 1 && m <= 12) setMonth(m);
+      },
+      setTxWatts: function(value) {
+        var w = parseFloat(value);
+        if (!isNaN(w) && w > 0 && w <= 10000) setTxWatts(w);
+      },
       setWireType: function(value) {
         // Legacy: 'copper'/'steel' still work
         if (value === 'copper' || value === 'steel') {
@@ -3130,6 +3152,7 @@ export default function HFCalc() {
       getInputs: function() {
         return {
           from: loc1, to: loc2, freq: freq,
+          month: month, txWatts: txWatts,
           wireType: wireType,
           wireCore: wireCore,
           wireGauge: effectiveGauge,
@@ -3383,6 +3406,10 @@ export default function HFCalc() {
           api.setToLocation(params.value); reply(true, { set: 'to' });
         } else if (method === 'setLegEndHeight') {
           api.setLegEndHeight(params.value, params.unit); reply(true, { set: 'legEndHeight' });
+        } else if (method === 'setMonth') {
+          api.setMonth(params.value); reply(true, { set: 'month' });
+        } else if (method === 'setTxWatts') {
+          api.setTxWatts(params.value); reply(true, { set: 'txWatts' });
         } else if (method === 'ping') {
           reply(true, { pong: true, version: api.version, author: api.author, signature: api.signature });
         } else {
@@ -3410,7 +3437,11 @@ export default function HFCalc() {
     };
   // Re-bind whenever any state setter or calculation context changes so the
   // API closure always reflects the freshest state.
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, legEndHeight]);
+  // month and txWatts were missing from this list — the closure's contract
+  // and its contents disagreed, so getResults().frequency_check served stale
+  // month/power to any external caller until some OTHER listed input changed.
+  // The same class as every duplicated-fact bug in docs/VALIDATION.md Part 27.
+  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, legEndHeight, month, txWatts]);
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 calc(60px + env(safe-area-inset-bottom)) 0' }}>

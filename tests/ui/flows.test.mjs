@@ -529,6 +529,57 @@ describe('AI integration layer', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('AI month and power knobs', { skip: SKIP, concurrency: 1 }, () => {
+  // Until v1.38 an agent could ask "will 14.2 MHz close this path" but not
+  // "in December" or "at 2 watts" — the two settings that move the answer.
+  test('setMonth moves the MUF an agent reads back', async () => {
+    const page = await newPage(browser);
+    await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:54:03 W 076:52:50', to: 'N 26:21:00 E 127:46:00', freq: '14.2' }));
+    // Setters go through React state, so the api rebinds on the next render —
+    // read back after a tick, the same way a human sees the panel update.
+    const muf = await page.evaluate(async () => {
+      const tick = () => new Promise(r => setTimeout(r, 250));
+      window.HFCalc.setMonth(1); await tick();
+      const jan = window.HFCalc.getResults().frequency_check.muf_mhz;
+      window.HFCalc.setMonth(7); await tick();
+      const jul = window.HFCalc.getResults().frequency_check.muf_mhz;
+      return { jan, jul };
+    });
+    assert.notEqual(muf.jan, muf.jul, 'month did not move the MUF: ' + JSON.stringify(muf));
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('setTxWatts moves the LUF and only the LUF', async () => {
+    const page = await newPage(browser);
+    await page.evaluate(() => window.HFCalc.calculate(
+      { from: 'N 34:54:03 W 076:52:50', to: 'N 26:21:00 E 127:46:00', freq: '14.2' }));
+    const r = await page.evaluate(async () => {
+      const tick = () => new Promise(r => setTimeout(r, 250));
+      window.HFCalc.setTxWatts(2); await tick();
+      const low = window.HFCalc.getResults().frequency_check;
+      window.HFCalc.setTxWatts(150); await tick();
+      const high = window.HFCalc.getResults().frequency_check;
+      return { low, high, inputs: window.HFCalc.getInputs() };
+    });
+    assert.ok(r.high.luf_mhz < r.low.luf_mhz, '150 W LUF should beat 2 W LUF');
+    assert.equal(r.high.muf_mhz, r.low.muf_mhz, 'power must never move the MUF');
+    assert.equal(r.inputs.txWatts, 150, 'getInputs must echo the power that was set');
+    assert.ok(r.inputs.month >= 1 && r.inputs.month <= 12, 'getInputs must echo the month');
+    // out-of-range values must be refused, not clamped into nonsense
+    const bad = await page.evaluate(async () => {
+      window.HFCalc.setMonth(13); window.HFCalc.setTxWatts(-5);
+      await new Promise(r => setTimeout(r, 250));
+      return window.HFCalc.getInputs();
+    });
+    assert.ok(bad.month >= 1 && bad.month <= 12, 'month 13 was accepted');
+    assert.equal(bad.txWatts, 150, 'negative watts were accepted');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
   // v1.29 security fix. Before it, any page could iframe the app and read the
   // operator's cached coordinates straight out of getInputs — the location

@@ -6,7 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  # An installer built from a commit that fails its own tests is a defect
+  # shipped with a version number. The Pages deploy has required this since
+  # v1.33; these three were flagged in the same sweep and left ungated.
+  tests:
+    uses: ./.github/workflows/test.yml
+
   build:
+    needs: tests
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Setup Java

@@ -155,6 +155,17 @@ window.HFCalc.setLegEndHeight(6, 'ft');    // elevated inverted-V
 Read whatever's currently in the input fields. `legEndHeightM` is the leg end
 height converted to meters.
 
+#### `setMonth(value)` · `setTxWatts(value)`  — NEW (v1.38)
+
+The month drives the MUF (season at every bounce) and the transmit power
+drives the LUF. Both feed the `frequency_check` block in the next
+`getResults()`. `setMonth` takes 1–12; `setTxWatts` takes watts (an
+AN/PRC-160 is 2 / 5 / 10 / 20, the RF-5833H amp is 150). Until v1.38 these
+were the only calculator inputs an external agent could not reach.
+
+Like every setter here, these go through React state — allow the page a
+moment (~250 ms) before reading the change back through `getResults()`.
+
 #### `getResults() → Result | null`
 
 Read the most recent calculation result, or `null` if nothing's been calculated.
@@ -277,7 +288,7 @@ For AI hosts that embed the calculator in an `<iframe>` or webview — the host 
 {
   type: 'hfcalc:request',
   id: 'unique-id-for-correlation',
-  method: 'calculate' | 'getResults' | 'getInputs' | 'reset' | 'setFromLocation' | 'setToLocation' | 'setLegEndHeight' | 'ping',
+  method: 'calculate' | 'getResults' | 'getInputs' | 'reset' | 'setFromLocation' | 'setToLocation' | 'setLegEndHeight' | 'setMonth' | 'setTxWatts' | 'ping',
   params: { /* method-specific */ }
 }
 ```

@@ -30,6 +30,7 @@ Repository reorganisation and CI: August 2026 (app v1.32.0-1.33.0)
 CI made to actually pass: August 2026 (app v1.34.0-1.35.0)
 Fresh-eyes bug hunt: August 2026 (app v1.36.0)
 Found-but-unfixed cleanup and icon badge: August 2026 (app v1.37.0)
+Remaining ledger cleared: August 2026 (app v1.38.0)
 
 ---
 
@@ -2340,6 +2341,61 @@ defect class again; and the generator now records what version it baked into
 and forgetting next time fails the suite instead of shipping a stale icon.
 
 238 unit tests, 29 browser tests.
+
+## Part 31 — The rest of the unfixed ledger (v1.38.0)
+
+Asked directly: "fix the things that you didn't fix." The ledger, built from
+the record rather than memory, had three actionable entries and one unwired
+capability. All four are done. What remains parked is listed at the end with
+reasons, because a ledger that hides its tail is how Part 30 happened.
+
+**1. The installers shipped ungated.** The v1.33 sweep gated the Pages deploy
+on the test workflow — and the same sweep output listed the Android, iOS and
+Windows builds as NOT gated, which went unfixed. An APK built from a commit
+that fails its own tests is a defect with a version number on it. All three
+build workflows now require the same tests the deploy requires, and every
+workflow runs the same Node 22 the tests run.
+
+**2. The inverted-V planner measured its legs from the ground.** The legs
+anchor at the leg-end height (default 3 in, operator-settable in feet), and
+`asin(apex/leg)` instead of `asin((apex − end)/leg)` overstated the leg angle
+— while the Optimal Apex Height box on the *same card* did it correctly. The
+two disagreed on one screen. The planner now takes the leg-end height, and its
+valid-range message and seeded default moved with the math.
+
+**3. An agent could not set the month or the power** — the two knobs that move
+the frequency answer. `setMonth` and `setTxWatts` added to `window.HFCalc` and
+the `postMessage` bridge, echoed back through `getInputs()`, documented, and
+pinned by two browser tests (month moves the MUF; power moves the LUF and
+must never move the MUF).
+
+**4. And the test for #3 found a real pre-existing bug.** The `window.HFCalc`
+binding re-runs on a dependency list, and that list omitted `month` and
+`txWatts` — so `getResults().frequency_check` (added in Part 29) served
+**stale month and power** to any external caller until some other listed input
+happened to change. The closure's contract and its contents disagreed: the
+same stated-in-two-places defect as Part 27, in a React dependency array. The
+first run of the new test failed with January and July returning the same MUF
+to fifteen decimal places, which is what found it.
+
+### Parked, with reasons — the tail of the ledger
+
+- **The `hops` linear multiplier** (Part 22): measurable only by separating
+  ground-reflection loss from absorption, which the loss-curve method cannot
+  do. Twelve clean fits disagreeing in direction are not a basis for moving a
+  shipped constant.
+- **The LUF's absolute scale** (Part 20): the 10 dB margin anchor at 20 W.
+  VOACAP's reliability output is censored exactly where it would calibrate it.
+- **Terrain adjustments**: VOACAP models no terrain; there is nothing to
+  measure them against. Labelled as heuristics everywhere they appear.
+- **`?embed=1` is opt-in, not authentication** (Part 24): a real
+  `frame-ancestors` policy needs a header GitHub Pages cannot send.
+- **Real-device testing**: desktop Chromium has no magnetometer and no touch.
+  Still manual, still stated in the About card.
+- **The license question and the 49 MB git history**: both the author's call,
+  not an engineering task.
+
+238 unit tests, 31 browser tests.
 
 ## Limitations
 
