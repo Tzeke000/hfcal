@@ -8,8 +8,8 @@ which they did before this module existed, when three scripts each carried
 their own hand-copied diurnal curve.
 
 Mirrors:
-  src/propagation.js  maxHopKm, calcTakeoffAngle (no terrain), secantFactor
-  src/freqAdvisor.js  solarDeclination, cosZenith, illuminationFactor,
+  src/physics/propagation.js  maxHopKm, calcTakeoffAngle (no terrain), secantFactor
+  src/physics/freqAdvisor.js  solarDeclination, cosZenith, illuminationFactor,
                       seasonLatitudeFactor, estimateFoF2
 
 Verify the mirror against the real thing with:
@@ -28,9 +28,31 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 EARTH_R = 6371.0
+
+
+def _require(path, what):
+    """Refuse to run on a missing asset instead of quietly using a worse model.
+
+    These loaders used to set a flag and carry on when the file was not where
+    they expected. That is right for the APP — it falls back to the physical
+    model and keeps working offline. It is wrong for this MIRROR, whose whole
+    job is to reproduce what ships: a silent fallback makes every study report
+    the fallback's accuracy while claiming to have measured the shipped path.
+
+    The v1.32 reorganisation proved the point. Moving mfactorTable.js into
+    src/data/ left this path stale, and run_muf_study.py went on to report
+    5.4% mean error against a known 4.4% without one word of complaint. The
+    only reason it was caught is that somebody remembered the old number.
+    """
+    if not os.path.exists(path):
+        raise SystemExit(
+            'appmodel: cannot find %s at\n  %s\n'
+            'This mirror must read exactly what the app ships. Fix the path '
+            'rather than letting the study run on a fallback and report a '
+            'number that is not what was measured.' % (what, path))
 F2_HEIGHT_KM = 360.0
 
-# ── src/freqAdvisor.js constants ─────────────────────────────────────────────
+# ── src/physics/freqAdvisor.js constants ─────────────────────────────────────────────
 MID_MONTH_DOY = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]
 FOF2_LAG_HOURS = 1.05
 FOF2_ILLUM_EXP = 0.16
@@ -174,10 +196,10 @@ def est_fof2(ssn, local_hour, month=None, mag_lat=None, lat=None):
     return (night + (noon - night) * d) * season_lat_factor(month, mag_lat, d)
 
 
-# Mirrors minOrderCorrection() in src/freqAdvisor.js. The minimum of k noisy
+# Mirrors minOrderCorrection() in src/physics/freqAdvisor.js. The minimum of k noisy
 # estimates sits below the true minimum by sigma * E[min of k standard
 # normals]; sigma is the model's own measured per-point error, not a fit.
-# Mirrors foF2PointSigma() in src/freqAdvisor.js: the de-bias is proportional
+# Mirrors foF2PointSigma() in src/physics/freqAdvisor.js: the de-bias is proportional
 # to the per-point error of whichever source is live, and the lookup table is
 # ten times better than the physical model it replaced.
 FOF2_SIGMA_TABLE = 0.012
@@ -215,11 +237,13 @@ _MAP = None
 
 
 def _map_eval(modip_deg, lst, month, ssn, lon):
-    """Mirror of mapFoF2() in src/freqAdvisor.js, read from the generated file."""
+    """Mirror of mapFoF2() in src/physics/freqAdvisor.js, read from the generated file."""
     global _MAP
     if _MAP is None:
         import re
-        txt = open(os.path.join(ROOT, 'src', 'fof2Map.js')).read()
+        _p = os.path.join(ROOT, 'src', 'data', 'fof2Map.js')
+        _require(_p, 'the foF2 coefficient map')
+        txt = open(_p).read()
         o = re.search(r'nt: (\d+), nm: (\d+), nl: (\d+), ns: (\d+), nlon: (\d+)', txt)
         body = txt[txt.index('FOF2_MAP_COEFFS = new Float64Array([') + 36:]
         body = body[:body.index('])')]
@@ -271,14 +295,12 @@ _TABLE = None
 
 
 def _load_table():
-    """Read public/fof2-table.bin exactly as src/fof2Table.js does."""
+    """Read public/fof2-table.bin exactly as src/data/fof2Table.js does."""
     global _TABLE
     if _TABLE is not None:
         return _TABLE
     path = os.path.join(ROOT, 'public', 'fof2-table.bin')
-    if not os.path.exists(path):
-        _TABLE = False
-        return _TABLE
+    _require(path, 'the foF2 lookup table')
     import struct
     raw = open(path, 'rb').read()
     if raw[:4] != b'HFT1':
@@ -348,7 +370,7 @@ def bounce_fof2(ssn, utc_hour, month, b):
     """b = (lat, lon, mag_lat, modip). Table, then map, then physics.
 
     The table is guarded only by a physical band, not against the physical
-    model - see the comment on bounceFoF2 in src/freqAdvisor.js and Part 19.
+    model - see the comment on bounceFoF2 in src/physics/freqAdvisor.js and Part 19.
     """
     lst = local_solar_time(utc_hour, b[1])
     phys = est_fof2(ssn, lst, month, b[2], b[0])
@@ -376,14 +398,12 @@ _MTAB = None
 
 
 def _load_mtable():
-    """Read src/mfactorTable.js exactly as freqAdvisor.js uses it."""
+    """Read src/data/mfactorTable.js exactly as freqAdvisor.js uses it."""
     global _MTAB
     if _MTAB is not None:
         return _MTAB
-    path = os.path.join(ROOT, 'src', 'mfactorTable.js')
-    if not os.path.exists(path):
-        _MTAB = False
-        return _MTAB
+    path = os.path.join(ROOT, 'src', 'data', 'mfactorTable.js')
+    _require(path, 'the M-factor table')
     txt = open(path).read()
 
     def grab(name):
@@ -440,7 +460,7 @@ def app_muf(dist_km, utc_hour, ssn, mid_lon, month=None, mag_lat=None, lat=None,
 
 def modips(points):
     """Modified dip latitude for each (lat, lon), from the app's own code."""
-    src = ("import('%s/src/magnetic.js').then(m=>{const p=%s;"
+    src = ("import('%s/src/physics/magnetic.js').then(m=>{const p=%s;"
            "console.log(JSON.stringify(p.map(q=>m.modip(q[0],q[1]))))})"
            % (ROOT, json.dumps([list(p) for p in points])))
     out = subprocess.run(['node', '-e', src], capture_output=True, text=True, cwd=ROOT)
@@ -476,7 +496,7 @@ def dominant_mode(line):
 
 def mag_latitudes(points):
     """Magnetic latitude for each (lat, lon), from the app's own WMM code."""
-    src = ("import('%s/src/magnetic.js').then(m=>{const p=%s;"
+    src = ("import('%s/src/physics/magnetic.js').then(m=>{const p=%s;"
            "console.log(JSON.stringify(p.map(q=>m.magneticLatitude(q[0],q[1]))))})"
            % (ROOT, json.dumps([list(p) for p in points])))
     out = subprocess.run(['node', '-e', src], capture_output=True, text=True, cwd=ROOT)
@@ -484,7 +504,7 @@ def mag_latitudes(points):
 
 
 # ── LUF ──────────────────────────────────────────────────────────────────────
-# Mirrors estimateLUF in src/freqAdvisor.js. Kept here so the absorption study
+# Mirrors estimateLUF in src/physics/freqAdvisor.js. Kept here so the absorption study
 # can compare the app's A = K * I^0.75 * hops against VOACAP's own loss curve.
 LUF_K = 373.1
 LUF_A_NIGHT = 48.0
@@ -524,13 +544,13 @@ def estimate_luf(illum, watts, hops, dist_km=None):
 
 # ── mirror check ─────────────────────────────────────────────────────────────
 def check():
-    """Compare this mirror against src/freqAdvisor.js over a spread of inputs."""
+    """Compare this mirror against src/physics/freqAdvisor.js over a spread of inputs."""
     cases = []
     for lat in (-70, -34, 0, 34.9, 60):
         for month in (1, 4, 7, 10):
             for hour in (0, 6, 12, 18):
                 cases.append([70, hour, month, lat * 0.9, lat])
-    src = ("import('%s/src/freqAdvisor.js').then(f=>{const c=%s;"
+    src = ("import('%s/src/physics/freqAdvisor.js').then(f=>{const c=%s;"
            "console.log(JSON.stringify(c.map(a=>f.estimateFoF2(a[0],a[1],a[2],a[3],a[4]))))})"
            % (ROOT, json.dumps(cases)))
     js = json.loads(subprocess.run(['node', '-e', src], capture_output=True,
@@ -545,7 +565,7 @@ def check():
             for hops in (1, 2, 3):
                 for dist in (0, 300, 1500, 4000, 9000):
                     lufc.append([illum, watts, hops, dist])
-    src2 = ("import('%s/src/freqAdvisor.js').then(f=>{const c=%s;"
+    src2 = ("import('%s/src/physics/freqAdvisor.js').then(f=>{const c=%s;"
             "console.log(JSON.stringify(c.map(a=>f.estimateLUF(a[0],a[1],a[2],a[3]||undefined))))})"
             % (ROOT, json.dumps(lufc)))
     js2 = json.loads(subprocess.run(['node', '-e', src2], capture_output=True,
@@ -553,9 +573,9 @@ def check():
     worst_luf = max(abs(estimate_luf(c[0], c[1], c[2], c[3] or None) - v)
                     for c, v in zip(lufc, js2))
 
-    print('checked %d foF2 cases against src/freqAdvisor.js, max difference %.9f MHz'
+    print('checked %d foF2 cases against src/physics/freqAdvisor.js, max difference %.9f MHz'
           % (len(cases), worst))
-    print('checked %d LUF cases against src/freqAdvisor.js, max difference %.9f MHz'
+    print('checked %d LUF cases against src/physics/freqAdvisor.js, max difference %.9f MHz'
           % (len(lufc), worst_luf))
     if worst > 1e-9 or worst_luf > 1e-9:
         print('MIRROR IS OUT OF DATE')

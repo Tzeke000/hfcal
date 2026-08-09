@@ -50,11 +50,11 @@ If you'd rather install a real `.apk` file:
 3. Scroll to the bottom → download `hf-field-antenna-debug-apk` from Artifacts
 4. Unzip → transfer the APK to your phone → tap to install (allow "unknown sources" when asked)
 
-📖 [Detailed Android instructions](INSTALL.md#android-apk)
+📖 [Detailed Android instructions](docs/INSTALL.md#android-apk)
 
 ### 🍎 iPhone IPA
 
-The PWA install (above) is much easier on iPhone. The IPA route requires re-signing every 7 days with a free Apple ID. [Detailed iPhone instructions](INSTALL.md#iphone-ipa).
+The PWA install (above) is much easier on iPhone. The IPA route requires re-signing every 7 days with a free Apple ID. [Detailed iPhone instructions](docs/INSTALL.md#iphone-ipa).
 
 ---
 
@@ -79,7 +79,7 @@ The calculator auto-fills, runs, and the AI reads back the result.
 - **`window.HFCalc.*` JS API** — for browser-control agents and devtools
 - **`postMessage`** — for AI hosts that embed the app in an iframe
 
-📖 **[Full AI integration guide → AI-INTEGRATION.md](AI-INTEGRATION.md)**
+📖 **[Full AI integration guide → docs/AI-INTEGRATION.md](docs/AI-INTEGRATION.md)**
 
 This guide is written so any AI can read it and learn how to drive the calculator. Point your AI at it.
 
@@ -138,10 +138,12 @@ and the evidence supporting it.
 
 - Built with React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows desktop) + vite-plugin-pwa
 - Physics, terrain and coordinate math live in small pure modules under `src/`, each with its own test file
-- UI components are being lifted out of `src/HFCalc.jsx` into `src/components/` — the compass and saved-shots cards, which is where every bug reported from real use has been, are already out
+- UI components are being lifted out of `src/ui/HFCalc.jsx` into `src/ui/` — the compass and saved-shots cards, which is where every bug reported from real use has been, are already out
 - Antenna deployment images ship as asset files, not base64 — no external requests either way
 - Production builds use Terser with aggressive minification + variable mangling
 - AI integration layer exposes `window.HFCalc.*`, postMessage, and URL parameters
+
+**Layout** — `src/physics` (the model, VOACAP-validated), `src/data` (generated tables, never hand-edited), `src/lib` (coordinates, comm cards, space weather), `src/ui` (React), `tests/unit` + `tests/ui`, `scripts/validation/build` (generates the tables) and `scripts/validation/studies` (measures against VOACAP). Each folder has a README.
 
 ```bash
 npm install

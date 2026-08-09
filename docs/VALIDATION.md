@@ -67,7 +67,7 @@ Parts 2 and 3 add a second geometry sweep for the frequency model: fixed path
 length, six sites spanning 60 N to 44 S, all twelve months — described in
 those sections.
 
-Reproduce with: `python3 scripts/validation/run_voacap_study.py`
+Reproduce with: `python3 scripts/validation/studies/run_voacap_study.py`
 (raw data: `docs/validation/voacap-results.json`).
 
 ## Round 1 — initial model (v1.4.1, flat-earth)
@@ -143,7 +143,7 @@ falls inside the 2F2 envelope.
 
 ## Part 2 — Frequency advisor (MUF) vs VOACAP
 
-v1.7 added an offline frequency check (`src/freqAdvisor.js`): given the path
+v1.7 added an offline frequency check (`src/physics/freqAdvisor.js`): given the path
 and the time of day it estimates MUF / FOT / LUF and rules on whether an
 assigned frequency will close the link. VOACAP reports path MUF directly, so
 the same validation approach applies.
@@ -152,7 +152,7 @@ the same validation approach applies.
 months (June, December) x two solar levels (SSN 30, 100) = 288 hourly
 samples. The app's estimate is `foF2(SSN, local solar time)` times the
 curved-earth secant factor at the takeoff angle validated in Part 1.
-Reproduce with `python3 scripts/validation/run_muf_study.py`.
+Reproduce with `python3 scripts/validation/studies/run_muf_study.py`.
 
 **Calibration.** The foF2 diurnal coefficients (peak at 12.8 local solar
 time, night ratio 0.45, `6.8 + 0.036 x SSN` MHz at peak, decay exponent 1.6)
@@ -189,7 +189,7 @@ the ordering flips.
 **Method.** Six sites spanning 60 N to 44 S x all twelve months x 24 UTC
 hours x two solar levels (SSN 30, 100), on a fixed 1500 km due-east path so
 the secant factor is constant and every MUF difference is a foF2 difference.
-Reproduce with `python3 scripts/validation/run_seasonal_study.py`, then
+Reproduce with `python3 scripts/validation/studies/run_seasonal_study.py`, then
 `--eval` to re-score the model against the collected data.
 
 **What the data showed.** Three separable effects:
@@ -198,13 +198,13 @@ Reproduce with `python3 scripts/validation/run_seasonal_study.py`, then
    toward the poles. It tracks *magnetic* latitude, not geographic — which is
    why New Zealand at 44 S behaves like roughly 50 S. The app derives this
    on-device from the World Magnetic Model dip angle
-   (`magneticLatitude()` in `src/magnetic.js`, tan I = 2 tan λm).
+   (`magneticLatitude()` in `src/physics/magnetic.js`, tan I = 2 tan λm).
 2. **The December/annual anomaly.** foF2 runs high around January at every
    latitude, from Earth being nearer the Sun at perihelion.
 3. **Local season**, which reverses between hemispheres and between day and
    night, collapsing to equinox peaks near the equator.
 
-**Implementation.** `seasonLatitudeFactor()` in `src/freqAdvisor.js`
+**Implementation.** `seasonLatitudeFactor()` in `src/physics/freqAdvisor.js`
 multiplies the diurnal foF2 curve. It takes the month from the operator (a
 12-month selector, defaulted to the device date) and the magnetic latitude at
 the **path midpoint** — the reflection point, the same place local solar time
@@ -277,7 +277,7 @@ cannot produce.
 
 **Check 2 — VOACAP.** Fifteen ground distances from 1500 to 5000 km × two
 months × two solar levels, recording which propagation MODES VOACAP actually
-offers. Reproduce with `python3 scripts/validation/run_layer_study.py`.
+offers. Reproduce with `python3 scripts/validation/studies/run_layer_study.py`.
 
 | Distance | 1F2 share of cells | Dominant mode |
 |---|---|---|
@@ -321,7 +321,7 @@ the geomagnetic equator in between.
 **Method.** Six real interhemispheric circuits × January and July (opposite
 seasons) × two solar levels × 24 hours = 576 samples. Magnetic latitudes come
 from the app's own WMM code via `node`, so the study tests what ships.
-Reproduce with `python3 scripts/validation/run_interhemi_study.py`.
+Reproduce with `python3 scripts/validation/studies/run_interhemi_study.py`.
 
 | Circuit | Distance | Midpoint | Magnetic lat |
 |---|---|---|---|
@@ -493,7 +493,7 @@ refusing. The app itself always has both.
 compare against, and three scripts had each hand-copied their own diurnal
 curve — which had already drifted apart once. They now share
 `scripts/validation/appmodel.py`, and `python3 scripts/validation/appmodel.py
---check` verifies that mirror against `src/freqAdvisor.js` directly (currently
+--check` verifies that mirror against `src/physics/freqAdvisor.js` directly (currently
 exact to 1e-9 MHz across 80 cases).
 
 ## Part 7 — Terminator, and which point on the path (v1.14.1)
@@ -615,7 +615,7 @@ operational LUF is simply *the lowest frequency meeting the required
 reliability*. Four distances (300–3000 km) × six powers (5 W – 1 kW) × two
 months × two solar levels × 24 hours, at 38 dB-Hz required SNR (SSB voice, not
 VOACAP's 73 dB-Hz broadcast default) and 90% reliability. Reproduce with
-`python3 scripts/validation/run_luf_study.py`.
+`python3 scripts/validation/studies/run_luf_study.py`.
 
 **Honest limit of this study.** The result is heavily **censored**: at low
 power many daylight hours have no closing frequency anywhere in the grid, so
@@ -835,7 +835,7 @@ works. Two things follow:
 
 **Method.** Four distances (500–6000 km) × two seasons × two solar levels ×
 24 hours, MUFday interpolated to the 0.90 crossing. 361 usable samples (94% of
-the matrix). Reproduce with `python3 scripts/validation/run_fot_study.py`.
+the matrix). Reproduce with `python3 scripts/validation/studies/run_fot_study.py`.
 
 **Result.**
 
@@ -1156,7 +1156,7 @@ coordinate. It just stores the answer.
 ### Provenance is the point
 
 Nothing here is copied out of anyone else's data set. Every value is produced
-by `scripts/validation/build_fof2_table.py` from VOACAP 16.1207W, by a
+by `scripts/validation/build/build_fof2_table.py` from VOACAP 16.1207W, by a
 documented process, and can be regenerated and re-checked by anyone with the
 repository. The physical model is retained in full and still guards every
 lookup. The app remains something whose numbers can be explained and audited
@@ -1425,7 +1425,7 @@ the app still working when it does is the point.
 
 **The suite was checked against the bugs it claims to cover.** Rather than
 trust that it would have caught them, all three were deliberately reintroduced
-into `src/HFCalc.jsx` and the suite was run:
+into `src/ui/HFCalc.jsx` and the suite was run:
 
 | Regression reintroduced | Result |
 |---|---|
@@ -1542,7 +1542,7 @@ unchanged), seasonal 4.8% → 4.7%.
   5.90% — the reverse of before the fix. Unmeasured why; flagged rather than
   guessed at.
 
-Six unit tests in `src/fof2Guard.test.js` pin the new behaviour: that the
+Six unit tests in `tests/unit/fof2Guard.test.js` pin the new behaviour: that the
 table wins when it disagrees violently with the model in either direction,
 that a value outside the physical band is still rejected, and that the map
 kept its chaperone. They live in their own file because they install a
@@ -1657,7 +1657,7 @@ for a short-path shot at manpack power. Everything changes for a long one.
   calibration by using one-hop paths only, so `hops` remains a linear
   multiplier that has not been separately measured.
 
-Four tests in `src/freqAdvisor.test.js` pin the new behaviour: the short-path
+Four tests in `tests/unit/freqAdvisor.test.js` pin the new behaviour: the short-path
 anchor, monotonic growth with hop length, the per-hop nature of the obliquity,
 and the night residual appearing on long paths but not short ones.
 
@@ -1665,7 +1665,7 @@ and the night residual appearing on long paths but not short ones.
 
 Not a measurement, recorded here because it changed what *can* be measured.
 
-`src/HFCalc.jsx` was 4,324 lines and 251 KB. The physics lived in small pure
+`src/ui/HFCalc.jsx` was 4,324 lines and 251 KB. The physics lived in small pure
 modules with their own tests; the UI lived in one file. Every bug ever reported
 from real use was in that one file, and none were in the modules. The bug
 distribution was tracking the structure exactly.
@@ -1678,10 +1678,10 @@ Moved out:
 
 | new module | lines | why this one |
 |---|---|---|
-| `src/theme.js` | 117 | every component reads `T`, so nothing else could move until this did |
-| `src/terrain.js` | 245 | **pure functions that had never been tested** — not skipped on purpose, just unreachable except by rendering the whole app |
-| `src/components/CompassCard.jsx` | 270 | the reported compass-freeze bug lived here |
-| `src/components/SavedShots.jsx` | 202 | the other two reported bugs lived here |
+| `src/ui/theme.js` | 117 | every component reads `T`, so nothing else could move until this did |
+| `src/physics/terrain.js` | 245 | **pure functions that had never been tested** — not skipped on purpose, just unreachable except by rendering the whole app |
+| `src/ui/CompassCard.jsx` | 270 | the reported compass-freeze bug lived here |
+| `src/ui/SavedShots.jsx` | 202 | the other two reported bugs lived here |
 
 `HFCalc.jsx` is down to 3,558 lines. That is still too big, and the remaining
 cards — the frequency panel, the forecast, the About banner, the antenna cards
@@ -1695,7 +1695,7 @@ immediately with `no heading: Compass`: the card was not on the page at all.
 That is precisely the class of defect the suite was written for, caught on its
 first real refactor rather than by an operator in the field.
 
-Ten new tests in `src/terrain.test.js` cover the newly reachable terrain code:
+Ten new tests in `tests/unit/terrain.test.js` cover the newly reachable terrain code:
 database well-formedness, the documented overlap-priority rule
 (mountain > lake > ocean > highland > desert), classification everywhere on
 Earth, dateline-crossing paths, conductivity bounds, and that the "key
@@ -1813,7 +1813,7 @@ panel said "±12% vs VOACAP" and the 24-Hour Forecast said "±15%". Pooled
 across the mid-latitude, polar and transequatorial sets — 5,184 comparisons —
 the p90 is **11.0%**. Both now say "within about 11% nine times out of ten".
 
-**2. The M-factor accuracy was three different numbers.** `src/mfactorTable.js`
+**2. The M-factor accuracy was three different numbers.** `src/data/mfactorTable.js`
 shipped 4.84%, this document said 4.82%, and `mfactor-table-meta.json` said
 5.65% under a field called `heldout_pct`. The last is a *different metric* —
 nearest-cell rather than interpolated — under a name that looked like the
@@ -1844,14 +1844,14 @@ Most came from the v1.26 split, where `export` was added mechanically to
 everything that moved. A module's exports are its contract; a wider one than
 the code needs is a claim about stability nobody intended to make.
 
-**6. The two GENERATED data modules had no tests at all.** `src/fof2Map.js` and
-`src/mfactorTable.js` are the only source files nobody hand-edits, which makes
+**6. The two GENERATED data modules had no tests at all.** `src/data/fof2Map.js` and
+`src/data/mfactorTable.js` are the only source files nobody hand-edits, which makes
 them exactly the ones that can be silently truncated, exported at the wrong
 precision, or written with their axes reordered — none of which crashes. Both
 failure modes have already happened here once: coefficients at 7 significant
 figures cost 0.4% against the Python mirror (Part 14), and the M table was once
 fitted on raw minima while the app fed it corrected ones (Part 16). Nine tests
-in `src/generatedData.test.js` now check declared geometry against actual
+in `tests/unit/generatedData.test.js` now check declared geometry against actual
 length, that every cell decodes to a physically possible value, that the axes
 are sorted, that outputs stay in band across the whole input space, and that
 the coefficients still carry full double precision.
@@ -1869,7 +1869,7 @@ in this project was sitting.
 
 ### What was wrong
 
-`AI-INTEGRATION.md` documents a `postMessage` bridge so an AI host can drive
+`docs/AI-INTEGRATION.md` documents a `postMessage` bridge so an AI host can drive
 the calculator from an iframe. As shipped through v1.28 that bridge:
 
 - answered **any** message from **any** origin,
@@ -1929,7 +1929,7 @@ in this document has been — **by putting the vulnerability back**:
 12, including the test that the documented `?embed=1` integration still works.
 Mutations reverted; all 19 pass.
 
-`AI-INTEGRATION.md` now leads Channel 3 with the requirement and the reason,
+`docs/AI-INTEGRATION.md` now leads Channel 3 with the requirement and the reason,
 and its worked example passes a real target origin instead of `'*'`.
 
 ### Also swept, and clean
