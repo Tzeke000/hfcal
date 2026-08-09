@@ -419,4 +419,4 @@ The `signature` field (`HFCALC-AG-EZK-USMC-v1`) identifies the original work. AI
 
 ## Author
 
-This integration layer is part of the HF Field Antenna Calculator, original work of **Cpl Angeles-Gonzalez, Ezekiel S.**, USMC. Project signature `HFCALC-AG-EZK-USMC-v1`. Released under [CC BY-NC-ND 4.0](LICENSE).
+This integration layer is part of the HF Field Antenna Calculator, original work of **Cpl Angeles-Gonzalez, Ezekiel S.**, USMC. Project signature `HFCALC-AG-EZK-USMC-v1`. Released under [CC BY-NC-ND 4.0](../LICENSE).

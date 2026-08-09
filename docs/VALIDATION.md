@@ -27,6 +27,7 @@ postMessage coordinate-leak fix: August 2026 (app v1.29.0)
 Ten-item sweep, mostly new ground: August 2026 (app v1.30.0)
 Built-but-unwired sweep: August 2026 (app v1.31.0)
 Repository reorganisation and CI: August 2026 (app v1.32.0-1.33.0)
+CI made to actually pass: August 2026 (app v1.34.0-1.35.0)
 
 ---
 
@@ -2172,6 +2173,61 @@ two places, where only one got updated.** There the fact was a physical
 constant; here it is a file path. The fix is the same in kind — one source of
 truth, and a loud failure when the assumption breaks instead of a quiet
 substitution.
+
+## Part 28 — Watching the CI I built, instead of assuming it (v1.34.0 / v1.35.0)
+
+Part 27 added a test workflow and made the Pages deploy require it. **I had
+never seen that workflow run.** It failed, and took deployment with it. Gating
+a deploy on an unverified pipeline is the same mistake as trusting a test that
+has never been seen to fail — the thing this document has been insisting on for
+ten Parts — committed in the act of adding the tests.
+
+It took three runs to get green, and each failure was informative.
+
+**Run 1 — the browser was on disk and the harness walked past it.** The install
+log was explicit: `Chrome for Testing … downloaded to
+/home/runner/.cache/ms-playwright/chromium-1234`. The harness looked for
+`chrome-linux/chrome` inside it; Playwright had moved to Chrome for Testing and
+the layout is now `chrome-linux64/chrome`. `HFCALC_REQUIRE_BROWSER` then did
+precisely what it was written to do — refuse to skip — and failed the job. *The
+guard was right and the finder was wrong*, which is the outcome you want from a
+guard. `findChromium()` now searches for the executable up to three levels deep
+instead of guessing a layout, and on failure prints what it actually found in
+each root — a bare "not found" is what sent me to the wrong conclusion first.
+
+**Run 2 — 24 of 25 passed, and the one failure was mine.** The blunt
+"click every button on the page" test clicks *Scan DAGR*, which opens a file
+chooser. Chromium logs `File chooser dialog can only be shown with a user
+activation` when a file input is clicked by a script rather than a person, and
+the harness counts console warnings as errors. **The test passed locally and
+failed in CI**, because the warning only appears on some Chromium builds — so
+no amount of local running would have found it. Fixed twice over: the sweep
+skips the file picker, since clicking it asserts nothing, and the collector
+ignores that one warning by name. Everything else stays strict — React's
+duplicate-key complaint is a `console.error` and is exactly what the collector
+exists to catch.
+
+**What this cost and what it bought.** Deployment was blocked for three runs.
+Against that: the browser suite now genuinely runs on every push, the Python
+mirror is checked against the JavaScript on every push, and the site cannot
+ship ahead of either. Before Part 27 none of that was true — 231 unit tests and
+25 browser tests protected exactly one laptop.
+
+**The lesson is narrower than "test your CI".** It is that a *verification
+mechanism is itself unverified until you watch it fail and pass.* The guard
+that broke the build was the one doing its job; the parts that were wrong were
+a hardcoded layout assumption and a test of mine. Both were found by reading
+the logs rather than by reasoning about what should have happened.
+
+### Also fixed in this pass
+
+- A broken link — `docs/AI-INTEGRATION.md` pointed at `LICENSE` from its new
+  home in `docs/`. Found by hand, which is the wrong way, so
+  `tests/unit/docs.test.js` now walks every markdown file and asserts that
+  every link and every backticked repository path resolves. Proved by breaking
+  a real path and watching it name the file and the target.
+- A fresh `git clone` was checked end to end — build, 231 unit tests, and the
+  Python mirror — to confirm the reorganisation left nothing uncommitted.
 
 ## Limitations
 

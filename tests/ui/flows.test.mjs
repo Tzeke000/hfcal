@@ -342,7 +342,10 @@ describe('cards that had no test at all', { skip: SKIP, concurrency: 1 }, () => 
     const page = await newPage(browser);
     await calculate(page, CHERRY_POINT, OKINAWA);
     const n = await page.evaluate(() => {
-      const skip = /CLEAR SAVED DATA|EXPORT/i;
+      // Scan DAGR opens a file chooser, which a scripted click cannot
+      // legitimately do; clicking it asserts nothing and only produces a
+      // browser warning about the missing user activation.
+      const skip = /CLEAR SAVED DATA|EXPORT|SCAN DAGR/i;
       const btns = [...document.querySelectorAll('button')]
         .filter(b => !skip.test(b.textContent || ''));
       btns.forEach(b => { try { b.click(); } catch (e) { /* keep going */ } });

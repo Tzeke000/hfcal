@@ -161,6 +161,13 @@ export async function newPage(browser) {
     if (m.type() !== 'error' && m.type() !== 'warning') return;
     const t = m.text();
     if (/Failed to load resource|net::ERR_|ERR_TUNNEL/.test(t)) return;
+    // Chromium emits this whenever a file input is clicked programmatically
+    // rather than by a human. It is an artifact of driving the page from a
+    // script, not something the app did wrong, and it only shows up on some
+    // Chromium builds — which is why it passed here and failed in CI.
+    // Everything else stays strict: React's duplicate-key complaint is a
+    // console.error and is exactly what this collector exists to catch.
+    if (/File chooser dialog can only be shown with a user activation/.test(t)) return;
     errors.push(`${m.type()}: ${t}`);
   });
   page.errors = errors;
