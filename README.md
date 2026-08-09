@@ -4,9 +4,11 @@
 > Original work · Project signature: `HFCALC-AG-EZK-USMC-v1`
 > Released under [CC BY-NC-ND 4.0](LICENSE)
 
-A USMC-themed offline HF antenna calculator. Plug in your grid + target grid + frequency, get back wire lengths, takeoff angle, propagation analysis, and step-by-step deployment guides for 9 antenna types.
+**Built for the Marine standing at the wire with no signal, no laptop, and no time.**
 
-**Works completely offline once installed.**
+When SATCOM is denied, HF is the fallback — and HF lives or dies on the antenna. A wire cut wrong or hung at the wrong height is the difference between comms and silence. This app puts that knowledge in your pocket and runs it entirely on the phone: enter your grid, the target grid, and your frequency, and it hands back the wire lengths, the support heights, the direction to point, and a straight answer to the question that actually matters — **will this frequency close this path right now, at the power I have?**
+
+The tools the military already has are good — they are just not where the antenna is. This does not claim to beat them. It claims to match the standard where the standard has never been able to go: **offline, in your hand, at the point of construction.**
 
 ---
 
@@ -21,7 +23,7 @@ Open the link in your browser and tap **INSTALL** at the top of the page. Works 
 - **Phone (Android or iPhone)** — installs as a real app icon on your home screen
 - **Desktop (Windows / Mac / Linux Chrome / Edge)** — installs as a standalone app with its own window and Start menu / Dock icon
 
-After installing it works **fully offline** — perfect for the field with no signal.
+After installing it works **fully offline** — the ionospheric tables, antenna guides, and maps are all carried on the device. Connect once so the full-accuracy ionosphere table and the live space-weather reading can cache; after that it never needs a network again.
 
 ✅ Free · ✅ Never expires · ✅ Auto-updates · ✅ No app store
 
@@ -32,18 +34,12 @@ After installing it works **fully offline** — perfect for the field with no si
 If you'd rather have a real `.exe` installer instead of a PWA install:
 
 1. Go to [the latest release](https://github.com/Tzeke000/hfcal/releases/latest) — or, if no release is published yet, the [Windows build artifacts](https://github.com/Tzeke000/hfcal/actions/workflows/build-windows.yml)
-2. Download `HFCalc-Setup-1.0.0-x64.exe` (or similar filename)
+2. Download the `HFCalc-Setup-*-x64.exe` installer
 3. Double-click to install
 
 ⚠️ **Heads up:** the installer is **unsigned**. Windows will show *"Windows protected your PC"* the first time you run it. Click **"More info" → "Run anyway"**. (To avoid this we'd need a $200/year code-signing certificate.)
 
-The `.exe` installs HF Field Antenna as a standalone Windows program. Same calculator, same offline support, same AI integration — just a more traditional Windows install experience.
-
----
-
 ### 📲 Android APK (alternative)
-
-If you'd rather install a real `.apk` file:
 
 1. Go to the [latest Android build](https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml)
 2. Click the most recent successful run
@@ -58,49 +54,70 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 
 ---
 
+## What it does
+
+**Path and geometry**
+- **Coordinate input** — MGRS grid straight off a DAGR (or scan the DAGR screen with the camera), DMS, or decimal degrees. Remembers your last known-good pair so it opens cold with something useful.
+- **Path analysis** — distance, true and magnetic bearing (the number you dial into a lensatic), back azimuth, and the terrain under the whole great-circle path: ocean, land, mountain, desert, and what that ground is worth to your signal.
+- **Live compass** — uses the phone's magnetometer, corrected by the World Magnetic Model carried on the device, to walk you onto the antenna bearing.
+
+**The frequency answer**
+- **Frequency check** — MUF, FOT and LUF for this path at this hour, and a verdict on the frequency you were assigned, with an alternate to request if it will not propagate. Pick any of the 12 months (season at every bounce) and set the transmit power the way the radio is labelled — LOW / MED / HIGH / GLOBAL on an AN/PRC-160, VRC for the 150 W amp, or type your actual watts.
+- **24-hour forecast** — MUF / FOT / LUF in 4-hour Zulu blocks with your local time alongside, so comm windows can be planned instead of discovered.
+- **Every bounce checked** — a long shot reflects off the ionosphere several times, each at a different place, local time, and season; the weakest bounce caps the path and the app shows you which one it is.
+- **PATH CLOSED warning** — when absorption eats everything the ionosphere would reflect, it says so outright. Checked against VOACAP over 6,912 cases: it has never once fired on a path VOACAP could close.
+- **Live space weather** — NOAA solar flux and Kp when a connection exists, cached with its age shown; a stated mid-cycle default when it doesn't. Everything works either way.
+
+**The antenna**
+- **Antenna selection** — recommends from 9 field-expedient types for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire, delta loop — each with pros/cons, deployment photos, and step-by-step build instructions.
+- **Wire physics** — 8 wire core types (bare/stranded/insulated copper, CCS, galvanized steel, stainless, iron, speaker wire) × AWG 10–24 plus custom. Velocity factor computed per combination, so the cut lengths match the wire actually in your hands.
+- **Optimal apex height** — computes the support height that puts the antenna's first lobe on your path's takeoff angle, checks it against what an inverted-V's legs can physically reach, and tells you when to just use the buildable maximum.
+
+**Field workflow**
+- **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator.
+- **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
+
+**Privacy** — your coordinates never leave the device. The app stores your last position locally so it is there when you open it cold; an embedded host must be explicitly authorized (`?embed=1`) before it can read even that, and CLEAR SAVED DATA wipes it.
+
+---
+
+## How close is it?
+
+Measured against **VOACAP** — the U.S. government's own HF prediction engine, the standard since the 1980s — at sites the app's tables were never built from:
+
+| Quantity | Accuracy |
+|---|---|
+| Takeoff angle | within ~1° of the VOACAP median, 250–6,000 km |
+| Critical frequency (foF2) | ~1% (own-built lookup table from 30,240 VOACAP runs) |
+| Path geometry (M-factor) | ~4.8% (own-built table from 12,960 more) |
+| MUF, mid-latitude | ~4% mean · 2.4% median |
+| MUF, pooled across every path type | ~5% mean · within 11% nine times out of ten |
+| Arctic / transpolar paths | ~5.5% |
+| Transequatorial paths | ~6% (the weakest region, stated in-app) |
+
+The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
+
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 32 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+
+**238 unit tests** pin the physics so it cannot drift. **31 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+
+---
+
 ## 🤖 AI Integration
 
-The calculator can be **driven by AI assistants** — your own AI projects (like Ava), Claude, ChatGPT, Claude Code, or any browser-automation agent.
+The calculator can be **driven by AI assistants** — your own AI projects, Claude, ChatGPT, Claude Code, or any browser-automation agent.
 
-### Quick example
+Tell your AI: *"Open the HF calculator and figure out what antenna to use for talking to Lagos from my position on 14.2 MHz."* It opens:
 
-Tell your AI: *"Open the HF calculator and figure out what antenna to use for talking to Lagos from my position on 14.2 MHz."*
-
-The AI opens this URL:
 ```
 https://tzeke000.github.io/hfcal/?from=32.43,-80.67&to=6.45,3.39&freq=14.2&auto=1
 ```
 
-The calculator auto-fills, runs, and the AI reads back the result.
+The calculator auto-fills, runs, and the AI reads back the full result — including the MUF/FOT/LUF verdict, and it can set the month and transmit power to plan ahead.
 
-### Three integration channels
+Three channels: **URL parameters** (any AI that can open a link), **`window.HFCalc.*`** (browser-control agents), and **`postMessage`** (embedding hosts — off by default, requires `?embed=1`, because the reply can carry the operator's coordinates).
 
-- **URL parameters** — for any AI that can open a link
-- **`window.HFCalc.*` JS API** — for browser-control agents and devtools
-- **`postMessage`** — for AI hosts that embed the app in an iframe
-
-📖 **[Full AI integration guide → docs/AI-INTEGRATION.md](docs/AI-INTEGRATION.md)**
-
-This guide is written so any AI can read it and learn how to drive the calculator. Point your AI at it.
-
----
-
-## What it does
-
-- **Coordinate input** — accepts MGRS grid (DAGR-style), DMS, or decimal degrees
-- **Path analysis** — distance, bearing, terrain along the great-circle path (ocean / land / mountain / desert)
-- **Propagation modeling** — F2-layer multi-hop, ionosphere takeoff angle adjusted for terrain, NVIS / single-hop / DX zone detection
-- **Antenna selection** — recommends antennas appropriate for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire, **delta loop (full-wave)**
-- **Wire physics** — 8 wire core types (bare/stranded/insulated copper, CCS, galv steel, stainless, plain iron, speaker wire) × 8 AWG gauges (10–24 AWG) plus custom AWG input. Effective velocity factor computed per-combination.
-- **Field-deployable specs** — wire lengths in feet & meters, support heights, leg angles, build steps, deployment diagrams
-
-## Verified against published HF benchmarks
-
-Tested across 12 real-world paths (Norfolk → Lagos transatlantic, Karachi → Beijing through the Himalayas, etc.). Distances and bearings match haversine to <0.05 km / 0.05°. Takeoff angles align with published references (G4KNO, Skywave Radio Handbook, R&S NVIS notes).
-
-The propagation model is measured against VOACAP — the U.S. government's own HF engine — at sites it was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5% (about 5.5% on Arctic paths, 6% across the equator). The full study, the raw data and the scripts to re-run it are in [`docs/VALIDATION.md`](docs/VALIDATION.md).
-
-238 unit tests pin the physics. A second suite of 31 browser tests (`npm run test:ui`) builds the app and drives it in Chromium, covering the state that unit tests cannot reach — every bug reported from actual use was in the UI, not the math. That suite was itself verified by reintroducing all three of those bugs and confirming it caught each one.
+📖 **[Full AI integration guide → docs/AI-INTEGRATION.md](docs/AI-INTEGRATION.md)** — written so any AI can read it and learn to drive the calculator. Point your AI at it.
 
 ---
 
@@ -136,14 +153,10 @@ and the evidence supporting it.
 
 ## For developers
 
-- Built with React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows desktop) + vite-plugin-pwa
-- Physics, terrain and coordinate math live in small pure modules under `src/`, each with its own test file
-- UI components are being lifted out of `src/ui/HFCalc.jsx` into `src/ui/` — the compass and saved-shots cards, which is where every bug reported from real use has been, are already out
-- Antenna deployment images ship as asset files, not base64 — no external requests either way
-- Production builds use Terser with aggressive minification + variable mangling
-- AI integration layer exposes `window.HFCalc.*`, postMessage, and URL parameters
-
-**Layout** — `src/physics` (the model, VOACAP-validated), `src/data` (generated tables, never hand-edited), `src/lib` (coordinates, comm cards, space weather), `src/ui` (React), `tests/unit` + `tests/ui`, `scripts/validation/build` (generates the tables) and `scripts/validation/studies` (measures against VOACAP). Each folder has a README.
+- React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows) + vite-plugin-pwa
+- **Layout** — `src/physics` (the model, VOACAP-validated), `src/data` (generated tables, never hand-edited), `src/lib` (coordinates, comm cards, space weather), `src/ui` (React), `tests/unit` + `tests/ui`, `scripts/validation/build` (generates the tables) and `scripts/validation/studies` (measures against VOACAP). Each folder has a README.
+- Physical constants live in exactly one place (`src/physics/propagation.js`); the validation studies run through a Python mirror that CI checks against the JavaScript to 1e-9 on every push
+- Everything ships as local assets — no external requests, no CDNs, no telemetry
 
 ```bash
 npm install
@@ -155,13 +168,10 @@ npm run test:ui      # 31 browser tests: builds dist/, drives it in Chromium
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 
-To build the mobile apps and Windows .exe automatically, push to this repo — the GitHub Actions workflows in `.github/workflows/` build:
-- `.apk` (Android, debug-signed)
-- `.ipa` (iOS, unsigned — needs Sideloadly to install)
-- `.exe` (Windows, NSIS installer, unsigned)
+Pushing to this repo builds everything automatically — `.apk`, `.ipa`, `.exe`, and the GitHub Pages deploy — and none of it ships unless the full test suite passes first.
 
 ---
 
 ## Disclaimer
 
-Wire lengths, takeoff angles, and propagation analysis are estimates derived from published HF references (ITU, ARRL, USMC MCRP 3-40.3C, Rohde & Schwarz NVIS notes). Always trim antennas for SWR before transmitting. Use at your own risk. The author makes no warranty of any kind.
+Wire lengths, takeoff angles, and propagation figures are estimates derived from published HF references (ITU, ARRL, USMC MCRP 3-40.3C, Rohde & Schwarz NVIS notes) and measured against VOACAP as documented above. Propagation numbers are statistical monthly-median estimates, not a forecast for one specific hour. **Always trim antennas for SWR and confirm with the radio before you rely on anything here. Your SOI/JCEOI assignment governs.** Not a substitute for issued communications planning tools or procedures. Use at your own risk. The author makes no warranty of any kind.
