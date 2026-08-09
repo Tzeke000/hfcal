@@ -20,6 +20,7 @@ Transequatorial fix and uncertainty audit: August 2026 (app v1.22.0)
 Browser tests for the state the operator touches: August 2026 (app v1.23.0)
 High-latitude / polar measurement: August 2026 (app v1.24.0)
 LUF calibrated against VOACAP loss curves: August 2026 (app v1.25.0)
+Component split and terrain tests: August 2026 (app v1.26.0)
 
 ---
 
@@ -1641,6 +1642,50 @@ for a short-path shot at manpack power. Everything changes for a long one.
 Four tests in `src/freqAdvisor.test.js` pin the new behaviour: the short-path
 anchor, monotonic growth with hop length, the per-hop nature of the obliquity,
 and the night residual appearing on long paths but not short ones.
+
+## Part 21 — Splitting the file the bugs live in (v1.26.0)
+
+Not a measurement, recorded here because it changed what *can* be measured.
+
+`src/HFCalc.jsx` was 4,324 lines and 251 KB. The physics lived in small pure
+modules with their own tests; the UI lived in one file. Every bug ever reported
+from real use was in that one file, and none were in the modules. The bug
+distribution was tracking the structure exactly.
+
+The v1.23 browser tests are what made this safe to change, and the order
+mattered: doing this refactor a week earlier, with only pure-function tests,
+would have been reckless.
+
+Moved out:
+
+| new module | lines | why this one |
+|---|---|---|
+| `src/theme.js` | 117 | every component reads `T`, so nothing else could move until this did |
+| `src/terrain.js` | 245 | **pure functions that had never been tested** — not skipped on purpose, just unreachable except by rendering the whole app |
+| `src/components/CompassCard.jsx` | 270 | the reported compass-freeze bug lived here |
+| `src/components/SavedShots.jsx` | 202 | the other two reported bugs lived here |
+
+`HFCalc.jsx` is down to 3,558 lines. That is still too big, and the remaining
+cards — the frequency panel, the forecast, the About banner, the antenna cards
+— are the obvious next candidates.
+
+**The browser suite earned its place during this change.** Extracting
+`CompassCard` left `isDeclinationModelCurrent` unimported. The build passed —
+an undefined free variable is only an error at runtime — and all 202 unit tests
+passed, because none of them render a component. The browser tests failed
+immediately with `no heading: Compass`: the card was not on the page at all.
+That is precisely the class of defect the suite was written for, caught on its
+first real refactor rather than by an operator in the field.
+
+Ten new tests in `src/terrain.test.js` cover the newly reachable terrain code:
+database well-formedness, the documented overlap-priority rule
+(mountain > lake > ocean > highland > desert), classification everywhere on
+Earth, dateline-crossing paths, conductivity bounds, and that the "key
+obstacle" is the highest point on a path rather than the first one found. One
+of them failed on the first run and the **test** was wrong, not the code —
+`samplePath(n)` takes a segment count and returns n+1 points. Recorded because
+a test suite that has only ever confirmed the author's assumptions is not
+evidence of much.
 
 ## Limitations
 

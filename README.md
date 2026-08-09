@@ -100,7 +100,7 @@ Tested across 12 real-world paths (Norfolk → Lagos transatlantic, Karachi → 
 
 The propagation model is measured against VOACAP — the U.S. government's own HF engine — at sites it was never built from: takeoff angle within about 1°, critical frequency about 1%, MUF about 4–5% (about 5.5% on Arctic paths, 6% across the equator). The full study, the raw data and the scripts to re-run it are in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-202 unit tests pin the physics. A second suite of 11 browser tests (`npm run test:ui`) builds the app and drives it in Chromium, covering the state that unit tests cannot reach — every bug reported from actual use was in the UI, not the math. That suite was itself verified by reintroducing all three of those bugs and confirming it caught each one.
+212 unit tests pin the physics. A second suite of 11 browser tests (`npm run test:ui`) builds the app and drives it in Chromium, covering the state that unit tests cannot reach — every bug reported from actual use was in the UI, not the math. That suite was itself verified by reintroducing all three of those bugs and confirming it caught each one.
 
 ---
 
@@ -137,7 +137,8 @@ and the evidence supporting it.
 ## For developers
 
 - Built with React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows desktop) + vite-plugin-pwa
-- Single `src/HFCalc.jsx` component, fully self-contained
+- Physics, terrain and coordinate math live in small pure modules under `src/`, each with its own test file
+- UI components are being lifted out of `src/HFCalc.jsx` into `src/components/` — the compass and saved-shots cards, which is where every bug reported from real use has been, are already out
 - Antenna deployment images ship as asset files, not base64 — no external requests either way
 - Production builds use Terser with aggressive minification + variable mangling
 - AI integration layer exposes `window.HFCalc.*`, postMessage, and URL parameters
@@ -146,7 +147,7 @@ and the evidence supporting it.
 npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
-npm test             # 202 unit tests over the physics and coordinate math
+npm test             # 212 unit tests over the physics, terrain and coordinate math
 npm run test:ui      # 11 browser tests: builds dist/, drives it in Chromium
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
