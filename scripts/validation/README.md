@@ -5,7 +5,7 @@ Everything that measures this app against VOACAP.
 | | |
 |---|---|
 | `appmodel.py` | **The Python mirror of the shipped JavaScript.** Every study computes the app's answer through this, so a study can never accidentally test something the app does not do. `python3 appmodel.py --check` compares it against `src/physics/freqAdvisor.js` over 455 cases and must report zero difference. |
-| `build/` | Generates the data files the app ships: the foF2 grid and lookup table, the coefficient map, the M-factor table. Slow, run rarely, output committed. |
+| `build/` | Generates the data files the app ships: the foF2 grid and lookup table, the coefficient map, the M-factor table, and the 1° land/sea bitmask (build_land_mask.py, from Natural Earth coastlines). Slow, run rarely, output committed. |
 | `studies/` | Measures the app against VOACAP and writes results to `docs/validation/`. Safe to re-run any time. Each one is documented as a numbered Part in `docs/VALIDATION.md`. |
 
 ## Running a study

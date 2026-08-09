@@ -34,6 +34,7 @@ Remaining ledger cleared: August 2026 (app v1.38.0)
 Hooks lint, dep-contract fixes: August 2026 (app v1.39.0)
 External-review defects: August 2026 (app v1.40.0)
 Full external review, Tier 2/3: August 2026 (app v1.41.0)
+Coastline bitmask replaces ocean boxes: August 2026 (app v1.42.0)
 
 ---
 
@@ -2581,6 +2582,53 @@ Every fix above has a test that fails against the prior code, except the two
 CI-workflow changes (#20, #21's sync step), which are verified by the version
 guard test and by reading the workflow. 247 unit tests, 35 browser tests,
 lint clean, Python mirror exact.
+
+## Part 35 — A real coastline, not hand-drawn boxes (v1.42.0)
+
+Iris's #1 finding was a symptom; hand-maintained ocean geometry was the
+disease. The western North Pacific was silently land because a bounding box
+stopped at −100° instead of wrapping to the dateline (Parts 33/34). Every one
+of the ~30 ocean boxes was a chance to get a meridian wrong, and no test could
+catch a coastline that was simply never drawn.
+
+So the boxes are gone. Ocean-vs-land now comes from a **1-degree land/sea
+bitmask built from Natural Earth's public-domain 1:50m coastline** — 360×180
+cells, one bit each, 8,100 bytes packed, base64-inlined as
+`src/data/landMask.js` (built by `scripts/validation/build/build_land_mask.py`,
+which rasterizes the coastline polygons by even-odd ray casting at each cell
+centre). It is smaller than a single app icon and it makes the entire
+defect class impossible: there is no geometry left to hand-maintain, and
+classification is now exact to the source coastline everywhere on Earth.
+
+What changed in `terrain.js`:
+
+- The 27 hand-drawn ocean boxes were deleted.
+- `classifyPoint` checks the feature boxes first — mountain, lake, desert,
+  highland — because those carry elevation, fresh-water, and conductivity a
+  land/sea mask cannot. Where none applies, the mask decides: land or ocean.
+
+Effect: Tokyo→Honolulu went from 48% ocean to **97%**; open water the boxes
+never covered (Bay of Bengal, the Caribbean interior, the whole Southern
+Ocean, mid-Indian, mid-South-Atlantic) is now ocean without anyone having
+drawn a box for it. Land fraction of the globe from the mask is 33%, against
+the true ~29% — the excess is 1-degree cell-centre sampling rounding coastal
+and Antarctic-shelf cells to land, which is the honest behaviour at the model's
+own resolution.
+
+The mask is a generated data file, so it is guarded like the others
+(`generatedData.test.js`): declared geometry vs decoded length, boolean-total
+everywhere, longitude wrap, and known land/sea spot points. Three more tests
+in `terrain.test.js` check open ocean, continental interiors, and a plausible
+global land fraction.
+
+**Honest limits of a 1-degree mask.** Small islands whose cell centre is water
+read as ocean (Guam, at 13.4°N 144.8°E, is one). That is a resolution limit,
+not a maintenance bug, and it is uniform and predictable rather than a
+forgotten box. A finer mask (0.5° = 32 KB, 0.25° = 130 KB) is a one-line
+change to the builder if island paths ever need it; 1° matches the resolution
+of everything else in the terrain model today.
+
+253 unit tests, 35 browser tests, lint clean.
 
 ## Limitations
 

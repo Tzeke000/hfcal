@@ -162,3 +162,39 @@ test('Tokyo to Honolulu reads as an ocean path', function() {
   const r = pathTerrainAnalysis(35.7, 139.7, 21.3, -157.9, 32);
   assert.ok(r.oceanFrac > 0.9, 'expected a near-all-ocean WESTPAC path, got ' + r.oceanFrac);
 });
+
+// ── Real coastline mask, not hand-drawn boxes (v1.42) ───────────────────────
+// classifyPoint's ocean-vs-land answer now comes from a 1-degree land/sea
+// bitmask built from Natural Earth coastlines, replacing the hand-drawn ocean
+// boxes whose maintenance produced bug #1 (western North Pacific = land).
+
+test('open ocean far from any old box is now ocean everywhere', function() {
+  // Points the hand-drawn boxes never covered — all open water.
+  const water = [[30, 160], [40, 170], [-20, 100], [0, -30], [50, -30],
+                 [-40, 80], [10, 65], [25, -140]];
+  for (const [la, lo] of water) {
+    assert.equal(classifyPoint(la, lo).type, 'ocean', 'expected ocean at ' + [la, lo]);
+  }
+});
+
+test('major landmass interiors are land', function() {
+  const land = [[38, -98], [55, 40], [0, 20], [-25, 135], [45, 105], [-10, -55]];
+  for (const [la, lo] of land) {
+    const t = classifyPoint(la, lo).type;
+    assert.ok(t !== 'ocean', 'expected land-ish at ' + [la, lo] + ', got ' + t);
+  }
+});
+
+test('the land mask is a plausible model of Earth', function() {
+  // Sanity on the whole grid: land fraction near the real ~29-34% (1-degree
+  // cell-centre sampling rounds coastal cells to land, so slightly high).
+  let land = 0, total = 0;
+  for (let la = -89.5; la < 90; la += 1) {
+    for (let lo = -179.5; lo < 180; lo += 1) {
+      total++;
+      if (classifyPoint(la, lo).type !== 'ocean') land++;
+    }
+  }
+  const frac = land / total;
+  assert.ok(frac > 0.25 && frac < 0.40, 'land fraction implausible: ' + frac.toFixed(3));
+});

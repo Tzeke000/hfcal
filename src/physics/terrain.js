@@ -21,37 +21,12 @@
 // When multiple boxes overlap, highest priority wins: mountain > lake > ocean > highland > desert
 // ══════════════════════════════════════════════════════════════════════════════
 
+
+import { isLand } from '../data/landMask.js';
 export const TERRAIN_DB = [
   // ── OCEANS & MAJOR SEAS ────────────────────────────────────────────────────
-  { t:'ocean', n:'North Atlantic',       latMin:  0,  latMax: 65,  lonMin:-80,   lonMax:  0   },
-  { t:'ocean', n:'South Atlantic',       latMin:-60,  latMax:  0,  lonMin:-65,   lonMax: 20   },
-  { t:'ocean', n:'North Pacific',        latMin:  0,  latMax: 65,  lonMin:-180,  lonMax:-100  },
   // Open NW/central Pacific east of Japan and the Philippine Sea to the
   // dateline — was defaulting to land, wrecking WESTPAC path physics.
-  { t:'ocean', n:'NW Pacific',           latMin:  0,  latMax: 65,  lonMin: 145,  lonMax: 180  },
-  { t:'ocean', n:'South Pacific',        latMin:-60,  latMax:  0,  lonMin:-180,  lonMax: -70  },
-  { t:'ocean', n:'Indian Ocean',         latMin:-60,  latMax: 30,  lonMin: 20,   lonMax: 110  },
-  { t:'ocean', n:'Southern Ocean',       latMin:-90,  latMax:-60,  lonMin:-180,  lonMax: 180  },
-  { t:'ocean', n:'Arctic Ocean',         latMin: 70,  latMax: 90,  lonMin:-180,  lonMax: 180  },
-  { t:'ocean', n:'Mediterranean Sea',    latMin: 30,  latMax: 47,  lonMin: -6,   lonMax:  42  },
-  { t:'ocean', n:'Caribbean Sea',        latMin:  8,  latMax: 25,  lonMin:-90,   lonMax: -60  },
-  { t:'ocean', n:'Gulf of Mexico',       latMin: 18,  latMax: 31,  lonMin:-100,  lonMax: -80  },
-  { t:'ocean', n:'Arabian Sea',          latMin:  5,  latMax: 25,  lonMin: 50,   lonMax:  78  },
-  { t:'ocean', n:'Bay of Bengal',        latMin:  5,  latMax: 25,  lonMin: 78,   lonMax: 100  },
-  { t:'ocean', n:'South China Sea',      latMin:  0,  latMax: 25,  lonMin:100,   lonMax: 122  },
-  { t:'ocean', n:'East China/Japan Sea', latMin: 25,  latMax: 45,  lonMin:120,   lonMax: 145  },
-  { t:'ocean', n:'Philippine Sea',       latMin:  5,  latMax: 30,  lonMin:122,   lonMax: 145  },
-  { t:'ocean', n:'Coral/Tasman Sea',     latMin:-45,  latMax:  0,  lonMin:145,   lonMax: 180  },
-  { t:'ocean', n:'North Sea/Baltic',     latMin: 50,  latMax: 70,  lonMin: -5,   lonMax:  30  },
-  { t:'ocean', n:'Black Sea',            latMin: 41,  latMax: 47,  lonMin: 27,   lonMax:  42  },
-  { t:'ocean', n:'Caspian Sea',          latMin: 36,  latMax: 48,  lonMin: 49,   lonMax:  55  },
-  { t:'ocean', n:'Red Sea',             latMin: 12,  latMax: 30,  lonMin: 32,   lonMax:  44  },
-  { t:'ocean', n:'Persian Gulf',         latMin: 22,  latMax: 30,  lonMin: 48,   lonMax:  57  },
-  { t:'ocean', n:'Gulf of Guinea',       latMin: -5,  latMax: 10,  lonMin: -5,   lonMax:  10  },
-  { t:'ocean', n:'Sea of Okhotsk',       latMin: 44,  latMax: 62,  lonMin:135,   lonMax: 160  },
-  { t:'ocean', n:'Bering Sea',           latMin: 50,  latMax: 68,  lonMin:-180,  lonMax:-157  },
-  { t:'ocean', n:'Hudson Bay',           latMin: 50,  latMax: 65,  lonMin: -95,  lonMax: -75  },
-  { t:'ocean', n:'Gulf of Alaska',       latMin: 54,  latMax: 62,  lonMin:-158,  lonMax:-135  },
 
   // ── MAJOR LAKES ───────────────────────────────────────────────────────────
   { t:'lake', n:'Lake Superior',         latMin: 46.4,latMax: 49.0,lonMin:-92.0, lonMax:-84.5 },
@@ -143,6 +118,9 @@ export const TERRAIN_COND = {
 export function classifyPoint(lat, lon) {
   while (lon > 180) lon -= 360;
   while (lon < -180) lon += 360;
+  // Feature boxes first — mountain / lake / desert / highland carry elevation,
+  // fresh-water, and conductivity a land/sea mask cannot. They win where they
+  // apply.
   var best = null;
   var bestPri = -1;
   for (var i = 0; i < TERRAIN_DB.length; i++) {
@@ -152,8 +130,12 @@ export function classifyPoint(lat, lon) {
       if (pri > bestPri) { bestPri = pri; best = e; }
     }
   }
-  if (!best) return { type: 'land', name: null, elev: 0, cond: TERRAIN_COND.land };
-  return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
+  if (best) return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
+  // Ocean vs land now comes from a real 1-degree coastline bitmask, not from
+  // hand-drawn ocean boxes (whose maintenance was a bug factory — the western
+  // North Pacific was silently land for months, VALIDATION Parts 33/35).
+  if (isLand(lat, lon)) return { type: 'land', name: null, elev: 0, cond: TERRAIN_COND.land };
+  return { type: 'ocean', name: 'Ocean', elev: 0, cond: TERRAIN_COND.ocean };
 }
 
 // ── GREAT-CIRCLE PATH SAMPLER ─────────────────────────────────────────────────
