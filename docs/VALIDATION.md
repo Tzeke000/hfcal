@@ -23,6 +23,7 @@ LUF calibrated against VOACAP loss curves: August 2026 (app v1.25.0)
 Component split and terrain tests: August 2026 (app v1.26.0)
 PATH CLOSED false-closure check: August 2026 (app v1.27.0)
 Repository-wide sweep: August 2026 (app v1.28.0)
+postMessage coordinate-leak fix: August 2026 (app v1.29.0)
 
 ---
 
@@ -1857,6 +1858,106 @@ the coefficients still carry full double precision.
 name. It now carries an `aria-label` naming the shot it deletes.
 
 221 unit tests and 12 browser tests.
+
+## Part 24 — A coordinate leak, found by sweeping where I had not looked (v1.29.0)
+
+The Part 23 sweep covered claims, dead code, coverage, docs and hygiene. It did
+not cover the app's **public API surface**, and that is where the worst defect
+in this project was sitting.
+
+### What was wrong
+
+`AI-INTEGRATION.md` documents a `postMessage` bridge so an AI host can drive
+the calculator from an iframe. As shipped through v1.28 that bridge:
+
+- answered **any** message from **any** origin,
+- with **no opt-in** and **no framing check**,
+- and broadcast its replies with `postMessage(msg, '*')`.
+
+Separately, and reasonably on its own, the app caches the operator's last
+known-good coordinate pair in `localStorage` and **loads it into state before
+any user action** — that is what makes it useful when you open it cold in the
+field.
+
+Together those two facts are a position leak:
+
+```html
+<iframe src="https://tzeke000.github.io/hfcal/"></iframe>
+<script>
+  frame.contentWindow.postMessage(
+    { type: 'hfcalc:request', id: 1, method: 'getInputs' }, '*');
+  // reply carries { from: <operator's last position>, to: <their target> }
+</script>
+```
+
+The frame runs on the app's own origin, so it reads the **operator's own**
+cached locations. No user interaction, no calculation, nothing on screen. Any
+web page the operator ever visited could have asked.
+
+This app is built for Marines in the field. Position is the single thing it
+must never hand to something that merely asked for it.
+
+### The fix
+
+**The bridge is off unless the embedding host opts in** with `?embed=1`. A host
+that genuinely embeds the calculator constructs that URL; a drive-by iframe
+does not. Every method except `ping` is refused without it, and the refusal
+says what to add, so an integrator gets a pointer rather than silence.
+
+**Replies are addressed to the asking origin** instead of broadcast, and
+operator data is never sent to an opaque (`"null"`) origin at all, because an
+opaque origin cannot be checked. `'*'` is now only ever reached by errors and
+by `ping`, neither of which carries operator data.
+
+`window.HFCalc.*` is untouched. It requires running script in the page itself,
+which is a different threat entirely, and gating it would break the
+browser-automation channel for no security gain.
+
+### Proved, not asserted
+
+Four browser tests cover it, and the fix was verified the way every other fix
+in this document has been — **by putting the vulnerability back**:
+
+| reintroduced | result |
+|---|---|
+| bridge gate disabled, replies broadcast to `'*'` | `refuses to hand out coordinates without an explicit opt-in` **fails** |
+| " | `getResults is refused too, not just getInputs` **fails** |
+
+14 passed, 2 failed — one per leaking method, no false alarms from the other
+12, including the test that the documented `?embed=1` integration still works.
+Mutations reverted; all 19 pass.
+
+`AI-INTEGRATION.md` now leads Channel 3 with the requirement and the reason,
+and its worked example passes a real target origin instead of `'*'`.
+
+### Also swept, and clean
+
+- **No XSS surface.** No `innerHTML`, no `dangerouslySetInnerHTML`, no `eval`,
+  no `new Function` anywhere in `src/`.
+- **The coordinate parser refuses hostile input** rather than guessing —
+  empty, whitespace, `999,999`, out-of-range DMS, `1e400`, a script tag, a NUL
+  byte, and trailing junk all return a named error. `-0,-0` correctly parses to
+  the origin.
+- **The frequency guard (1–30 MHz) holds**, which is what keeps a zero or
+  negative frequency out of the wire maths where it would produce an infinite
+  or negative length. It had no test at any level; it has three now, including
+  one that the form is not left wedged after a rejection. Non-numeric text is
+  not tested because the field is `type="number"` and the browser refuses it —
+  that guard is real and it is not ours.
+
+### Honest limits of this fix
+
+- `?embed=1` is an opt-in, not authentication. A host that wants the data can
+  still ask for it, and an operator who is served a malicious page that frames
+  the app *with* the parameter is still exposed. Closing that properly needs a
+  `frame-ancestors` CSP header, which GitHub Pages cannot set and which is not
+  available via `<meta>`. The opt-in raises the bar from "any page" to "a page
+  that specifically targets this app"; it does not eliminate the class.
+- The saved-shot list itself is not reachable over the bridge, only the current
+  input pair — but the input pair is the operator's current position, which is
+  the sensitive part.
+- `CLEAR SAVED DATA` in the Saved Shots card wipes the location cache, and is
+  the operator's own control over all of this.
 
 ## Limitations
 

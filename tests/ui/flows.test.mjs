@@ -10,7 +10,7 @@ import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   browserAvailable, startServer, stopServer, launch, newPage,
-  toggleCard, statVal, calculate, readFrequencies,
+  toggleCard, statVal, calculate, readFrequencies, BASE_URL,
 } from './harness.mjs';
 
 const unavailable = browserAvailable();
@@ -282,6 +282,126 @@ describe('frequency check', { skip: SKIP, concurrency: 1 }, () => {
         `${m}: banner=${banner > 0} but LUF ${f.LUF} vs MUF ${f.MUF}`);
     }
     assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('input validation', { skip: SKIP, concurrency: 1 }, () => {
+  // The frequency guard (1-30 MHz) is what stops a zero or negative frequency
+  // reaching the wire maths, where it would produce an infinite or negative
+  // length. It had no test at any level.
+  async function tryCalc(page, from, to, freq) {
+    const inputs = page.locator('input[placeholder*="15T XG"]');
+    await inputs.nth(0).fill(from);
+    await inputs.nth(1).fill(to);
+    const f = page.locator('input[placeholder="e.g. 7.3"]');
+    if (await f.count()) await f.first().fill(freq);
+    await page.getByRole('button', { name: 'CALCULATE', exact: true }).click();
+    await page.waitForTimeout(400);
+    return page.evaluate(() =>
+      [...document.querySelectorAll('.usmc-stat-label')].some(e => e.textContent.trim() === 'Distance'));
+  }
+
+  test('a frequency outside 1-30 MHz is refused, not computed', async () => {
+    // Non-numeric text is not in this list because the field is type="number"
+    // and the browser will not accept it — that guard is real and it is the
+    // browser's, not ours. These are the values that CAN be typed.
+    for (const bad of ['0', '-5', '900', '0.5']) {
+      const page = await newPage(browser);
+      const got = await tryCalc(page, CHERRY_POINT, OKINAWA, bad);
+      assert.equal(got, false, 'the app computed a result for frequency "' + bad + '"');
+      const msg = await page.evaluate(() =>
+        document.body.innerText.includes('Enter frequency 1-30 MHz'));
+      assert.ok(msg, 'no error shown for frequency "' + bad + '"');
+      assert.deepEqual(page.errors, []);
+      await page.context().close();
+    }
+  });
+
+  test('an unparseable location is refused, not guessed at', async () => {
+    const page = await newPage(browser);
+    const got = await tryCalc(page, 'not a coordinate', OKINAWA, '7.3');
+    assert.equal(got, false, 'the app computed a result from junk input');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a valid shot still calculates after a rejected one', async () => {
+    // A rejected input must not leave the form wedged.
+    const page = await newPage(browser);
+    assert.equal(await tryCalc(page, CHERRY_POINT, OKINAWA, '0'), false);
+    assert.equal(await tryCalc(page, CHERRY_POINT, OKINAWA, '7.3'), true,
+      'the form stayed stuck after a rejected frequency');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
+  // v1.29 security fix. Before it, any page could iframe the app and read the
+  // operator's cached coordinates straight out of getInputs — the location
+  // cache is loaded into state before any user action, so a bare frame load
+  // was enough. For a field app that is a position leak.
+  async function ask(page, method) {
+    return page.evaluate((m) => new Promise((resolve) => {
+      const id = 'probe-' + m;
+      function onMsg(ev) {
+        if (!ev.data || ev.data.type !== 'hfcalc:response' || ev.data.id !== id) return;
+        window.removeEventListener('message', onMsg);
+        resolve(ev.data);
+      }
+      window.addEventListener('message', onMsg);
+      window.postMessage({ type: 'hfcalc:request', id, method: m }, '*');
+      setTimeout(() => { window.removeEventListener('message', onMsg); resolve(null); }, 2500);
+    }), method);
+  }
+
+  test('refuses to hand out coordinates without an explicit opt-in', async () => {
+    const page = await newPage(browser);
+    // Put a real coordinate pair in the cache, exactly as an operator would.
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+
+    const res = await ask(page, 'getInputs');
+    assert.ok(res, 'no reply at all — the probe is broken, not the app');
+    assert.equal(res.ok, false, 'the bridge served coordinates with no opt-in');
+    assert.match(res.error, /embed=1/, 'the refusal should tell an integrator what to do');
+    assert.equal(res.result, undefined, 'a refusal must not carry a payload');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('getResults is refused too, not just getInputs', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const res = await ask(page, 'getResults');
+    assert.ok(res && res.ok === false, 'getResults leaked without opt-in');
+    assert.equal(res.result, undefined);
+    await page.context().close();
+  });
+
+  test('ping still answers, and carries no operator data', async () => {
+    // An integrator must be able to detect the app and learn what to do.
+    const page = await newPage(browser);
+    const res = await ask(page, 'ping');
+    assert.ok(res && res.ok === true, 'ping should always answer');
+    assert.equal(res.result.pong, true);
+    const blob = JSON.stringify(res.result);
+    assert.doesNotMatch(blob, /\d{2}\.\d+\s*,\s*-?\d/, 'ping must not carry coordinates');
+    assert.ok(res.result.version, 'ping should still identify the build');
+    await page.context().close();
+  });
+
+  test('with ?embed=1 the documented integration still works', async () => {
+    // The fix must not break a host that legitimately embeds the calculator.
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await page.goto(BASE_URL + '?embed=1', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    const res = await ask(page, 'getInputs');
+    assert.ok(res && res.ok === true, 'opt-in did not re-enable the bridge');
+    assert.ok(res.result.from, 'getInputs should return the from location when opted in');
     await page.context().close();
   });
 });

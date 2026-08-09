@@ -1871,8 +1871,8 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, and the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  221 automated tests pin every formula so the physics cannot drift as the app changes, plus 11 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  221 automated tests pin every formula so the physics cannot drift as the app changes, plus 19 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3172,12 +3172,43 @@ export default function HFCalc() {
     // 3. postMessage listener — for hosts that embed the app in an iframe.
     // Schema: { type: 'hfcalc:request', id: '...', method: 'calculate', params: {...} }
     // Response: { type: 'hfcalc:response', id: '...', ok: true, result: {...} } | error
+    //
+    // ── SECURITY, v1.29 ──────────────────────────────────────────────────────
+    // This bridge used to answer ANY message from ANY origin and reply with
+    // postMessage(msg, '*'), with no opt-in and no framing check. Combined with
+    // the location cache — which holds the operator's last known-good
+    // coordinate pair and is loaded into state before any user action — that
+    // let any web page do this:
+    //
+    //     <iframe src="https://…/hfcal/"> then postMessage {method:'getInputs'}
+    //
+    // and read back where the operator had been and what they were shooting at.
+    // The iframe runs on the app's own origin, so it sees the operator's own
+    // cached locations. For a field app used by Marines that is a position
+    // leak, and position is the one thing this app must never hand out.
+    //
+    // Two changes. The bridge is OFF unless the embedding host asks for it by
+    // loading the app with ?embed=1 — a host that legitimately embeds the app
+    // builds that URL, a drive-by iframe does not. And replies now go to the
+    // asking origin instead of being broadcast to '*'; operator data is never
+    // sent to an opaque ("null") origin at all, because an opaque origin
+    // cannot be checked. `ping` still answers without opt-in, carrying only
+    // the version and signature, so an integrator gets a usable diagnostic and
+    // a pointer instead of silence.
+    function bridgeEnabled() {
+      try {
+        return new URLSearchParams(window.location.search).has('embed');
+      } catch (e) { return false; }
+    }
+
     function onMessage(ev) {
       var data = ev.data;
       if (!data || typeof data !== 'object' || data.type !== 'hfcalc:request') return;
       var reqId = data.id || null;
       var method = data.method;
       var params = data.params || {};
+      var origin = (typeof ev.origin === 'string') ? ev.origin : '';
+      var realOrigin = origin && origin !== 'null';
 
       function reply(ok, payload) {
         var msg = {
@@ -3186,13 +3217,31 @@ export default function HFCalc() {
           ok: ok,
         };
         if (ok) msg.result = payload; else msg.error = String(payload);
+        // Target the asker. '*' is only ever reached for errors and ping,
+        // which carry no operator data.
+        var target = realOrigin ? origin : '*';
         try {
           if (ev.source && ev.source.postMessage) {
-            ev.source.postMessage(msg, '*');
+            ev.source.postMessage(msg, target);
           } else if (window.parent && window.parent !== window) {
-            window.parent.postMessage(msg, '*');
+            window.parent.postMessage(msg, target);
           }
         } catch (e) { /* swallow */ }
+      }
+
+      if (method !== 'ping') {
+        if (!bridgeEnabled()) {
+          reply(false, 'postMessage bridge is disabled. The embedding host must '
+            + 'load the calculator with ?embed=1 to turn it on. This is deliberate: '
+            + 'without it any page could frame the app and read the operator\u2019s '
+            + 'cached coordinates. See AI-INTEGRATION.md.');
+          return;
+        }
+        if (!realOrigin) {
+          reply(false, 'postMessage bridge refuses opaque origins — it cannot verify '
+            + 'who is asking, and the reply may contain coordinates.');
+          return;
+        }
       }
 
       try {

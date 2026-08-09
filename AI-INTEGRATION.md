@@ -230,6 +230,32 @@ Clear all inputs and results.
 
 For AI hosts that embed the calculator in an `<iframe>` or webview — the host and the calculator are in different JavaScript contexts and need to communicate via messages.
 
+> ### ⚠ The bridge is OFF by default. Load the app with `?embed=1`.
+>
+> ```
+> https://tzeke000.github.io/hfcal/?embed=1
+> ```
+>
+> Without that parameter every method except `ping` is refused, and the refusal
+> tells you so.
+>
+> **Why.** Until v1.29 this bridge answered any message from any origin and
+> broadcast its replies to `'*'`. The calculator caches the operator's last
+> known-good coordinate pair and loads it into state before any user action, so
+> any web page could embed the app, send `getInputs`, and read back where the
+> operator had been and what they were shooting at. The frame runs on the app's
+> own origin, so it sees the operator's own cached data. This app is used by
+> Marines in the field; position is the one thing it must never hand out to a
+> page that merely asked.
+>
+> A host that genuinely embeds the calculator builds the URL and adds the
+> parameter. A drive-by iframe does not. Replies are also now addressed to the
+> asking origin rather than broadcast, and operator data is never sent to an
+> opaque (`"null"`) origin, because an opaque origin cannot be checked.
+>
+> `window.HFCalc.*` (Channel 2) is unaffected — it requires running script in
+> the page itself, which is a different thing entirely.
+
 ### Schema
 
 **Request (host → calculator):**
@@ -271,6 +297,9 @@ For AI hosts that embed the calculator in an `<iframe>` or webview — the host 
 ### Example: host driving the calculator in an iframe
 
 ```javascript
+const HFCALC_ORIGIN = 'https://tzeke000.github.io';
+// NOTE the ?embed=1 — the bridge stays off without it. See the box above.
+// <iframe id="hfcalc-iframe" src="https://tzeke000.github.io/hfcal/?embed=1">
 const iframe = document.getElementById('hfcalc-iframe');
 
 // Wait for ready
@@ -297,7 +326,7 @@ function callHFCalc(method, params) {
     iframe.contentWindow.postMessage({
       type: 'hfcalc:request',
       id, method, params
-    }, '*');
+    }, HFCALC_ORIGIN);   // address the calculator, do not broadcast
   });
 }
 
