@@ -13,7 +13,7 @@ import {
   interpretSFI, interpretKp, spaceWxAdvice,
 } from "../lib/spacewx.js";
 import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAULT_SSN,
-         FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source,
+         FOT_DAYS_IN_10, MUF_DAYS_IN_10, foF2Source, nextOpenWindow,
          FOF2_SIGMA_TABLE, MFACTOR_ACCURACY_PCT,
          cosZenith, solarDeclination } from "../physics/freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "../data/fof2Table.js";
@@ -1506,6 +1506,25 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                       + assess.txWatts + ' W. Turn the power up, wait for the D layer to thin after dark, or shorten the path. '
                       + 'This warning has been checked against VOACAP over 6,912 cases and never once fired on a path VOACAP could close.'}
                   </div>
+                  {(function() {
+                    // When it opens — read straight off the forward scan so the
+                    // operator does not have to eyeball the 24-hour table.
+                    if (!pathCtx) return null;
+                    var w = nextOpenWindow({
+                      takeoffDeg: results.directive.mufTakeoffDeg, layerKm: HOP.F2.hKm,
+                      midLon: pathCtx.midLon, latDeg: pathCtx.midLat,
+                      magLatDeg: pathCtx.magLatDeg, modipDeg: pathCtx.modipDeg,
+                      ends: pathCtx.ends, bounces: pathCtx.bounces, hops: pathCtx.hops,
+                      distKm: results.geo.distKm, txWatts: txWatts, month: month, sfi: cachedSFI(),
+                    }, utcHour);
+                    var msg = w
+                      ? 'Opens \u2248' + String(Math.floor(w.utcHour)).padStart(2, '0') + '00Z \u2014 in about '
+                        + (w.inHours === 1 ? '1 hour' : w.inHours + ' hours') + ' at this power.'
+                      : 'Stays closed all day at ' + assess.txWatts + ' W \u2014 more power or a shorter path is the only fix.';
+                    return (
+                      <div style={{ color: '#ffd9d0', fontWeight: 700, fontSize: '0.76rem', marginTop: 6 }}>{msg}</div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1950,7 +1969,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  253 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  255 automated tests pin every formula so the physics cannot drift as the app changes, plus 25 more that build the app and drive it in a browser — every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting all three of those bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2984,6 +3003,18 @@ export default function HFCalc() {
   // state, delivered as if they answered the new request. Worse, when the new
   // inputs failed validation the old results were returned as a success.
   var calcSeqRef = useRef(0);
+  // Night (red-light) mode — persisted, applied to <html> so the CSS veil in
+  // theme.js covers the whole app. Off by default.
+  var [night, setNight] = useState(function() {
+    try { return localStorage.getItem('hfcalc_night_v1') === '1'; } catch (e) { return false; }
+  });
+  useEffect(function() {
+    try {
+      if (night) document.documentElement.setAttribute('data-night', '1');
+      else document.documentElement.removeAttribute('data-night');
+      localStorage.setItem('hfcalc_night_v1', night ? '1' : '0');
+    } catch (e) { /* storage/DOM unavailable — ignore */ }
+  }, [night]);
   var readyAnnouncedRef = useRef(false);   // hfcalc:ready must fire once, not per keystroke
   // The AI-integration effect re-binds on every state change; this guard keeps
   // the URL-parameter import to a single application per page load so it
@@ -3529,8 +3560,18 @@ export default function HFCalc() {
             <div style={{ color: T.accentText, fontSize: '0.62rem', letterSpacing: '0.1em', marginTop: 3, fontWeight: 600 }}>MADE BY {AUTHOR_NAME.toUpperCase()}</div>
             <div style={{ color: T.textMute, fontSize: '0.58rem', letterSpacing: '0.12em', marginTop: 1 }}>{AUTHOR_BRANCH} &nbsp;&middot;&nbsp; FIELD EXPEDIENT &nbsp;&middot;&nbsp; OFFLINE &nbsp;&middot;&nbsp; {'V' + APP_VERSION}</div>
           </div>
-          <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: '1px solid #2e4422', flexShrink: 0 }}>
-            <img src={ICON_192} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <button onClick={function() { setNight(function(n) { return !n; }); }}
+              title={night ? 'Night mode on — tap for normal' : 'Night mode (red light) — preserves dark adaptation'}
+              aria-label="Toggle red-light night mode"
+              style={{ background: night ? '#3a0d00' : T.surfaceHi, color: night ? '#ff6a4a' : T.textSec,
+                       border: '1px solid ' + (night ? '#7a2a14' : T.borderHi), borderRadius: 8,
+                       padding: '7px 10px', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', lineHeight: 1 }}>
+              {night ? '\u25cf NIGHT' : '\u25cb NIGHT'}
+            </button>
+            <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: '1px solid #2e4422' }}>
+              <img src={ICON_192} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
           </div>
         </div>
       </div>

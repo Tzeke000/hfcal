@@ -91,7 +91,15 @@ const USMC_CSS = [
   "ol, ul { margin: 0; padding: 0; list-style: none; }",
 
   /* Install banner pulsing arrow */
-  "@keyframes usmcArrowPulse { 0%,100% { transform: translateX(0); opacity: 1; } 50% { transform: translateX(4px); opacity: 0.6; } }"
+  "@keyframes usmcArrowPulse { 0%,100% { transform: translateX(0); opacity: 1; } 50% { transform: translateX(4px); opacity: 0.6; } }",
+
+  /* ── Night (red-light) mode ───────────────────────────────────────────────
+     Toggled via data-night on <html>. Strip colour from the whole app, then
+     multiply a red veil over it: white text -> red, black stays black, so the
+     result is red-on-black that keeps a Marine\u2019s dark adaptation. Applied
+     globally so it needs no change to the T palette every component reads. */
+  "html[data-night] body { filter: grayscale(1) brightness(0.85) contrast(1.05); }",
+  "html[data-night] body::after { content: \"\"; position: fixed; inset: 0; background: #ff1a00; mix-blend-mode: multiply; pointer-events: none; z-index: 2147483000; }"
 ].join("\n");
 
 // ── STYLE INJECTOR ────────────────────────────────────────────────────────────

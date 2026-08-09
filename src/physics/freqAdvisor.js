@@ -768,6 +768,21 @@ export function assessFrequency(params) {
 // params: everything assessFrequency takes (minus utcHour), plus
 //   blockHours   size of each block in hours (default 4, must divide 24)
 //   nowUtcHour   current UTC hour, used to flag the active block
+// The next hour (UTC) at which a currently-closed path opens, scanning forward
+// from `fromUtcHour`. Returns { utcHour, inHours } or null if it stays closed
+// all day. Used to turn a bare "PATH CLOSED" into "opens ~0430Z (in 3h40m)".
+export function nextOpenWindow(params, fromUtcHour) {
+  var start = (typeof fromUtcHour === 'number' && isFinite(fromUtcHour)) ? fromUtcHour : 0;
+  for (var i = 1; i <= 24; i++) {
+    var h = (start + i) % 24;
+    var a = assessFrequency(Object.assign({}, params, { utcHour: h, freqMHz: null }));
+    if (a && !a.pathClosed) {
+      return { utcHour: h, inHours: i };
+    }
+  }
+  return null;
+}
+
 export function frequencyForecast(params) {
   var size = params.blockHours || 4;
   if (24 % size !== 0) size = 4;

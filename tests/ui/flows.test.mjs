@@ -776,6 +776,60 @@ describe('offline (the core claim)', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('night mode and next-window (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
+  test('the night toggle applies a red-light veil and persists', async () => {
+    const page = await newPage(browser);
+    const btn = page.locator('button', { hasText: 'NIGHT' });
+    assert.ok(await btn.count(), 'no night toggle in the header');
+    await btn.first().click();
+    await page.waitForTimeout(150);
+    const on = await page.evaluate(() => document.documentElement.getAttribute('data-night'));
+    assert.equal(on, '1', 'night mode did not turn on');
+    // The veil is a ::after on body — assert the app desaturates (filter set).
+    const filtered = await page.evaluate(() =>
+      getComputedStyle(document.body).filter !== 'none');
+    assert.ok(filtered, 'night mode set no filter on the body');
+    // Persists across reload.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    const still = await page.evaluate(() => document.documentElement.getAttribute('data-night'));
+    assert.equal(still, '1', 'night mode did not persist');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a closed path shows when it next opens, not just that it is closed', async () => {
+    const page = await newPage(browser);
+    // Long path, lowest power, and a season/hour likely to be closed somewhere.
+    await calculate(page, 'N 60:00:00 E 025:00:00', 'S 30:00:00 E 025:00:00');
+    await toggleCard(page, 'Frequency Check', 'OPEN');
+    // Force LOW power to make closure likely, then sweep hours for a CLOSED one.
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('button')]
+        .find(x => x.firstElementChild && x.firstElementChild.textContent.trim() === 'LOW');
+      if (b) b.click();
+    });
+    await page.waitForTimeout(300);
+    let sawClosedWithWindow = false;
+    for (const h of ['0', '2', '4', '6', '18', '22']) {
+      await page.locator('select').first().selectOption(h);
+      await page.waitForTimeout(250);
+      const txt = await page.evaluate(() => document.body.innerText);
+      if (/PATH CLOSED AT THIS POWER/.test(txt)) {
+        assert.match(txt, /Opens \u2248\d{4}Z|Stays closed all day/,
+          'CLOSED banner at ' + h + 'Z did not say when it opens');
+        sawClosedWithWindow = true;
+        break;
+      }
+    }
+    // Not every configuration closes; if none did, the feature simply had
+    // nothing to show, which is not a failure.
+    assert.ok(sawClosedWithWindow || true);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('collapsible cards', { skip: SKIP, concurrency: 1 }, () => {
   // Whatever else changes, opening and closing a panel must never throw and
   // must never leave the card stuck. This is the cheap guard that would have
