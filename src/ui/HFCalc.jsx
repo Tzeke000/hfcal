@@ -1095,6 +1095,26 @@ function isNewerVersion(remote, local) {
   return false;
 }
 
+// ── EMBED-HOST ALLOWLIST ──────────────────────────────────────────────────────
+// Origins the OPERATOR has approved to read data over the postMessage bridge.
+// The cross-origin-frame refusal killed the drive-by iframe, but a popup
+// variant survived it: a hostile page window.open()s the app with ?embed=1 —
+// the popup is top-level, so the framing check passes — and postMessages
+// getInputs from the opener (Iris round 2, B2). The parameter is attacker-
+// supplied, so the only party who can authorize a cross-origin host is the
+// operator, on screen. Same-origin senders need no approval: they already run
+// our code.
+var EMBED_ALLOW_KEY = 'hfcalc_embed_allow_v1';
+function loadEmbedAllow() {
+  try {
+    var a = JSON.parse(localStorage.getItem(EMBED_ALLOW_KEY) || '[]');
+    return Array.isArray(a) ? a.filter(function(s) { return typeof s === 'string'; }) : [];
+  } catch (e) { return []; }
+}
+function persistEmbedAllow(list) {
+  try { localStorage.setItem(EMBED_ALLOW_KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+}
+
 // ── UPDATE BANNER ─────────────────────────────────────────────────────────────
 // Checks the server's version.json (emitted at build time) against the
 // version baked into this bundle. If the server is ahead, shows an alert at
@@ -1126,32 +1146,47 @@ function UpdateBanner() {
 
   function doUpdate() {
     if (busy) return;
-    // Never nuke the caches while offline. Deleting the service worker and
-    // every cache with no network strips the only copy of the app and the
-    // reload has nothing to serve — a bricked install in the field. The
-    // cached app is fine; the update simply waits for a connection.
+    // Never nuke the caches without a LIVE connection. Deleting the service
+    // worker and every cache with no reachable server strips the only copy of
+    // the app and the reload has nothing to serve — a bricked install in the
+    // field. navigator.onLine is NOT that check: it only says an interface is
+    // up. A hotspot with no backhaul, a captive portal, a dead base LAN all
+    // read onLine===true (Iris B1). So prove the server answers — fetch the
+    // same version.json the banner is built on — and only then wipe.
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      setOffline(true);
+      setOffline(true);   // fast path: certainly offline, skip the probe
       return;
     }
     setOffline(false);
     setBusy(true);
     var reload = function() { try { window.location.reload(); } catch (e) {} };
+    function wipeAndReload() {
+      try {
+        var jobs = [];
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          jobs.push(navigator.serviceWorker.getRegistrations().then(function(regs) {
+            return Promise.all(regs.map(function(r) { return r.unregister(); }));
+          }));
+        }
+        if (window.caches && caches.keys) {
+          jobs.push(caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          }));
+        }
+        Promise.all(jobs).then(reload, reload);
+        setTimeout(reload, 4000); // safety net if a promise hangs
+      } catch (e) { reload(); }
+    }
+    var probe;
     try {
-      var jobs = [];
-      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-        jobs.push(navigator.serviceWorker.getRegistrations().then(function(regs) {
-          return Promise.all(regs.map(function(r) { return r.unregister(); }));
-        }));
-      }
-      if (window.caches && caches.keys) {
-        jobs.push(caches.keys().then(function(keys) {
-          return Promise.all(keys.map(function(k) { return caches.delete(k); }));
-        }));
-      }
-      Promise.all(jobs).then(reload, reload);
-      setTimeout(reload, 4000); // safety net if a promise hangs
-    } catch (e) { reload(); }
+      probe = fetch(import.meta.env.BASE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' });
+    } catch (e) { probe = Promise.reject(e); }
+    probe.then(function(r) {
+      if (r && r.ok) { wipeAndReload(); return; }
+      setBusy(false); setOffline(true);
+    }, function() {
+      setBusy(false); setOffline(true);
+    });
   }
 
   var stepRow = function(n, bold, desc, key) {
@@ -1186,7 +1221,7 @@ function UpdateBanner() {
         </div>
         {offline && (
           <div style={{ color: T.warn, fontSize: '0.72rem', marginTop: 8, lineHeight: 1.5, flexBasis: '100%' }}>
-            {'You\u2019re offline. Updating clears the app\u2019s stored copy, and with no connection there is nothing to reload — so it is held until you have signal. The version you have keeps working.'}
+            {'Can\u2019t reach the update server — you may be offline, on a captive portal, or on a link with no internet behind it. Updating clears the app\u2019s stored copy, and with nothing to reload from it is held until the server answers. The version you have keeps working.'}
           </div>
         )}
       </div>
@@ -2973,6 +3008,9 @@ export default function HFCalc() {
       zoneName: results.antennaData.zoneName,
       takeoffDeg: results.directive.takeoffDeg,
       wireLabel: (WIRE_CORES[results.wireCore] ? WIRE_CORES[results.wireCore].short : results.wireType) + ' ' + results.wireGauge + ' AWG',
+      // Raw wire keys so shareUrl can emit ?core=&gauge= — the QR receiver
+      // must rebuild with the same wire or the cut lengths differ (VF).
+      wireCore: results.wireCore, wireGauge: results.wireGauge,
       vf: results.vf,
       legEndM: legEndHeight,
       antenna: {
@@ -3005,6 +3043,9 @@ export default function HFCalc() {
   // state, delivered as if they answered the new request. Worse, when the new
   // inputs failed validation the old results were returned as a success.
   var calcSeqRef = useRef(0);
+  // A cross-origin host asking to read data over the postMessage bridge —
+  // origin string while a request is pending operator approval (Iris B2).
+  var [embedAsk, setEmbedAsk] = useState(null);
   // Night (red-light) mode — persisted, applied to <html> so the CSS veil in
   // theme.js covers the whole app. Off by default.
   var [night, setNight] = useState(function() {
@@ -3159,6 +3200,21 @@ export default function HFCalc() {
           else { setLegEndStr(lm[1]); setLegEndUnit(lu); }
           didSet = true;
         }
+      }
+      // ?watts= and ?month= — the two knobs that move the verdict (power sets
+      // the LUF, month sets the MUF). The QR handoff encodes them so the
+      // receiver's auto-calc reproduces the SENDER's verdict, not a verdict at
+      // this device's defaults (Iris round 2, C1). Same bounds as the AI-layer
+      // setters.
+      var qWatts = url.searchParams.get('watts');
+      if (qWatts) {
+        var wv = parseFloat(qWatts);
+        if (!isNaN(wv) && wv > 0 && wv <= 10000) { setTxWatts(wv); didSet = true; }
+      }
+      var qMonth = url.searchParams.get('month');
+      if (qMonth) {
+        var mv = parseInt(qMonth, 10);
+        if (!isNaN(mv) && mv >= 1 && mv <= 12) { setMonth(mv); didSet = true; }
       }
       // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate:
       // marking the session as "has calculated" lets the live-recompute effect
@@ -3485,6 +3541,24 @@ export default function HFCalc() {
             + 'who is asking, and the reply may contain coordinates.');
           return;
         }
+        // Data-bearing methods need OPERATOR approval when the asker is
+        // cross-origin. ?embed=1 alone cannot gate them: it is attacker-
+        // supplied, and a popup opened with it is top-level so the framing
+        // check passes (Iris round 2, B2). getInputs returns the operator's
+        // grids outright; getResults and a parameterless calculate answer
+        // from cached inputs, which gives away distance and bearing from the
+        // operator's position. Same-origin askers already run our code and
+        // need no approval — that is also what keeps the documented
+        // same-origin integration working.
+        var wantsData = method === 'getInputs' || method === 'getResults' || method === 'calculate';
+        if (wantsData && origin !== window.location.origin
+            && loadEmbedAllow().indexOf(origin) === -1) {
+          setEmbedAsk(origin);
+          reply(false, 'This host (' + origin + ') is not authorized to read '
+            + 'operator data. The operator is being asked on screen; if they '
+            + 'approve, send the request again. See docs/AI-INTEGRATION.md.');
+          return;
+        }
       }
 
       try {
@@ -3580,6 +3654,34 @@ export default function HFCalc() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 16px 0 16px' }}>
 
+        {embedAsk && (
+          <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.warn }}>
+            <div style={{ color: T.warn, fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.12em' }}>EXTERNAL HOST REQUEST</div>
+            <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.86rem', marginTop: 4, wordBreak: 'break-all' }}>{embedAsk}</div>
+            <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55, marginTop: 6 }}>
+              This site is asking to read your calculator data — which can include your entered grids and results. Only allow a host you opened on purpose and trust with your position.
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                onClick={function() {
+                  var list = loadEmbedAllow();
+                  if (list.indexOf(embedAsk) === -1) persistEmbedAllow(list.concat(embedAsk));
+                  setEmbedAsk(null);
+                }}
+                style={{ flex: 1, background: T.accent, color: '#0e1409', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer' }}>
+                ALLOW THIS HOST
+              </button>
+              <button
+                onClick={function() { setEmbedAsk(null); }}
+                style={{ flex: 1, background: '#3a1810', color: '#ff9b86', border: '1px solid #7a3428', borderRadius: 6, padding: '10px 0', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer' }}>
+                DENY
+              </button>
+            </div>
+            <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
+              Allowed hosts are remembered on this device only. The recovery screen&#39;s CLEAR SAVED DATA forgets them.
+            </div>
+          </div>
+        )}
         <UpdateBanner />
         <InstallBanner pwa={pwa} />
         <AboutBanner />

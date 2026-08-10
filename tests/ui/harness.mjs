@@ -99,7 +99,16 @@ export function browserAvailable() {
 // The tests run against `dist/`, not the dev server: that is what ships, and
 // it is what the service worker precaches.
 const PORT = Number(process.env.HFCALC_PORT || 4179);
-export const BASE_URL = process.env.HFCALC_URL || `http://127.0.0.1:${PORT}/`;
+// The deployed site lives at /hfcal/, not /. Until v1.46 every browser test
+// exercised only the base-/ build, so the artifact that actually ships was
+// never driven (Iris round 2, B3). HFCALC_BASE_PATH='/hfcal/' serves dist/
+// under that prefix, exactly as GitHub Pages does — CI runs the suite both
+// ways (`npm run test:ui` and `npm run test:ui:pages`).
+const BASE_PATH = (() => {
+  const p = process.env.HFCALC_BASE_PATH || '/';
+  return p.endsWith('/') ? p : p + '/';
+})();
+export const BASE_URL = process.env.HFCALC_URL || `http://127.0.0.1:${PORT}${BASE_PATH}`;
 
 const DIST = fileURLToPath(new URL('../../dist/', import.meta.url));
 const MIME = {
@@ -120,7 +129,18 @@ export async function startServer() {
     throw new Error('dist/ is missing — run `npm run build` first');
   }
   server = createServer((req, res) => {
-    const rel = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
+    let urlPath = decodeURIComponent(req.url.split('?')[0]);
+    if (BASE_PATH !== '/') {
+      // Pages-style prefix serving: /hfcal/x maps to dist/x; /hfcal redirects
+      // to /hfcal/ (as Pages does); anything outside the prefix is a real 404.
+      if (urlPath + '/' === BASE_PATH) {
+        res.writeHead(301, { Location: BASE_PATH }).end();
+        return;
+      }
+      if (!urlPath.startsWith(BASE_PATH)) { res.writeHead(404).end(); return; }
+      urlPath = '/' + urlPath.slice(BASE_PATH.length);
+    }
+    const rel = normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
     let file = join(DIST, rel);
     if (!file.startsWith(DIST)) { res.writeHead(403).end(); return; }
     var missing = !existsSync(file) || statSync(file).isDirectory();

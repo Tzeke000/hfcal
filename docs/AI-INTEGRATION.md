@@ -25,7 +25,7 @@ The simplest channel. The AI just opens a URL with query parameters and the app 
 ### Endpoint
 
 ```
-https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={copper|steel}&core={CORE_KEY}&gauge={AWG}&auto={0|1}
+https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={copper|steel}&core={CORE_KEY}&gauge={AWG}&watts={W}&month={1-12}&auto={0|1}
 ```
 
 ### Parameters
@@ -39,6 +39,8 @@ https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={c
 | `core` | wire core key (see "Wire cores") | No | Detailed wire core selection — overrides `wire` |
 | `gauge` | AWG number e.g. `14`, `18`, `22` | No | Wire gauge in AWG; custom values accepted |
 | `legend` | number + optional unit, e.g. `3`, `3in`, `0.5ft`, `0.08m` | No | Leg end height (inverted-V/dipole leg ends above ground). Bare number = inches. Default 3 in |
+| `watts` | number 0–10000 | No | Transmit power in watts — sets the LUF. The QR handoff encodes it so the receiver reproduces the sender's verdict |
+| `month` | integer 1–12 | No | Month of operation — sets the MUF (season at every bounce) |
 | `auto` | `0` or `1` | No | If all of `from`/`to`/`freq` are present, calculation auto-runs unless `auto=0` |
 
 > The calculator also accepts MGRS grids and DMS — but for AI use we recommend decimal lat/lon since it's unambiguous.
@@ -277,6 +279,16 @@ For AI hosts that embed the calculator in an `<iframe>` or webview — the host 
 > parameter. A drive-by iframe does not. Replies are also now addressed to the
 > asking origin rather than broadcast, and operator data is never sent to an
 > opaque (`"null"`) origin, because an opaque origin cannot be checked.
+>
+> **Cross-origin hosts additionally need one-time operator approval** (since
+> v1.46). `?embed=1` is attacker-supplied — a hostile page can `window.open`
+> the app with it and message from the opener, which the framing check cannot
+> see. So the data-bearing methods (`calculate`, `getResults`, `getInputs`)
+> answer a cross-origin sender only after the operator taps **ALLOW THIS
+> HOST** on a card the app shows when the first request arrives. The refusal
+> reply says approval is pending; re-send the request after the operator
+> approves. Approved origins persist on the device. Same-origin senders and
+> the `set*` / `ping` methods are unaffected.
 >
 > `window.HFCalc.*` (Channel 2) is unaffected — it requires running script in
 > the page itself, which is a different thing entirely.

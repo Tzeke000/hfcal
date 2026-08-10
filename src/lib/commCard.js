@@ -144,6 +144,17 @@ export function shareUrl(shot, base) {
   if (shot.wireCore) add('core', shot.wireCore);
   if (shot.wireGauge) add('gauge', shot.wireGauge);
   if (typeof shot.legEndM === 'number') add('legend', (shot.legEndM / 0.0254).toFixed(1));
+  // The LUF moves with transmit power and the MUF moves with the month — the
+  // same rule the comm card states. A handoff that drops them lets the
+  // receiver auto-calc at defaults and read the OPPOSITE verdict for "the
+  // same plan" (sender at 5 W: PATH CLOSED; receiver at 20 W: GOOD).
+  var fc = shot.freqCheck || {};
+  var w = (typeof fc.txWatts === 'number') ? fc.txWatts
+        : (typeof shot.txWatts === 'number') ? shot.txWatts : null;
+  if (w != null && isFinite(w) && w > 0) add('watts', w);
+  var mo = (typeof fc.month === 'number') ? fc.month
+         : (typeof shot.month === 'number') ? shot.month : null;
+  if (mo != null && mo >= 1 && mo <= 12) add('month', Math.round(mo));
   add('auto', '1');
   return b + (p.length ? '?' + p.join('&') : '');
 }

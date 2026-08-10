@@ -17,6 +17,7 @@ import {
   TERRAIN_DB, TERRAIN_PRIORITY, TERRAIN_COND,
   classifyPoint, samplePath, pathTerrainAnalysis,
 } from '../../src/physics/terrain.js';
+import { isLand } from '../../src/data/landMask.js';
 
 test('every database entry is well formed', function() {
   assert.ok(TERRAIN_DB.length > 0);
@@ -49,15 +50,26 @@ test('classifyPoint returns a usable answer anywhere on Earth', function() {
 });
 
 test('overlapping boxes resolve by priority, highest wins', function() {
-  // The documented rule: mountain > lake > ocean > highland > desert. If two
-  // boxes cover a point, the winner must be the higher-priority type.
+  // The documented rule: mountain > lake beat everything; desert/highland
+  // boxes apply only where the coastline mask says LAND (their rectangles
+  // overhang open water — Iris round 2, finding A). So the expected winner is
+  // the highest-priority box hit, after dropping desert/highland hits on
+  // water; if nothing remains, the mask decides land vs ocean.
   for (let lat = -80; lat <= 80; lat += 7) {
     for (let lon = -175; lon < 180; lon += 11) {
-      const hits = TERRAIN_DB.filter(e =>
+      const hitsAll = TERRAIN_DB.filter(e =>
         lat >= e.latMin && lat <= e.latMax && lon >= e.lonMin && lon <= e.lonMax);
-      if (hits.length < 2) continue;
-      const best = Math.max(...hits.map(e => TERRAIN_PRIORITY[e.t]));
+      if (hitsAll.length < 2) continue;
+      const isWater = !isLand(lat, lon);
+      const hits = hitsAll.filter(e =>
+        !(isWater && (e.t === 'desert' || e.t === 'highland')));
       const got = classifyPoint(lat, lon);
+      if (hits.length === 0) {
+        assert.equal(got.type, isWater ? 'ocean' : 'land',
+          'mask should decide at ' + [lat, lon] + ': got ' + got.type);
+        continue;
+      }
+      const best = Math.max(...hits.map(e => TERRAIN_PRIORITY[e.t]));
       assert.equal(TERRAIN_PRIORITY[got.type], best,
         'priority not respected at ' + [lat, lon] + ': got ' + got.type);
     }
@@ -183,6 +195,55 @@ test('major landmass interiors are land', function() {
     const t = classifyPoint(la, lo).type;
     assert.ok(t !== 'ocean', 'expected land-ish at ' + [la, lo] + ', got ' + t);
   }
+});
+
+// ── Water beats desert/highland boxes (v1.46, Iris round 2 finding A) ───────
+// The v1.42 mask rewrite checked feature boxes FIRST, silently losing the old
+// ocean-above-desert ordering: the Sahara box (which overhangs the whole
+// Mediterranean and Red Sea) and the Arabian box (which overhangs the Persian
+// Gulf) claimed open water and gave 5th Fleet / EUCOM paths desert physics —
+// +2° takeoff penalty, no sea-path bonus, conductivity 0.3 instead of
+// 5000 mS/m. These pins make that regression impossible to reintroduce.
+
+test('the Mediterranean, Red Sea and Persian Gulf are water, not desert', function() {
+  const seas = [
+    ['open Mediterranean', 33, 20],
+    ['Mediterranean south of Crete', 34, 24],
+    ['Red Sea', 20, 38.5],
+    ['Persian Gulf', 27, 51.5],
+    ['Gulf of Oman', 24.5, 59.5],
+  ];
+  for (const [name, la, lo] of seas) {
+    assert.equal(classifyPoint(la, lo).type, 'ocean',
+      name + ' at ' + [la, lo] + ' must classify as ocean');
+  }
+});
+
+test('the deserts those boxes exist for are still desert on land', function() {
+  assert.equal(classifyPoint(23, 10).type, 'desert', 'central Sahara');
+  assert.equal(classifyPoint(24, 45).type, 'desert', 'Arabian interior');
+  assert.equal(classifyPoint(-25, 130).type, 'desert', 'Australian outback');
+});
+
+test('mountain and lake boxes still outrank the water mask', function() {
+  // Great Lakes cells read water in the coastline mask; the lake boxes must
+  // keep winning so they get freshwater (3 mS/m), not seawater, conductivity.
+  assert.equal(classifyPoint(44, -87.5).type, 'lake', 'Lake Michigan');
+  assert.equal(classifyPoint(47.5, -88).type, 'lake', 'Lake Superior');
+});
+
+test('Malta to Alexandria is a sea path, not a desert path', function() {
+  const r = pathTerrainAnalysis(35.9, 14.5, 31.2, 29.9, 32);
+  assert.ok(r.oceanFrac > 0.8,
+    'near-all-sea path must score as ocean, got oceanFrac ' + r.oceanFrac.toFixed(2));
+  assert.ok(r.desertFrac < 0.1,
+    'desert must not claim the Mediterranean, got desertFrac ' + r.desertFrac.toFixed(2));
+});
+
+test('Bahrain to Jask across the Gulf is mostly water', function() {
+  const r = pathTerrainAnalysis(26.2, 50.6, 25.6, 57.8, 32);
+  assert.ok(r.oceanFrac > 0.5,
+    'Persian Gulf crossing should be majority water, got ' + r.oceanFrac.toFixed(2));
 });
 
 test('the land mask is a plausible model of Earth', function() {

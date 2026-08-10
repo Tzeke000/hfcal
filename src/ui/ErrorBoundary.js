@@ -34,11 +34,20 @@ export class ErrorBoundary extends React.Component {
 
   clearAndReload() {
     // Wipe only this app's own keys, not the whole origin — the operator may
-    // have unrelated things in storage. These are the keys the app writes.
+    // have unrelated things in storage. Match by the hfcalc_ prefix rather
+    // than a hand-kept list: the list missed the three stores added in v1.43/
+    // v1.44 (truth log, SOI, night mode), so a crash rooted in one of those
+    // looped forever through a recovery button that promised to fix it (Iris
+    // round 2, C2). Every store this app writes is named hfcalc_*; a prefix
+    // wipe cannot forget the next one either.
     try {
-      var keys = ['hfcalc_shots_v1', 'hfcalc_locs_v1', 'hfcalc_spacewx_v1'];
-      for (var i = 0; i < keys.length; i++) {
-        try { localStorage.removeItem(keys[i]); } catch (e) { /* keep going */ }
+      var doomed = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('hfcalc_') === 0) doomed.push(k);
+      }
+      for (var j = 0; j < doomed.length; j++) {
+        try { localStorage.removeItem(doomed[j]); } catch (e) { /* keep going */ }
       }
     } catch (e) { /* localStorage itself unavailable — reload anyway */ }
     try { window.location.reload(); } catch (e) { /* nothing more we can do */ }

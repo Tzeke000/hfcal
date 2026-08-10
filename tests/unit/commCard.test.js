@@ -1,7 +1,7 @@
 // Unit tests for commCard.js — run with `npm test` (node --test).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dtg, fmtLatLon, formatCommCard, shotLabel, commCardFilename } from '../../src/lib/commCard.js';
+import { dtg, fmtLatLon, formatCommCard, shotLabel, commCardFilename, shareUrl } from '../../src/lib/commCard.js';
 
 var SHOT = {
   dtg: '271430Z JUL 26',
@@ -168,4 +168,43 @@ test('shotLabel shows real values when present', function() {
 test('commCardFilename survives a shot with no frequency', function() {
   assert.doesNotThrow(function() { commCardFilename({}); });
   assert.match(commCardFilename({ dtg: '091200Z AUG 26', freqMHz: 7.3 }), /7\.3MHz\.txt$/);
+});
+
+// ── shareUrl: the QR handoff must carry the WHOLE plan (Iris round 2, C1) ────
+// The LUF moves with transmit power and the MUF with the month. A handoff URL
+// that drops them lets the receiver auto-calc at their own defaults and read
+// the opposite verdict for "the same plan" — sender at 5 W sees PATH CLOSED,
+// receiver at default 20 W sees GOOD.
+
+test('shareUrl carries from/to/freq AND watts/month/wire', function() {
+  const shot = {
+    p1: { lat: 35.9, lon: 14.5 }, p2: { lat: 31.2, lon: 29.9 },
+    freqMHz: 7.3, wireCore: 'copper_bare', wireGauge: '14', legEndM: 0.0762,
+    freqCheck: { luf: 5.1, muf: 12.2, fot: 10.4, txWatts: 5, month: 12,
+                 utcHour: 14, verdictLabel: 'GOOD' },
+  };
+  const url = new URL(shareUrl(shot));
+  assert.equal(url.searchParams.get('from'), '35.90000,14.50000');
+  assert.equal(url.searchParams.get('to'), '31.20000,29.90000');
+  assert.equal(url.searchParams.get('freq'), '7.3');
+  assert.equal(url.searchParams.get('core'), 'copper_bare');
+  assert.equal(url.searchParams.get('gauge'), '14');
+  assert.equal(url.searchParams.get('watts'), '5', 'power sets the LUF — must survive the handoff');
+  assert.equal(url.searchParams.get('month'), '12', 'month sets the MUF — must survive the handoff');
+  assert.equal(url.searchParams.get('auto'), '1');
+});
+
+test('shareUrl falls back to top-level txWatts/month and omits them when absent', function() {
+  const top = new URL(shareUrl({ p1: { lat: 1, lon: 2 }, txWatts: 150, month: 3 }));
+  assert.equal(top.searchParams.get('watts'), '150');
+  assert.equal(top.searchParams.get('month'), '3');
+  const bare = new URL(shareUrl({ p1: { lat: 1, lon: 2 } }));
+  assert.equal(bare.searchParams.get('watts'), null);
+  assert.equal(bare.searchParams.get('month'), null);
+});
+
+test('shareUrl rejects nonsense power and month rather than encoding them', function() {
+  const u = new URL(shareUrl({ freqCheck: { txWatts: -5, month: 13 } }));
+  assert.equal(u.searchParams.get('watts'), null);
+  assert.equal(u.searchParams.get('month'), null);
 });

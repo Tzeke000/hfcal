@@ -118,9 +118,15 @@ export const TERRAIN_COND = {
 export function classifyPoint(lat, lon) {
   while (lon > 180) lon -= 360;
   while (lon < -180) lon += 360;
-  // Feature boxes first — mountain / lake / desert / highland carry elevation,
-  // fresh-water, and conductivity a land/sea mask cannot. They win where they
-  // apply.
+  // Feature boxes carry elevation, fresh-water, and conductivity a land/sea
+  // mask cannot — but they are rectangles, and the desert/highland rectangles
+  // overhang open water (the Sahara box spans the Mediterranean and Red Sea;
+  // the Arabian box spans the Persian Gulf). The old ocean boxes outranked
+  // desert/highland; when the mask replaced them, that ordering was silently
+  // lost and the Med scored as desert (Iris round 2, finding A). So: where the
+  // coastline mask says WATER, a desert/highland box does not apply. Mountain
+  // and lake boxes still win outright, same as they outranked ocean boxes
+  // before — coastal ranges and the Great Lakes rely on that.
   var best = null;
   var bestPri = -1;
   for (var i = 0; i < TERRAIN_DB.length; i++) {
@@ -130,11 +136,14 @@ export function classifyPoint(lat, lon) {
       if (pri > bestPri) { bestPri = pri; best = e; }
     }
   }
-  if (best) return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
-  // Ocean vs land now comes from a real 1-degree coastline bitmask, not from
+  var water = !isLand(lat, lon);
+  if (best && !(water && (best.t === 'desert' || best.t === 'highland'))) {
+    return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
+  }
+  // Ocean vs land comes from a real 1-degree coastline bitmask, not from
   // hand-drawn ocean boxes (whose maintenance was a bug factory — the western
   // North Pacific was silently land for months, VALIDATION Parts 33/35).
-  if (isLand(lat, lon)) return { type: 'land', name: null, elev: 0, cond: TERRAIN_COND.land };
+  if (!water) return { type: 'land', name: null, elev: 0, cond: TERRAIN_COND.land };
   return { type: 'ocean', name: 'Ocean', elev: 0, cond: TERRAIN_COND.ocean };
 }
 

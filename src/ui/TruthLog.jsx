@@ -32,15 +32,16 @@ export function TruthLog({ currentShot, appVersion }) {
   function log(outcome) {
     if (!currentShot) return;
     var entry = makeTruthEntry(currentShot, outcome, note, new Date());
-    var dropped = false;
-    setEntries(function(cur) {
-      var next = [entry].concat(cur);
-      dropped = next.length > TRUTH_MAX;
-      return next.slice(0, TRUTH_MAX);
-    });
+    // Decide the flash BEFORE the state update, from this render's list —
+    // reading a variable assigned inside the updater races React's scheduling
+    // (updaters can be deferred or re-run), and the old code only ever showed
+    // OLDEST DROPPED on the "failed" branch anyway (Iris round 2, minor).
+    var dropped = entries.length >= TRUTH_MAX;
+    setEntries(function(cur) { return [entry].concat(cur).slice(0, TRUTH_MAX); });
     setNote('');
     setOpen(true);
-    say(outcome === 'worked' ? 'LOGGED — WORKED' : (dropped ? 'LOGGED — OLDEST DROPPED' : 'LOGGED — DIDN’T'));
+    say((outcome === 'worked' ? 'LOGGED — WORKED' : 'LOGGED — DIDN’T')
+      + (dropped ? ' · OLDEST DROPPED' : ''));
   }
 
   function remove(id) {

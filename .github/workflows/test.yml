@@ -46,6 +46,27 @@ jobs:
           HFCALC_REQUIRE_BROWSER: '1'
         run: npm run test:ui
 
+  browser-pages:
+    name: Browser tests (deployed /hfcal/ base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx --yes playwright@1.62.1 install --with-deps chromium
+      - name: Run the browser suite against the Pages-base build
+        # The site deploys at /hfcal/, not /. Until this job existed only the
+        # base-/ build was ever driven — the artifact that actually ships was
+        # never tested (Iris round 2, B3). Same suite, built with PWA_BASE and
+        # served under the /hfcal/ prefix exactly as GitHub Pages serves it.
+        env:
+          HFCALC_REQUIRE_BROWSER: '1'
+        run: npm run test:ui:pages
+
   mirror:
     name: Python mirror matches the JavaScript
     runs-on: ubuntu-latest

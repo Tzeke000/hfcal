@@ -115,7 +115,9 @@ export function SavedShots({ currentShot, onClearStored }) {
     var alive = true;
     var url = shareUrl(currentShot, (typeof window !== 'undefined' && window.location)
       ? window.location.origin + window.location.pathname : undefined);
-    QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 1, width: 320,
+    // margin is the QUIET ZONE in modules — the decoder spec wants 4; 1 gave
+    // ~7 px of breathing room and marginal scans (Iris round 2, C3).
+    QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 4, width: 320,
       color: { dark: '#0e1409', light: '#e8f0e0' } })
       .then(function(d) { if (alive) setQrData({ src: d, url: url }); },
             function() { if (alive) setQrData({ src: null, url: url }); });
@@ -195,13 +197,25 @@ export function SavedShots({ currentShot, onClearStored }) {
             </button>
           </div>
           {qrArm && currentShot && (
-            <div style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
+            /* position+zIndex lift this box ABOVE the night-mode red veil
+               (theme.js body::after, z-index 2147483000). Under the red
+               multiply the light modules dropped to ~57/255 luma against ~3 —
+               below decoder contrast spec, so the QR could fail exactly in the
+               nighttime handoff it exists for (Iris round 2, C3). The body's
+               grayscale filter still applies, which is what preserves dark
+               adaptation; only the red veil is bypassed. */
+            <div style={{ position: 'relative', zIndex: 2147483001, background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
               {qrData && qrData.src
                 ? <img src={qrData.src} alt="Scan to load this plan" style={{ width: 220, height: 220, maxWidth: '100%', imageRendering: 'pixelated' }} />
                 : <div style={{ color: T.textMute, fontSize: '0.74rem' }}>Generating…</div>}
               <div style={{ color: T.textMute, fontSize: '0.66rem', lineHeight: 1.5, marginTop: 8 }}>
-                Point another phone's camera at this. Their app opens with this plan already loaded — no network, no typing grids.
+                Point another phone's camera at this — their app opens with this plan loaded, grids, wire, power and month included. On iPhone the scan opens in Safari, so it needs either a connection or one prior visit to the app link in Safari; an installed Android app opens it offline.
               </div>
+              {qrData && qrData.url && (
+                <div style={{ color: T.textDim, fontSize: '0.6rem', fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.5, marginTop: 6 }}>
+                  {qrData.url}
+                </div>
+              )}
             </div>
           )}
           {!currentShot && (

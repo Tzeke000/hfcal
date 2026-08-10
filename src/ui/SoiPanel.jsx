@@ -130,7 +130,7 @@ export function SoiPanel({ results, pathCtx, month, txWatts, cachedSFI }) {
                   <div style={{ color: vColor(code), fontWeight: 700, fontSize: '0.72rem' }}>
                     {r.usableNow
                       ? (r.verdict ? r.verdict.label : 'USABLE') + ' NOW'
-                      : (r.next ? 'OPENS ' + hz(r.next.utcHour) + ' (in ' + (r.next.inHours === 1 ? '1 h' : r.next.inHours + ' h') + ')'
+                      : (r.next ? 'OPENS ~' + hz(r.next.utcHour) + ' (in ~' + (r.next.inHours === 1 ? '1 h' : r.next.inHours + ' h') + ')'
                                 : 'CLOSED ALL DAY at ' + txWatts + ' W')}
                   </div>
                   <div style={{ color: T.textMute, fontSize: '0.6rem', marginTop: 2 }}>

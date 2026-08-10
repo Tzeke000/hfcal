@@ -2675,6 +2675,129 @@ corrupt-tolerant loaders as saved shots.
 
 261 unit tests, 40 browser tests, lint clean, Python mirror exact.
 
+## Part 37 — The deploy that failed three releases in a row (v1.45.0)
+
+v1.42, v1.43 and v1.44 never reached the site. The operator, running v1.41,
+reported the update banner never appearing — and the banner logic was correct.
+The server was still serving v1.41, because every deploy since had failed its
+test gate.
+
+**Root cause: one line of `.gitignore`.** The pattern `build/` (unanchored)
+matches a directory named `build` at ANY depth — including
+`scripts/validation/build/`, the directory that holds the table generators.
+`build_land_mask.py` (Part 35) sat on disk, worked locally, and was silently
+never committed. CI checked out a tree without it, the docs guard flagged a
+documented path that did not exist, the suite failed, and the deploy gate —
+correctly — held everything back. The gate did its job; the failure was never
+looking at WHY three times in a row.
+
+**Fixes.**
+1. `.gitignore` root-anchored: `/build/` ignores only the build output at the
+   repository root, never a source directory that happens to share the name.
+2. The missing builder committed.
+3. A new guard in `docs.test.js`: every repo path named in the docs must be
+   **tracked by git** (`git ls-files`), not merely present on disk. The
+   difference is exactly this failure: on the author's machine the file
+   existed and every test passed; only a fresh checkout — CI's, or anyone
+   reproducing the study — saw the hole. The guard was mutation-tested by
+   unstaging the file (fail) and restaging it (pass).
+
+**Lesson (Part 28 restated, harder).** "Verify CI rather than assume" now
+includes: a red X on a push you made is YOUR failure to diagnose that day,
+not noise to try again past. Three identical failures is one bug, not three
+bad days.
+
+## Part 38 — Iris round 2: the review of the fixes (v1.46.0)
+
+An independent re-review of v1.40–v1.45 (16 round-1 findings verified clean
+fixed, 2 accepted as declared won't-fix) produced one new Tier-1, three
+partials on round-1 items, four new-feature defects and three minors. All
+verified here before fixing; all fixed in v1.46.0.
+
+**A (Tier 1) — the land mask fixed WESTPAC and broke the Med.** Part 35
+replaced the hand-drawn ocean boxes with the coastline mask — but the old
+priority (ocean boxes ABOVE desert/highland) was silently lost when the
+rewrite checked feature boxes first. The Sahara box spans the whole
+Mediterranean and Red Sea; the Arabian box spans the Persian Gulf. Verified at
+v1.45: `classifyPoint(33,20)` (open Med) → desert; Malta→Alexandria scored
+oceanFrac 0.24 / desertFrac 0.76 — desert takeoff penalty, no sea-path bonus,
+conductivity 0.3 instead of 5000 mS/m, in 5th Fleet / EUCOM waters. The same
+defect class the mask exists to kill, reintroduced by the mask's own
+integration. Fix: where the mask says WATER, desert/highland boxes do not
+apply; mountain/lake boxes still win outright (the Great Lakes rely on it,
+and both outranked ocean before). Six new regression tests pin the Med, Red
+Sea, Persian Gulf, Gulf of Oman, Malta→Alexandria and a Persian Gulf
+crossing — no test had ever covered those seas, which is why 262/262 passed
+with the bug in.
+
+**B1 — UPDATE NOW trusted `navigator.onLine`.** `onLine===true` means an
+interface is up, not that anything is reachable — hotspot without backhaul,
+captive portal, dead base LAN all read true, and the tap would still delete
+every cache and service worker and reload into nothing. The tap now PROBES
+the same `version.json` the banner is built on (`cache:'no-store'`) and wipes
+only on a live 200; any failure shows the hold message. New browser test:
+banner armed, then the server made unreachable while the interface stays
+"online" — the tap must warn, keep the service worker, and leave the app
+usable.
+
+**B2 — embed gate: iframe attack dead, popup variant alive.** The
+cross-origin-frame refusal (Part 34) cannot see a POPUP: `window.open('…
+?embed=1')` is top-level, the parameter is attacker-supplied, and the opener
+can postMessage `getInputs` — cached coordinates out. The parameter can never
+authorize this; only the operator can. Data-bearing methods (`calculate`,
+`getResults`, `getInputs`) from a cross-origin sender now require one-time
+on-screen approval (ALLOW THIS HOST / DENY, persisted allowlist,
+`hfcalc_embed_allow_v1`). Same-origin senders are unaffected, which keeps the
+documented integration working. New browser test runs the real attack — the
+harness serves on 127.0.0.1, so `localhost:<port>` is a genuine second origin:
+seed cached coordinates, attacker page opens the popup, asks, is refused; the
+consent card names the origin; approval is tapped; the re-ask succeeds.
+
+**B3 — the deployed artifact was never driven.** `test:ui` builds at base `/`;
+the site deploys at `/hfcal/`. The harness now serves `dist/` under
+`HFCALC_BASE_PATH` exactly as Pages does (prefix mapping, `/hfcal`→`/hfcal/`
+redirect, real 404 outside the prefix), `test:ui:pages` builds with
+`PWA_BASE=/hfcal/`, and CI runs the full 42-test suite BOTH ways.
+
+**C1 — QR handoff dropped power and month.** The LUF moves with transmit
+power and the MUF with the month — the rule the comm card itself states. The
+share URL carried neither (and `currentShot` never carried the wire keys, so
+`?core=&gauge=` silently never emitted either): sender plans at 5 W, PATH
+CLOSED; receiver scans, auto-calcs at default 20 W, GOOD. `shareUrl` now
+encodes `watts` and `month` (validated bounds), the URL import reads them
+through the same bounds as the AI-layer setters, and the wire keys ride
+along. Unit tests pin presence, fallbacks, and rejection of nonsense values.
+
+**C2 — the recovery wipe missed the new stores.** `CLEAR SAVED DATA` wiped a
+hand-kept list (shots, locs, spacewx) that predated the truth log, SOI list
+and night flag added in v1.43/44 — a crash rooted in those looped forever
+through a button that promised to fix it. The wipe now matches the `hfcalc_`
+prefix: every store this app writes is covered, including the next one.
+Unit-tested against a mock store with foreign keys that must survive.
+
+**C3/C4 — the QR under the red veil, and the iPhone caption.** Night mode's
+red multiply dropped the QR's light modules to ~57/255 luma against ~3 —
+under decoder contrast specs, in exactly the nighttime handoff the two
+features jointly serve. The QR box now sits above the veil (the grayscale
+filter still applies — that is what preserves dark adaptation); quiet zone
+raised from 1 to the spec's 4 modules. The caption no longer claims "no
+network" unconditionally: an iPhone camera scan opens Safari, whose storage
+is partitioned from the installed PWA — the caption now says so, and the
+share URL is printed under the QR as the degraded manual path.
+
+**Minors.** SOI "OPENS 2000Z" hedged to `~` (the scan starts at the fractional
+current hour, so the stated hour can be up to 59 min early — the main panel
+already hedged, the SOI card did not). The truth-log flash no longer reads a
+variable assigned inside a state updater (and OLDEST DROPPED now shows on
+both outcome branches). The mask builder's spot checks now RAISE instead of
+printing MISMATCH and writing the mask anyway, the land-fraction and
+packed-size sanity checks are fatal too, and the generated header records the
+source file's sha256 so the shipped mask is independently reproducible:
+fetch the coastline file, check the hash, re-run, diff.
+
+271 unit tests, 42 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

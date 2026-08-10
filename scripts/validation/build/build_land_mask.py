@@ -30,6 +30,7 @@ Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S. - USMC.
 Project signature: HFCALC-AG-EZK-USMC-v1
 """
 import base64
+import hashlib
 import json
 import os
 import sys
@@ -41,10 +42,8 @@ NLON, NLAT = 360, 180   # 1-degree cells
 
 
 def rings_of(geom):
-    """Yield each polygon's exterior+interior rings as (Nx2) arrays."""
+    """Yield each polygon (list of rings: exterior first, then holes)."""
     t = geom['type']
-    polys = geom['coordinates'] if t == 'Polygon' else \
-        [p for mp in geom['coordinates'] for p in [mp]] if False else None
     if t == 'Polygon':
         yield geom['coordinates']
     elif t == 'MultiPolygon':
@@ -104,27 +103,47 @@ def main():
     if len(sys.argv) < 2:
         print('usage: build_land_mask.py <ne_50m_land.geojson>')
         return 1
-    data = json.load(open(sys.argv[1]))
+    src_path = sys.argv[1]
+    src_bytes = open(src_path, 'rb').read()
+    # Recorded in the generated header so anyone can fetch the same coastline
+    # file, hash it, re-run this script and get a byte-identical mask — as
+    # first committed, the shipped mask could not be independently re-verified
+    # (Iris round 2, minor).
+    src_sha = hashlib.sha256(src_bytes).hexdigest()
+    data = json.loads(src_bytes)
     land = build_mask(data['features'])
     packed = pack(land)
     b64 = base64.b64encode(packed).decode('ascii')
 
-    # Sanity: land fraction of the globe should be ~29%.
+    # Sanity gates, not prints. Earth's land fraction is ~29%; cell-centre
+    # sampling at 1 degree rounds coastal cells and lands slightly higher. A
+    # violated check must KILL the build — as first committed these printed
+    # "MISMATCH" and wrote the broken mask anyway (Iris round 2, minor).
     frac = land.mean()
     print('land fraction: %.1f%% (Earth is ~29%%)' % (frac * 100))
     print('packed bytes: %d' % len(packed))
+    if not (0.25 < frac < 0.40):
+        raise SystemExit('land fraction %.3f is implausible — refusing to write the mask' % frac)
+    if len(packed) != NLON * NLAT // 8:
+        raise SystemExit('packed size %d != expected %d' % (len(packed), NLON * NLAT // 8))
 
-    # A few spot checks printed for the human running this.
     def island(lat, lon):
         r = int(np.floor(lat)) + 90
         c = int(np.floor(lon)) + 180
         r = min(max(r, 0), NLAT - 1); c = ((c % NLON) + NLON) % NLON
         return bool(land[r, c])
+    bad = []
     for name, la, lo, exp in [('mid-Pacific', 30, -150, False), ('Kansas', 38, -98, True),
                               ('NW Pacific (bug #1)', 40, 160, False), ('Sahara', 23, 10, True),
-                              ('Tokyo', 35.7, 139.7, True), ('open Atlantic', 30, -40, False)]:
+                              ('Tokyo', 35.7, 139.7, True), ('open Atlantic', 30, -40, False),
+                              ('Mediterranean', 33, 20, False), ('Red Sea', 20, 38.5, False),
+                              ('Persian Gulf', 27, 51.5, False)]:
         got = island(la, lo)
         print('  %-22s %s  (expected %s)%s' % (name, got, exp, '' if got == exp else '  <-- MISMATCH'))
+        if got != exp:
+            bad.append(name)
+    if bad:
+        raise SystemExit('spot checks failed (%s) — refusing to write the mask' % ', '.join(bad))
 
     out = os.path.join(ROOT, 'src', 'data', 'landMask.js')
     with open(out, 'w') as fh:
@@ -137,6 +156,10 @@ def main():
 // This replaced the hand-drawn ocean bounding boxes, whose maintenance was a
 // bug factory (docs/VALIDATION.md Parts 25/33/35). Source: Natural Earth
 // 1:50m physical land, public domain.
+// Source file: %s
+// Source sha256: %s
+// (fetch the same file, check the hash, re-run the script: the mask must
+//  reproduce byte-identically)
 //
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
@@ -173,7 +196,7 @@ export function isLand(latDeg, lonDeg) {
   var byte = bits()[idx >> 3];
   return ((byte >> (7 - (idx & 7))) & 1) === 1;
 }
-''' % (NLON, NLAT, float(frac), b64))
+''' % (os.path.basename(src_path), src_sha, NLON, NLAT, float(frac), b64))
     print('wrote', out, '(%d bytes on disk)' % os.path.getsize(out))
     return 0
 

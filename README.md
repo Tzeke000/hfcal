@@ -102,9 +102,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 32 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 38 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**262 unit tests** pin the physics so it cannot drift. **40 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**271 unit tests** pin the physics so it cannot drift. **42 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -168,8 +168,8 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 262 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 40 browser tests: builds dist/, drives it in Chromium
+npm test             # 271 unit tests over the physics, terrain and coordinate math
+npm run test:ui      # 42 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 

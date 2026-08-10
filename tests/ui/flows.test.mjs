@@ -515,6 +515,43 @@ describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  // navigator.onLine===true only means an interface is up — a hotspot with no
+  // backhaul or a captive portal reads online while nothing is reachable
+  // (Iris round 2, B1). The tap now PROBES version.json before wiping; if the
+  // probe fails the wipe must be held exactly as if offline.
+  test('UPDATE NOW refuses to wipe when online but the server is unreachable', async () => {
+    const page = await newPage(browser);
+    // Arm the banner with a reachable newer version…
+    await page.route('**/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"version":"99.0.0"}' }));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    const btn = page.locator('button', { hasText: 'UPDATE NOW' });
+    assert.ok(await btn.count(), 'banner should be armed by the newer remote version');
+
+    // …then kill the server while the interface stays "online".
+    await page.unroute('**/version.json*');
+    await page.route('**/version.json*', route => route.abort('connectionfailed'));
+
+    let swCleared = false;
+    await page.exposeFunction('__markSWCleared2', () => { swCleared = true; });
+    await page.evaluate(() => {
+      if (navigator.serviceWorker) {
+        const orig = navigator.serviceWorker.getRegistrations.bind(navigator.serviceWorker);
+        navigator.serviceWorker.getRegistrations = function () { window.__markSWCleared2(); return orig(); };
+      }
+    });
+
+    await btn.first().click();
+    await page.waitForTimeout(600);
+    const warned = await page.evaluate(() => /reach the update server|offline/i.test(document.body.innerText));
+    assert.ok(warned, 'unreachable-server update should warn, not silently proceed');
+    assert.equal(swCleared, false, 'the app cleared its service worker with the server unreachable');
+    // The page must not have navigated away — the app keeps serving.
+    assert.ok(await page.locator('button:has-text("CALCULATE")').count(), 'app must remain usable');
+    await page.context().close();
+  });
+
   // Corrupt saved-shot data must never white-screen the app. Two layers now
   // stand between it and a blank screen: loadShots/shotLabel tolerate junk,
   // and the ErrorBoundary is the backstop for anything they miss. The app
@@ -724,6 +761,67 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
       assert.equal(resp.result, undefined, 'a refusal must not carry coordinates');
     }
     // 'none' (no reply at all) is also an acceptable refusal.
+    await ctx.close();
+  });
+
+  test('a cross-origin POPUP with ?embed=1 needs operator approval (B2)', async () => {
+    // The iframe attack is dead, but window.open('…?embed=1') from a hostile
+    // page left the same leak open: the popup is top-level so the framing
+    // check passes, ?embed=1 is attacker-supplied, and the opener postMessages
+    // getInputs (Iris round 2, B2). The gate is now the OPERATOR: a cross-
+    // origin asker gets nothing until the on-screen approval is tapped.
+    //
+    // The harness serves on 127.0.0.1; http://localhost:<port> reaches the
+    // same server from a DIFFERENT origin — a real cross-origin attacker
+    // page without needing a second server.
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    // Seed the app origin's cache with a real coordinate pair, as an operator would.
+    const seed = await ctx.newPage();
+    await seed.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await seed.waitForSelector('button:has-text("CALCULATE")');
+    await calculate(seed, CHERRY_POINT, OKINAWA);
+    await seed.close();
+
+    const attacker = await ctx.newPage();
+    await attacker.goto(BASE_URL.replace('127.0.0.1', 'localhost'), { waitUntil: 'domcontentloaded' });
+    // window.open needs a user gesture — give the attacker page a button.
+    await attacker.evaluate((target) => {
+      const b = document.createElement('button');
+      b.id = '__pop'; b.textContent = 'pop';
+      b.onclick = () => { window.__w = window.open(target); };
+      document.body.appendChild(b);
+    }, BASE_URL + '?embed=1');
+    const popupPromise = ctx.waitForEvent('page');
+    await attacker.click('#__pop');
+    const popup = await popupPromise;
+    await popup.waitForSelector('button:has-text("CALCULATE")', { timeout: 15000 });
+
+    const ask = () => attacker.evaluate(() => new Promise((resolve) => {
+      function onMsg(ev) {
+        if (!ev.data || ev.data.type !== 'hfcalc:response') return;
+        window.removeEventListener('message', onMsg);
+        resolve(ev.data);
+      }
+      window.addEventListener('message', onMsg);
+      window.__w.postMessage({ type: 'hfcalc:request', id: 'pop', method: 'getInputs' }, '*');
+      setTimeout(() => { window.removeEventListener('message', onMsg); resolve(null); }, 2500);
+    }));
+
+    const res = await ask();
+    assert.ok(res, 'no reply at all — the probe is broken, not the app');
+    assert.equal(res.ok, false, 'a cross-origin popup opener read operator data with no approval');
+    assert.equal(res.result, undefined, 'a refusal must not carry a payload');
+
+    // The app must be asking the operator, naming the asking origin…
+    await popup.waitForSelector('text=EXTERNAL HOST REQUEST', { timeout: 5000 });
+    const named = await popup.evaluate(() => /localhost/.test(document.body.innerText));
+    assert.ok(named, 'the consent card should name the asking origin');
+
+    // …and after the operator approves, the documented flow works.
+    await popup.click('button:has-text("ALLOW THIS HOST")');
+    const res2 = await ask();
+    assert.ok(res2 && res2.ok === true, 'operator approval did not enable the bridge');
+    assert.ok(res2.result.from, 'getInputs should answer the approved host');
     await ctx.close();
   });
 
