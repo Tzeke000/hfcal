@@ -11,6 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -97,4 +98,31 @@ test('the Tauri installer version matches package.json', function() {
   const v = (tauri.package && tauri.package.version) || tauri.version;
   assert.equal(v, pkg.version,
     'tauri.conf.json version ' + v + ' != package.json ' + pkg.version);
+});
+
+
+test('every repo path named in docs is TRACKED BY GIT, not just on disk', function() {
+  // The gap the on-disk check cannot see: a file that exists locally but was
+  // never committed (a .gitignore pattern swallowed the new land-mask builder,
+  // and three deploys failed in CI while every local run passed — the local
+  // disk had the file, git did not). This asserts against git's index, so the
+  // failure happens on the author's machine before the push, not in CI after.
+  let tracked;
+  try {
+    tracked = new Set(execSync('git ls-files', { cwd: ROOT, encoding: 'utf8' })
+      .split('\n').filter(Boolean));
+  } catch (e) {
+    return; // no git available (tarball checkout) — the on-disk test still ran
+  }
+  if (!tracked.size) return;
+  const missing = [];
+  for (const f of DOCS) {
+    const body = readFileSync(join(ROOT, f), 'utf8');
+    for (const m of body.matchAll(/`((?:src|tests|scripts|public|docs)\/[^`\s]+\.[A-Za-z0-9]{1,5})`/g)) {
+      if (existsSync(join(ROOT, m[1])) && !tracked.has(m[1])) {
+        missing.push(f + ' -> ' + m[1] + ' (on disk but NOT in git — check .gitignore)');
+      }
+    }
+  }
+  assert.deepEqual(missing, [], 'files documented but never committed:\n  ' + missing.join('\n  '));
 });
