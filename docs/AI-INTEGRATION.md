@@ -39,7 +39,7 @@ https://tzeke000.github.io/hfcal/?from={LAT,LON}&to={LAT,LON}&freq={MHZ}&wire={c
 | `core` | wire core key (see "Wire cores") | No | Detailed wire core selection — overrides `wire` |
 | `gauge` | AWG number e.g. `14`, `18`, `22` | No | Wire gauge in AWG; custom values accepted |
 | `legend` | number + optional unit, e.g. `3`, `3in`, `0.5ft`, `0.08m` | No | Leg end height (inverted-V/dipole leg ends above ground). Bare number = inches. Default 3 in |
-| `watts` | number 0–10000 | No | Transmit power in watts — sets the LUF. The QR handoff encodes it so the receiver reproduces the sender's verdict |
+| `watts` | number, greater than 0, at most 10000 | No | Transmit power in watts — sets the LUF. The QR handoff encodes it so the receiver reproduces the sender's verdict |
 | `month` | integer 1–12 | No | Month of operation — sets the MUF (season at every bounce) |
 | `auto` | `0` or `1` | No | If all of `from`/`to`/`freq` are present, calculation auto-runs unless `auto=0` |
 

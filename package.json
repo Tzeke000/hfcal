@@ -1,6 +1,6 @@
 {
   "name": "hf-field-antenna-calc",
-  "version": "1.47.0",
+  "version": "1.48.0",
   "private": true,
   "type": "module",
   "description": "USMC Field Expedient HF Antenna Calculator. Original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.",
@@ -15,7 +15,7 @@
     "test": "node --test tests/unit/*.test.js",
     "lint": "eslint src/",
     "test:ui": "vite build && node --test tests/ui/flows.test.mjs",
-    "test:ui:pages": "PWA_BASE=/hfcal/ vite build && HFCALC_BASE_PATH=/hfcal/ node --test tests/ui/flows.test.mjs",
+    "test:ui:pages": "node scripts/test-ui-pages.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",

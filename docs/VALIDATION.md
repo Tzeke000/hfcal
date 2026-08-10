@@ -2798,6 +2798,53 @@ fetch the coastline file, check the hash, re-run, diff.
 271 unit tests, 42 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 39 — Iris round 3: the review of the review of the fixes (v1.48.0)
+
+Round 3 measured everything rather than reading commit messages: the reviewer
+ran both suites locally, re-ran the terrain module in node, and traced the C1
+wiring end-to-end. All 11 round-2 fixes verified — 9 clean, 2 with residuals.
+Four new findings, all fixed here.
+
+**R3-1 — the update probe accepted ANY 200; a captive portal still bricked
+the install.** The round-2 fix probed `version.json` before wiping, but
+authorized the wipe on `r.ok` alone — and a captive portal answers arbitrary
+URLs with **200 and its login page**. Arm the banner on good wifi, walk into
+portal coverage, tap: caches and service worker wiped, reload lands on the
+portal, app gone until real internet. The exact scenario the fix was named
+for, narrowed but not closed. Now only a response that parses as the real
+`version.json` — JSON with a `version` field, the same shape the arming path
+reads — authorizes the wipe. New browser test: banner armed, then the route
+re-fulfilled with `200 text/html` ("Sign in to GuestWiFi") — the wipe must
+hold, the service worker must survive, the app must stay usable.
+
+**R3-2 — DENY was not remembered.** The consent card's DENY only dismissed
+the prompt; every subsequent postMessage re-raised it, and a hostile popup
+could re-ask in a loop — prompt fatigue is a real path to a mistaken ALLOW
+when the card sits at the top of the app. Denials now persist
+(`hfcalc_embed_deny_v1`, covered by the prefix wipe like the allowlist): a
+denied origin is refused silently and never re-raises the card. New browser
+test drives the real popup, taps DENY, re-asks, and asserts both the refusal
+and that the card stays down.
+
+**R3-3 — `test:ui:pages` was Bash-only.** The `PWA_BASE=/hfcal/` env-prefix
+syntax dies under cmd.exe, so the Pages-base suite had no local repro on
+Windows. Replaced with `scripts/test-ui-pages.mjs` — sets the env in-process
+and spawns node directly. No cross-env dependency; the repo stays
+dependency-light on principle.
+
+**R3-4 — the browser suite skip-greened.** On a machine with no Chromium,
+`npm run test:ui` exits 0 with "17 suites, 0 tests" — it *looks* like a pass
+(it fooled the reviewer's first run, 155 ms "green"). CI was already guarded
+(`HFCALC_REQUIRE_BROWSER=1` turns the skip fatal), so the deploy gate was
+never at risk — but a local "tests pass" claim could be hollow. The skip now
+prints an unmissable banner stating the suite DID NOT RUN and how to fix it.
+
+**Doc nit:** AI-INTEGRATION said watts `0–10000`; the code requires strictly
+greater than zero. The doc now says so.
+
+271 unit tests, 44 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

@@ -15,6 +15,17 @@ import {
 
 const unavailable = browserAvailable();
 const SKIP = unavailable ? `browser tests skipped: ${unavailable}` : false;
+// A skipped suite exits 0 and LOOKS like a pass — "17 suites, 0 tests" green
+// in 155 ms fooled the round-3 reviewer's first run (Iris R3-4). CI is
+// guarded by HFCALC_REQUIRE_BROWSER=1 turning the skip fatal; locally, say
+// it loudly enough that nobody mistakes a skip for the suite passing.
+if (unavailable) {
+  console.error('\n' + '!'.repeat(72)
+    + '\n!!  BROWSER SUITE DID NOT RUN — ' + unavailable
+    + '\n!!  This exit-0 is a SKIP, not a pass. Install Chromium'
+    + '\n!!  (npx playwright install chromium) or set HFCALC_CHROMIUM.'
+    + '\n' + '!'.repeat(72) + '\n');
+}
 const CHERRY_POINT = 'N 34:54:03 W 076:52:50';
 const OKINAWA = 'N 26:21:00 E 127:46:00';
 
@@ -552,6 +563,42 @@ describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  // A captive portal doesn't refuse the probe — it answers 200 with its
+  // LOGIN PAGE. r.ok alone would authorize the wipe and the reload would land
+  // on the portal: app gone until real internet (Iris R3-1). Only a response
+  // that parses as the real version.json may wipe.
+  test('UPDATE NOW refuses to wipe when a captive portal answers 200 HTML', async () => {
+    const page = await newPage(browser);
+    await page.route('**/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"version":"99.0.0"}' }));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    const btn = page.locator('button', { hasText: 'UPDATE NOW' });
+    assert.ok(await btn.count(), 'banner should be armed by the newer remote version');
+
+    // Interpose the "portal": same URL, 200, but an HTML login page.
+    await page.unroute('**/version.json*');
+    await page.route('**/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>Sign in to GuestWiFi</body></html>' }));
+
+    let swCleared = false;
+    await page.exposeFunction('__markSWCleared3', () => { swCleared = true; });
+    await page.evaluate(() => {
+      if (navigator.serviceWorker) {
+        const orig = navigator.serviceWorker.getRegistrations.bind(navigator.serviceWorker);
+        navigator.serviceWorker.getRegistrations = function () { window.__markSWCleared3(); return orig(); };
+      }
+    });
+
+    await btn.first().click();
+    await page.waitForTimeout(600);
+    const warned = await page.evaluate(() => /reach the update server|offline/i.test(document.body.innerText));
+    assert.ok(warned, 'a portal 200 must be treated as unreachable, not as the update server');
+    assert.equal(swCleared, false, 'the app wiped its service worker on a captive-portal 200');
+    assert.ok(await page.locator('button:has-text("CALCULATE")').count(), 'app must remain usable');
+    await page.context().close();
+  });
+
   // Corrupt saved-shot data must never white-screen the app. Two layers now
   // stand between it and a blank screen: loadShots/shotLabel tolerate junk,
   // and the ErrorBoundary is the backstop for anything they miss. The app
@@ -822,6 +869,49 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
     const res2 = await ask();
     assert.ok(res2 && res2.ok === true, 'operator approval did not enable the bridge');
     assert.ok(res2.result.from, 'getInputs should answer the approved host');
+    await ctx.close();
+  });
+
+  test('DENY is remembered — a denied origin cannot re-raise the consent card (R3-2)', async () => {
+    // DENY that only dismissed the card let a hostile popup re-ask in a loop;
+    // prompt fatigue is a real path to a mistaken ALLOW. Denials now persist.
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const attacker = await ctx.newPage();
+    await attacker.goto(BASE_URL.replace('127.0.0.1', 'localhost'), { waitUntil: 'domcontentloaded' });
+    await attacker.evaluate((target) => {
+      const b = document.createElement('button');
+      b.id = '__pop2'; b.textContent = 'pop';
+      b.onclick = () => { window.__w = window.open(target); };
+      document.body.appendChild(b);
+    }, BASE_URL + '?embed=1');
+    const popupPromise = ctx.waitForEvent('page');
+    await attacker.click('#__pop2');
+    const popup = await popupPromise;
+    await popup.waitForSelector('button:has-text("CALCULATE")', { timeout: 15000 });
+
+    const ask = () => attacker.evaluate(() => new Promise((resolve) => {
+      function onMsg(ev) {
+        if (!ev.data || ev.data.type !== 'hfcalc:response') return;
+        window.removeEventListener('message', onMsg);
+        resolve(ev.data);
+      }
+      window.addEventListener('message', onMsg);
+      window.__w.postMessage({ type: 'hfcalc:request', id: 'deny', method: 'getInputs' }, '*');
+      setTimeout(() => { window.removeEventListener('message', onMsg); resolve(null); }, 2500);
+    }));
+
+    await ask();
+    await popup.waitForSelector('text=EXTERNAL HOST REQUEST', { timeout: 5000 });
+    await popup.click('button:has-text("DENY")');
+    await popup.waitForTimeout(300);
+
+    // The re-ask must be refused AND must not re-raise the card.
+    const res = await ask();
+    assert.ok(res && res.ok === false, 'denied origin must stay refused');
+    assert.equal(res.result, undefined);
+    await popup.waitForTimeout(600);
+    const cardBack = await popup.evaluate(() => /EXTERNAL HOST REQUEST/.test(document.body.innerText));
+    assert.equal(cardBack, false, 'a denied origin re-raised the consent card — prompt-fatigue loop is open');
     await ctx.close();
   });
 
