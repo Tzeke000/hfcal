@@ -1,0 +1,48 @@
+# The install counter's other half. The app pings a tiny release asset ONCE
+# on first launch (src/ui/HFCalc.jsx, "install beacon"); GitHub counts asset
+# downloads, so that asset's public download_count = approximate installs.
+# No analytics service, no server, no data attached — a bare fetch of a file
+# from the same host the app itself was installed from.
+#
+# This workflow creates that release + asset (idempotent, safe to re-run),
+# then fetches it once and prints the count to prove the counter increments.
+# Marked prerelease so it never becomes the repo's "latest release" — that
+# slot belongs to real installers.
+#
+# Read the count any time:
+#   https://api.github.com/repos/Tzeke000/hfcal/releases/tags/install-beacon
+#   (the "download_count" field on beacon.txt)
+name: Install-counter beacon
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  beacon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create the beacon release and asset (idempotent)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > beacon.txt << 'EOF'
+          HFCALC install beacon — HFCALC-AG-EZK-USMC-v1
+          This file is the app's install counter. The app fetches it once on
+          first launch (a bare GET, no data attached); GitHub's download count
+          on this asset = approximate installs. It is not a software release.
+          EOF
+          gh release view install-beacon >/dev/null 2>&1 || \
+            gh release create install-beacon --prerelease \
+              --title "Install beacon (not a software release)" \
+              --notes "Download counter for the app's one-time anonymous install ping. See .github/workflows/beacon-release.yml."
+          gh release upload install-beacon beacon.txt --clobber
+      - name: Prove the counter increments
+        run: |
+          curl -sL -o /dev/null "https://github.com/${{ github.repository }}/releases/download/install-beacon/beacon.txt"
+          sleep 5
+          curl -s "https://api.github.com/repos/${{ github.repository }}/releases/tags/install-beacon" \
+            | python3 -c "import json,sys; a=[x for x in json.load(sys.stdin)['assets'] if x['name']=='beacon.txt']; print('beacon.txt download_count =', a[0]['download_count'] if a else 'MISSING')"

@@ -928,6 +928,52 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('install beacon', { skip: SKIP, concurrency: 1 }, () => {
+  // The one-time anonymous install count (v1.49). The whole contract is
+  // testable: it must fire exactly once per device, carry NOTHING, never
+  // fire again once it has succeeded, and never fire at all from
+  // localhost — a single local test run opens ~30 fresh profiles, and every
+  // one of them pinging GitHub would make the real count fiction.
+  test('pings exactly once, carries nothing, and never counts dev machines', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const page = await ctx.newPage();
+    const hits = [];
+    await page.route('**/releases/download/install-beacon/**', route => {
+      hits.push(route.request());
+      route.fulfill({ status: 200, contentType: 'text/plain', body: 'beacon' });
+    });
+
+    // Plain localhost visit: the guard must hold.
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(600);
+    assert.equal(hits.length, 0, 'localhost fired the beacon — dev/test runs would pollute the count');
+
+    // Armed (?beacontest=1 stands in for a real deployed origin): first
+    // launch pings exactly once…
+    await page.goto(BASE_URL + '?beacontest=1', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(800);
+    assert.equal(hits.length, 1, 'first launch should ping exactly once, got ' + hits.length);
+
+    // …and the ping is a bare GET of the asset: no query, no body, no
+    // coordinates, no identifier of any kind.
+    const req = hits[0];
+    const u = new URL(req.url());
+    assert.equal(req.method(), 'GET');
+    assert.equal(u.search, '', 'the ping must carry no parameters');
+    assert.equal(req.postData(), null, 'the ping must carry no body');
+    assert.ok(u.pathname.endsWith('/beacon.txt'), 'the ping must be the beacon asset itself');
+
+    // …and never fires again once it has succeeded.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(600);
+    assert.equal(hits.length, 1, 'a device that already counted itself pinged again');
+    await ctx.close();
+  });
+});
+
 describe('offline (the core claim)', { skip: SKIP, concurrency: 1 }, () => {
   // Nothing tested the one promise the whole product rests on: install once,
   // then work with no network. This registers the service worker, cuts the

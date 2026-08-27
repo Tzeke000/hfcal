@@ -74,12 +74,15 @@ coordinates and a frequency into a complete, buildable antenna solution:
 ## Differentiators
 
 - **Fully offline.** Installs as a PWA / Windows executable / Android APK;
-  every calculation runs on-device. No account, no cloud, no telemetry, no
-  server side and no third-party CDN — even the OCR engine and the webfonts
-  are vendored, so nothing is fetched from anyone else's infrastructure.
-  Exactly one optional network call exists in the whole app (NOAA SWPC
-  space-weather advisories); it falls back to cached or default solar
-  activity when unreachable, and no calculation depends on it.
+  every calculation runs on-device. No account, no cloud, no server side and
+  no third-party CDN — even the OCR engine and the webfonts are vendored.
+  The complete network footprint is three optional, fail-silent fetches:
+  NOAA SWPC space-weather advisories (falls back to cached or default solar
+  activity; no calculation depends on it), an update check against the
+  app's own site, and a one-time anonymous install ping on first launch (a
+  bare fetch of a file from the app's own repository, nothing attached).
+  None carry coordinates or any identifier; in airplane mode nothing
+  transmits and everything works.
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —

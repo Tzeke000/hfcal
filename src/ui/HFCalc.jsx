@@ -1998,7 +1998,7 @@ function AboutBanner() {
               {feat('QR handoff', 'show any plan as a QR code; another operator scans it and their app opens pre-filled — grids, frequency, wire, power and month all carried. No typing under a poncho. (On iPhone the scan opens Safari, so the receiver needs a connection or one prior visit in Safari; an installed Android app opens it offline.)', 'f14b', 'offline')}
               {feat('Field truth log', 'one tap after a shot — it closed, or it didn’t — records the app’s prediction beside what actually happened, plus a note. Export the card and send it back: your real paths become the validation data no lab study can produce.', 'f14c', 'offline')}
               {feat('Red-light night mode', 'the NIGHT button up top turns the whole app red-on-black to preserve dark adaptation. The QR stays scannable — it deliberately sits above the red veil.', 'f14d', 'offline')}
-              {feat('The app itself', 'installs to the home screen and runs with no account, no telemetry and no connection. Even the fonts and the text recogniser are carried locally — nothing is fetched from anyone else.', 'f15', 'offline')}
+              {feat('The app itself', 'installs to the home screen and runs with no account and no connection — fonts and the text recogniser are carried locally. Its complete network footprint, stated in full: the NOAA space-weather refresh, the update check against its own site, and a one-time anonymous install ping on first launch (a bare fetch of a file from the app’s own GitHub, nothing attached, so the author can count installs). All three fail silently offline; none carry coordinates or any identifier.', 'f15', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8, color: T.accentText, fontSize: '0.64rem' }}>Where the math comes from</div>
               <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6, marginBottom: 9 }}>
@@ -2030,7 +2030,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  271 automated tests pin every formula so the physics cannot drift as the app changes, plus 44 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  271 automated tests pin every formula so the physics cannot drift as the app changes, plus 45 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2076,7 +2076,7 @@ function AboutBanner() {
               {feat('Point of need', 'the only one of these that works at the antenna site: phone, offline, grids to cut lengths in under a minute.', 'w1', 'none')}
               {feat('Field-expedient wire', 'velocity factor for salvage iron, galvanized fence wire, speaker wire, by core and gauge. Planning tools assume catalog antennas.', 'w2', 'none')}
               {feat('Buildability check', 'it does not just give the radiation-optimal height \u2014 it checks whether your legs can reach it, and tells you the buildable maximum and what you lose.', 'w3', 'none')}
-              {feat('EMCON-clean', 'no account, no telemetry, no server, no third-party CDN. The OCR engine and fonts are bundled, not fetched.', 'w4', 'none')}
+              {feat('EMCON-clean', 'no account, no server of its own, no third-party CDN, no analytics service; the OCR engine and fonts are bundled, not fetched. Its entire network footprint is three fail-silent fetches — NOAA space weather, the update check, and a one-time anonymous install count on first launch — none of which carry any data about you. In airplane mode nothing transmits and everything works.', 'w4', 'none')}
               {feat('It teaches', 'formulas are shown, not hidden \u2014 the same tool trains and fields.', 'w5', 'none')}
 
               <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, marginTop: 10, fontStyle: 'italic' }}>
@@ -3082,6 +3082,36 @@ export default function HFCalc() {
       localStorage.setItem('hfcalc_night_v1', night ? '1' : '0');
     } catch (e) { /* storage/DOM unavailable — ignore */ }
   }, [night]);
+  // ── INSTALL BEACON — the one-time anonymous install count ────────────────
+  // On FIRST launch only, fetch a tiny release asset from the app's own
+  // GitHub repo; GitHub counts asset downloads, and that public count is the
+  // install counter (.github/workflows/beacon-release.yml is the other
+  // half). A bare GET with NOTHING attached: no coordinates, no identifier,
+  // no query, no body — the receiving side learns only "some device fetched
+  // this file", which the device already revealed by installing the app from
+  // the same host. Disclosed in the About tab and README — the app
+  // enumerates its network footprint rather than claiming "no telemetry"
+  // while doing this quietly. Offline first launch: skipped silently,
+  // retried on later launches until it succeeds ONCE, then never again
+  // (hfcalc_beacon_v1). Failure can never affect the app.
+  //
+  // The localhost guard keeps dev servers and the browser-test harness from
+  // polluting the real count (a single local test run opens ~30 fresh
+  // profiles); ?beacontest=1 lets the test suite exercise the ping against a
+  // stubbed route.
+  useEffect(function() {
+    try {
+      if (localStorage.getItem('hfcalc_beacon_v1')) return;
+      var host = window.location.hostname;
+      var testArm = new URLSearchParams(window.location.search).has('beacontest');
+      if ((host === 'localhost' || host === '127.0.0.1') && !testArm) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      fetch('https://github.com/Tzeke000/hfcal/releases/download/install-beacon/beacon.txt',
+        { mode: 'no-cors', cache: 'no-store' })
+        .then(function() { try { localStorage.setItem('hfcalc_beacon_v1', '1'); } catch (e) { /* ignore */ } },
+              function() { /* offline or blocked — try again next launch */ });
+    } catch (e) { /* counting must never break the app */ }
+  }, []);
   var readyAnnouncedRef = useRef(false);   // hfcalc:ready must fire once, not per keystroke
   // The AI-integration effect re-binds on every state change; this guard keeps
   // the URL-parameter import to a single application per page load so it

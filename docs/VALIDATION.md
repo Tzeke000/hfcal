@@ -2845,6 +2845,53 @@ greater than zero. The doc now says so.
 271 unit tests, 44 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 40 — An install counter that keeps the privacy promise honest (v1.49.0)
+
+The author wanted to know whether anyone actually uses the app. The repo's
+Traffic page cannot answer that: its "clones" were the CI pipeline (18 clones
+/ 15 unique matched the release pushes exactly — every Actions job is a
+fresh machine with a fresh IP), its "visitors" count the repo page nobody
+using the app ever visits, and GitHub shows no traffic at all for the Pages
+site the app is actually served from. Real usage was invisible — which is
+what "no telemetry" buys, and the author decided a bare install count was
+worth one precisely-scoped exception.
+
+**Mechanism — no analytics service, no server, nothing attached.** GitHub
+counts release-asset downloads. A tiny `beacon.txt` is published as a
+prerelease asset (`install-beacon`, created idempotently by
+`.github/workflows/beacon-release.yml`, marked prerelease so it never
+claims the "latest release" slot from real installers). On FIRST launch the
+app fetches it once — a bare GET, `no-cors`, `no-store`, no query, no body,
+no identifier. The asset's public `download_count` is the install counter.
+The device reveals nothing it did not already reveal by installing the app
+from the same host; a device that never connects after install is never
+counted, by design. Offline first launch: skipped silently and retried on
+later launches until it succeeds once (`hfcalc_beacon_v1`), then never
+again.
+
+**The honesty half.** The app's About tab, README, and capability brief all
+said "no telemetry — nothing is fetched from anyone else." Shipping a quiet
+ping under that banner would make the claim a lie, which is worse than the
+ping. Every one of those claims now ENUMERATES the complete network
+footprint instead: NOAA space weather, the update check, and the one-time
+install ping — all fail-silent offline, none carrying coordinates or any
+identifier.
+
+**Count hygiene.** A localhost/127.0.0.1 guard keeps dev servers and the
+browser-test harness out of the real count — one local suite run opens ~30
+fresh profiles, and every one pinging GitHub would make the number fiction.
+`?beacontest=1` lets the suite exercise the ping against a stubbed route.
+The new browser test pins the whole contract: plain localhost fires zero;
+armed first launch fires exactly once; the request is a bare GET of the
+asset with no parameters and no body; a device that has counted itself
+never pings again. Known approximations, stated: the count is per browser
+profile (an iPhone counted in Safari and again as the installed PWA reads
+as two), and anyone fetching the asset manually inflates it — it is a
+field gauge of "did anyone try this," not an audit.
+
+271 unit tests, 45 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
