@@ -16,6 +16,12 @@ name: Install-counter beacon
 
 on:
   workflow_dispatch:
+  # Also runs whenever this file itself changes on main — the automation
+  # token here cannot dispatch workflows manually, and the job is idempotent
+  # so re-runs are harmless.
+  push:
+    branches: [main]
+    paths: ['.github/workflows/beacon-release.yml']
 
 permissions:
   contents: write
