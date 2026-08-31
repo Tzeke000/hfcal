@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- The author's private install-counter dashboard. Deliberately unlisted:
+     linked from nowhere, indexed by nothing (noindex below). It reads a
+     PUBLIC number — the beacon asset's download count on GitHub — so it
+     reveals nothing that isn't already world-readable via the GitHub API;
+     this page just makes it a one-tap glance.
+     See .github/workflows/beacon-release.yml and docs/VALIDATION.md Part 40.
+     Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
+     Project signature: HFCALC-AG-EZK-USMC-v1 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>HFCALC — installs</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #080c07; color: #f0f4ee;
+    font-family: Inter, system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card {
+    text-align: center; padding: 32px 40px; max-width: 420px;
+    background: #0e1510; border: 1px solid #2e4422; border-radius: 12px;
+  }
+  .label {
+    color: #7dc86b; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .num {
+    font-size: 5.5rem; font-weight: 800; line-height: 1.1;
+    color: #f0f4ee; font-variant-numeric: tabular-nums; margin: 10px 0 2px;
+  }
+  .sub { color: #8fa284; font-size: 0.78rem; line-height: 1.5; }
+  .meta { color: #445a38; font-size: 0.66rem; margin-top: 14px; line-height: 1.5; }
+  button {
+    margin-top: 16px; background: #5a9e4b; color: #0e1409; border: none;
+    border-radius: 6px; padding: 10px 22px; font-size: 0.78rem;
+    font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
+  }
+  .err { color: #ff9b86; font-size: 0.78rem; margin-top: 10px; display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="label">HF Field Antenna Calculator</div>
+  <div class="num" id="n">–</div>
+  <div class="sub">devices counted in<br>(one anonymous ping per install, first launch only)</div>
+  <div class="err" id="err"></div>
+  <button id="r">REFRESH</button>
+  <div class="meta" id="meta">HFCALC-AG-EZK-USMC-v1</div>
+</div>
+<script>
+  var API = 'https://api.github.com/repos/Tzeke000/hfcal/releases/tags/install-beacon';
+  function load() {
+    document.getElementById('err').style.display = 'none';
+    fetch(API, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('GitHub answered ' + r.status); return r.json(); })
+      .then(function (j) {
+        var a = (j.assets || []).filter(function (x) { return x.name === 'beacon.txt'; })[0];
+        if (!a) throw new Error('beacon asset missing');
+        document.getElementById('n').textContent = a.download_count.toLocaleString();
+        document.getElementById('meta').textContent =
+          'checked ' + new Date().toLocaleTimeString()
+          + ' · counter lags real pings by minutes-to-hours'
+          + ' · includes ~1 setup test-download';
+      })
+      .catch(function (e) {
+        var el = document.getElementById('err');
+        el.textContent = 'Could not reach GitHub: ' + e.message
+          + ' (offline, or API rate limit — wait a minute and refresh)';
+        el.style.display = 'block';
+      });
+  }
+  document.getElementById('r').addEventListener('click', load);
+  load();
+  setInterval(load, 5 * 60 * 1000);   // gentle: 60 unauthenticated req/hr limit
+</script>
+</body>
+</html>
