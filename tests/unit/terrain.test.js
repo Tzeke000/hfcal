@@ -246,6 +246,106 @@ test('Bahrain to Jask across the Gulf is mostly water', function() {
     'Persian Gulf crossing should be majority water, got ' + r.oceanFrac.toFixed(2));
 });
 
+// ── WTI / Yuma training area (v1.51) ────────────────────────────────────────
+// Marines are using this at WTI on the Barry M. Goldwater Range, so the
+// southwest is pinned rather than left to a regional average. Before the
+// split, ONE box called the whole southwest 800 m dry desert: MCAS Yuma (65 m,
+// irrigated Colorado valley), Camp Pendleton (Pacific coast) and the Salton
+// Sea (890 km² lake) were all "Mojave/Sonoran desert, 800 m".
+
+test('the Yuma valley is irrigated cropland, not 800 m of dry sand', function() {
+  const yuma = classifyPoint(32.66, -114.61);        // MCAS Yuma
+  assert.equal(yuma.type, 'irrigated', 'MCAS Yuma sits in irrigated valley');
+  assert.ok(yuma.elev < 200, 'Yuma is ~65 m, got ' + yuma.elev);
+  assert.ok(yuma.cond > TERRAIN_COND.land,
+    'irrigated soil must conduct better than average land, got ' + yuma.cond);
+  // The whole point: ground wave carries much further here than the old
+  // desert classification implied.
+  assert.ok(yuma.cond / TERRAIN_COND.desert > 10,
+    'irrigated vs desert should be an order of magnitude apart');
+});
+
+test('the Imperial Valley is irrigated and near sea level', function() {
+  const ic = classifyPoint(32.79, -115.56);          // El Centro
+  assert.equal(ic.type, 'irrigated');
+  assert.ok(ic.elev < 100, 'the Imperial Valley is at/below sea level');
+});
+
+test('Camp Pendleton is coastal land, not desert', function() {
+  const cp = classifyPoint(33.35, -117.42);
+  assert.notEqual(cp.type, 'desert', 'a Pacific-coast base must not be desert');
+  assert.ok(cp.cond >= TERRAIN_COND.land,
+    'coastal ground must not be charged desert conductivity');
+});
+
+test('the Salton Sea is water', function() {
+  const ss = classifyPoint(33.33, -115.83);
+  assert.equal(ss.type, 'lake', 'an 890 km2 lake must not classify as desert');
+  assert.ok(ss.cond > TERRAIN_COND.desert);
+});
+
+test('the ranges around the BMGR are mountains with real peak heights', function() {
+  // These are above the 800 m obstacle-clearance threshold, so they actually
+  // shape the recommended takeoff angle for a station shooting across them.
+  const gila = classifyPoint(32.60, -114.20);
+  assert.equal(gila.type, 'mountain');
+  assert.ok(gila.elev > 900 && gila.elev < 1100, 'Sheep Mtn is ~962 m, got ' + gila.elev);
+  const kofa = classifyPoint(33.30, -114.10);
+  assert.equal(kofa.type, 'mountain');
+  assert.ok(kofa.elev > 1400 && kofa.elev < 1600, 'Signal Peak is ~1486 m, got ' + kofa.elev);
+});
+
+test('Twentynine Palms gets its own elevation, not the Mojave average', function() {
+  // Regression on the ordering trap: equal-priority boxes used to resolve by
+  // array order, so the general Mojave box (900 m) beat the specific MCAGCC
+  // box (700 m) purely by being listed first.
+  const tp = classifyPoint(34.23, -116.05);
+  assert.equal(tp.name, 'Twentynine Palms',
+    'the specific box must win over the regional one, got ' + tp.name);
+  assert.equal(tp.elev, 700);
+});
+
+test('on equal priority the smaller box wins, whatever the array order', function() {
+  // The general rule behind the test above, checked directly so a future
+  // reordering of TERRAIN_DB cannot quietly undo it.
+  for (const [lat, lon] of [[34.23, -116.05], [32.66, -114.61], [32.79, -115.56]]) {
+    const hits = TERRAIN_DB.filter(e =>
+      lat >= e.latMin && lat <= e.latMax && lon >= e.lonMin && lon <= e.lonMax);
+    const topPri = Math.max(...hits.map(e => TERRAIN_PRIORITY[e.t]));
+    const tied = hits.filter(e => TERRAIN_PRIORITY[e.t] === topPri);
+    if (tied.length < 2) continue;
+    const areas = tied.map(e => (e.latMax - e.latMin) * (e.lonMax - e.lonMin));
+    const smallest = tied[areas.indexOf(Math.min(...areas))];
+    assert.equal(classifyPoint(lat, lon).name, smallest.n,
+      'smallest tied box should win at ' + [lat, lon]);
+  }
+});
+
+test('Las Vegas is desert basin, not the Rocky Mountains', function() {
+  // Pre-existing defect found while fixing the southwest: the Rockies box
+  // spanned 117W, sweeping in all of Nevada. Las Vegas came back as
+  // "Rocky Mountains, 3500 m", charging a 3.5 km obstacle clearance to
+  // southwest paths.
+  const lv = classifyPoint(36.17, -115.14);
+  assert.equal(lv.type, 'desert', 'Las Vegas is in the Mojave basin, got ' + lv.name);
+  assert.ok(lv.elev < 1200, 'got ' + lv.elev + ' m for Las Vegas');
+  // The split must not lose the real Rockies at either end.
+  assert.equal(classifyPoint(39.74, -104.99).type, 'mountain', 'Denver');
+  assert.equal(classifyPoint(46.87, -113.99).type, 'mountain', 'Missoula');
+});
+
+test('a local WTI path reads as workable ground, not dead sand', function() {
+  // MCAS Yuma -> Camp Pendleton, the obvious WTI regional shot. It used to
+  // run desert-to-desert; it now crosses irrigated valley, desert and
+  // coastal land, so the effective conductivity is far more favourable.
+  const r = pathTerrainAnalysis(32.66, -114.61, 33.35, -117.42, 32);
+  assert.ok(r.condMSm > TERRAIN_COND.desert * 2,
+    'effective conductivity should beat bare desert, got ' + r.condMSm.toFixed(2));
+  assert.ok((r.fracs.irrigated || 0) > 0, 'the path should register irrigated ground');
+  assert.ok(Math.abs(Object.values(r.fracs).reduce((a, b) => a + b, 0) - 1) < 1e-9,
+    'fractions must still sum to 1 with the new class');
+});
+
 test('the land mask is a plausible model of Earth', function() {
   // Sanity on the whole grid: land fraction near the real ~29-34% (1-degree
   // cell-centre sampling rounds coastal cells to land, so slightly high).

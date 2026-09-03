@@ -15,10 +15,11 @@
 // EMBEDDED TERRAIN DATABASE
 // All coordinates in decimal degrees (WGS-84).
 // Each entry is a bounding box { latMin, latMax, lonMin, lonMax, type, name, elev? }
-//   type: 'ocean' | 'lake' | 'mountain' | 'desert' | 'highland'
+//   type: 'ocean' | 'lake' | 'mountain' | 'desert' | 'highland' | 'irrigated'
 //   elev: approximate peak elevation in meters (mountains/highlands only)
 // Points sampled along the great-circle path are classified using these boxes.
-// When multiple boxes overlap, highest priority wins: mountain > lake > ocean > highland > desert
+// When multiple boxes overlap, highest priority wins:
+//   mountain > lake > ocean > irrigated > highland > desert
 // ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -43,6 +44,9 @@ export const TERRAIN_DB = [
   { t:'lake', n:'Lake Titicaca',         latMin:-16.5,latMax:-15.2,lonMin:-70.0, lonMax: -68.5},
   { t:'lake', n:'Great Bear Lake',       latMin: 64.5,latMax: 67.0,lonMin:-124,  lonMax:-118  },
   { t:'lake', n:'Great Slave Lake',      latMin: 60.8,latMax: 62.5,lonMin:-117,  lonMax:-109  },
+  // Hypersaline (saltier than the ocean), so 3 mS/m understates it — but the
+  // freshwater class is still 10x better than the desert it was mistaken for.
+  { t:'lake', n:'Salton Sea',            latMin: 33.10,latMax: 33.55,lonMin:-116.10,lonMax:-115.60 },
 
   // ── MOUNTAIN RANGES ───────────────────────────────────────────────────────
   // elev = typical peak height in meters (used for propagation penalty)
@@ -56,7 +60,14 @@ export const TERRAIN_DB = [
   { t:'mountain', n:'Andes (Ecuador–Peru)',         latMin:-14, latMax:  4, lonMin: -81, lonMax: -74,  elev: 5500 },
   { t:'mountain', n:'Andes (Bolivia–Chile)',        latMin:-34, latMax:-14, lonMin: -72, lonMax: -65,  elev: 6500 },
   { t:'mountain', n:'Andes (Patagonia)',            latMin:-56, latMax:-34, lonMin: -73, lonMax: -68,  elev: 3800 },
-  { t:'mountain', n:'Rocky Mountains',              latMin: 35, latMax: 60, lonMin:-117, lonMax:-104,  elev: 3500 },
+  // Split (v1.51). As ONE box spanning 35-60N / 117-104W this swept in all of
+  // Nevada and the eastern Mojave: Las Vegas came back as "Rocky Mountains,
+  // 3500 m", which then charged a 3.5 km obstacle clearance to any path near
+  // it — a large takeoff-angle error on southwest paths. The Rockies' western
+  // edge runs much further east in the south (Colorado/Wasatch) than in the
+  // north (Idaho/Montana Bitterroots), which one rectangle cannot express.
+  { t:'mountain', n:'Northern Rockies',             latMin: 42, latMax: 60, lonMin:-117, lonMax:-104,  elev: 3500 },
+  { t:'mountain', n:'Southern Rockies / Wasatch',   latMin: 35, latMax: 42, lonMin:-112, lonMax:-104,  elev: 3500 },
   { t:'mountain', n:'Sierra Nevada (CA)',           latMin: 36, latMax: 42, lonMin:-122, lonMax:-118,  elev: 3600 },
   { t:'mountain', n:'Cascade Range',                latMin: 42, latMax: 49, lonMin:-122, lonMax:-120,  elev: 3300 },
   { t:'mountain', n:'Appalachians',                 latMin: 33, latMax: 47, lonMin: -85, lonMax: -68,  elev:  900 },
@@ -86,7 +97,37 @@ export const TERRAIN_DB = [
   { t:'desert', n:'Atacama Desert',     latMin:-30, latMax:-18, lonMin: -72, lonMax: -67, elev: 2400 },
   { t:'desert', n:'Patagonian Desert',  latMin:-52, latMax:-38, lonMin: -70, lonMax: -63, elev:  600 },
   { t:'desert', n:'Great Basin (US)',   latMin: 35, latMax: 43, lonMin:-118, lonMax:-111, elev: 1500 },
-  { t:'desert', n:'Mojave/Sonoran',     latMin: 30, latMax: 37, lonMin:-118, lonMax:-109, elev:  800 },
+  // ── AMERICAN SOUTHWEST, broken out (v1.51) ───────────────────────────────
+  // This was ONE box — 'Mojave/Sonoran', 30-37N, 118-109W, elev 800 — which
+  // charged the whole southwest a single elevation and a single desert
+  // conductivity. Three things were wrong with real operational consequences:
+  // MCAS Yuma (65 m, irrigated Colorado valley) was called 800 m dry desert;
+  // Camp Pendleton, on the Pacific coast, was called desert; and the Salton
+  // Sea, an 890 km2 lake, was called desert. Marines train across all three.
+  // Split into the recognised desert subdivisions, with the training areas
+  // and the local ranges that actually shape a takeoff angle called out.
+  // Elevations are published figures for each region, not interpolations.
+  { t:'desert', n:'Mojave Desert',      latMin: 34.0,latMax: 37.0,lonMin:-118.0,lonMax:-114.0, elev:  900 },
+  { t:'desert', n:'Lower Colorado Desert', latMin: 32.0,latMax: 33.8,lonMin:-116.3,lonMax:-113.6, elev: 90 },
+  { t:'desert', n:'Sonoran (Arizona Upland)', latMin: 31.3,latMax: 34.0,lonMin:-113.6,lonMax:-110.5, elev: 600 },
+  // MCAGCC Twentynine Palms sits at ~610 m, not the Mojave's ~900 m average.
+  { t:'desert', n:'Twentynine Palms',   latMin: 34.0,latMax: 34.6,lonMin:-116.4,lonMax:-115.6, elev:  700 },
+
+  // ── IRRIGATED VALLEYS ─────────────────────────────────────────────────────
+  // Wet agricultural soil in the middle of dry desert. Yuma is a major winter
+  // produce region and the Imperial Valley is fed by the All-American Canal;
+  // both conduct an order of magnitude better than the sand around them.
+  { t:'irrigated', n:'Yuma Valley',     latMin: 32.40,latMax: 32.95,lonMin:-114.85,lonMax:-114.45, elev: 45 },
+  { t:'irrigated', n:'Imperial Valley', latMin: 32.65,latMax: 33.25,lonMin:-116.05,lonMax:-115.35, elev:  0 },
+
+  // ── SOUTHWEST RANGES that shape a takeoff angle out of Yuma ──────────────
+  // Above the 800 m obstacle-clearance threshold, so these actually raise the
+  // recommended angle for a station shooting across them — which is the whole
+  // point of having them. Peak elevations: Sheep Mtn (Gila) 962 m, Signal Peak
+  // (Kofa) 1486 m, Chocolate Mts ~754 m.
+  { t:'mountain', n:'Gila Mountains (AZ)', latMin: 32.40,latMax: 32.90,lonMin:-114.32,lonMax:-114.08, elev:  962 },
+  { t:'mountain', n:'Kofa / Castle Dome Mts', latMin: 33.00,latMax: 33.75,lonMin:-114.45,lonMax:-113.80, elev: 1486 },
+  { t:'mountain', n:'Chocolate Mountains', latMin: 32.95,latMax: 33.55,lonMin:-115.45,lonMax:-114.75, elev:  754 },
   { t:'desert', n:'Australian Outback', latMin:-33, latMax:-20, lonMin: 117, lonMax: 142, elev:  400 },
   { t:'desert', n:'Namib Desert',       latMin:-28, latMax:-17, lonMin:  11, lonMax:  17, elev:  700 },
   { t:'desert', n:'Kalahari',           latMin:-26, latMax:-20, lonMin:  20, lonMax:  27, elev: 1000 },
@@ -101,10 +142,15 @@ export const TERRAIN_DB = [
   { t:'highland', n:'Greenland Ice Sheet',latMin:60,latMax:84,lonMin:-55,  lonMax: -18, elev: 2800 },
 ];
 
-// Priority for overlap resolution
-export const TERRAIN_PRIORITY = { mountain: 5, lake: 4, ocean: 3, highland: 2, desert: 1 };
+// Priority for overlap resolution. 'irrigated' sits above highland/desert
+// because it is the more specific claim: an irrigated valley inside a desert
+// region is still irrigated.
+export const TERRAIN_PRIORITY = {
+  mountain: 6, lake: 5, ocean: 4, irrigated: 3, highland: 2, desert: 1,
+};
 
-// Conductivity table (mS/m) per terrain type
+// Conductivity table (mS/m) per terrain type. Classes follow the ground-
+// conductivity bands in ITU-R P.832 / the FCC M3 conductivity maps.
 export const TERRAIN_COND = {
   ocean:    5000,   // seawater — near perfect
   lake:     3,      // freshwater — similar to wet land
@@ -112,6 +158,12 @@ export const TERRAIN_COND = {
   desert:   0.3,    // very dry — terrible
   highland: 2,      // mixed
   land:     3,      // average continental interior
+  // Irrigated cropland: wet agricultural soil, the "rich agricultural land"
+  // band (10-30 mS/m) in the references above. This matters more than it
+  // looks — ground-wave range goes as sqrt(cond), so an irrigated valley
+  // carries a ground wave about 7x further than the dry desert around it,
+  // and the antenna over it is markedly more efficient.
+  irrigated: 15,
 };
 
 // Classify a single lat/lon point — returns { type, name, elev }
@@ -127,17 +179,26 @@ export function classifyPoint(lat, lon) {
   // coastline mask says WATER, a desert/highland box does not apply. Mountain
   // and lake boxes still win outright, same as they outranked ocean boxes
   // before — coastal ranges and the Great Lakes rely on that.
+  // On equal priority the SMALLER box wins — the more specific claim beats the
+  // regional average. Without this the winner depended on array order, which
+  // silently gave MCAGCC Twentynine Palms the Mojave's 900 m regional average
+  // instead of its own 700 m, purely because the general box was listed first.
+  // Ordering-dependent geography is the same trap as Parts 35/38/41.
   var best = null;
   var bestPri = -1;
+  var bestArea = Infinity;
   for (var i = 0; i < TERRAIN_DB.length; i++) {
     var e = TERRAIN_DB[i];
     if (lat >= e.latMin && lat <= e.latMax && lon >= e.lonMin && lon <= e.lonMax) {
       var pri = TERRAIN_PRIORITY[e.t] || 0;
-      if (pri > bestPri) { bestPri = pri; best = e; }
+      var area = (e.latMax - e.latMin) * (e.lonMax - e.lonMin);
+      if (pri > bestPri || (pri === bestPri && area < bestArea)) {
+        bestPri = pri; bestArea = area; best = e;
+      }
     }
   }
   var water = !isLand(lat, lon);
-  if (best && !(water && (best.t === 'desert' || best.t === 'highland'))) {
+  if (best && !(water && (best.t === 'desert' || best.t === 'highland' || best.t === 'irrigated'))) {
     return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
   }
   // Ocean vs land comes from a real 1-degree coastline bitmask, not from
@@ -182,7 +243,7 @@ export function samplePath(lat1, lon1, lat2, lon2, n) {
 // ── PATH TERRAIN SUMMARY ──────────────────────────────────────────────────────
 export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
   var pts = samplePath(lat1, lon1, lat2, lon2, n || 32);
-  var counts = { ocean: 0, lake: 0, mountain: 0, desert: 0, highland: 0, land: 0 };
+  var counts = { ocean: 0, lake: 0, mountain: 0, desert: 0, highland: 0, land: 0, irrigated: 0 };
   var names  = {};
   var maxElev = 0;
   var condSum = 0;
@@ -229,7 +290,7 @@ export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
     namedBodies:   namedBodies,
     namedMountains:namedMountains,
     oceanFrac:     fracs.ocean || 0,
-    landFrac:      (fracs.land || 0) + (fracs.highland || 0),
+    landFrac:      (fracs.land || 0) + (fracs.highland || 0) + (fracs.irrigated || 0),
     mountainFrac:  fracs.mountain || 0,
     desertFrac:    fracs.desert || 0,
   };

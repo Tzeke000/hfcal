@@ -20,10 +20,43 @@
     font-family: Inter, system-ui, sans-serif;
     display: flex; align-items: center; justify-content: center;
   }
+  body { display: block; padding: 24px 16px; }
+  .wrap { max-width: 560px; margin: 0 auto; }
   .card {
-    text-align: center; padding: 32px 40px; max-width: 420px;
+    text-align: center; padding: 32px 40px;
     background: #0e1510; border: 1px solid #2e4422; border-radius: 12px;
   }
+  .reports { margin-top: 18px; }
+  .rhead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid #2e4422; padding-bottom: 7px; margin-bottom: 12px;
+  }
+  .rhead h2 {
+    margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #7dc86b;
+  }
+  .tally { display: flex; gap: 10px; margin-bottom: 12px; }
+  .tile {
+    flex: 1; background: #0e1510; border: 1px solid #2e4422; border-radius: 8px;
+    padding: 12px 8px; text-align: center;
+  }
+  .tile .v { font-size: 1.9rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .tile .k {
+    font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #8fa284; margin-top: 3px;
+  }
+  .worked { color: #7dc86b; } .didnt { color: #ff9b86; } .rate { color: #f0f4ee; }
+  details {
+    background: #0e1510; border: 1px solid #2e4422; border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 8px;
+  }
+  details summary { cursor: pointer; font-size: 0.78rem; color: #f0f4ee; }
+  details pre {
+    white-space: pre-wrap; word-break: break-word; font-size: 0.66rem;
+    color: #8fa284; margin: 10px 0 0; line-height: 1.5;
+  }
+  .empty { color: #8fa284; font-size: 0.76rem; line-height: 1.6; }
+  a { color: #7dc86b; }
   .label {
     color: #7dc86b; font-size: 0.72rem; font-weight: 700;
     letter-spacing: 0.14em; text-transform: uppercase;
@@ -43,13 +76,28 @@
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="label">HF Field Antenna Calculator</div>
-  <div class="num" id="n">–</div>
-  <div class="sub">devices counted in<br>(one anonymous ping per install, first launch only)</div>
-  <div class="err" id="err"></div>
-  <button id="r">REFRESH</button>
-  <div class="meta" id="meta">HFCALC-AG-EZK-USMC-v1</div>
+<div class="wrap">
+  <div class="card">
+    <div class="label">HF Field Antenna Calculator</div>
+    <div class="num" id="n">–</div>
+    <div class="sub">devices counted in<br>(one anonymous ping per install, first launch only)</div>
+    <div class="err" id="err"></div>
+    <button id="r">REFRESH</button>
+    <div class="meta" id="meta">HFCALC-AG-EZK-USMC-v1</div>
+  </div>
+
+  <div class="reports">
+    <div class="rhead">
+      <h2>Field reports — did the shot close?</h2>
+      <span style="color:#445a38;font-size:0.62rem" id="rmeta"></span>
+    </div>
+    <div class="tally">
+      <div class="tile"><div class="v worked" id="tw">–</div><div class="k">closed</div></div>
+      <div class="tile"><div class="v didnt" id="td">–</div><div class="k">didn’t</div></div>
+      <div class="tile"><div class="v rate" id="tr">–</div><div class="k">app was right</div></div>
+    </div>
+    <div id="rlist"></div>
+  </div>
 </div>
 <script>
   var API = 'https://api.github.com/repos/Tzeke000/hfcal/releases/tags/install-beacon';
@@ -73,9 +121,86 @@
         el.style.display = 'block';
       });
   }
-  document.getElementById('r').addEventListener('click', load);
-  load();
-  setInterval(load, 5 * 60 * 1000);   // gentle: 60 unauthenticated req/hr limit
+  // ── Field reports ────────────────────────────────────────────────────────
+  // Operators post their truth-log cards as labelled issues on the repo
+  // (TruthLog's POST TO LOG). This reads them back and tallies what actually
+  // happened in the field, so the record is visible to the author and to
+  // anyone else who bothers to look — not buried in one inbox.
+  // Matched by TITLE prefix rather than a label: a label must exist on the
+  // repo before it can be applied, and a report that silently failed to be
+  // labelled would silently vanish from this tally. The title is generated
+  // by the app and always travels with the card.
+  var ISSUES = 'https://api.github.com/repos/Tzeke000/hfcal/issues'
+             + '?state=all&per_page=100';
+  var TITLE_PREFIX = 'hfcalc field truth log';
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function tally(body) {
+    // The card's own summary line is authoritative when present; fall back to
+    // counting the per-shot markers. Both apostrophe forms, because the card
+    // uses a typographic one.
+    var t = String(body || '');
+    var m = t.match(/ENTRIES:\s*(\d+)\s+WORKED:\s*(\d+)\s+DIDN[’']T:\s*(\d+)/);
+    var worked, didnt;
+    if (m) { worked = +m[2]; didnt = +m[3]; }
+    else {
+      worked = (t.match(/\[WORKED\]/g) || []).length;
+      didnt = (t.match(/\[DIDN[’']T\]/g) || []).length;
+    }
+    var h = t.match(/(\d+)\s*hit\s*\/\s*(\d+)\s*miss/);
+    return { worked: worked, didnt: didnt,
+             hits: h ? +h[1] : 0, misses: h ? +h[2] : 0 };
+  }
+
+  function loadReports() {
+    fetch(ISSUES, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('GitHub answered ' + r.status); return r.json(); })
+      .then(function (list) {
+        list = Array.isArray(list) ? list.filter(function (i) {
+          return !i.pull_request
+            && String(i.title || '').toLowerCase().indexOf(TITLE_PREFIX) === 0;
+        }) : [];
+        var W = 0, D = 0, H = 0, M = 0, out = '';
+        list.forEach(function (iss) {
+          var t = tally(iss.body);
+          W += t.worked; D += t.didnt; H += t.hits; M += t.misses;
+          out += '<details><summary>' + esc(iss.title || ('report #' + iss.number))
+              + ' <span style="color:#445a38">· #' + iss.number + ' · '
+              + esc((iss.created_at || '').slice(0, 10)) + '</span></summary>'
+              + '<pre>' + esc(iss.body || '(empty)') + '</pre>'
+              + '<a href="' + esc(iss.html_url) + '" target="_blank" rel="noopener"'
+              + ' style="font-size:0.66rem">open on GitHub →</a></details>';
+        });
+        document.getElementById('tw').textContent = W;
+        document.getElementById('td').textContent = D;
+        document.getElementById('tr').textContent =
+          (H + M) > 0 ? Math.round(100 * H / (H + M)) + '%' : '–';
+        document.getElementById('rmeta').textContent =
+          list.length + ' report' + (list.length === 1 ? '' : 's');
+        document.getElementById('rlist').innerHTML = out || '<div class="empty">'
+          + 'No field reports yet. They appear here when an operator taps '
+          + '<strong>POST TO LOG</strong> in the app’s Field Truth Log. '
+          + 'Cards sent to you by email instead can be pasted into '
+          + '<a href="https://github.com/Tzeke000/hfcal/issues/new?title='
+          + encodeURIComponent('HFCALC field truth log — pasted') + '" '
+          + 'target="_blank" rel="noopener">a new report</a> to show up here '
+          + '(keep the title prefix).</div>';
+      })
+      .catch(function (e) {
+        document.getElementById('rlist').innerHTML =
+          '<div class="empty">Could not load reports: ' + esc(e.message) + '</div>';
+      });
+  }
+
+  function loadAll() { load(); loadReports(); }
+  document.getElementById('r').addEventListener('click', loadAll);
+  loadAll();
+  setInterval(loadAll, 5 * 60 * 1000);   // gentle: 60 unauthenticated req/hr limit
 </script>
 </body>
 </html>

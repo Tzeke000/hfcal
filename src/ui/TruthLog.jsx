@@ -24,6 +24,13 @@ import {
 // "to" field of that draft; it does not make the app send anything itself.
 var AUTHOR_CONTACT = '';
 
+// The dashboard at /count.html finds these reports by their TITLE prefix
+// (buildSubmission generates it), not by a label — a label has to be created
+// on the repo before it can be applied, and a report that silently failed to
+// be labelled would silently vanish from the tally. The title always travels
+// with the card. Keep this in step with buildSubmission's subject line.
+var FIELD_REPORT_TITLE_PREFIX = 'HFCALC field truth log';
+
 // Remembers whether the operator has been asked, so the card is offered once
 // rather than nagging on every open.
 var ASK_KEY = 'hfcalc_truth_ask_v1';
@@ -104,6 +111,36 @@ export function TruthLog({ currentShot, appVersion }) {
     }
   }
 
+  // The PUBLIC route: open a pre-filled issue on the app's own repository.
+  // Same card, same redaction, but it lands somewhere both the author and
+  // other operators can read — a shared field record instead of one person's
+  // inbox, and the dashboard at /count.html tallies these automatically.
+  // Needs a GitHub account, which is why it sits alongside SEND rather than
+  // replacing it. Still nothing transmitted by the app: this opens a form
+  // the operator reads and submits themselves.
+  function doPostToLog() {
+    if (!entries.length) return;
+    var sub = buildSubmission(entries, appVersion, exact ? 'exact' : 'degree');
+    saveAsk('sent');
+    setAskState('sent');
+    var url = 'https://github.com/Tzeke000/hfcal/issues/new'
+      + '?title=' + encodeURIComponent(sub.subject)
+      + '&body=' + encodeURIComponent(sub.body);
+    try {
+      if (url.length > 7000) {   // too long for a URL — hand over the text instead
+        exportText(sub.body, truthFilename(new Date()), say);
+        say('CARD COPIED — PASTE IT INTO THE REPORT');
+        window.open('https://github.com/Tzeke000/hfcal/issues/new?title='
+          + encodeURIComponent(FIELD_REPORT_TITLE_PREFIX), '_blank', 'noopener');
+        return;
+      }
+      window.open(url, '_blank', 'noopener');
+      say('PUBLIC LOG OPENED');
+    } catch (e) {
+      exportText(sub.body, truthFilename(new Date()), say);
+    }
+  }
+
   var scored = entries.map(scoreEntry);
   var hits = scored.filter(function(x) { return x === 'hit'; }).length;
   var misses = scored.filter(function(x) { return x === 'miss'; }).length;
@@ -160,12 +197,16 @@ export function TruthLog({ currentShot, appVersion }) {
                 <span style={{ color: T.textMute, fontSize: '0.7rem' }}>Send exact grids instead</span>
               </label>
               <div style={{ color: T.textDim, fontSize: '0.64rem', lineHeight: 1.45, marginTop: 6 }}>
-                {'Nothing is transmitted by the app. Tapping SEND opens your own share sheet or email draft with the text in it — you choose who it goes to and you press send.'}
+                {'Nothing is transmitted by the app. SEND opens your own share sheet or email draft; POST TO LOG opens a pre-filled report on the app’s GitHub (needs a GitHub account) where other operators can see it too. Either way you read the text and you press send.'}
               </div>
               <div style={{ display: 'flex', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
                 <button onClick={doSend}
                   style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.accent, color: '#0e1409', border: 'none' }}>
                   SEND IT
+                </button>
+                <button onClick={doPostToLog}
+                  style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.surfaceHi, color: T.textPrim }}>
+                  POST TO LOG
                 </button>
                 <button onClick={function() { saveAsk('later'); setAskState('later'); }}
                   style={{ ...btn, flex: 1, minWidth: 90, padding: '10px 0', background: T.bg, color: T.textPrim }}>

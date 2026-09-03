@@ -3021,6 +3021,83 @@ the tests run.
 288 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 42 — The southwest, because Marines are training on it (v1.51.0)
+
+Marines are taking this to WTI on the Barry M. Goldwater Range, so the Yuma
+area stopped being an abstraction. It was wrong, and wrong in the direction
+that matters for the short-range work done there.
+
+**One box called the whole southwest 800 m of dry desert.** `Mojave/Sonoran`,
+30–37° N, 118–109° W, elev 800, conductivity 0.3 mS/m. Consequences, all
+verified by running the module:
+
+- **MCAS Yuma** (65 m, in the irrigated Colorado River valley) came back as
+  800 m dry desert — a 735 m elevation error and, worse, the wrong ground.
+- **Camp Pendleton**, on the Pacific coast, came back as desert. The obvious
+  WTI regional path ran desert-to-desert end to end.
+- **The Salton Sea**, an 890 km² lake, came back as desert.
+
+**Split into the recognised subdivisions**, each with its published elevation
+rather than a regional average: Mojave (900 m), Lower Colorado Desert (90 m —
+the lowest, hottest subdivision of the Sonoran), Arizona Upland (600 m), and
+MCAGCC Twentynine Palms called out at its own 700 m. Pendleton now falls
+through to the coastline mask as land; the Salton Sea is a lake.
+
+**A new `irrigated` class**, because it changes the answer. The Yuma and
+Imperial valleys are wet agricultural soil in the middle of dry desert —
+the "rich agricultural land" band (10–30 mS/m) of ITU-R P.832 / the FCC M3
+maps, against desert's 0.3. Ground-wave range goes as √conductivity, so on
+the paths WTI actually uses the estimate moves by a factor of 1.4–3.0:
+
+| path | effective mS/m | vs the old all-desert model |
+|---|---|---|
+| MCAS Yuma → Camp Pendleton | 2.74 | 3.0× further |
+| MCAS Yuma → Twentynine Palms | 1.30 | 2.1× further |
+| MCAS Yuma → BMGR East | 0.58 | 1.4× further |
+
+**The local ranges, because they shape a takeoff angle.** Gila Mountains
+(962 m), Kofa/Castle Dome (1486 m), Chocolate Mountains (754 m). Above the
+800 m clearance threshold, so a station shooting across them now gets its
+angle raised instead of being told the ground is flat.
+
+**Two defects found while doing it:**
+
+1. **Ordering decided geography.** Equal-priority boxes resolved by array
+   order, so the general Mojave box (900 m) beat the specific Twentynine
+   Palms box (700 m) purely by being listed first. Now the SMALLER box wins
+   on a tie — the more specific claim beats the regional average — and that
+   rule is pinned by a test that recomputes it from the database rather than
+   hard-coding an answer.
+2. **Las Vegas was in the Rocky Mountains.** Pre-existing: the Rockies box
+   spanned 117° W, sweeping in all of Nevada and the eastern Mojave, so Las
+   Vegas returned "Rocky Mountains, 3500 m" and charged a 3.5 km obstacle
+   clearance to southwest paths. The range's western edge runs much further
+   east in the south than in the north, which one rectangle cannot express;
+   split into Northern (42–60° N) and Southern/Wasatch (35–42° N, to 112° W).
+   Denver and Missoula still read mountain; Las Vegas now reads Mojave basin.
+
+**Stated limits.** This is hand-entered regional data with cited elevations,
+not a DEM. The model cannot resolve anything below roughly 0.3° (~30 km), so
+it will never see the individual wash, ridge or built-up area an operator is
+standing in — for local terrain the operator's own eyes and a map beat it,
+and the app has always said the terrain database is a coarse bounding-box
+model. What it now gets right is the regional character: elevation band,
+ground conductivity class, and the ranges big enough to matter to a takeoff
+angle. Replacing these boxes with a real elevation dataset, the way Part 35
+replaced the ocean boxes with a coastline, remains the honest next step.
+
+**Field reports made public.** The truth log gained a second route beside
+SEND: **POST TO LOG** files the same redacted card as a report on the app's
+own repository, where other operators can read it, rather than into one
+person's inbox. The author's dashboard (`/count.html`) tallies them —
+closed, didn't, and how often the app's prediction agreed. Reports are found
+by their title prefix rather than a label, deliberately: a label has to exist
+on the repo before it can be applied, and a report that silently failed to be
+labelled would silently vanish from the tally.
+
+297 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

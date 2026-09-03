@@ -58,7 +58,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 
 **Path and geometry**
 - **Coordinate input** — MGRS grid straight off a DAGR (or scan the DAGR screen with the camera), DMS, or decimal degrees. Remembers your last known-good pair so it opens cold with something useful.
-- **Path analysis** — distance, true and magnetic bearing (the number you dial into a lensatic), back azimuth, and the terrain under the whole great-circle path: ocean, land, mountain, desert, and what that ground is worth to your signal.
+- **Path analysis** — distance, true and magnetic bearing (the number you dial into a lensatic), back azimuth, and the terrain under the whole great-circle path: ocean, land, mountain, desert, irrigated valley, and what that ground is worth to your signal. Land and sea come from a real 1° coastline mask; the American southwest is broken out to the desert subdivision so the Yuma/WTI training area reads as what it is.
 - **Live compass** — uses the phone's magnetometer, corrected by the World Magnetic Model carried on the device, to walk you onto the antenna bearing.
 
 **The frequency answer**
@@ -69,7 +69,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 - **Every bounce checked** — a long shot reflects off the ionosphere several times, each at a different place, local time, and season; the weakest bounce caps the path and the app shows you which one it is.
 - **PATH CLOSED warning** — when absorption eats everything the ionosphere would reflect, it says so outright. Checked against VOACAP over 6,912 cases: it has never once fired on a path VOACAP could close.
 - **Live space weather** — NOAA solar flux and Kp when a connection exists, cached with its age shown; a stated mid-cycle default when it doesn't. Everything works either way.
-- **Auroral absorption** — during a geomagnetic storm the app works out where the auroral oval has reached from the live Kp, checks it against every point your path crosses the absorbing layer, and raises the floor accordingly. A transpolar circuit that is fine on a quiet day gets told it is closing, and told why.
+- **Auroral absorption** — during a geomagnetic storm the app works out where the auroral oval has reached from the live Kp, checks it against every point your path crosses the absorbing layer, and raises the floor accordingly. A high-latitude circuit that is fine on a quiet day gets told it is closing, and told why.
 
 **The antenna**
 - **Antenna selection** — recommends from 9 field-expedient types for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire, delta loop — each with pros/cons, deployment photos, and step-by-step build instructions.
@@ -78,7 +78,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 
 **Field workflow**
 - **QR handoff** — show any plan as a QR code; another operator scans it phone-to-phone and their app opens pre-filled. No network, no typing grids.
-- **Field truth log** — one tap after a shot (closed / didn't) records the app's prediction beside reality, plus the space weather it was predicted under. The app then offers to send the card back so the model can be corrected against real paths: your grids are rounded to whole degrees by default (the resolution the model works at anyway), nothing is transmitted by the app itself — tapping send opens your own share sheet with the text in it — and DON'T ASK is remembered.
+- **Field truth log** — one tap after a shot (closed / didn't) records the app's prediction beside reality, plus the space weather it was predicted under. The app then offers to send the card back so the model can be corrected against real paths: your grids are rounded to whole degrees by default (the resolution the model works at anyway), nothing is transmitted by the app itself — tapping send opens your own share sheet with the text in it — and DON'T ASK is remembered. **POST TO LOG** instead files the same card as a public report on this repo, where every operator can see what has and hasn't closed — those reports are tallied on the author's dashboard.
 - **Red-light night mode** — a red-on-black theme that preserves dark adaptation.
 - **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator.
 - **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
@@ -103,9 +103,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 41 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 42 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**288 unit tests** pin the physics so it cannot drift. **50 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**297 unit tests** pin the physics so it cannot drift. **50 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -169,7 +169,7 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 288 unit tests over the physics, terrain and coordinate math
+npm test             # 297 unit tests over the physics, terrain and coordinate math
 npm run test:ui      # 50 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
