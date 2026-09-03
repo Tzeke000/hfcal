@@ -240,6 +240,55 @@ export function samplePath(lat1, lon1, lat2, lon2, n) {
   return pts;
 }
 
+// ── NEAR-FIELD HORIZON ────────────────────────────────────────────────────────
+// What the operator actually has to shoot OVER, scanned at its own resolution.
+//
+// The main path sampler uses a fixed number of points across the whole path,
+// so on a 3,500 km shot the first sample after the station lands 110 km out —
+// and a ridge 30 km off the end of the runway is never looked at. That is
+// exactly the MCAS Yuma case: the Gila Mountains sit ~30 km east, and on any
+// long eastward path they fell straight through the gap between samples.
+//
+// So the first 200 km get their own scan at ~4 km steps. The winner is the
+// feature subtending the LARGEST ANGLE from the station — the horizon-setting
+// one — measured as relief ABOVE THE STATION, not above sea level.
+export const NEAR_FIELD_KM = 200;
+export const NEAR_FIELD_STEP_KM = 4;
+export const NEAR_FIELD_MIN_RELIEF_M = 300;
+
+export function nearFieldObstacle(lat1, lon1, lat2, lon2) {
+  var D2R = Math.PI / 180, R2D = 180 / Math.PI, R = 6371;
+  var la1 = lat1 * D2R, lo1 = lon1 * D2R, la2 = lat2 * D2R, lo2 = lon2 * D2R;
+  var d = 2 * Math.asin(Math.sqrt(
+    Math.pow(Math.sin((la2 - la1) / 2), 2) +
+    Math.cos(la1) * Math.cos(la2) * Math.pow(Math.sin((lo2 - lo1) / 2), 2)));
+  if (!isFinite(d) || d < 1e-9) return null;
+  var totalKm = d * R;
+  var txElev = classifyPoint(lat1, lon1).elev || 0;
+  var reach = Math.min(NEAR_FIELD_KM, totalKm);
+  var best = null;
+  for (var km = NEAR_FIELD_STEP_KM; km <= reach; km += NEAR_FIELD_STEP_KM) {
+    var f = km / totalKm;
+    var A = Math.sin((1 - f) * d) / Math.sin(d);
+    var B = Math.sin(f * d) / Math.sin(d);
+    var x = A * Math.cos(la1) * Math.cos(lo1) + B * Math.cos(la2) * Math.cos(lo2);
+    var y = A * Math.cos(la1) * Math.sin(lo1) + B * Math.cos(la2) * Math.sin(lo2);
+    var z = A * Math.sin(la1) + B * Math.sin(la2);
+    var lat = Math.atan2(z, Math.sqrt(x * x + y * y)) * R2D;
+    var lon = Math.atan2(y, x) * R2D;
+    var ter = classifyPoint(lat, lon);
+    if (ter.type !== 'mountain' && ter.type !== 'highland') continue;
+    var relief = (ter.elev || 0) - txElev;
+    if (relief < NEAR_FIELD_MIN_RELIEF_M) continue;
+    var deg = Math.atan2(relief / 1000, km) * R2D;
+    if (!best || deg > best.subtendedDeg) {
+      best = { name: ter.name, elev: ter.elev, distKm: km,
+               reliefM: relief, subtendedDeg: deg };
+    }
+  }
+  return best;
+}
+
 // ── PATH TERRAIN SUMMARY ──────────────────────────────────────────────────────
 export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
   var pts = samplePath(lat1, lon1, lat2, lon2, n || 32);
@@ -284,6 +333,20 @@ export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
   return {
     pts:           pts,
     fracs:         fracs,
+    // Every obstacle on the path, not just the tallest. The near-field
+    // clearance rule needs these because the horizon a station actually has
+    // to shoot over is set by whatever subtends the LARGEST ANGLE from where
+    // it stands — usually a modest ridge a few km away, not the highest peak
+    // a thousand km down the path (v1.52).
+    obstacles:     obstacleElevs,
+    // The horizon-setting feature in the first 200 km, scanned at its own
+    // resolution so it cannot fall between path samples on a long shot.
+    nearObstacle:  nearFieldObstacle(lat1, lon1, lat2, lon2),
+    // Ground elevation at the transmitter, so clearance can be computed as
+    // relief ABOVE THE STATION rather than above sea level. A 962 m ridge is
+    // 900 m of obstacle from Yuma at 65 m, and almost nothing from a station
+    // already at 900 m in the Mojave.
+    txElevM:       (pts[0] && pts[0].terrain) ? (pts[0].terrain.elev || 0) : 0,
     condMSm:       condMSm,
     maxElev:       maxElev,
     keyObstacle:   keyObstacle,

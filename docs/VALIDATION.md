@@ -3098,6 +3098,56 @@ labelled would silently vanish from the tally.
 297 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 43 — The ridge next to the base (v1.52.0)
+
+Prompted by the operator: *"I know there's a mountain ridge in Yuma near the
+Marine base there."* There is — the Gila Mountains, crest ~962 m, about 30 km
+east of MCAS Yuma. Part 42 had already put them in the database. They still
+never reached the answer, for two independent reasons, both now fixed.
+
+**1. The near field fell between the samples.** `pathTerrainAnalysis` takes a
+fixed 32 samples across the whole path. On a 3,500 km shot that puts the
+first sample after the station 110 km out, so a ridge at 30 km was never
+looked at — it existed in the database and was invisible to the model. The
+first 200 km now get their own scan at 4 km steps (`nearFieldObstacle`),
+independent of path length.
+
+**2. The clearance rule keyed off the tallest obstacle, not the blocking
+one.** It used `keyObstacle`, defined as the highest point anywhere on the
+path. Shooting east from Yuma, that is the Rockies 987 km away — so the app
+reasoned about a range on the far side of the continent and ignored the ridge
+off the end of the runway. The horizon a station must clear is set by
+whatever subtends the LARGEST ANGLE from where it stands, which is what the
+scan now selects.
+
+**Relief is measured above the station, not above sea level.** A 962 m ridge
+is ~900 m of obstacle seen from Yuma at 65 m, and essentially nothing seen
+from a station already at 900 m in the Mojave. This only became possible
+because Part 42 gave the desert boxes real elevations; while everything was a
+blanket 800 m, "relief" was meaningless. Verified both ways: from MCAS Yuma
+the eastward shot is raised to clear a 917 m rise 32 km out; from MCAGCC
+Twentynine Palms the same shot sees no near ridge, because the station is on
+top of the terrain.
+
+**A regression caught in passing.** The first cut made near-field clearance
+and the mountain-path scatter penalty mutually exclusive (`else if`), so a
+station with a ridge on its doorstep silently stopped being charged for the
+range it crossed 900 km later. They are different mechanisms — a local
+horizon sets a minimum angle, a mountainous path scatters — and a shot can
+suffer both. Now applied independently.
+
+**On VOACAP.** The operator also asked what VOACAP says about Yuma. It says
+nothing about terrain: VOACAP is an ionospheric propagation engine and holds
+no elevation data at all. It *consumes* ground conductivity as an antenna
+input rather than supplying it. So VOACAP can validate the propagation
+answer for a Yuma path — a legitimate future study, TX at MCAS Yuma the way
+Part 9's is at Twentynine Palms — but it cannot be a source for the ridge.
+Terrain has to come from an elevation dataset; the sources are listed in
+`scripts/validation/README.md`.
+
+301 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

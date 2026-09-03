@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   TERRAIN_DB, TERRAIN_PRIORITY, TERRAIN_COND,
-  classifyPoint, samplePath, pathTerrainAnalysis,
+  classifyPoint, samplePath, pathTerrainAnalysis, nearFieldObstacle,
 } from '../../src/physics/terrain.js';
 import { isLand } from '../../src/data/landMask.js';
 
@@ -344,6 +344,52 @@ test('a local WTI path reads as workable ground, not dead sand', function() {
   assert.ok((r.fracs.irrigated || 0) > 0, 'the path should register irrigated ground');
   assert.ok(Math.abs(Object.values(r.fracs).reduce((a, b) => a + b, 0) - 1) < 1e-9,
     'fractions must still sum to 1 with the new class');
+});
+
+// ── The ridge next to the base (v1.52) ──────────────────────────────────────
+// The Gila Mountains sit ~30 km east of MCAS Yuma and are the first thing a
+// low-angle eastward shot has to clear. The main path sampler could not see
+// them: 32 samples across a 3,500 km path puts the first one 110 km out, so a
+// ridge at 30 km fell straight through the gap. The near-field scan exists
+// because of exactly that.
+
+test('the near-field scan finds the ridge beside MCAS Yuma on a long path', function() {
+  const near = nearFieldObstacle(32.6566, -114.6060, 36.85, -76.29);  // -> Norfolk
+  assert.ok(near, 'a long eastward shot from Yuma must still see the Gila ridge');
+  assert.match(near.name, /Gila/, 'got ' + near.name);
+  assert.ok(near.distKm < 60, 'the ridge is ~30 km out, got ' + near.distKm);
+  // Relief is measured above the STATION, not above sea level.
+  assert.ok(near.reliefM > 850 && near.reliefM < 950,
+    '962 m ridge seen from a 65 m station is ~900 m of relief, got ' + near.reliefM);
+  assert.ok(near.subtendedDeg > 1 && near.subtendedDeg < 3,
+    'a 900 m rise at 30 km subtends ~1.7 deg, got ' + near.subtendedDeg);
+});
+
+test('relief is measured above the station, so a high station is not blocked', function() {
+  // Same class of ridge, but from Twentynine Palms at 700 m the Mojave's own
+  // relief is not a horizon. Using height above SEA LEVEL would wrongly
+  // charge a station for terrain it is already standing on top of.
+  const fromLow = nearFieldObstacle(32.6566, -114.6060, 36.85, -76.29);
+  const fromHigh = nearFieldObstacle(34.23, -116.05, 36.85, -76.29);
+  assert.ok(fromLow, 'the low station should see a ridge');
+  if (fromHigh) {
+    assert.ok(fromHigh.reliefM < fromLow.reliefM,
+      'the higher station must see less relief, not more');
+  }
+});
+
+test('the near-field scan reports nothing when there is no near ridge', function() {
+  // Mid-ocean: nothing to clear in the first 200 km.
+  assert.equal(nearFieldObstacle(20, -150, 10, -140), null);
+});
+
+test('a near ridge and a mountainous path are charged independently', function() {
+  // They are different mechanisms — the local horizon sets a minimum angle,
+  // the range 900 km downpath scatters. A shot can suffer both.
+  const r = pathTerrainAnalysis(32.6566, -114.6060, 36.85, -76.29, 32);
+  assert.ok(r.nearObstacle, 'the Yuma->Norfolk path has a near ridge');
+  assert.ok(typeof r.txElevM === 'number', 'the TX elevation must travel with the path');
+  assert.ok(r.txElevM < 200, 'MCAS Yuma is low, got ' + r.txElevM);
 });
 
 test('the land mask is a plausible model of Earth', function() {

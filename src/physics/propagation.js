@@ -170,27 +170,52 @@ export function calcTakeoffAngle(hopDistKm, freqMHz, layerKm, terrain, opts) {
   var finalDeg = baseDeg;
 
   // 1. Mountain barrier clearance
-  if (terrain && terrain.keyObstacle && terrain.keyObstacle.elev > 800) {
-    var obs = terrain.keyObstacle;
-    // Horizontal distance from TX to obstacle
-    var distToObsKm = obs.frac * fullDistKm;   // obs.frac is along the FULL path
-    if (distToObsKm < 200 && distToObsKm > 1) {
-      // Near-field mountain — must aim OVER it
-      var clearRad = Math.atan2(obs.elev / 1000, distToObsKm); // radians
-      var clearDeg = clearRad * 180 / Math.PI + 2; // +2° safety
-      if (clearDeg > finalDeg) {
-        finalDeg = clearDeg;
-        adjustments.push({
-          type: 'mountain_clearance',
-          delta: +(clearDeg - baseDeg).toFixed(1),
-          note: obs.name + ' (' + obs.elev.toFixed(0) + ' m) blocks near path — angle raised to clear ridgeline'
-        });
-      }
-    } else if (terrain.mountainFrac > 0.2) {
-      // Path runs through significant mountain terrain
-      finalDeg += 3;
-      adjustments.push({ type: 'mountain_path', delta: 3, note: 'Path crosses ' + obs.name + ' — +3° to compensate for terrain scatter and absorption' });
+  //
+  // The horizon a station has to shoot over is set by whatever subtends the
+  // LARGEST ANGLE from where it stands — not by the tallest peak anywhere on
+  // the path. This used to key off keyObstacle (the highest), which meant a
+  // station at MCAS Yuma shooting east was told about the Rockies 987 km away
+  // and never about the Gila Mountains 30 km off the end of the runway. The
+  // Gila ridge is the one that actually blocks a low-angle shot (v1.52).
+  //
+  // Relief is measured ABOVE THE STATION, not above sea level: 962 m of ridge
+  // is ~900 m of obstacle seen from Yuma at 65 m, and next to nothing seen
+  // from a station already at 900 m in the Mojave.
+  var txElev = (terrain && typeof terrain.txElevM === 'number') ? terrain.txElevM : 0;
+  var blocker = terrain ? terrain.nearObstacle : null;
+  if (!blocker && terrain && terrain.keyObstacle && terrain.keyObstacle.elev > 800) {
+    // Callers that build a terrain object by hand (tests, the AI layer) may
+    // not have run the near-field scan. Fall back to the old single-obstacle
+    // reading so their behaviour is unchanged.
+    var ko = terrain.keyObstacle;
+    var koDist = ko.frac * fullDistKm;
+    var koRelief = ko.elev - txElev;
+    if (koDist > 1 && koDist < 200 && koRelief > 300) {
+      blocker = { name: ko.name, reliefM: koRelief, distKm: koDist,
+                  subtendedDeg: Math.atan2(koRelief / 1000, koDist) * 180 / Math.PI };
     }
+  }
+  if (blocker) {
+    var clearDeg = blocker.subtendedDeg + 2;    // +2° safety over the crest
+    if (clearDeg > finalDeg) {
+      finalDeg = clearDeg;
+      adjustments.push({
+        type: 'mountain_clearance',
+        delta: +(clearDeg - baseDeg).toFixed(1),
+        note: blocker.name + ' (' + blocker.reliefM.toFixed(0) + ' m above you, '
+          + blocker.distKm.toFixed(0) + ' km out) blocks the low angle — raised to clear the ridgeline'
+      });
+    }
+  }
+  // INDEPENDENT of the clearance above: the local horizon and the scatter loss
+  // of a path that spends its length in mountains are different mechanisms, and
+  // a shot can suffer both. Making them exclusive meant a station with a ridge
+  // on its doorstep silently stopped being charged for the range it crossed
+  // 900 km later.
+  if (terrain && terrain.keyObstacle && terrain.keyObstacle.elev > 800
+      && terrain.mountainFrac > 0.2) {
+    finalDeg += 3;
+    adjustments.push({ type: 'mountain_path', delta: 3, note: 'Path crosses ' + terrain.keyObstacle.name + ' — +3° to compensate for terrain scatter and absorption' });
   }
 
   // 2. Ocean path advantage
