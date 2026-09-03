@@ -24,7 +24,7 @@ function loadSoi() {
   } catch (e) { return []; }
 }
 
-export function SoiPanel({ results, pathCtx, month, txWatts, cachedSFI }) {
+export function SoiPanel({ results, pathCtx, month, txWatts, cachedSFI, cachedKp }) {
   var [open, setOpen] = useState(false);
   var [freqs, setFreqs] = useState(loadSoi);
   var [entry, setEntry] = useState('');
@@ -62,6 +62,7 @@ export function SoiPanel({ results, pathCtx, month, txWatts, cachedSFI }) {
       ends: pathCtx.ends, bounces: pathCtx.bounces, hops: pathCtx.hops,
       distKm: results.geo.distKm, txWatts: txWatts, month: month,
       sfi: cachedSFI ? cachedSFI() : null,
+      kp: cachedKp ? cachedKp() : null,
     }, freqs, now);
   }
 

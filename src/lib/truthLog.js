@@ -53,9 +53,74 @@ export function makeTruthEntry(shot, outcome, note, when) {
       txWatts: numOrNull(fc.txWatts != null ? fc.txWatts : shot.txWatts),
       month: numOrNull(fc.month),
       utcHour: numOrNull(fc.utcHour),
+      // The space weather the prediction was made UNDER. Without these an
+      // entry cannot be re-derived later: the same path and hour give a
+      // different MUF at SFI 70 than at SFI 200, and the auroral term is
+      // driven entirely by Kp. A returned card missing them is an anecdote;
+      // with them it is a reproducible data point.
+      sfi: numOrNull(fc.sfi),
+      kp: numOrNull(fc.kp),
+      auroralDb30: numOrNull(fc.auroralDb30),
     },
     appVersion: shot.appVersion || null,
   };
+}
+
+// ── SENDING A CARD BACK ──────────────────────────────────────────────────────
+// The operator can hand the log back so the model gets measured against real
+// paths — the one thing a VOACAP study cannot provide, because VOACAP is
+// itself a model.
+//
+// COORDINATES ARE THE WHOLE PROBLEM. A truth entry records where a Marine was
+// and what they were shooting at, and this app's first promise is that
+// position never leaves the device. So the default precision is WHOLE DEGREES:
+//
+//   - it costs the science NOTHING. The foF2 map and the land/sea mask this
+//     app validates against are themselves 1-degree grids, so a rounded
+//     coordinate lands in the same cell the model used.
+//   - it costs an adversary almost everything: a degree is ~60 nautical miles
+//     of ambiguity, which is a region, not a position report.
+//
+// 'exact' exists for training, ham use, and anyone who simply does not care —
+// but the operator has to choose it, on screen, having been told.
+export function redactEntry(e, precision) {
+  if (!e || typeof e !== 'object') return e;
+  var out = JSON.parse(JSON.stringify(e));
+  if (precision === 'exact') return out;
+  out.from = coarsen(out.from);
+  out.to = coarsen(out.to);
+  out.coordPrecision = 'degree';
+  return out;
+}
+
+function coarsen(p) {
+  if (!p || typeof p.lat !== 'number' || typeof p.lon !== 'number') return p;
+  return { lat: Math.round(p.lat), lon: Math.round(p.lon) };
+}
+
+// The plain-text card the operator sends back, plus a subject line. Built from
+// redacted copies so nothing here can carry a precise grid unless the operator
+// asked for that.
+export function buildSubmission(entries, appVersion, precision) {
+  var list = (Array.isArray(entries) ? entries : []).map(function(e) {
+    return redactEntry(e, precision);
+  });
+  var scored = list.map(scoreEntry);
+  var hits = scored.filter(function(s) { return s === 'hit'; }).length;
+  var misses = scored.filter(function(s) { return s === 'miss'; }).length;
+  var subject = 'HFCALC field truth log — ' + list.length + ' shot'
+    + (list.length === 1 ? '' : 's')
+    + (hits + misses > 0 ? ' (' + hits + ' hit / ' + misses + ' miss)' : '')
+    + (appVersion ? ' — v' + appVersion : '');
+  var head = [
+    'Field truth log from an HFCALC user.',
+    precision === 'exact'
+      ? 'Coordinates: EXACT, sent deliberately by the operator.'
+      : 'Coordinates: rounded to whole degrees by the app (~60 NM), which is the'
+        + ' resolution the model itself works at.',
+    '',
+  ].join('\n');
+  return { subject: subject, body: head + formatTruthReport(list, appVersion) };
 }
 
 function numOrNull(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
@@ -132,6 +197,15 @@ export function formatTruthReport(entries, appVersion) {
     L.push('   TRIED ' + freq + ' at ' + atwx);
     L.push('   APP SAID  LUF ' + fx(p.luf) + '  FOT ' + fx(p.fot) + '  MUF ' + fx(p.muf)
       + (p.verdict ? '  [' + p.verdict + ']' : ''));
+    // The space weather behind those numbers — without it the entry cannot be
+    // recomputed, and an entry that cannot be recomputed cannot correct the
+    // model. Printed only when known, so older entries stay readable.
+    if (p.sfi != null || p.kp != null) {
+      L.push('   SPACE WX  ' + (p.sfi != null ? 'SFI ' + p.sfi.toFixed(0) : 'SFI --')
+        + '  ' + (p.kp != null ? 'Kp ' + p.kp.toFixed(1) : 'Kp --')
+        + (p.auroralDb30 ? '  (auroral ' + p.auroralDb30.toFixed(2) + ' dB @30MHz)' : ''));
+    }
+    if (e.coordPrecision === 'degree') L.push('   GRIDS ROUNDED to whole degrees by the app');
     if (e.note) L.push('   NOTE: ' + e.note);
   });
 

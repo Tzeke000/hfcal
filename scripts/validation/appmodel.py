@@ -530,16 +530,64 @@ def d_layer_obliquity(hop_dist_km):
     return 1.0 / math.sqrt(s) if s > 1e-9 else 1.0
 
 
-def estimate_luf(illum, watts, hops, dist_km=None):
+def estimate_luf(illum, watts, hops, dist_km=None, auroral_a=0.0):
     i = max(0.0, min(1.0, illum))
     p = watts if (watts and watts > 0) else LUF_REF_WATTS
     n = hops if (hops and hops >= 1) else 1
+    aur = auroral_a if (auroral_a and auroral_a > 0) else 0.0
     margin = LUF_MARGIN_20W_DB + 10.0 * math.log10(p / LUF_REF_WATTS)
     if margin < 1:
         margin = 1.0
     sec = d_layer_obliquity(dist_km / n) if (dist_km and dist_km > 0) else 1.0
-    a = sec * (LUF_A_NIGHT + LUF_K * (i ** 0.75)) * n
+    a = sec * (LUF_A_NIGHT + LUF_K * (i ** 0.75) + aur) * n
     return max(LUF_FLOOR_MHZ, math.sqrt(a / margin) - LUF_GYRO_MHZ)
+
+
+# ── AURORAL ABSORPTION ───────────────────────────────────────────────────────
+# Mirrors the auroral term in src/physics/freqAdvisor.js. The studies run at
+# quiet conditions (VOACAP has no storm term), so this exists to keep the
+# mirror honest rather than because any published figure depends on it.
+AURORAL_KP_QUIET = 3.0
+AURORAL_KP_MAX = 9.0
+AURORAL_BOUNDARY_KP0_DEG = 66.5
+AURORAL_BOUNDARY_SLOPE_DEG = 2.05
+AURORAL_RAMP_DEG = 5.0
+AURORAL_DB30_AT_KP9 = 2.5
+AURORAL_REF_MHZ = 30.0
+
+
+def auroral_oval_boundary(kp):
+    k = 0.0 if kp is None else max(0.0, min(AURORAL_KP_MAX, kp))
+    return AURORAL_BOUNDARY_KP0_DEG - AURORAL_BOUNDARY_SLOPE_DEG * k
+
+
+def auroral_weight(mag_lat_deg, kp):
+    if mag_lat_deg is None:
+        return 0.0
+    edge = auroral_oval_boundary(kp)
+    w = (abs(mag_lat_deg) - (edge - AURORAL_RAMP_DEG)) / AURORAL_RAMP_DEG
+    return max(0.0, min(1.0, w))
+
+
+def auroral_absorption_db30(mag_lat_deg, kp):
+    if kp is None or kp <= AURORAL_KP_QUIET:
+        return 0.0
+    w = auroral_weight(mag_lat_deg, kp)
+    if w <= 0:
+        return 0.0
+    x = min(1.0, (kp - AURORAL_KP_QUIET) / (AURORAL_KP_MAX - AURORAL_KP_QUIET))
+    return AURORAL_DB30_AT_KP9 * x * x * w
+
+
+def auroral_absorption_a(mag_lats, kp):
+    vals = [v for v in (mag_lats or []) if v is not None]
+    if not vals:
+        return 0.0
+    db30 = sum(auroral_absorption_db30(v, kp) for v in vals) / len(vals)
+    if db30 <= 0:
+        return 0.0
+    ref = AURORAL_REF_MHZ + LUF_GYRO_MHZ
+    return db30 * ref * ref
 
 
 # ── mirror check ─────────────────────────────────────────────────────────────
@@ -573,11 +621,33 @@ def check():
     worst_luf = max(abs(estimate_luf(c[0], c[1], c[2], c[3] or None) - v)
                     for c, v in zip(lufc, js2))
 
+    # Auroral term: sweep Kp across the whole scale and geomagnetic latitude
+    # from mid-latitude to the pole, including the quiet region where the term
+    # must be exactly zero and the ramp where it is partial.
+    aurc = []
+    for kp in (0, 2, 3, 4, 5, 6, 7, 8, 9):
+        for lats in ([20.0], [46.0], [57.0], [70.0], [85.0], [80.0, 20.0, 20.0], [-75.0, 60.0]):
+            aurc.append([lats, float(kp)])
+    src3 = ("import('%s/src/physics/freqAdvisor.js').then(f=>{const c=%s;"
+            "console.log(JSON.stringify(c.map(a=>[f.auroralAbsorptionA(a[0],a[1]),"
+            "f.auroralOvalBoundary(a[1]),f.estimateLUF(0.4,20,2,3000,f.auroralAbsorptionA(a[0],a[1]))])))})"
+            % (ROOT, json.dumps(aurc)))
+    js3 = json.loads(subprocess.run(['node', '-e', src3], capture_output=True,
+                                    text=True, cwd=ROOT).stdout.strip())
+    worst_aur = 0.0
+    for c, v in zip(aurc, js3):
+        worst_aur = max(worst_aur, abs(auroral_absorption_a(c[0], c[1]) - v[0]))
+        worst_aur = max(worst_aur, abs(auroral_oval_boundary(c[1]) - v[1]))
+        worst_aur = max(worst_aur, abs(
+            estimate_luf(0.4, 20, 2, 3000, auroral_absorption_a(c[0], c[1])) - v[2]))
+
     print('checked %d foF2 cases against src/physics/freqAdvisor.js, max difference %.9f MHz'
           % (len(cases), worst))
     print('checked %d LUF cases against src/physics/freqAdvisor.js, max difference %.9f MHz'
           % (len(lufc), worst_luf))
-    if worst > 1e-9 or worst_luf > 1e-9:
+    print('checked %d auroral cases against src/physics/freqAdvisor.js, max difference %.9f'
+          % (len(aurc), worst_aur))
+    if worst > 1e-9 or worst_luf > 1e-9 or worst_aur > 1e-9:
         print('MIRROR IS OUT OF DATE')
         return 1
     print('mirror matches')

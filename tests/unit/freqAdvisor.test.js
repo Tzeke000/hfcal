@@ -10,6 +10,9 @@ import {
   frequencyForecast, bestBlocks,
   solarDeclination, cosZenith, illuminationFactor,
   estimateLUF, DEFAULT_TX_WATTS, LUF_FLOOR_MHZ,
+  auroralOvalBoundary, auroralWeight, auroralAbsorptionDb30, auroralAbsorptionA,
+  AURORAL_KP_QUIET, AURORAL_BOUNDARY_KP0_DEG, AURORAL_DB30_AT_KP9, AURORAL_REF_MHZ,
+  LUF_GYRO_MHZ,
   pathFoF2, minOrderCorrection, FOF2_POINT_SIGMA,
   FOT_RATIO, MUF_DAYS_IN_10, FOT_DAYS_IN_10,
   dLayerObliquity,
@@ -1082,4 +1085,197 @@ test('rankAssignedFrequencies ignores junk entries', function() {
     modipDeg: 30, month: 3, distKm: 1500, hops: 1, txWatts: 20, sfi: 90 };
   const ranked = rankAssignedFrequencies(base, [14.2, NaN, -5, 0, 'x', 7.0], 12);
   assert.equal(ranked.length, 2, 'only the two valid frequencies should survive');
+});
+
+// ── AURORAL ABSORPTION (v1.50) ───────────────────────────────────────────────
+// The gap the app stated on its own About screen for twenty-six releases:
+// Kp was fetched and displayed but nothing consumed it. These pin the two
+// sourced pieces (oval position from the NOAA aurora-visibility table, the
+// 1/(f+fH)^2 law from Part 20) and — most importantly — the SAFETY PROPERTY
+// that quiet conditions are untouched, so the VOACAP validation still holds.
+
+test('auroral: the oval edge matches the NOAA aurora-visibility table', function() {
+  // NOAA SWPC publishes the equatorward viewing boundary in geomagnetic
+  // latitude against Kp. Within a tenth of a degree of a straight line.
+  const table = [[0, 66.5], [1, 64.5], [2, 62.4], [3, 60.4], [4, 58.3],
+                 [5, 56.3], [6, 54.2], [7, 52.2], [8, 50.1], [9, 48.1]];
+  for (const [kp, published] of table) {
+    const got = auroralOvalBoundary(kp);
+    assert.ok(Math.abs(got - published) < 0.35,
+      'Kp ' + kp + ': oval edge ' + got.toFixed(2) + ' vs published ' + published);
+  }
+  assert.equal(auroralOvalBoundary(0), AURORAL_BOUNDARY_KP0_DEG);
+  // Off-scale and junk Kp must not produce a nonsense boundary.
+  assert.equal(auroralOvalBoundary(99), auroralOvalBoundary(9));
+  assert.equal(auroralOvalBoundary(null), auroralOvalBoundary(0));
+});
+
+test('auroral: QUIET CONDITIONS CHANGE NOTHING — the validation still holds', function() {
+  // The load-bearing property. Every VOACAP comparison in docs/VALIDATION.md
+  // was run without a storm term; if this term leaked into quiet conditions,
+  // every published accuracy figure would silently be measuring something
+  // else. At or below the quiet threshold, and with no reading at all, the
+  // auroral contribution must be EXACTLY zero — not small, zero.
+  for (const kp of [null, undefined, NaN, 0, 1, 2, 3]) {
+    assert.equal(auroralAbsorptionA([80, 75, 70], kp), 0, 'Kp ' + kp + ' must add nothing');
+  }
+  // And the LUF itself must be bit-identical with a zero/absent auroral term.
+  for (const d of [300, 1200, 2500, 6000]) {
+    for (const illum of [0, 0.5, 1]) {
+      assert.equal(estimateLUF(illum, 20, 1, d, 0), estimateLUF(illum, 20, 1, d),
+        'a zero auroral term changed the LUF at ' + d + ' km');
+    }
+  }
+});
+
+test('auroral: absorption is confined to high geomagnetic latitude', function() {
+  const kp = 7;
+  const edge = auroralOvalBoundary(kp);           // ~52.2 deg at Kp 7
+  // Mid-latitudes: nothing, storm or no storm. A Marine at Cherry Point
+  // (~46 deg CGM) shooting to Okinawa must never pick up auroral absorption.
+  assert.equal(auroralWeight(0, kp), 0, 'the equator is not in the oval');
+  assert.equal(auroralWeight(30, kp), 0);
+  assert.equal(auroralWeight(edge - 6, kp), 0, 'well equatorward of the edge');
+  // Inside the oval: full weight, and symmetric about the magnetic equator —
+  // the southern auroral zone is not special.
+  assert.equal(auroralWeight(edge, kp), 1, 'at the edge the ramp is complete');
+  assert.equal(auroralWeight(80, kp), 1);
+  assert.equal(auroralWeight(-80, kp), auroralWeight(80, kp), 'south must match north');
+  // The ramp is monotone and has no cliff.
+  let prev = -1;
+  for (let la = edge - 6; la <= edge + 2; la += 0.5) {
+    const w = auroralWeight(la, kp);
+    assert.ok(w >= prev - 1e-12, 'weight must not decrease going poleward');
+    prev = w;
+  }
+});
+
+test('auroral: the oval reaches lower latitudes as the storm deepens', function() {
+  // The operational point of the whole term: a station that is clear when the
+  // field is quiet gets absorbed as the oval expands over it, without moving
+  // an inch. Asserted on absorption in dB rather than the bare geometric
+  // weight, because absorption is the quantity with the quiet gate on it and
+  // the one that actually reaches the operator.
+  const lat = 57;                                  // northern Scandinavia-ish
+  assert.equal(auroralAbsorptionDb30(lat, 3), 0, 'quiet: no absorption at all');
+  assert.ok(auroralAbsorptionDb30(lat, 5) > 0, 'G1 storm: the oval has reached it');
+  assert.ok(auroralAbsorptionDb30(lat, 8) > 4 * auroralAbsorptionDb30(lat, 5),
+    'G4 storm should be far worse than G1, not marginally');
+  // auroralWeight itself is deliberately PURE GEOMETRY with no quiet gate —
+  // "is this point in the oval", which is what crossingsAffected counts.
+  assert.ok(auroralWeight(lat, 3) > 0, 'geometry alone puts it near the quiet oval');
+});
+
+test('auroral: absorption grows super-linearly with Kp and hits its anchor', function() {
+  const deep = 80;
+  const vals = [4, 5, 6, 7, 8, 9].map(k => auroralAbsorptionDb30(deep, k));
+  for (let i = 1; i < vals.length; i++) {
+    assert.ok(vals[i] > vals[i - 1], 'absorption must rise with Kp');
+  }
+  // Super-linear: each Kp step costs more than the one before it.
+  for (let i = 2; i < vals.length; i++) {
+    assert.ok(vals[i] - vals[i - 1] > vals[i - 1] - vals[i - 2] - 1e-12,
+      'growth should accelerate, not flatten');
+  }
+  // The single stated anchor: Kp 9, deep in the oval.
+  assert.ok(Math.abs(auroralAbsorptionDb30(deep, 9) - AURORAL_DB30_AT_KP9) < 1e-9);
+  // Unsettled conditions must stay nearly harmless — a term that punished
+  // Kp 4 as if it were a blackout would cry wolf.
+  assert.ok(auroralAbsorptionDb30(deep, 4) < 0.15 * AURORAL_DB30_AT_KP9,
+    'Kp 4 should be a nudge, not a blackout');
+});
+
+test('auroral: A is the dB figure converted through the absorption law', function() {
+  // The term has to arrive in the same MHz^2 dB currency estimateLUF uses,
+  // or it is not the same physics as the solar term next to it.
+  const a = auroralAbsorptionA([80], 9);
+  const ref = AURORAL_REF_MHZ + LUF_GYRO_MHZ;
+  assert.ok(Math.abs(a - AURORAL_DB30_AT_KP9 * ref * ref) < 1e-6);
+  // A partly-exposed path takes a share, not the whole thing: three
+  // crossings, one inside the oval.
+  const partial = auroralAbsorptionA([80, 20, 20], 9);
+  assert.ok(Math.abs(partial - a / 3) < 1e-6,
+    'one exposed crossing in three should contribute a third of the mean');
+  // Junk entries are skipped rather than poisoning the mean.
+  assert.equal(auroralAbsorptionA([NaN, null, 80], 9), auroralAbsorptionA([80], 9));
+  assert.equal(auroralAbsorptionA([], 9), 0);
+  assert.equal(auroralAbsorptionA(null, 9), 0);
+});
+
+test('auroral: a storm raises the LUF and can close a polar path outright', function() {
+  // Transpolar circuit, dark, 20 W manpack, 3 hops over 6000 km.
+  const args = [0, 20, 3, 6000];
+  const quiet = estimateLUF(...args, 0);
+  const storm = estimateLUF(...args, auroralAbsorptionA([75, 80, 82], 8));
+  assert.ok(storm > quiet, 'a severe storm must raise the floor');
+  assert.ok(storm > 6, 'a G4 transpolar path should be badly absorbed, got ' + storm.toFixed(1));
+  // The same storm on a mid-latitude path must not move at all.
+  const midQuiet = estimateLUF(0.5, 20, 2, 3000, 0);
+  const midStorm = estimateLUF(0.5, 20, 2, 3000, auroralAbsorptionA([35, 40, 38], 8));
+  assert.equal(midStorm, midQuiet, 'a storm must not touch a mid-latitude path');
+});
+
+test('auroral: assessFrequency reports the storm rather than silently absorbing', function() {
+  // High-latitude path, both ends and the bounce inside the oval.
+  const base = {
+    takeoffDeg: 12, layerKm: 360, midLon: 20, latDeg: 70, magLatDeg: 72,
+    ends: [{ lat: 68, lon: 15, magLatDeg: 70 }, { lat: 72, lon: 25, magLatDeg: 74 }],
+    bounces: [{ lat: 70, lon: 20, magLatDeg: 72 }],
+    hops: 1, distKm: 1200, txWatts: 20, month: 1, utcHour: 0, sfi: 140,
+  };
+  const calm = assessFrequency({ ...base, kp: 1 });
+  const hit = assessFrequency({ ...base, kp: 8 });
+  assert.equal(calm.auroral, null, 'quiet conditions must not report an auroral term');
+  assert.ok(hit.auroral, 'a severe storm must be reported, not hidden');
+  assert.equal(hit.auroral.kp, 8);
+  assert.equal(hit.auroral.crossingsAffected, 3, 'all three crossings are in the oval');
+  assert.ok(hit.luf > calm.luf, 'the storm must raise this path’s floor');
+  // lufQuiet lets the UI show the COST of the storm, so it must equal the
+  // undisturbed answer exactly.
+  assert.equal(hit.auroral.lufQuiet, calm.luf,
+    'lufQuiet must be the same path with the storm removed');
+  assert.ok(hit.muf > 0 && isFinite(hit.muf), 'the MUF is unaffected by absorption');
+});
+
+test('auroral: a genuinely mid-latitude path is untouched by a severe storm', function() {
+  // Latitudes chosen to sit clear of the oval. Note this is NOT the real
+  // Cherry Point -> Okinawa geometry: that great circle runs over the Arctic
+  // with bounces near 74 deg geomagnetic and IS hit by storms (the browser
+  // suite pins that). This case is the low-latitude one, e.g. Hawaii-Guam.
+  const base = {
+    takeoffDeg: 6, layerKm: 360, midLon: -170, latDeg: 35, magLatDeg: 30,
+    ends: [{ lat: 34.9, lon: -76.9, magLatDeg: 46 }, { lat: 26.3, lon: 127.8, magLatDeg: 16 }],
+    bounces: [{ lat: 40, lon: -160, magLatDeg: 38 }, { lat: 35, lon: 170, magLatDeg: 30 }],
+    hops: 4, distKm: 12000, txWatts: 20, month: 7, utcHour: 6, sfi: 140,
+  };
+  const calm = assessFrequency({ ...base, kp: 1 });
+  // Severe (G4, Kp 7) is the realistic worst case for a deployed circuit, and
+  // a WESTPAC path must be untouched by it: the oval edge sits at 52 deg and
+  // the northernmost crossing here is 46.
+  const severe = assessFrequency({ ...base, kp: 7 });
+  assert.equal(severe.auroral, null, 'no crossing is in the oval at Kp 7');
+  assert.equal(severe.luf, calm.luf, 'a WESTPAC path must be identical through a G4');
+});
+
+test('auroral: an EXTREME storm does reach the mid-latitudes, and says so', function() {
+  // Not a bug — the reason the oval is computed from Kp instead of a fixed
+  // latitude. At Kp 8-9 the oval reaches ~48 deg geomagnetic; the May 2024 G5
+  // put aurora over North Carolina and degraded HF there. Cherry Point sits at
+  // ~46 deg CGM, so the app SHOULD start charging it absorption at G4-G5 and
+  // this pins that it does — quietly refusing to would be the defect.
+  const base = {
+    takeoffDeg: 6, layerKm: 360, midLon: -170, latDeg: 35, magLatDeg: 30,
+    ends: [{ lat: 34.9, lon: -76.9, magLatDeg: 46 }, { lat: 26.3, lon: 127.8, magLatDeg: 16 }],
+    bounces: [{ lat: 40, lon: -160, magLatDeg: 38 }, { lat: 35, lon: 170, magLatDeg: 30 }],
+    hops: 4, distKm: 12000, txWatts: 20, month: 7, utcHour: 6, sfi: 140,
+  };
+  const extreme = assessFrequency({ ...base, kp: 9 });
+  assert.ok(extreme.auroral, 'a G5 must be reported even on a mid-latitude path');
+  assert.equal(extreme.auroral.crossingsAffected, 1,
+    'only the northern terminal is inside the oval');
+  assert.ok(extreme.luf > extreme.auroral.lufQuiet,
+    'the G5 must cost this path something');
+  // But only a share: one exposed crossing in four, not a blackout.
+  assert.ok(extreme.luf < 2.5 * extreme.auroral.lufQuiet,
+    'one grazed terminal in four must not read as a total blackout');
 });

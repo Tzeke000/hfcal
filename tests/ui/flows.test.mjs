@@ -1064,6 +1064,85 @@ describe('night mode and next-window (v1.43)', { skip: SKIP, concurrency: 1 }, (
   });
 });
 
+describe('auroral absorption (v1.50)', { skip: SKIP, concurrency: 1 }, () => {
+  // Kp had been fetched and displayed for twenty-six releases without
+  // anything consuming it. These drive the screen an operator actually reads:
+  // a storm must be named and explained on a polar path, and must be
+  // completely invisible on a mid-latitude one.
+  const TROMSO = 'N 69:39:00 E 018:57:00';
+  const FAIRBANKS = 'N 64:50:00 W 147:43:00';
+  // A genuinely low-latitude path. Cherry Point -> Okinawa is NOT one: its
+  // great circle runs over the Arctic with bounces at 58/74/59 deg
+  // geomagnetic, so it is correctly charged auroral absorption in a storm.
+  const HAWAII = 'N 21:18:00 W 157:52:00';
+  const GUAM = 'N 13:27:00 E 144:47:00';
+
+  async function withKp(kp, from, to) {
+    // newPage from the harness, so page.errors is collected — a console error
+    // in this flow must fail the test like anywhere else.
+    const page = await newPage(browser);
+    // Seed the space-weather cache the way a previous online visit would.
+    await page.evaluate((k) => localStorage.setItem('hfcalc_spacewx_v1',
+      JSON.stringify({ sfi: 140, kp: k, at: Date.now() })), kp);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await calculate(page, from, to);
+    await toggleCard(page, 'Frequency Check', 'OPEN').catch(() => {});
+    await page.waitForTimeout(400);
+    const text = await page.evaluate(() => document.body.innerText);
+    return { page, text };
+  }
+
+  test('a geomagnetic storm on a transpolar path is named and explained', async () => {
+    const { page, text } = await withKp(8, TROMSO, FAIRBANKS);
+    assert.match(text, /AURORAL ABSORPTION/,
+      'a Kp 8 storm on a Tromso-Fairbanks path must be reported');
+    assert.match(text, /Kp 8\.0/, 'the banner should quote the Kp it used');
+    assert.match(text, /geomagnetic latitude/i, 'it should explain where the oval is');
+    // It must say what the storm COST, not just that there is one.
+    assert.match(text, /raises this path’s floor from [\d.]+ to [\d.]+ MHz/,
+      'the banner should show the floor before and after');
+    // And it must admit how soft the number is.
+    assert.match(text, /Softest number in the app/i,
+      'the uncertainty has to travel with the warning');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a severe storm is invisible on a low-latitude path', async () => {
+    // Hawaii -> Guam stays at 6-22 deg geomagnetic the whole way, so even a
+    // G4 must add nothing. This is the test that stops the term becoming a
+    // blanket pessimism applied to every path.
+    const { page, text } = await withKp(8, HAWAII, GUAM);
+    assert.doesNotMatch(text, /AURORAL ABSORPTION/,
+      'a low-latitude Pacific path must not be charged auroral absorption');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('the US-to-WESTPAC great circle is transpolar, and a storm hits it', async () => {
+    // Worth pinning because it is counter-intuitive and operationally
+    // important: the app's own reference path, Cherry Point to Okinawa, does
+    // NOT run across the mid-latitude Pacific. Its great circle crosses the
+    // Arctic with bounces at 58/74/59 deg geomagnetic, so a geomagnetic storm
+    // genuinely closes it down — which is exactly the advice "avoid
+    // transpolar routing" exists for, now computed instead of assumed.
+    const { page, text } = await withKp(7, CHERRY_POINT, OKINAWA);
+    assert.match(text, /AURORAL ABSORPTION/,
+      'the transpolar WESTPAC great circle must be charged in a G3 storm');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a quiet field says nothing at all, even at the pole', async () => {
+    const { page, text } = await withKp(1, TROMSO, FAIRBANKS);
+    assert.doesNotMatch(text, /AURORAL ABSORPTION/,
+      'quiet conditions must add no auroral term anywhere');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('field truth log (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
   test('logging worked/didn\u2019t records entries and exports a report', async () => {
     const page = await newPage(browser);
@@ -1094,6 +1173,74 @@ describe('field truth log (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
     const rows = await page.evaluate(() =>
       [...document.querySelectorAll('button')].filter(b => b.textContent.trim() === '✕').length);
     assert.ok(rows >= 2, 'entries did not persist across reload');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  // The send-back prompt (v1.50). This flow is the ONE place the app offers to
+  // put operator data on its way off the device, so the test asserts the
+  // guardrails, not just that the button exists: the prompt has to appear,
+  // have a real refusal, remember it, and never transmit anything itself.
+  test('the send-back prompt appears, defaults to rounded grids, and honours DON’T ASK', async () => {
+    const page = await newPage(browser);
+    // Nothing may leave the device on its own. Fail the test if the page
+    // makes ANY request to a host other than the local harness while we drive
+    // this flow (the space-weather fetch to NOAA is expected and allowed).
+    const offDevice = [];
+    page.on('request', r => {
+      const u = r.url();
+      if (/^https?:/.test(u) && !/127\.0\.0\.1|localhost/.test(u)
+          && !/swpc\.noaa\.gov|github\.com/.test(u)) offDevice.push(u);
+    });
+
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    // No entries yet, so nothing to send and no prompt.
+    let prompt = await page.evaluate(() => /SEND THIS BACK/.test(document.body.innerText));
+    assert.equal(prompt, false, 'an empty log must not ask to send anything');
+
+    // Log one shot — now there is something worth offering.
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /IT CLOSED/.test(b.textContent)).click());
+    await page.waitForTimeout(300);
+    prompt = await page.evaluate(() => /SEND THIS BACK/.test(document.body.innerText));
+    assert.ok(prompt, 'a logged shot should bring up the offer to send it back');
+
+    // It must name the author, say what goes, and default to rounded grids.
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.match(text, /Angeles-Gonzalez/, 'the prompt should say who it goes to');
+    assert.match(text, /rounded to whole degrees/i, 'rounding must be the stated default');
+    assert.match(text, /Nothing is transmitted by the app/i,
+      'the prompt must be honest about how sending works');
+
+    // The stored entry keeps FULL precision — rounding is applied to the card
+    // being sent, not to the operator's own history.
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('hfcalc_truth_v1') || '[]'));
+    assert.ok(Math.abs(stored[0].from.lat - Math.round(stored[0].from.lat)) > 1e-6,
+      'the device copy should still be full precision');
+    // And it carries the space weather needed to reproduce the prediction.
+    assert.ok('sfi' in stored[0].predicted && 'kp' in stored[0].predicted,
+      'the entry must record the space weather it was predicted under');
+
+    // DON'T ASK must stick, across a reload.
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /DON.?.?T ASK/.test(b.textContent)).click());
+    await page.waitForTimeout(250);
+    prompt = await page.evaluate(() => /SEND THIS BACK/.test(document.body.innerText));
+    assert.equal(prompt, false, 'DON’T ASK should dismiss the prompt immediately');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    prompt = await page.evaluate(() => /SEND THIS BACK/.test(document.body.innerText));
+    assert.equal(prompt, false, 'DON’T ASK must survive a reload');
+    // The manual SEND BACK button stays available for someone who changes
+    // their mind — declining the prompt is not the same as losing the feature.
+    const manual = await page.evaluate(() => [...document.querySelectorAll('button')]
+      .some(b => /SEND BACK/.test(b.textContent)));
+    assert.ok(manual, 'the manual send button should remain');
+
+    assert.deepEqual(offDevice, [], 'the app transmitted to an unexpected host: ' + offDevice.join(', '));
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

@@ -13,8 +13,26 @@ import { T } from './theme.js';
 import { exportText } from './SavedShots.jsx';
 import {
   makeTruthEntry, loadTruth, persistTruth, scoreEntry,
-  formatTruthReport, truthFilename, TRUTH_MAX,
+  formatTruthReport, truthFilename, TRUTH_MAX, buildSubmission,
 } from '../lib/truthLog.js';
+
+// Where a card goes when the operator says yes. EMPTY BY DESIGN: with no
+// address set, SEND opens the device's own share sheet and the operator picks
+// the app and the recipient. Nothing is ever transmitted by this app — the
+// operator's mail or messaging client does it, with the payload in front of
+// them and their finger on send. Setting an address here only pre-fills the
+// "to" field of that draft; it does not make the app send anything itself.
+var AUTHOR_CONTACT = '';
+
+// Remembers whether the operator has been asked, so the card is offered once
+// rather than nagging on every open.
+var ASK_KEY = 'hfcalc_truth_ask_v1';
+function loadAsk() {
+  try { return localStorage.getItem(ASK_KEY) || ''; } catch (e) { return ''; }
+}
+function saveAsk(v) {
+  try { localStorage.setItem(ASK_KEY, v); } catch (e) { /* ignore */ }
+}
 
 export function TruthLog({ currentShot, appVersion }) {
   var [entries, setEntries] = useState(loadTruth);
@@ -22,6 +40,9 @@ export function TruthLog({ currentShot, appVersion }) {
   var [note, setNote] = useState('');
   var [flash, setFlash] = useState(null);
   var [persistFailed, setPersistFailed] = useState(false);
+  // '' = never asked, 'never' = declined for good, 'later' = not this session.
+  var [askState, setAskState] = useState(loadAsk);
+  var [exact, setExact] = useState(false);
 
   // Persist as an effect of the list changing — never alongside a click
   // handler working from a stale snapshot (the saved-shots resurrection bug).
@@ -40,6 +61,9 @@ export function TruthLog({ currentShot, appVersion }) {
     setEntries(function(cur) { return [entry].concat(cur).slice(0, TRUTH_MAX); });
     setNote('');
     setOpen(true);
+    // "Not now" and "already sent" both mean "ask again when there is new
+    // data" — a fresh shot is new data. "Don't ask" is permanent.
+    if (askState === 'later' || askState === 'sent') { saveAsk(''); setAskState(''); }
     say((outcome === 'worked' ? 'LOGGED — WORKED' : 'LOGGED — DIDN’T')
       + (dropped ? ' · OLDEST DROPPED' : ''));
   }
@@ -51,6 +75,33 @@ export function TruthLog({ currentShot, appVersion }) {
   function doExport() {
     if (!entries.length) return;
     exportText(formatTruthReport(entries, appVersion), truthFilename(new Date()), say);
+  }
+
+  // Hand the card back. Web Share first — on a phone that is the native sheet,
+  // so the operator chooses Mail / Signal / whatever and the recipient, and
+  // sees the text before it goes. Falls back to a mailto: draft, then to the
+  // clipboard. Every route ends with a human pressing send in another app;
+  // this function never puts anything on the network itself.
+  function doSend() {
+    if (!entries.length) return;
+    var sub = buildSubmission(entries, appVersion, exact ? 'exact' : 'degree');
+    saveAsk('sent');
+    setAskState('sent');
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        navigator.share({ title: sub.subject, text: sub.body })
+          .then(function() { say('SHARE SHEET OPENED'); },
+                function() { /* operator cancelled — nothing to report */ });
+        return;
+      }
+      var href = 'mailto:' + encodeURIComponent(AUTHOR_CONTACT)
+        + '?subject=' + encodeURIComponent(sub.subject)
+        + '&body=' + encodeURIComponent(sub.body);
+      if (href.length < 6000) { window.location.href = href; say('EMAIL DRAFT OPENED'); return; }
+      exportText(sub.body, truthFilename(new Date()), say);
+    } catch (e) {
+      exportText(sub.body, truthFilename(new Date()), say);
+    }
   }
 
   var scored = entries.map(scoreEntry);
@@ -80,6 +131,54 @@ export function TruthLog({ currentShot, appVersion }) {
 
       {open && (
         <div style={{ marginTop: 14 }}>
+          {/* Asked once, when there is actually something worth sending, and
+              never again after an answer. A prompt that reappears on every
+              open teaches the operator to dismiss it without reading. */}
+          {entries.length > 0 && askState !== 'never' && askState !== 'later' && askState !== 'sent' && (
+            <div style={{ background: T.surfaceHi, border: '1px solid ' + T.borderHi, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px', marginBottom: 12 }}>
+              <div style={{ color: T.accentText, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em', marginBottom: 4 }}>
+                SEND THIS BACK?
+              </div>
+              <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55 }}>
+                {'Send these ' + entries.length + ' result'
+                  + (entries.length === 1 ? '' : 's')
+                  + ' to the author of this app, Cpl Angeles-Gonzalez, so the predictions can be measured against what actually happened? '
+                  + 'Real shots are the only thing that can improve the model — VOACAP cannot provide them, because VOACAP is a model too.'}
+              </div>
+              <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 7 }}>
+                <strong style={{ color: T.textPrim }}>What goes:</strong>{' '}
+                {'frequency, distance, the MUF/FOT/LUF the app predicted, your power and month, the hour, the space weather at the time, whether it closed, and your note.'}
+              </div>
+              <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 4 }}>
+                <strong style={{ color: T.textPrim }}>Your grids:</strong>{' '}
+                {exact
+                  ? 'EXACT, as entered. Only do this in training or if position is not sensitive.'
+                  : 'rounded to whole degrees (~60 NM) — the resolution the model works at anyway, so nothing useful is lost.'}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 7, cursor: 'pointer' }}>
+                <input type="checkbox" checked={exact} onChange={function(e) { setExact(e.target.checked); }} />
+                <span style={{ color: T.textMute, fontSize: '0.7rem' }}>Send exact grids instead</span>
+              </label>
+              <div style={{ color: T.textDim, fontSize: '0.64rem', lineHeight: 1.45, marginTop: 6 }}>
+                {'Nothing is transmitted by the app. Tapping SEND opens your own share sheet or email draft with the text in it — you choose who it goes to and you press send.'}
+              </div>
+              <div style={{ display: 'flex', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
+                <button onClick={doSend}
+                  style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.accent, color: '#0e1409', border: 'none' }}>
+                  SEND IT
+                </button>
+                <button onClick={function() { saveAsk('later'); setAskState('later'); }}
+                  style={{ ...btn, flex: 1, minWidth: 90, padding: '10px 0', background: T.bg, color: T.textPrim }}>
+                  NOT NOW
+                </button>
+                <button onClick={function() { saveAsk('never'); setAskState('never'); }}
+                  style={{ ...btn, flex: 1, minWidth: 90, padding: '10px 0', background: T.bg, color: T.textDim }}>
+                  DON’T ASK
+                </button>
+              </div>
+            </div>
+          )}
+
           {!currentShot && (
             <div style={{ color: T.textMute, fontSize: '0.74rem', marginBottom: 12 }}>
               Run a calculation first — then log whether the path actually closed.
@@ -119,10 +218,16 @@ export function TruthLog({ currentShot, appVersion }) {
           )}
 
           {entries.length > 0 && (
-            <button onClick={doExport}
-              style={{ ...btn, width: '100%', padding: '9px 0', background: T.surfaceHi, color: T.textPrim, marginBottom: 10 }}>
-              EXPORT TRUTH LOG ({entries.length}) — SEND IT BACK
-            </button>
+            <div style={{ display: 'flex', gap: 7, marginBottom: 10 }}>
+              <button onClick={doSend}
+                style={{ ...btn, flex: 2, padding: '9px 0', background: T.surfaceHi, color: T.textPrim }}>
+                SEND BACK ({entries.length})
+              </button>
+              <button onClick={doExport}
+                style={{ ...btn, flex: 1, padding: '9px 0', background: T.bg, color: T.textSec }}>
+                EXPORT
+              </button>
+            </div>
           )}
 
           {entries.length === 0 && (

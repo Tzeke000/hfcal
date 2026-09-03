@@ -399,17 +399,122 @@ export function dLayerObliquity(hopDistKm) {
 //   distKm   total path length, used for the obliquity of each crossing.
 //            Omitted, it falls back to a vertical crossing, which is only
 //            right for NVIS.
-export function estimateLUF(illum, watts, hops, distKm) {
+//   auroralA extra absorption per crossing in MHz^2 dB, from
+//            auroralAbsorptionA(). Omitted or zero, the result is exactly
+//            what it was before the auroral term existed.
+export function estimateLUF(illum, watts, hops, distKm, auroralA) {
   var i = (typeof illum === 'number' && isFinite(illum)) ? Math.max(0, Math.min(1, illum)) : 0;
   var p = (typeof watts === 'number' && isFinite(watts) && watts > 0) ? watts : DEFAULT_TX_WATTS;
   var n = (typeof hops === 'number' && isFinite(hops) && hops >= 1) ? hops : 1;
+  var aur = (typeof auroralA === 'number' && isFinite(auroralA) && auroralA > 0) ? auroralA : 0;
   var margin = LUF_MARGIN_20W_DB + 10 * (Math.log(p / LUF_REF_WATTS) / Math.LN10);
   if (margin < 1) margin = 1;
   var sec = (typeof distKm === 'number' && isFinite(distKm) && distKm > 0)
     ? dLayerObliquity(distKm / n) : 1;
-  var A = sec * (LUF_A_NIGHT + LUF_K * Math.pow(i, 0.75)) * n;
+  var A = sec * (LUF_A_NIGHT + LUF_K * Math.pow(i, 0.75) + aur) * n;
   var absorbed = Math.sqrt(A / margin) - LUF_GYRO_MHZ;
   return Math.max(LUF_FLOOR_MHZ, absorbed);
+}
+
+// ── AURORAL ABSORPTION ────────────────────────────────────────────────────────
+// The gap the app has been stating on its own About screen since v1.24:
+// "there is still no auroral-absorption term." Kp has been fetched from NOAA
+// and shown to the operator all along, but nothing consumed it — a Marine on
+// a transpolar circuit during a G3 storm got the same LUF as on a quiet day.
+// This closes that, using the reading the app already has.
+//
+// TWO PIECES, both from published sources rather than invented:
+//
+//   1. WHERE the oval is. Its equatorward edge moves toward the equator as
+//      magnetic activity rises. NOAA SWPC publishes the aurora-visibility
+//      boundary against Kp (66.5 deg CGM at Kp 0 down to 48.1 at Kp 9); that
+//      table is linear to within a tenth of a degree at 2.05 deg per Kp unit,
+//      which is what AURORAL_BOUNDARY_* encode. Poleward of that edge the ray
+//      is crossing disturbed, heavily ionised D/lower-E region.
+//
+//   2. HOW MUCH it absorbs. Auroral absorption is measured by riometer at
+//      30 MHz, where quiet is a few tenths of a dB and strong events run to
+//      several dB. It obeys the same 1/(f+fH)^2 law as the solar D-layer term
+//      already in this file, so a dB figure at 30 MHz converts straight into
+//      the same A (MHz^2 dB) currency estimateLUF works in.
+//
+// HONESTY, stated the way the rest of this file states it: the SHAPE is
+// sourced — oval position from the NOAA table, frequency dependence from the
+// same absorption law measured in Part 20, super-linear growth with Kp
+// because that is how auroral absorption behaves. The SCALE rests on ONE
+// anchor (AURORAL_DB30_AT_KP9) taken from the riometer literature's severe-
+// event level, not on a measurement of this app against anything. It is the
+// softest number here, softer even than the LUF's own scale, and the app says
+// so on screen when it fires. VOACAP cannot arbitrate it: VOACAP is a
+// monthly-MEDIAN model with no storm term at all, which is precisely why this
+// had to be added rather than measured.
+//
+// SAFETY PROPERTY: below AURORAL_KP_QUIET, or with no Kp reading at all, this
+// contributes EXACTLY ZERO and every number the app produces is bit-identical
+// to before. The VOACAP validation was run at quiet conditions, so none of it
+// is disturbed.
+export const AURORAL_KP_QUIET = 3;              // at/below this: no term at all
+export const AURORAL_KP_MAX = 9;                // Kp scale ceiling
+export const AURORAL_BOUNDARY_KP0_DEG = 66.5;   // oval edge at Kp 0, deg CGM
+export const AURORAL_BOUNDARY_SLOPE_DEG = 2.05; // equatorward drift per Kp unit
+export const AURORAL_RAMP_DEG = 5;              // no cliff at the boundary
+export const AURORAL_DB30_AT_KP9 = 2.5;         // THE ANCHOR: dB at 30 MHz,
+                                                // deep in the oval, Kp 9
+export const AURORAL_REF_MHZ = 30;              // riometer reference frequency
+
+// Equatorward edge of the auroral oval in geomagnetic latitude, from the
+// NOAA SWPC aurora-visibility table. Clamped to the Kp scale.
+export function auroralOvalBoundary(kp) {
+  var k = (typeof kp === 'number' && isFinite(kp)) ? Math.max(0, Math.min(AURORAL_KP_MAX, kp)) : 0;
+  return AURORAL_BOUNDARY_KP0_DEG - AURORAL_BOUNDARY_SLOPE_DEG * k;
+}
+
+// How exposed one D-layer crossing is, 0 (outside the oval) to 1 (well
+// inside). Ramped over AURORAL_RAMP_DEG so a station one degree south of the
+// boundary is not treated as if the storm stops at a line on a map.
+// Saturates poleward: the polar cap is not modelled separately, which
+// overstates absorption for a ray passing over the pole itself and is the
+// conservative direction for someone deciding whether to trust a circuit.
+export function auroralWeight(magLatDeg, kp) {
+  if (typeof magLatDeg !== 'number' || !isFinite(magLatDeg)) return 0;
+  var edge = auroralOvalBoundary(kp);
+  var w = (Math.abs(magLatDeg) - (edge - AURORAL_RAMP_DEG)) / AURORAL_RAMP_DEG;
+  return Math.max(0, Math.min(1, w));
+}
+
+// Auroral absorption for one crossing, in dB at the 30 MHz riometer
+// reference. Quadratic in (Kp - quiet): unsettled conditions barely move it,
+// storms bite hard, which is the observed behaviour.
+export function auroralAbsorptionDb30(magLatDeg, kp) {
+  if (typeof kp !== 'number' || !isFinite(kp) || kp <= AURORAL_KP_QUIET) return 0;
+  var w = auroralWeight(magLatDeg, kp);
+  if (w <= 0) return 0;
+  var span = AURORAL_KP_MAX - AURORAL_KP_QUIET;
+  var x = Math.min(1, (kp - AURORAL_KP_QUIET) / span);
+  return AURORAL_DB30_AT_KP9 * x * x * w;
+}
+
+// Mean auroral absorption over the points where the ray crosses the absorbing
+// layer, expressed in the same A (MHz^2 dB) currency as the solar term so it
+// adds straight into estimateLUF. Taking the MEAN and letting estimateLUF
+// multiply by the hop count is what makes partial exposure come out right: one
+// bounce of three inside the oval contributes one crossing's worth of
+// absorption, not three.
+export function auroralAbsorptionA(magLats, kp) {
+  if (!magLats || !magLats.length) return 0;
+  var sum = 0, n = 0;
+  for (var i = 0; i < magLats.length; i++) {
+    var v = magLats[i];
+    if (typeof v !== 'number' || !isFinite(v)) continue;
+    sum += auroralAbsorptionDb30(v, kp);
+    n++;
+  }
+  if (!n) return 0;
+  var db30 = sum / n;
+  if (db30 <= 0) return 0;
+  // L(f) = A / (f + fH)^2, so A = L(30) * (30 + fH)^2.
+  var ref = AURORAL_REF_MHZ + LUF_GYRO_MHZ;
+  return db30 * ref * ref;
 }
 
 // ── MULTI-HOP: THE WEAKEST BOUNCE ────────────────────────────────────────────
@@ -705,7 +810,25 @@ export function assessFrequency(params) {
   }
   var muf = foF2 * m;
   var fot = FOT_RATIO * muf;
-  var luf = estimateLUF(daylight, params.txWatts, params.hops, params.distKm);
+
+  // Auroral absorption, from the Kp the app already fetches. Sampled where
+  // the ray crosses the absorbing layer: the two station ends plus every
+  // ionospheric bounce, whichever of those carry a geomagnetic latitude.
+  // Zero at quiet Kp or with no reading, leaving the LUF exactly as measured.
+  var auroralLats = [];
+  if (ends && ends.length === 2) {
+    for (var ei = 0; ei < 2; ei++) {
+      if (typeof ends[ei].magLatDeg === 'number') auroralLats.push(ends[ei].magLatDeg);
+    }
+  }
+  if (params.bounces && params.bounces.length) {
+    for (var bi = 0; bi < params.bounces.length; bi++) {
+      if (typeof params.bounces[bi].magLatDeg === 'number') auroralLats.push(params.bounces[bi].magLatDeg);
+    }
+  }
+  if (!auroralLats.length && typeof params.magLatDeg === 'number') auroralLats.push(params.magLatDeg);
+  var auroralA = auroralAbsorptionA(auroralLats, params.kp);
+  var luf = estimateLUF(daylight, params.txWatts, params.hops, params.distKm, auroralA);
 
   var verdict = null;
   if (typeof params.freqMHz === 'number' && isFinite(params.freqMHz) && params.freqMHz > 0) {
@@ -753,6 +876,19 @@ export function assessFrequency(params) {
     txWatts: (typeof params.txWatts === 'number' && params.txWatts > 0) ? params.txWatts : DEFAULT_TX_WATTS,
     suggestedMHz: suggested,
     verdict: verdict,
+    // Non-null only when a geomagnetic storm is actually raising this path's
+    // floor, so the UI can say WHY the LUF moved instead of quietly moving it.
+    // lufQuiet is the same path's floor with the storm removed — the operator
+    // sees the cost of the disturbance, not just the total.
+    auroral: auroralA > 0 ? {
+      kp: params.kp,
+      ovalBoundaryDeg: auroralOvalBoundary(params.kp),
+      absorptionA: auroralA,
+      absorptionDb30: auroralA / ((AURORAL_REF_MHZ + LUF_GYRO_MHZ) * (AURORAL_REF_MHZ + LUF_GYRO_MHZ)),
+      crossingsSampled: auroralLats.length,
+      crossingsAffected: auroralLats.filter(function(v) { return auroralWeight(v, params.kp) > 0; }).length,
+      lufQuiet: estimateLUF(daylight, params.txWatts, params.hops, params.distKm, 0),
+    } : null,
     // True when the whole band is closed for this path/time (LUF above MUF)
     pathClosed: luf >= muf,
   };

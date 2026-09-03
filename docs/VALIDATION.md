@@ -2892,6 +2892,107 @@ field gauge of "did anyone try this," not an audit.
 271 unit tests, 45 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 41 — Auroral absorption, and closing the truth-log loop (v1.50.0)
+
+Two additions, both aimed at the same thing: making the app's own stated gaps
+smaller instead of just honest.
+
+### Auroral absorption — the gap the About screen had been admitting since v1.24
+
+Kp had been fetched from NOAA, cached, interpreted and shown to the operator
+for twenty-six releases, and **nothing consumed it**. A Marine on a
+transpolar circuit during a G4 storm got exactly the same LUF as on a quiet
+day. The About tab said so in as many words: "there is still no
+auroral-absorption term."
+
+**Two sourced pieces, one anchor.** Where the oval is, from NOAA SWPC's
+published aurora-visibility boundary against Kp — 66.5° geomagnetic at Kp 0
+falling to 48.1° at Kp 9, which is linear to within a tenth of a degree at
+2.05° per Kp unit (unit-tested against the published table row by row). How
+much it absorbs, through the same `A/(f+fH)²` law measured against VOACAP's
+loss curves in Part 20, so a riometer dB figure at 30 MHz converts straight
+into the A currency `estimateLUF` already works in. Growth is quadratic in
+(Kp − 3) because auroral absorption is observed to rise super-linearly with
+magnetic activity; the absolute severity rests on ONE anchor
+(`AURORAL_DB30_AT_KP9 = 2.5 dB`) from the riometer literature's severe-event
+level.
+
+**It is the softest number in the app and the app says so**, on the same
+banner that reports it. VOACAP cannot arbitrate it — VOACAP is a
+monthly-median model with no storm term at all, which is exactly why this had
+to be added from literature rather than measured. The banner is worded
+"expect trouble here", not as a figure.
+
+**The load-bearing safety property**, unit-tested explicitly: at or below
+Kp 3, and with no Kp reading at all, the term contributes **exactly zero** —
+not a small number, zero — and every LUF the app produces is bit-identical to
+v1.49. Every VOACAP comparison in this document was run without a storm term,
+so none of the published accuracy figures are disturbed. The Python mirror
+gained the term too and matches the JavaScript to 1e-9 across a 63-case sweep
+of Kp and geomagnetic latitude, so the studies cannot silently diverge.
+
+**What building it found.** Writing the tests surfaced two facts worth
+recording, both cases where the model was right and the author's intuition
+was wrong:
+
+1. **Extreme storms genuinely reach the mid-latitudes.** At Kp 8–9 the oval
+   reaches ~48–50°, and a station at 46° geomagnetic (Cherry Point) starts
+   picking up absorption. The first draft of the test asserted this was a
+   bug. It is not: the May 2024 G5 put aurora over North Carolina and
+   degraded HF there. Pinned as a test in the correct direction.
+2. **Cherry Point → Okinawa is a transpolar path.** The app's own reference
+   WESTPAC circuit does not cross the mid-latitude Pacific — its great circle
+   runs over the Arctic with reflection points at 58°, 74° and 59°
+   geomagnetic. So it is correctly closed down by a G3 storm. Two test
+   expectations had to be rewritten after computing the real geometry rather
+   than assuming it, and the transpolar finding is now itself a browser test.
+   This is the third round in a row where hand-assumed geography was the
+   defect and computed geography was the fix — the same lesson as Part 35's
+   ocean boxes and Part 38's Mediterranean.
+
+### Closing the truth-log loop — the app now asks for the data back
+
+Part 36 shipped the truth log and Part 38 noted it produces "data no VOACAP
+study can." But nothing asked the operator for it: the export button sat
+inside a collapsed card and was easy never to notice. Now, once there is
+something worth sending, opening the log offers to send it back — asked once,
+with a real refusal that is remembered.
+
+**Coordinates are the whole problem, and the resolution is principled.** A
+truth entry records where a Marine was and what they were shooting at, and
+this app's first promise is that position never leaves the device. So the
+default is WHOLE DEGREES, which costs the science nothing and the operator
+almost nothing: the foF2 map and the land/sea mask this model is built on are
+themselves 1° grids, so a rounded coordinate lands in the same cell the model
+used, while a degree is ~60 NM of ambiguity — a region, not a position
+report. Exact grids are available but must be chosen on screen, having been
+told. Redaction is applied to the outgoing copy only; the operator keeps full
+precision in their own history.
+
+**Nothing is transmitted by the app.** SEND hands a plain-text card to Web
+Share (the native sheet on a phone) or a `mailto:` draft — the operator picks
+the recipient, sees the payload, and presses send in their own client. This
+is the same principle as the install counter in Part 40: the app does not
+acquire a new outbound channel, it composes something a human then sends.
+
+Entries also now record the **space weather they were predicted under**
+(SFI, Kp, and the auroral dB if any). Without those an entry cannot be
+recomputed — the same path and hour give a different MUF at SFI 70 than at
+200, and the auroral term is driven entirely by Kp — and an entry that cannot
+be recomputed cannot correct the model. With them, a returned card is a
+reproducible data point rather than an anecdote.
+
+The privacy guard is a test, not a comment: a unit test scans the whole
+rendered card for the precise coordinates and fails if any sub-degree grid
+appears anywhere in it, so a future change that formats grids from some other
+field breaks the build. A browser test drives the prompt and asserts it names
+the author, states the rounding, keeps the device copy at full precision,
+honours DON'T ASK across a reload, and makes no request to any unexpected
+host during the whole flow.
+
+288 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

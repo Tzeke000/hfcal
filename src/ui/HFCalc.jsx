@@ -1270,6 +1270,18 @@ function cachedSFI() {
   } catch (e) { return null; }
 }
 
+// The planetary K-index from the same cache — it drives auroral absorption on
+// high-latitude paths. Null (never been online) means the advisor assumes
+// quiet and adds no auroral term, which is the pre-v1.50 behaviour exactly.
+function cachedKp() {
+  try {
+    var raw = localStorage.getItem(SPACEWX_CACHE_KEY);
+    if (!raw) return null;
+    var v = JSON.parse(raw);
+    return (v && typeof v.kp === 'number') ? v.kp : null;
+  } catch (e) { return null; }
+}
+
 // ── SEASON / MONTH SELECTOR ───────────────────────────────────────────────────
 // The ionosphere is seasonal, and the season that matters is the one at each
 // REFLECTION POINT, not the calendar month in some reference time zone. July
@@ -1471,7 +1483,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
       txWatts: txWatts,
       month: month,
       utcHour: utcHour,
-      sfi: cachedSFI(),
+      sfi: cachedSFI(), kp: cachedKp(),
       freqMHz: isNaN(freqMHz) ? null : freqMHz,
     });
   }
@@ -1551,6 +1563,27 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                 </div>
               </div>
 
+              {assess.auroral && (
+                <div style={{ background: '#2a1a10', border: '1px solid #7a5528', borderLeft: '3px solid #c48a2e', borderRadius: 6, padding: '10px 12px', marginBottom: 8 }}>
+                  <div style={{ color: '#e0c063', fontWeight: 700, fontSize: '0.74rem', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    {'AURORAL ABSORPTION — Kp ' + assess.auroral.kp.toFixed(1)}
+                  </div>
+                  <div style={{ color: '#f0e0c0', fontSize: '0.76rem', lineHeight: 1.55 }}>
+                    {'The geomagnetic field is disturbed and the auroral oval has reached down to '
+                      + assess.auroral.ovalBoundaryDeg.toFixed(0) + '° geomagnetic latitude. '
+                      + assess.auroral.crossingsAffected + ' of ' + assess.auroral.crossingsSampled
+                      + ' points where this path crosses the absorbing layer '
+                      + (assess.auroral.crossingsAffected === 1 ? 'is' : 'are') + ' inside it, '
+                      + 'which raises this path’s floor from '
+                      + assess.auroral.lufQuiet.toFixed(1) + ' to ' + assess.luf.toFixed(1) + ' MHz. '
+                      + 'Go higher in frequency, or route the path away from the pole.'}
+                  </div>
+                  <div style={{ color: '#a08850', fontSize: '0.62rem', lineHeight: 1.45, marginTop: 5 }}>
+                    {'Softest number in the app: the oval position comes from NOAA’s published Kp table and the frequency dependence is measured, but the absolute severity rests on one anchor from riometer literature. VOACAP cannot check it — it has no storm term at all. Treat it as "expect trouble here", not as a figure.'}
+                  </div>
+                </div>
+              )}
+
               {assess.pathClosed && (
                 <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '3px solid #c4442e', borderRadius: 6, padding: '10px 12px', marginBottom: 8 }}>
                   <div style={{ color: '#ff9b86', fontWeight: 700, fontSize: '0.74rem', letterSpacing: '0.06em', marginBottom: 3 }}>
@@ -1571,7 +1604,7 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                       midLon: pathCtx.midLon, latDeg: pathCtx.midLat,
                       magLatDeg: pathCtx.magLatDeg, modipDeg: pathCtx.modipDeg,
                       ends: pathCtx.ends, bounces: pathCtx.bounces, hops: pathCtx.hops,
-                      distKm: results.geo.distKm, txWatts: txWatts, month: month, sfi: cachedSFI(),
+                      distKm: results.geo.distKm, txWatts: txWatts, month: month, sfi: cachedSFI(), kp: cachedKp(),
                     }, utcHour);
                     var msg = w
                       ? 'Opens \u2248' + String(Math.floor(w.utcHour)).padStart(2, '0') + '00Z \u2014 in about '
@@ -2029,8 +2062,8 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  The FOT was checked against VOACAP\u2019s day-by-day statistics and corrected \u2014 the textbook \u201c85% of the MUF\u201d actually works about 82% of days, not 90%.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, there is still no auroral-absorption term, your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  271 automated tests pin every formula so the physics cannot drift as the app changes, plus 45 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  288 automated tests pin every formula so the physics cannot drift as the app changes, plus 50 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2613,7 +2646,7 @@ function FreqForecastCard({ results, freqStr, month, onMonth, pathCtx, txWatts, 
       distKm: results.geo.distKm,
       txWatts: txWatts,
       month: month,
-      sfi: cachedSFI(),
+      sfi: cachedSFI(), kp: cachedKp(),
       freqMHz: hasFreq ? freqMHz : null,
       blockHours: 4,
       nowUtcHour: now.getUTCHours() + now.getUTCMinutes() / 60,
@@ -2971,8 +3004,13 @@ export default function HFCalc() {
       // happens where the ray leaves and re-enters the atmosphere, so the LUF
       // needs the ends — and the operator wants to see the far end's local
       // time regardless.
-      ends: [{ lat: results.p1.lat, lon: results.p1.lon },
-             { lat: results.p2.lat, lon: results.p2.lon }],
+      // magLatDeg on each end too: auroral absorption is a geomagnetic-
+      // latitude effect, and the ends are where the ray crosses the
+      // absorbing layer on its way out and back in.
+      ends: [{ lat: results.p1.lat, lon: results.p1.lon,
+               magLatDeg: magneticLatitude(results.p1.lat, results.p1.lon) },
+             { lat: results.p2.lat, lon: results.p2.lon,
+               magLatDeg: magneticLatitude(results.p2.lat, results.p2.lon) }],
       // The ray crosses the absorbing D layer once per hop, so absorption —
       // and therefore the LUF — scales with hop count.
       hops: hops,
@@ -3016,7 +3054,7 @@ export default function HFCalc() {
       txWatts: txWatts,
       month: month,
       utcHour: _fcHour,
-      sfi: cachedSFI(), freqMHz: results.freq,
+      sfi: cachedSFI(), kp: cachedKp(), freqMHz: results.freq,
     });
     currentShot = {
       id: 'shot_' + Date.now(),
@@ -3053,6 +3091,14 @@ export default function HFCalc() {
                          // The hour the verdict was computed at, so a saved card
                          // is not read as valid for all hours (Iris #12).
                          utcHour: _fcHour,
+                         // The space weather the prediction was made UNDER.
+                         // A truth-log card without these cannot be
+                         // re-derived: the same path gives a different MUF at
+                         // SFI 70 than at 200, and Kp alone drives the
+                         // auroral term. With them, a returned card is a
+                         // reproducible data point instead of an anecdote.
+                         sfi: cachedSFI(), kp: cachedKp(),
+                         auroralDb30: _fc.auroral ? _fc.auroral.absorptionDb30 : null,
                          verdictLabel: _fc.verdict ? _fc.verdict.label : null } : null,
       appVersion: APP_VERSION,
     };
@@ -3384,7 +3430,7 @@ export default function HFCalc() {
               ends: pathCtx.ends, bounces: pathCtx.bounces, hops: pathCtx.hops,
               distKm: results.geo.distKm, txWatts: txWatts, month: month,
               utcHour: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
-              sfi: cachedSFI(), freqMHz: results.freq,
+              sfi: cachedSFI(), kp: cachedKp(), freqMHz: results.freq,
             });
             if (!a) return null;
             return {
@@ -3393,6 +3439,7 @@ export default function HFCalc() {
               tx_watts: a.txWatts,
               path_closed: a.pathClosed,
               using_default_solar: a.usingDefaultSolar,
+              auroral: a.auroral,
               verdict: a.verdict ? { code: a.verdict.code, label: a.verdict.label, ok: a.verdict.ok } : null,
             };
           })(),
@@ -3750,7 +3797,7 @@ export default function HFCalc() {
         <AboutBanner />
         <DAGRInstructions />
         <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
-        <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} />
+        <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} cachedKp={cachedKp} />
         <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
         <TruthLog currentShot={currentShot} appVersion={APP_VERSION} />
 
