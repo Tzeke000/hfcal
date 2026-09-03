@@ -1203,12 +1203,12 @@ test('auroral: A is the dB figure converted through the absorption law', functio
 });
 
 test('auroral: a storm raises the LUF and can close a polar path outright', function() {
-  // Transpolar circuit, dark, 20 W manpack, 3 hops over 6000 km.
+  // Deep auroral-zone circuit, dark, 20 W manpack, 3 hops over 6000 km.
   const args = [0, 20, 3, 6000];
   const quiet = estimateLUF(...args, 0);
   const storm = estimateLUF(...args, auroralAbsorptionA([75, 80, 82], 8));
   assert.ok(storm > quiet, 'a severe storm must raise the floor');
-  assert.ok(storm > 6, 'a G4 transpolar path should be badly absorbed, got ' + storm.toFixed(1));
+  assert.ok(storm > 6, 'a G4 auroral-zone path should be badly absorbed, got ' + storm.toFixed(1));
   // The same storm on a mid-latitude path must not move at all.
   const midQuiet = estimateLUF(0.5, 20, 2, 3000, 0);
   const midStorm = estimateLUF(0.5, 20, 2, 3000, auroralAbsorptionA([35, 40, 38], 8));

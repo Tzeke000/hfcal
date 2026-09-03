@@ -1101,7 +1101,7 @@ describe('auroral absorption (v1.50)', { skip: SKIP, concurrency: 1 }, () => {
     return { page, text };
   }
 
-  test('a geomagnetic storm on a transpolar path is named and explained', async () => {
+  test('a geomagnetic storm on a high-latitude path is named and explained', async () => {
     const { page, text } = await withKp(8, TROMSO, FAIRBANKS);
     assert.match(text, /AURORAL ABSORPTION/,
       'a Kp 8 storm on a Tromso-Fairbanks path must be reported');
@@ -1128,16 +1128,23 @@ describe('auroral absorption (v1.50)', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
-  test('the US-to-WESTPAC great circle is transpolar, and a storm hits it', async () => {
+  test('the US-to-WESTPAC great circle crosses the auroral zone, and a storm hits it', async () => {
     // Worth pinning because it is counter-intuitive and operationally
     // important: the app's own reference path, Cherry Point to Okinawa, does
-    // NOT run across the mid-latitude Pacific. Its great circle crosses the
-    // Arctic with bounces at 58/74/59 deg geomagnetic, so a geomagnetic storm
-    // genuinely closes it down — which is exactly the advice "avoid
-    // transpolar routing" exists for, now computed instead of assumed.
+    // NOT run across the mid-latitude Pacific. Its great circle bows over
+    // northern Canada and Alaska, peaking at 70.3 deg N (70.5 geomagnetic)
+    // near Utqiagvik, with F2 bounces at 57.7 / 74.2 / 59.4 deg geomagnetic —
+    // the middle one inside the auroral oval. So a geomagnetic storm genuinely
+    // closes this path, now computed instead of assumed.
+    //
+    // NOT transpolar: the vertex is ~2,200 km short of the pole and the path
+    // never enters the polar cap. The distinction is physical, not pedantic —
+    // polar-cap absorption is a different mechanism (solar proton events) from
+    // the auroral absorption modelled here, and this path demonstrates the
+    // auroral one.
     const { page, text } = await withKp(7, CHERRY_POINT, OKINAWA);
     assert.match(text, /AURORAL ABSORPTION/,
-      'the transpolar WESTPAC great circle must be charged in a G3 storm');
+      'the auroral-zone WESTPAC great circle must be charged in a G3 storm');
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

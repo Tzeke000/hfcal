@@ -420,7 +420,11 @@ export function estimateLUF(illum, watts, hops, distKm, auroralA) {
 // The gap the app has been stating on its own About screen since v1.24:
 // "there is still no auroral-absorption term." Kp has been fetched from NOAA
 // and shown to the operator all along, but nothing consumed it — a Marine on
-// a transpolar circuit during a G3 storm got the same LUF as on a quiet day.
+// an Arctic circuit during a G3 storm got the same LUF as on a quiet day.
+//
+// Scope: this is AURORAL absorption, driven by Kp, in the auroral oval.
+// Polar-cap absorption is a different mechanism (solar proton events) and is
+// NOT modelled here — do not read this term as covering the polar cap.
 // This closes that, using the reading the app already has.
 //
 // TWO PIECES, both from published sources rather than invented:

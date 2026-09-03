@@ -2940,15 +2940,28 @@ was wrong:
    picking up absorption. The first draft of the test asserted this was a
    bug. It is not: the May 2024 G5 put aurora over North Carolina and
    degraded HF there. Pinned as a test in the correct direction.
-2. **Cherry Point → Okinawa is a transpolar path.** The app's own reference
-   WESTPAC circuit does not cross the mid-latitude Pacific — its great circle
-   runs over the Arctic with reflection points at 58°, 74° and 59°
-   geomagnetic. So it is correctly closed down by a G3 storm. Two test
-   expectations had to be rewritten after computing the real geometry rather
-   than assuming it, and the transpolar finding is now itself a browser test.
-   This is the third round in a row where hand-assumed geography was the
-   defect and computed geography was the fix — the same lesson as Part 35's
-   ocean boxes and Part 38's Mediterranean.
+2. **Cherry Point → Okinawa crosses the auroral zone.** The app's own
+   reference WESTPAC circuit does not cross the mid-latitude Pacific — its
+   great circle bows over northern Canada and Alaska, peaking at 70.3° N
+   (70.5° geomagnetic) near Utqiagvik, with F2 reflection points at 57.7°,
+   74.2° and 59.4° geomagnetic. The middle one sits inside the auroral oval,
+   so the path is correctly closed down by a G3 storm. Two test expectations
+   had to be rewritten after computing the real geometry rather than assuming
+   it, and the finding is now itself a browser test. This is the third round
+   in a row where hand-assumed geography was the defect and computed geography
+   was the fix — the same lesson as Part 35's ocean boxes and Part 38's
+   Mediterranean.
+
+   **Correction (same day).** This finding was first written up, and its
+   tests named, calling that path "transpolar". That is wrong, and the error
+   is worth recording because it is exactly the kind this document exists to
+   catch. The vertex is ~2,200 km short of the pole and the path never enters
+   the polar cap; it is a **high-latitude, auroral-zone** path. The
+   distinction is physical rather than pedantic: polar-cap absorption is a
+   separate mechanism driven by solar proton events, not by Kp, and is not
+   modelled here — so calling this path transpolar mislabels which physics
+   the test demonstrates. The geometry and the geomagnetic figures were
+   right; only the word was wrong. Test names and comments corrected.
 
 ### Closing the truth-log loop — the app now asks for the data back
 

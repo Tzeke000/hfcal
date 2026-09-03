@@ -1576,7 +1576,8 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
                       + (assess.auroral.crossingsAffected === 1 ? 'is' : 'are') + ' inside it, '
                       + 'which raises this path’s floor from '
                       + assess.auroral.lufQuiet.toFixed(1) + ' to ' + assess.luf.toFixed(1) + ' MHz. '
-                      + 'Go higher in frequency, or route the path away from the pole.'}
+                      + 'Go higher in frequency, or route the path to lower latitude — '
+                      + 'a relay further south beats fighting the oval.'}
                   </div>
                   <div style={{ color: '#a08850', fontSize: '0.62rem', lineHeight: 1.45, marginTop: 5 }}>
                     {'Softest number in the app: the oval position comes from NOAA’s published Kp table and the frequency dependence is measured, but the absolute severity rests on one anchor from riometer literature. VOACAP cannot check it — it has no storm term at all. Treat it as "expect trouble here", not as a figure.'}
