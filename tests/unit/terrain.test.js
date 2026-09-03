@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   TERRAIN_DB, TERRAIN_PRIORITY, TERRAIN_COND,
-  classifyPoint, samplePath, pathTerrainAnalysis, nearFieldObstacle,
+  classifyPoint, samplePath, pathTerrainAnalysis, nearFieldObstacle, nearFieldSurvey,
 } from '../../src/physics/terrain.js';
 import { isLand } from '../../src/data/landMask.js';
 
@@ -404,4 +404,79 @@ test('the land mask is a plausible model of Earth', function() {
   }
   const frac = land / total;
   assert.ok(frac > 0.25 && frac < 0.40, 'land fraction implausible: ' + frac.toFixed(3));
+});
+
+// ── Mountains are handled the same way everywhere (v1.54) ───────────────────
+// An audit after the Yuma work found the near-field scan saw a ridge at MCAS
+// Yuma and NOTHING at Pohang, Iwakuni, Okinawa or Camp Lejeune — not because
+// those places are flat, but because the database stopped at continental-scale
+// ranges while Yuma had been surveyed in detail. Answer quality depended on
+// where the work had happened, which is not a property a model should have.
+
+test('the near-field survey never reports "clear", only what it knows', function() {
+  // Three genuinely different situations that used to return an identical
+  // null, indistinguishable from flat ground.
+  const yuma = nearFieldSurvey(32.6566, -114.6060, 36.85, -76.29);
+  assert.equal(yuma.status, 'blocked', 'a mapped ridge must be reported');
+
+  const inRange = nearFieldSurvey(69.06, 18.54, 69.06, 26.0);   // Bardufoss
+  assert.equal(inRange.status, 'in_range',
+    'a station inside a range cannot have its local horizon resolved');
+  assert.ok(inRange.txInRange);
+
+  const blind = nearFieldSurvey(26.28, 127.78, 26.28, 130.0);   // Okinawa
+  assert.equal(blind.status, 'none_mapped',
+    'unmapped terrain must not be reported as clear');
+});
+
+test('every survey status is one of the three declared values', function() {
+  const probes = [[32.66, -114.61], [34.65, -77.35], [26.28, 127.78],
+                  [38, -98], [13.58, 144.92], [69.06, 18.54], [-33.9, 151.2]];
+  for (const [lat, lon] of probes) {
+    const v = nearFieldSurvey(lat, lon, lat, lon + 3);
+    assert.ok(['blocked', 'in_range', 'none_mapped'].indexOf(v.status) !== -1,
+      'unknown status at ' + [lat, lon] + ': ' + v.status);
+    // 'blocked' is the only status that may carry an obstacle.
+    if (v.status === 'blocked') assert.ok(v.obstacle);
+    else assert.equal(v.obstacle, null);
+  }
+});
+
+test('the Appalachians do not reach the Atlantic', function() {
+  // The box spanned 33-47N / 85-68W and made the whole eastern seaboard a
+  // mountain — Camp Lejeune, Norfolk, Philadelphia, New York and Boston all
+  // took rocky-highland conductivity. Same class of defect as the Rockies box
+  // that swallowed Las Vegas.
+  for (const [name, lat, lon] of [['Camp Lejeune', 34.65, -77.35],
+                                  ['Norfolk', 36.85, -76.29],
+                                  ['Philadelphia', 39.95, -75.16],
+                                  ['New York City', 40.71, -74.01],
+                                  ['Boston', 42.36, -71.06]]) {
+    const r = classifyPoint(lat, lon);
+    assert.notEqual(r.type, 'mountain', name + ' is coastal, got ' + r.name);
+    assert.ok(r.cond >= TERRAIN_COND.land,
+      name + ' must not take rocky conductivity, got ' + r.cond);
+  }
+});
+
+test('the split keeps the real Appalachian peaks', function() {
+  // A fix that loses the mountains is not a fix.
+  for (const [name, lat, lon] of [['Mt Mitchell', 35.77, -82.27],
+                                  ['Asheville', 35.60, -82.55],
+                                  ['Allegheny PA', 41.0, -78.5],
+                                  ['Mt Washington', 44.27, -71.30],
+                                  ['Adirondacks', 44.11, -73.92]]) {
+    assert.equal(classifyPoint(lat, lon).type, 'mountain', name + ' should be mountain');
+  }
+});
+
+test('the ranges around a base are seen at the bases Marines use', function() {
+  // MCAGCC Twentynine Palms: cantonment on the desert floor, Bullion
+  // Mountains just north of it. The base must not itself be a mountain, and
+  // the ridge must be visible to a shot that crosses it.
+  assert.equal(classifyPoint(34.23, -116.05).type, 'desert', 'the cantonment is on the floor');
+  const v = nearFieldSurvey(34.23, -116.05, 34.45, -115.6);
+  assert.equal(v.status, 'blocked', 'the Bullion Mountains should be seen');
+  assert.ok(v.obstacle.reliefM > 300 && v.obstacle.reliefM < 900,
+    'relief above a 700 m base should be a few hundred m, got ' + v.obstacle.reliefM);
 });

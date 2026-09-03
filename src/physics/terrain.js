@@ -70,7 +70,16 @@ export const TERRAIN_DB = [
   { t:'mountain', n:'Southern Rockies / Wasatch',   latMin: 35, latMax: 42, lonMin:-112, lonMax:-104,  elev: 3500 },
   { t:'mountain', n:'Sierra Nevada (CA)',           latMin: 36, latMax: 42, lonMin:-122, lonMax:-118,  elev: 3600 },
   { t:'mountain', n:'Cascade Range',                latMin: 42, latMax: 49, lonMin:-122, lonMax:-120,  elev: 3300 },
-  { t:'mountain', n:'Appalachians',                 latMin: 33, latMax: 47, lonMin: -85, lonMax: -68,  elev:  900 },
+  // Split (v1.54). As ONE box spanning 33-47N / 85-68W this reached the
+  // Atlantic and made the entire eastern seaboard a mountain: Camp Lejeune,
+  // Norfolk, Philadelphia, New York and Boston all classified as rocky
+  // highland, taking 1 mS/m conductivity instead of coastal ground. Same
+  // defect as the Rockies box that swallowed Las Vegas (Part 42) — the range
+  // runs NE-SW on a diagonal, which one rectangle cannot express. Peaks:
+  // Mt Mitchell 2037 m, Mt Washington 1917 m.
+  { t:'mountain', n:'Southern Appalachians',        latMin: 34.0, latMax: 39.0, lonMin: -84.5, lonMax: -79.5, elev: 2037 },
+  { t:'mountain', n:'Central Appalachians',         latMin: 39.0, latMax: 43.0, lonMin: -80.5, lonMax: -75.5, elev: 1200 },
+  { t:'mountain', n:'Northern Appalachians',        latMin: 43.0, latMax: 47.0, lonMin: -75.0, lonMax: -70.0, elev: 1917 },
   { t:'mountain', n:'Atlas Mountains',              latMin: 29, latMax: 37, lonMin:  -9, lonMax:   9,  elev: 3200 },
   { t:'mountain', n:'Ethiopian Highlands',          latMin:  6, latMax: 15, lonMin:  35, lonMax:  42,  elev: 3500 },
   { t:'mountain', n:'Drakensberg',                  latMin:-31, latMax:-27, lonMin:  27, lonMax:  31,  elev: 3400 },
@@ -80,6 +89,24 @@ export const TERRAIN_DB = [
   { t:'mountain', n:'Zagros Mountains',             latMin: 28, latMax: 38, lonMin:  45, lonMax:  52,  elev: 4200 },
   { t:'mountain', n:'Pontic/Taurus',                latMin: 36, latMax: 42, lonMin:  30, lonMax:  44,  elev: 3800 },
   { t:'mountain', n:'Scandinavian Mountains',       latMin: 57, latMax: 71, lonMin:  12, lonMax:  28,  elev: 2400 },
+  // ── WESTPAC / EUCOM theatres (v1.54) ─────────────────────────────────────
+  // Added after auditing the near-field scan across real operating areas and
+  // finding it saw a ridge at Yuma and nothing at Pohang, Iwakuni, Okinawa or
+  // Lejeune — not because those places are flat, but because the database
+  // stopped at continental-scale ranges. Peak elevations are published
+  // figures. This is still not global coverage; nearFieldSurvey reports where
+  // the model is blind rather than pretending the ground is clear.
+  // The ranges inside the MCAGCC training area — the base cantonment sits at
+  // ~610 m just south of them, so they are real relief to a station there.
+  { t:'mountain', n:'Bullion Mountains (29 Palms)', latMin: 34.30, latMax: 34.65, lonMin: -116.30, lonMax: -115.85, elev: 1268 },
+  { t:'mountain', n:'Taebaek Mountains (KR)',       latMin: 35.8, latMax: 38.5, lonMin: 128.2, lonMax: 129.4, elev: 1708 },
+  { t:'mountain', n:'Sobaek Mountains (KR)',        latMin: 35.3, latMax: 37.0, lonMin: 127.4, lonMax: 128.4, elev: 1440 },
+  { t:'mountain', n:'Japanese Alps',                latMin: 35.2, latMax: 36.9, lonMin: 137.2, lonMax: 138.6, elev: 3190 },
+  { t:'mountain', n:'Chugoku Mountains (JP)',       latMin: 34.3, latMax: 35.5, lonMin: 131.5, lonMax: 133.6, elev: 1729 },
+  { t:'mountain', n:'Kyushu Mountains (JP)',        latMin: 31.8, latMax: 33.3, lonMin: 130.5, lonMax: 131.9, elev: 1791 },
+  { t:'mountain', n:'Yanbaru Hills (Okinawa)',      latMin: 26.5, latMax: 26.9, lonMin: 127.9, lonMax: 128.4, elev:  503 },
+  { t:'mountain', n:'Luzon Cordillera (PH)',        latMin: 16.0, latMax: 18.5, lonMin: 120.5, lonMax: 121.5, elev: 2922 },
+  { t:'mountain', n:'Zambales Mountains (PH)',      latMin: 14.6, latMax: 16.0, lonMin: 119.9, lonMax: 120.5, elev: 2037 },
   { t:'mountain', n:'New Guinea Highlands',         latMin: -8, latMax: -3, lonMin: 134, lonMax: 148,  elev: 4500 },
   { t:'mountain', n:'Southern Alps (NZ)',           latMin:-45, latMax:-43, lonMin: 167, lonMax: 172,  elev: 3700 },
   { t:'mountain', n:'Great Dividing Range (AU)',    latMin:-38, latMax:-16, lonMin: 146, lonMax: 153,  elev: 2200 },
@@ -256,6 +283,35 @@ export const NEAR_FIELD_KM = 200;
 export const NEAR_FIELD_STEP_KM = 4;
 export const NEAR_FIELD_MIN_RELIEF_M = 300;
 
+// Survey the near field and say WHICH of three things is true, because they
+// are not the same and the old single return value hid the difference:
+//
+//   'blocked'     a mapped ridge rises above the station on this path.
+//   'in_range'    the station is itself inside a mountain/highland box. The
+//                 box model has one elevation for the whole range, so relief
+//                 "above you" is zero and the local horizon is unresolvable —
+//                 not absent. A station in the Norwegian mountains is not on
+//                 a plain.
+//   'none_mapped' nothing mapped rises above the station here. This is NOT a
+//                 statement that the ground is clear. The database carries
+//                 major ranges plus the few areas surveyed in detail; Kansas
+//                 (really flat) and Okinawa (really hilly, unmapped at this
+//                 scale) both land here and the model cannot tell them apart.
+//
+// Saying "clear" when the truth is "unmapped" is the kind of confident wrong
+// answer this project keeps finding, so the model does not say it.
+export function nearFieldSurvey(lat1, lon1, lat2, lon2) {
+  var txTer = classifyPoint(lat1, lon1);
+  var txInRange = txTer.type === 'mountain' || txTer.type === 'highland';
+  var obstacle = nearFieldObstacle(lat1, lon1, lat2, lon2);
+  return {
+    status: obstacle ? 'blocked' : (txInRange ? 'in_range' : 'none_mapped'),
+    obstacle: obstacle,
+    txInRange: txInRange,
+    txTerrain: txTer.name || txTer.type,
+  };
+}
+
 export function nearFieldObstacle(lat1, lon1, lat2, lon2) {
   var D2R = Math.PI / 180, R2D = 180 / Math.PI, R = 6371;
   var la1 = lat1 * D2R, lo1 = lon1 * D2R, la2 = lat2 * D2R, lo2 = lon2 * D2R;
@@ -342,6 +398,9 @@ export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
     // The horizon-setting feature in the first 200 km, scanned at its own
     // resolution so it cannot fall between path samples on a long shot.
     nearObstacle:  nearFieldObstacle(lat1, lon1, lat2, lon2),
+    // ...and WHY there is no obstacle, when there is none. See nearFieldSurvey:
+    // "nothing mapped" is not "clear", and the app must not imply otherwise.
+    nearSurvey:    nearFieldSurvey(lat1, lon1, lat2, lon2),
     // Ground elevation at the transmitter, so clearance can be computed as
     // relief ABOVE THE STATION rather than above sea level. A 962 m ridge is
     // 900 m of obstacle from Yuma at 65 m, and almost nothing from a station

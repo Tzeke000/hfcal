@@ -200,6 +200,25 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
   // Antenna type recommendation based on zone + terrain
   var antennaType, whichWay, physGeometry, whyAngle;
 
+  // The terrain database carries major ranges plus a few areas surveyed in
+  // detail. Where it has nothing it must NOT be read as "clear ground" — on a
+  // short shot a ridge nobody mapped is the difference between comms and
+  // silence, so the app says which of the two it actually knows.
+  var survey = terrain && terrain.nearSurvey;
+  var coverageNote = '';
+  if (!terrainMask && survey) {
+    if (survey.status === 'in_range') {
+      coverageNote = ' TERRAIN CHECK: you are inside ' + survey.txTerrain
+        + '. The model carries one elevation for a whole range, so it cannot'
+        + ' resolve your local horizon — walk the ground and site by eye.';
+    } else if (survey.status === 'none_mapped') {
+      coverageNote = ' TERRAIN CHECK: nothing mapped rises above you on this'
+        + ' path — which is not the same as clear. The database holds major'
+        + ' ranges and a few surveyed areas, so a local ridge may simply be'
+        + ' unmapped. Check your own horizon before you commit to this.';
+    }
+  }
+
   if (zone === 'groundwave') {
     antennaType = 'Low horizontal dipole or longwire';
     whichWay = 'Orient wire perpendicular to ' + cardinal + ' (broadside toward target)';
@@ -213,7 +232,7 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
       : gwMult <= 0.7
         ? ' The ground here is dry and poor \u2014 roughly ' + gwMult.toFixed(1) + '\u00d7 the range of average land. Move toward damp ground, a stream or a coast if you can, or lay out more radials.'
         : '';
-    whyAngle = 'Ground wave \u2014 signal travels along the Earth surface. Height and angle are irrelevant; maximize wire length and minimize height.' + gwNote;
+    whyAngle = 'Ground wave \u2014 signal travels along the Earth surface. Height and angle are irrelevant; maximize wire length and minimize height.' + gwNote + coverageNote;
   } else if (zone === 'nvis') {
     antennaType = 'NVIS horizontal dipole';
     whichWay = 'Wire orientation does not matter \u2014 NVIS is omnidirectional';
@@ -226,7 +245,7 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
         + 'far station sits in dead space behind it. NVIS goes nearly straight '
         + 'up and comes nearly straight down, so the ridge stops mattering. '
         + 'Keep the wire LOW (3\u20136 ft) \u2014 raising it here works against you.'
-      : 'NVIS \u2014 signal goes nearly vertical, bounces off ionosphere. Low height is the requirement, not direction.';
+      : 'NVIS \u2014 signal goes nearly vertical, bounces off ionosphere. Low height is the requirement, not direction.' + coverageNote;
   } else {
     // Skywave \u2014 use takeoff angle geometry
     if (zone === 'singlehop' || zone === 'mediumdx') {
@@ -2081,7 +2100,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  309 automated tests pin every formula so the physics cannot drift as the app changes, plus 50 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  314 automated tests pin every formula so the physics cannot drift as the app changes, plus 50 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>

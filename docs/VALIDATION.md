@@ -3200,6 +3200,62 @@ also asserts the recorded cause and the recorded setup.
 309 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 45 — Every mountain, the same way (v1.54.0)
+
+Prompted by the operator: *"make sure the app takes all mountains into account
+the same way when needed."* It did not. The Yuma work had given one corner of
+the world 0.1–0.5 deg² resolution while everywhere else sat at 7.5–888 deg²,
+so the quality of the answer depended on where the work had happened. Audited
+by running the near-field scan at sixteen real operating areas.
+
+**Result: a ridge at MCAS Yuma, and NOTHING at Camp Lejeune, MCAGCC
+Twentynine Palms, Okinawa, Iwakuni, Pohang, Guam, Bardufoss, Djibouti, Subic
+Bay or Rota.** Not because those places are flat.
+
+**The deeper defect: three different truths returned an identical `null`.**
+
+| situation | truth | what the app said |
+|---|---|---|
+| Kansas | genuinely flat | nothing |
+| Okinawa | real hills, unmapped at this scale | nothing |
+| Bardufoss | station *inside* a range, so relief above itself is zero | nothing |
+
+A model that cannot tell "flat" from "unmapped" must not report either as
+clear. `nearFieldSurvey()` now returns one of three explicit states —
+`blocked`, `in_range`, `none_mapped` — and the short-range cards say which:
+*"you are inside the Scandinavian Mountains; the model carries one elevation
+for a whole range and cannot resolve your local horizon — site by eye"*, or
+*"nothing mapped rises above you, which is not the same as clear."* On a
+ground-wave or NVIS shot a ridge nobody mapped is the difference between
+comms and silence, so this is the one place the model's blindness has to be
+visible rather than inferred.
+
+**A pre-existing defect found by the audit: the Appalachians reached the
+Atlantic.** One box spanning 33–47° N / 85–68° W made the entire eastern
+seaboard a mountain — Camp Lejeune, Norfolk, Philadelphia, New York and
+Boston all classified as rocky highland and charged 1 mS/m instead of coastal
+ground. Exactly the Las Vegas defect from Part 42, in a different range: the
+Appalachians run NE–SW on a diagonal, which one rectangle cannot express.
+Split into Southern (2037 m, Mt Mitchell), Central (1200 m) and Northern
+(1917 m, Mt Washington). All five cities now read coastal land; all five real
+peaks still read mountain, which is the half of the fix that is easy to lose.
+
+**Coverage added where Marines actually operate**, with published peak
+elevations: Taebaek and Sobaek (Korea), Japanese Alps, Chugoku, Kyushu,
+Yanbaru Hills (Okinawa), Luzon Cordillera and Zambales (Philippines), and the
+Bullion Mountains inside the MCAGCC training area — a 568 m rise 16 km from
+the Twentynine Palms cantonment, which the model previously could not see.
+
+**This is still not global coverage, and the point is that it does not
+pretend to be.** The database holds major ranges plus the areas surveyed in
+detail. Adding boxes narrows the gap; `nearFieldSurvey` makes the remaining
+gap honest. A real elevation dataset (`scripts/validation/README.md`) is the
+only thing that closes it, and until then the app tells the operator when it
+is guessing rather than letting them assume it is not.
+
+314 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
