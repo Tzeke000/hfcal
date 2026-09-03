@@ -1081,9 +1081,17 @@ describe('auroral absorption (v1.50)', { skip: SKIP, concurrency: 1 }, () => {
     // newPage from the harness, so page.errors is collected — a console error
     // in this flow must fail the test like anywhere else.
     const page = await newPage(browser);
-    // Seed the space-weather cache the way a previous online visit would.
+    // Cut the live NOAA feed for this page. Without this the test passes or
+    // fails depending on the real Kp on the day it runs: a CI runner has
+    // internet, fetches the actual planetary index (1.0 on a quiet day) and
+    // overwrites the seeded storm. A dev box behind a proxy does not, so the
+    // seed survives and the test passes for the wrong reason.
+    await page.route('**/services.swpc.noaa.gov/**', route => route.abort());
+    // Seed the cache the way a previous online visit would have left it. The
+    // freshness field is fetchedAt — seeding anything else marks the cache
+    // stale and invites exactly the overwrite described above.
     await page.evaluate((k) => localStorage.setItem('hfcalc_spacewx_v1',
-      JSON.stringify({ sfi: 140, kp: k, at: Date.now() })), kp);
+      JSON.stringify({ sfi: 140, kp: k, fetchedAt: Date.now() })), kp);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('button:has-text("CALCULATE")');
     await calculate(page, from, to);

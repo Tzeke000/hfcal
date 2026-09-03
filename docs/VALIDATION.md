@@ -2990,6 +2990,21 @@ the author, states the rounding, keeps the device copy at full precision,
 honours DON'T ASK across a reload, and makes no request to any unexpected
 host during the whole flow.
 
+**Postscript — the first cut failed CI, and why that matters.** The auroral
+browser tests passed locally and failed on the runner. The cause was in the
+test, not the model: it seeded the space-weather cache with an `at`
+timestamp, but the freshness guard reads `fetchedAt`, so the cache was marked
+stale, the app fetched the LIVE planetary index, and a quiet real-world Kp of
+1.0 overwrote the seeded storm. It passed here only because this sandbox
+cannot reach NOAA — the seed survived for the wrong reason. That is the
+Part 34 lesson in a new costume: a test whose result depends on the machine
+it runs on is not pinning anything. Diagnosed by reproducing the runner's
+condition locally (stubbing NOAA with a quiet Kp), which reproduced the
+failure exactly, then confirming the fix flipped it — banner absent with Kp
+1.0 on screen, banner present with Kp 8.0. The suite now also cuts the NOAA
+route outright, so the outcome cannot depend on the real weather on the day
+the tests run.
+
 288 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
