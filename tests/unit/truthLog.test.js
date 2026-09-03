@@ -179,3 +179,64 @@ test('the entry records the space weather it was predicted under', function() {
   assert.equal(bare.predicted.sfi, null);
   assert.equal(bare.predicted.kp, null);
 });
+
+// ── The setup travels with the shot (v1.53) ─────────────────────────────────
+// A failure with only a prediction attached is unattributable: "7.3 didn't
+// close" could be the model, a longwire pointed 40 deg off, or an NVIS dipole
+// strung for a 3,000 km path. Those need different fixes, and the prediction
+// alone cannot tell them apart.
+
+test('a truth entry records what was built and where it was aimed', function() {
+  const e = makeTruthEntry({
+    p1: { lat: 32.66, lon: -114.61 }, p2: { lat: 32.62, lon: -114.05 },
+    distKm: 48.3, freqMHz: 7.3, bearing: 96.4, magBearing: 107,
+    takeoffDeg: 82, wireLabel: 'COPPER 14 AWG', zoneName: 'NVIS (80-500 km)',
+    antenna: { name: 'NVIS HORIZONTAL DIPOLE', key: 'nvis_dipole', apexFt: 6 },
+    freqCheck: { luf: 3.1, muf: 9.4, fot: 7.2, verdictLabel: 'GOOD' },
+  }, 'failed', 'Never heard them', new Date());
+  const s = e.setup;
+  assert.equal(s.antenna, 'NVIS HORIZONTAL DIPOLE');
+  assert.equal(s.antennaKey, 'nvis_dipole');
+  assert.equal(s.bearingDeg, 96.4);
+  assert.equal(s.magBearingDeg, 107);
+  assert.equal(s.takeoffDeg, 82);
+  assert.equal(s.wire, 'COPPER 14 AWG');
+  assert.equal(s.mode, 'NVIS (80-500 km)');
+});
+
+test('the report prints the build, the aim, and why it failed', function() {
+  const e = makeTruthEntry({
+    p1: { lat: 32.66, lon: -114.61 }, p2: { lat: 32.62, lon: -114.05 },
+    distKm: 48.3, freqMHz: 7.3, bearing: 96.4, magBearing: 107,
+    takeoffDeg: 82, wireLabel: 'COPPER 14 AWG', zoneName: 'NVIS (80-500 km)',
+    antenna: { name: 'NVIS HORIZONTAL DIPOLE', key: 'nvis_dipole', apexFt: 6 },
+    freqCheck: { luf: 3.1, muf: 9.4, fot: 7.2, verdictLabel: 'GOOD' },
+  }, 'failed', 'Never heard them', new Date());
+  const card = formatTruthReport([e], '1.53.0');
+  assert.match(card, /BUILT\s+NVIS HORIZONTAL DIPOLE/);
+  assert.match(card, /COPPER 14 AWG/);
+  assert.match(card, /AIMED\s+96° true \(107° mag\)/);
+  assert.match(card, /takeoff 82°/);
+  // A failure's note is labelled as the CAUSE, so the dashboard can pull it out.
+  assert.match(card, /WHY IT DIDN’T: Never heard them/);
+});
+
+test('a shot that worked keeps its note labelled as a note', function() {
+  const e = makeTruthEntry({ p1: { lat: 1, lon: 2 }, freqMHz: 7.3 },
+    'worked', 'clear copy both ways', new Date());
+  const card = formatTruthReport([e], '1.53.0');
+  assert.match(card, /NOTE: clear copy both ways/);
+  assert.doesNotMatch(card, /WHY IT DIDN’T/);
+});
+
+test('an entry from before the setup existed still formats', function() {
+  // Older entries carry no setup block; the report must not throw or print
+  // "undefined" at them.
+  const card = formatTruthReport([{
+    id: 'old', dtg: '011200Z JAN 26', outcome: 'worked',
+    from: { lat: 1, lon: 2 }, to: { lat: 3, lon: 4 }, freqMHz: 7.3,
+    predicted: { muf: 10, fot: 8, luf: 4, verdict: 'GOOD' },
+  }], '1.53.0');
+  assert.ok(card.indexOf('undefined') === -1, card);
+  assert.ok(card.indexOf('BUILT') === -1, 'no setup recorded, so no BUILT line');
+});

@@ -15,6 +15,7 @@ import {
   pathMidpoint,
   maxHopKm,
   interpolatePath, reflectionPoints,
+  terrainMaskAdvice, NVIS_MAX_KM,
 } from '../../src/physics/propagation.js';
 
 function approx(actual, expected, tol, msg) {
@@ -533,4 +534,41 @@ test('takeoff geometry still uses the per-hop distance', function() {
   const oneHop = calcTakeoffAngle(2000, 14, 360, null);
   const halfHop = calcTakeoffAngle(1000, 14, 360, null);
   assert.ok(halfHop.baseDeg > oneHop.baseDeg, 'a shorter hop must launch steeper');
+});
+
+// ── Terrain masking chooses the MODE, not just the angle (v1.53) ────────────
+// A ridge between two stations puts the far one in dead space for ground
+// wave — the shot does not weaken, it stops. Before this the app chose the
+// mode from distance alone, so a 48 km shot across 900 m of rock out of MCAS
+// Yuma was told "GROUND WAVE, keep the antenna low and horizontal": a
+// guaranteed no-comms, given as confident advice.
+
+test('a ridge between the stations calls for NVIS, not ground wave', function() {
+  const terrain = { nearObstacle: { name: 'Test Ridge', reliefM: 900, distKm: 28, subtendedDeg: 1.8 } };
+  const advice = terrainMaskAdvice(48, terrain);
+  assert.ok(advice, 'a 900 m ridge 28 km into a 48 km path must be flagged');
+  assert.equal(advice.recommend, 'nvis');
+  assert.equal(advice.name, 'Test Ridge');
+  // And the app's own zone function still says groundwave on distance alone —
+  // which is exactly why the terrain check has to exist.
+  assert.equal(propagationZone(48), 'groundwave');
+});
+
+test('an obstacle beyond the far station is not masking', function() {
+  // 28 km ridge on a 20 km path is behind the target, not between.
+  assert.equal(terrainMaskAdvice(20,
+    { nearObstacle: { name: 'R', reliefM: 900, distKm: 28, subtendedDeg: 1.8 } }), null);
+});
+
+test('NVIS is not offered when the path is too long for it to reach', function() {
+  // Beyond NVIS range the ridge is a real constraint, cleared by raising the
+  // angle — not by going vertical, which would simply fall short.
+  const terrain = { nearObstacle: { name: 'R', reliefM: 900, distKm: 28, subtendedDeg: 1.8 } };
+  assert.equal(terrainMaskAdvice(NVIS_MAX_KM + 1, terrain), null);
+  assert.ok(terrainMaskAdvice(NVIS_MAX_KM - 1, terrain), 'just inside NVIS range should still advise');
+});
+
+test('open ground is left alone', function() {
+  assert.equal(terrainMaskAdvice(48, { nearObstacle: null }), null);
+  assert.equal(terrainMaskAdvice(48, null), null);
 });

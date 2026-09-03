@@ -1169,8 +1169,15 @@ describe('field truth log (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
     await page.evaluate(() => [...document.querySelectorAll('button')]
       .find(b => /IT CLOSED/.test(b.textContent)).click());
     await page.waitForTimeout(250);
+    // IT DIDN'T now asks WHY before it records (v1.53) — a failure with no
+    // cause attached cannot tell a wrong prediction from a wrong antenna.
     await page.evaluate(() => [...document.querySelectorAll('button')]
       .find(b => /IT DIDN/.test(b.textContent)).click());
+    await page.waitForTimeout(250);
+    const asked = await page.evaluate(() => /WHY DIDN/.test(document.body.innerText));
+    assert.ok(asked, 'a failure must ask why before it is recorded');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'Never heard them').click());
     await page.waitForTimeout(250);
 
     const stored = await page.evaluate(() =>
@@ -1179,6 +1186,11 @@ describe('field truth log (v1.43)', { skip: SKIP, concurrency: 1 }, () => {
     assert.ok(stored.some(e => e.outcome === 'worked') && stored.some(e => e.outcome === 'failed'));
     assert.ok(stored[0].predicted && stored[0].predicted.verdict, 'prediction not captured');
     assert.ok(stored.some(e => e.note === 'inverted-V over water'), 'note not saved');
+    // The chosen cause is recorded, and so is the setup it was built with.
+    const failed = stored.find(e => e.outcome === 'failed');
+    assert.match(failed.note || '', /Never heard them/, 'the cause was not recorded');
+    assert.ok(failed.setup && failed.setup.antenna, 'the antenna built was not recorded');
+    assert.ok(typeof failed.setup.bearingDeg === 'number', 'the aim was not recorded');
 
     // Distinct ids (the collision class), and they survive a reload.
     assert.equal(new Set(stored.map(e => e.id)).size, 2);

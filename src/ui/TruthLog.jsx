@@ -31,6 +31,21 @@ var AUTHOR_CONTACT = '';
 // with the card. Keep this in step with buildSubmission's subject line.
 var FIELD_REPORT_TITLE_PREFIX = 'HFCALC field truth log';
 
+// One tap each, covering the causes that actually separate a model failure
+// from a build failure. Deliberately short — a list nobody scrolls is a list
+// nobody uses, and free text is still there underneath for the rest.
+var FAIL_REASONS = [
+  'Never heard them',
+  'Heard, too weak',
+  'Heavy noise / QRM',
+  'Jammed',
+  'Far end never up',
+  'Antenna problem',
+  'Radio / power problem',
+  'Wrong freq assigned',
+  'Not sure',
+];
+
 // Remembers whether the operator has been asked, so the card is offered once
 // rather than nagging on every open.
 var ASK_KEY = 'hfcalc_truth_ask_v1';
@@ -41,25 +56,73 @@ function saveAsk(v) {
   try { localStorage.setItem(ASK_KEY, v); } catch (e) { /* ignore */ }
 }
 
+// Reports that could not go out yet. The card is already saved on the device
+// (loadTruth/persistTruth), so nothing is ever lost — this only remembers
+// WHICH entries have been handed back, so a shot logged in a dead zone is
+// re-offered once there is signal instead of being silently forgotten. Same
+// idea as the space-weather cache: hold it, use it, refresh when you can.
+var SENT_KEY = 'hfcalc_truth_sent_v1';
+function loadSentIds() {
+  try {
+    var a = JSON.parse(localStorage.getItem(SENT_KEY) || '[]');
+    return Array.isArray(a) ? a.filter(function(x) { return typeof x === 'string'; }) : [];
+  } catch (e) { return []; }
+}
+function markSent(ids) {
+  try {
+    var have = loadSentIds();
+    var add = ids.filter(function(i) { return have.indexOf(i) === -1; });
+    if (add.length) localStorage.setItem(SENT_KEY, JSON.stringify(have.concat(add).slice(-500)));
+  } catch (e) { /* ignore */ }
+}
+
 export function TruthLog({ currentShot, appVersion }) {
   var [entries, setEntries] = useState(loadTruth);
   var [open, setOpen] = useState(false);
   var [note, setNote] = useState('');
+  var [whyOpen, setWhyOpen] = useState(false);
   var [flash, setFlash] = useState(null);
   var [persistFailed, setPersistFailed] = useState(false);
   // '' = never asked, 'never' = declined for good, 'later' = not this session.
   var [askState, setAskState] = useState(loadAsk);
   var [exact, setExact] = useState(false);
+  var [sentIds, setSentIds] = useState(loadSentIds);
+  var [online, setOnline] = useState(function() {
+    try { return typeof navigator === 'undefined' || navigator.onLine !== false; }
+    catch (e) { return true; }
+  });
+
+  // Come back to the operator when signal returns, rather than making them
+  // remember there was something waiting.
+  useEffect(function() {
+    function up() { setOnline(true); }
+    function down() { setOnline(false); }
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return function() {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
 
   // Persist as an effect of the list changing — never alongside a click
   // handler working from a stale snapshot (the saved-shots resurrection bug).
   useEffect(function() { setPersistFailed(!persistTruth(entries)); }, [entries]);
 
+  // Entries the author has not been handed yet.
+  var pending = entries.filter(function(e) { return sentIds.indexOf(e.id) === -1; });
+
   function say(msg) { setFlash(msg); setTimeout(function() { setFlash(null); }, 1800); }
 
-  function log(outcome) {
+  // A failure with no reason attached is nearly useless: "7.3 didn't close"
+  // could be the model, the antenna, the far end, or jamming, and those need
+  // different fixes. So IT DIDN'T asks why before it records — one tap on a
+  // cause, plus anything the operator wants to add.
+  function log(outcome, reason) {
     if (!currentShot) return;
-    var entry = makeTruthEntry(currentShot, outcome, note, new Date());
+    var full = [reason, note].filter(function(x) { return x && String(x).trim(); })
+      .join(' — ') || null;
+    var entry = makeTruthEntry(currentShot, outcome, full, new Date());
     // Decide the flash BEFORE the state update, from this render's list —
     // reading a variable assigned inside the updater races React's scheduling
     // (updaters can be deferred or re-run), and the old code only ever showed
@@ -67,6 +130,7 @@ export function TruthLog({ currentShot, appVersion }) {
     var dropped = entries.length >= TRUTH_MAX;
     setEntries(function(cur) { return [entry].concat(cur).slice(0, TRUTH_MAX); });
     setNote('');
+    setWhyOpen(false);
     setOpen(true);
     // "Not now" and "already sent" both mean "ask again when there is new
     // data" — a fresh shot is new data. "Don't ask" is permanent.
@@ -92,6 +156,9 @@ export function TruthLog({ currentShot, appVersion }) {
   function doSend() {
     if (!entries.length) return;
     var sub = buildSubmission(entries, appVersion, exact ? 'exact' : 'degree');
+    var ids = entries.map(function(e) { return e.id; });
+    markSent(ids);
+    setSentIds(loadSentIds());
     saveAsk('sent');
     setAskState('sent');
     try {
@@ -121,6 +188,9 @@ export function TruthLog({ currentShot, appVersion }) {
   function doPostToLog() {
     if (!entries.length) return;
     var sub = buildSubmission(entries, appVersion, exact ? 'exact' : 'degree');
+    var ids = entries.map(function(e) { return e.id; });
+    markSent(ids);
+    setSentIds(loadSentIds());
     saveAsk('sent');
     setAskState('sent');
     var url = 'https://github.com/Tzeke000/hfcal/issues/new'
@@ -171,20 +241,20 @@ export function TruthLog({ currentShot, appVersion }) {
           {/* Asked once, when there is actually something worth sending, and
               never again after an answer. A prompt that reappears on every
               open teaches the operator to dismiss it without reading. */}
-          {entries.length > 0 && askState !== 'never' && askState !== 'later' && askState !== 'sent' && (
+          {pending.length > 0 && askState !== 'never' && askState !== 'later' && (
             <div style={{ background: T.surfaceHi, border: '1px solid ' + T.borderHi, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px', marginBottom: 12 }}>
               <div style={{ color: T.accentText, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em', marginBottom: 4 }}>
                 SEND THIS BACK?
               </div>
               <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55 }}>
-                {'Send these ' + entries.length + ' result'
-                  + (entries.length === 1 ? '' : 's')
+                {'Send these ' + pending.length + ' result'
+                  + (pending.length === 1 ? '' : 's')
                   + ' to the author of this app, Cpl Angeles-Gonzalez, so the predictions can be measured against what actually happened? '
                   + 'Real shots are the only thing that can improve the model — VOACAP cannot provide them, because VOACAP is a model too.'}
               </div>
               <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 7 }}>
                 <strong style={{ color: T.textPrim }}>What goes:</strong>{' '}
-                {'frequency, distance, the MUF/FOT/LUF the app predicted, your power and month, the hour, the space weather at the time, whether it closed, and your note.'}
+                {'frequency, both grids, distance and bearing, the antenna you chose and where you pointed it, the takeoff angle and wire, the MUF/FOT/LUF the app predicted, your power and month, the hour, the space weather at the time, whether it closed, and — if it didn’t — why.'}
               </div>
               <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 4 }}>
                 <strong style={{ color: T.textPrim }}>Your grids:</strong>{' '}
@@ -199,13 +269,22 @@ export function TruthLog({ currentShot, appVersion }) {
               <div style={{ color: T.textDim, fontSize: '0.64rem', lineHeight: 1.45, marginTop: 6 }}>
                 {'Nothing is transmitted by the app. SEND opens your own share sheet or email draft; POST TO LOG opens a pre-filled report on the app’s GitHub (needs a GitHub account) where other operators can see it too. Either way you read the text and you press send.'}
               </div>
+              {!online && (
+                <div style={{ background: T.bg, border: '1px solid ' + T.borderHi, borderRadius: 5, padding: '8px 10px', marginTop: 8, color: T.textSec, fontSize: '0.7rem', lineHeight: 1.5 }}>
+                  <strong style={{ color: T.accentText }}>NO SIGNAL — HELD, NOT LOST.</strong>{' '}
+                  {'These ' + pending.length + ' result' + (pending.length === 1 ? ' is' : 's are')
+                    + ' saved on this device and will be offered again the moment you have a connection. '
+                    + 'SEND still works offline if your mail or messaging app queues drafts.'}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
                 <button onClick={doSend}
                   style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.accent, color: '#0e1409', border: 'none' }}>
                   SEND IT
                 </button>
-                <button onClick={doPostToLog}
-                  style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.surfaceHi, color: T.textPrim }}>
+                <button onClick={doPostToLog} disabled={!online}
+                  title={online ? '' : 'Needs a connection — the card is held on the device until you have one'}
+                  style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.surfaceHi, color: online ? T.textPrim : T.textDim, opacity: online ? 1 : 0.55, cursor: online ? 'pointer' : 'not-allowed' }}>
                   POST TO LOG
                 </button>
                 <button onClick={function() { saveAsk('later'); setAskState('later'); }}
@@ -238,12 +317,38 @@ export function TruthLog({ currentShot, appVersion }) {
                 maxLength={200}
                 style={{ width: '100%', padding: '8px 10px', background: T.bg, color: T.textPrim, border: '1px solid ' + T.border, borderRadius: 5, fontSize: '0.76rem', marginBottom: 8 }}
               />
+              {whyOpen && (
+                <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderRadius: 6, padding: '10px 11px', marginBottom: 10 }}>
+                  <div style={{ color: '#ff9b86', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 7 }}>
+                    WHY DIDN’T IT?
+                  </div>
+                  <div style={{ color: '#e0b5ab', fontSize: '0.7rem', lineHeight: 1.5, marginBottom: 8 }}>
+                    Tap the closest cause. This is the part that makes a failure
+                    worth anything — without it nobody can tell a wrong prediction
+                    from a wrong antenna.
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {FAIL_REASONS.map(function(r) {
+                      return (
+                        <button key={r} onClick={function() { log('failed', r); }}
+                          style={{ ...btn, background: T.bg, color: T.textPrim, borderColor: '#7a3428', padding: '8px 10px', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.02em' }}>
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button onClick={function() { setWhyOpen(false); }}
+                    style={{ ...btn, background: 'transparent', color: T.textDim, borderColor: T.border, marginTop: 8, width: '100%', padding: '7px 0', fontSize: '0.66rem' }}>
+                    CANCEL
+                  </button>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={function() { log('worked'); }}
                   style={{ ...btn, flex: 1, padding: '11px 0', background: T.accent, color: '#0e1409', border: 'none' }}>
                   ✓ IT CLOSED
                 </button>
-                <button onClick={function() { log('failed'); }}
+                <button onClick={function() { setWhyOpen(true); }}
                   style={{ ...btn, flex: 1, padding: '11px 0', background: '#3a1810', color: '#ff9b86', border: '1px solid #7a3428' }}>
                   ✕ IT DIDN’T
                 </button>

@@ -46,6 +46,22 @@ export function makeTruthEntry(shot, outcome, note, when) {
     to: shot.p2 ? { lat: shot.p2.lat, lon: shot.p2.lon } : null,
     distKm: (typeof shot.distKm === 'number') ? shot.distKm : null,
     freqMHz: (shot.freqMHz != null) ? shot.freqMHz : null,
+    // THE SETUP THE OPERATOR ACTUALLY BUILT. Without this a failed shot is
+    // unattributable: "7.3 MHz didn't close" could be the model being wrong,
+    // or a longwire pointed 40° off, or an NVIS dipole strung for a 3,000 km
+    // path. The prediction alone cannot tell those apart, and they need
+    // different fixes.
+    setup: {
+      bearingDeg: numOrNull(shot.bearing),
+      magBearingDeg: numOrNull(shot.magBearing),
+      antenna: (shot.antenna && shot.antenna.name) ? shot.antenna.name : null,
+      antennaKey: (shot.antenna && shot.antenna.key) ? shot.antenna.key : null,
+      takeoffDeg: numOrNull(shot.takeoffDeg),
+      apexFt: (shot.antenna && numOrNull(shot.antenna.apexFt) !== null)
+        ? shot.antenna.apexFt : null,
+      wire: shot.wireLabel || null,
+      mode: shot.zoneName || null,
+    },
     // The prediction, so reality can be scored against it later.
     predicted: {
       muf: numOrNull(fc.muf), fot: numOrNull(fc.fot), luf: numOrNull(fc.luf),
@@ -205,8 +221,20 @@ export function formatTruthReport(entries, appVersion) {
         + '  ' + (p.kp != null ? 'Kp ' + p.kp.toFixed(1) : 'Kp --')
         + (p.auroralDb30 ? '  (auroral ' + p.auroralDb30.toFixed(2) + ' dB @30MHz)' : ''));
     }
+    // What was actually built and where it was pointed. A failed shot with no
+    // setup recorded cannot be diagnosed.
+    var s = e.setup || {};
+    if (s.antenna || s.bearingDeg != null || s.wire || s.mode) {
+      L.push('   BUILT     ' + (s.antenna || 'antenna not recorded')
+        + (s.wire ? ' · ' + s.wire : '')
+        + (s.apexFt != null ? ' · apex ' + s.apexFt.toFixed(0) + ' ft' : ''));
+      L.push('   AIMED     ' + (s.bearingDeg != null ? s.bearingDeg.toFixed(0) + '° true' : 'bearing not recorded')
+        + (s.magBearingDeg != null ? ' (' + s.magBearingDeg.toFixed(0) + '° mag)' : '')
+        + (s.takeoffDeg != null ? ' · takeoff ' + s.takeoffDeg.toFixed(0) + '°' : '')
+        + (s.mode ? ' · ' + s.mode : ''));
+    }
     if (e.coordPrecision === 'degree') L.push('   GRIDS ROUNDED to whole degrees by the app');
-    if (e.note) L.push('   NOTE: ' + e.note);
+    if (e.note) L.push((e.outcome === 'worked' ? '   NOTE: ' : '   WHY IT DIDN’T: ') + e.note);
   });
 
   L.push('');

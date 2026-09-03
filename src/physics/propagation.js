@@ -119,6 +119,40 @@ export function propagationZone(distKm) {
   return 'longdx';
 }
 
+// The furthest NVIS can be made to reach. Beyond this a high angle simply
+// falls short and the ridge has to be cleared at a low angle instead.
+export const NVIS_MAX_KM = 500;
+
+// ── TERRAIN MASKING ───────────────────────────────────────────────────────────
+// Ground wave follows the surface, so a ridge between two stations puts the far
+// one in DEAD SPACE — the shot does not get weaker, it stops. The doctrinal
+// answer in complex terrain is NVIS: go nearly straight up, come nearly
+// straight down, and the ridge stops mattering.
+//
+// Without this the app gave the exactly wrong answer in the dangerous case: a
+// 48 km shot across the Gila Mountains out of MCAS Yuma was told "GROUND WAVE
+// — keep the antenna low and horizontal", which is a guaranteed no-comms
+// against 900 m of rock. Distance alone chose the mode; the rock in between
+// was never consulted.
+//
+// Returns null when nothing is in the way, or when the path is too long for
+// NVIS to be the answer (there the ridge is cleared by raising the angle —
+// see calcTakeoffAngle).
+export function terrainMaskAdvice(distKm, terrain) {
+  if (!terrain || !terrain.nearObstacle) return null;
+  if (!(distKm > 0) || distKm > NVIS_MAX_KM) return null;
+  var o = terrain.nearObstacle;
+  // Only call it masking when the obstacle is actually BETWEEN the stations.
+  if (o.distKm >= distKm) return null;
+  return {
+    name: o.name,
+    reliefM: o.reliefM,
+    distKm: o.distKm,
+    subtendedDeg: o.subtendedDeg,
+    recommend: 'nvis',
+  };
+}
+
 export function bearingToCardinal(b) {
   var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(b / 22.5) % 16];

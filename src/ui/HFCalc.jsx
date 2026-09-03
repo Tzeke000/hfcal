@@ -4,7 +4,7 @@ import {
   wavelength, toLengths, apexHeightPlan,
 } from "../physics/antennaMath.js";
 import {
-  geodesics, propagationZone, bearingToCardinal, HOP, calcHops,
+  geodesics, propagationZone, terrainMaskAdvice, bearingToCardinal, HOP, calcHops,
   pathMidpoint, reflectionPoints, groundWaveMultiplier,
 } from "../physics/propagation.js";
 import {
@@ -187,6 +187,8 @@ function extractCoordFromOCR(text) {
 function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
   var cardinal = bearingToCardinal(bearing);
   var zone = propagationZone(distKm);
+  var terrainMask = terrainMaskAdvice(distKm, terrain);
+  if (terrainMask && zone === 'groundwave') zone = 'nvis';
   var oceanFrac = terrain.oceanFrac || 0;
   var mountainFrac = terrain.mountainFrac || 0;
 
@@ -216,7 +218,15 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
     antennaType = 'NVIS horizontal dipole';
     whichWay = 'Wire orientation does not matter \u2014 NVIS is omnidirectional';
     physGeometry = 'Hang wire 3\u20136 ft above ground (0.05\u20130.15\u03bb). Signal fires straight up at ~80\u201390\u00b0.';
-    whyAngle = 'NVIS \u2014 signal goes nearly vertical, bounces off ionosphere. Low height is the requirement, not direction.';
+    whyAngle = terrainMask
+      ? 'NVIS \u2014 CHOSEN BECAUSE OF THE TERRAIN, not the distance. '
+        + terrainMask.name + ' rises ' + terrainMask.reliefM.toFixed(0)
+        + ' m above you ' + terrainMask.distKm.toFixed(0) + ' km along this path. '
+        + 'A ground wave does not get weaker against that \u2014 it stops, and the '
+        + 'far station sits in dead space behind it. NVIS goes nearly straight '
+        + 'up and comes nearly straight down, so the ridge stops mattering. '
+        + 'Keep the wire LOW (3\u20136 ft) \u2014 raising it here works against you.'
+      : 'NVIS \u2014 signal goes nearly vertical, bounces off ionosphere. Low height is the requirement, not direction.';
   } else {
     // Skywave \u2014 use takeoff angle geometry
     if (zone === 'singlehop' || zone === 'mediumdx') {
@@ -666,8 +676,13 @@ function LongwireGeoCalc({ wireLenMeters }) {
 
 // ── ANTENNA RECOMMENDATIONS ────────────────────────────────────────────────────
 
-function getAntennaRecommendations(distKm, freqMHz, vf) {
+function getAntennaRecommendations(distKm, freqMHz, vf, terrain) {
   var zone = propagationZone(distKm);
+  // A ridge between the stations puts the far end in dead space for ground
+  // wave. NVIS goes over it, so the mode is chosen by the rock as well as the
+  // distance — not by distance alone.
+  var mask = terrainMaskAdvice(distKm, terrain);
+  if (mask && zone === 'groundwave') zone = 'nvis';
   // Use the caller's effective velocity factor so the cut lengths quoted in
   // build steps match the wire-length tables shown on the same card.
   var wl = wavelength(freqMHz, vf === undefined ? 1 : vf);
@@ -2066,7 +2081,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  301 automated tests pin every formula so the physics cannot drift as the app changes, plus 50 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  309 automated tests pin every formula so the physics cannot drift as the app changes, plus 50 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3182,8 +3197,11 @@ export default function HFCalc() {
     var vf = computeVF(wireCore, effectiveGauge);
     var wl = wavelength(fMHz, vf);
     var lengths = { qw: toLengths(wl / 4), hw: toLengths(wl / 2), full: toLengths(wl) };
-    var antennaData = getAntennaRecommendations(geo.distKm, fMHz, vf);
+    // Terrain first: the antenna recommendation needs to know whether a ridge
+    // sits between the stations, because that changes the MODE, not just the
+    // angle (a ground-wave shot into dead space is no shot at all).
     var terrain = pathTerrainAnalysis(p1.lat, p1.lon, p2.lat, p2.lon, 32);
+    var antennaData = getAntennaRecommendations(geo.distKm, fMHz, vf, terrain);
     var hopsForDirective = calcHops(geo.distKm, fMHz, terrain);
     var directive = antennaDirective(geo.distKm, fMHz, geo.bearing, terrain, hopsForDirective);
     // Magnetic equivalents so the operator can dial the bearing straight into a

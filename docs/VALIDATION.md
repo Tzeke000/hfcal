@@ -3148,6 +3148,58 @@ Terrain has to come from an elevation dataset; the sources are listed in
 301 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 44 — Dead space, and the failure that explains itself (v1.53.0)
+
+**The mode was chosen by distance alone, and in the dangerous case that was
+wrong.** `propagationZone()` reads one number: under 80 km is ground wave.
+Ground wave follows the surface, so a ridge between two stations does not
+weaken it — it stops it, and the far station sits in dead space. Verified at
+v1.52: a 48 km shot out of MCAS Yuma across the Gila Mountains (917 m of
+relief, 28 km along the path) returned *"GROUND WAVE — keep the antenna low
+and horizontal."* That is a guaranteed no-comms, issued as confident advice.
+
+`terrainMaskAdvice()` now consults the rock as well as the distance. When a
+near obstacle sits **between** the stations and the path is within NVIS reach,
+the mode becomes NVIS and the card says why: which ridge, how much relief, how
+far along, and that a high angle goes over it while a low one does not. The
+guards matter as much as the rule —
+
+- an obstacle **beyond** the far station is not masking (28 km ridge on a
+  20 km path is behind the target);
+- past `NVIS_MAX_KM` (500 km) NVIS cannot reach, so the ridge is cleared by
+  raising the angle instead (Part 43) rather than by going vertical and
+  falling short;
+- open ground is left alone — the Yuma→valley shot 45 km west stays ground
+  wave.
+
+**A failure with no cause is nearly worthless.** "7.3 didn't close" can mean
+the model was wrong, the longwire was pointed 40° off, the far end never came
+up, or somebody was jamming. Those need different fixes and the prediction
+cannot separate them. IT DIDN'T now asks **why** before it records — nine
+one-tap causes plus free text — and the entry carries the setup that produced
+it: antenna type, true and magnetic bearing, takeoff angle, apex height, wire,
+and the propagation mode. The report labels a failure's note `WHY IT DIDN'T`
+rather than `NOTE`, so the dashboard can rank causes across every report
+without parsing prose. If one cause dominates, that is the thing to fix — and
+it says whether the fault is in the model or in the field kit.
+
+**Held, not lost.** Reports are queued the same way space weather is cached:
+the card is already persisted on the device, and a `hfcalc_truth_sent_v1`
+ledger records which entries have been handed back. A shot logged in a dead
+zone is re-offered the moment signal returns (`online`/`offline` events),
+POST TO LOG is disabled while offline rather than failing silently, and the
+prompt states plainly that nothing has been lost. Only entries not yet sent
+are counted, so the operator is never asked twice for the same shot.
+
+**A test caught the UX change, correctly.** The existing browser test clicked
+IT DIDN'T and expected an entry immediately; with the why-picker in front of
+it, that stopped being true and the suite went red. The test was right — the
+flow genuinely changed — so it was rewritten to walk the new path and now
+also asserts the recorded cause and the recorded setup.
+
+309 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

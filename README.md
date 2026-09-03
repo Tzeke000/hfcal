@@ -72,13 +72,14 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 - **Auroral absorption** — during a geomagnetic storm the app works out where the auroral oval has reached from the live Kp, checks it against every point your path crosses the absorbing layer, and raises the floor accordingly. A high-latitude circuit that is fine on a quiet day gets told it is closing, and told why.
 
 **The antenna**
+- **Terrain masking → NVIS** — if a ridge sits between you and the far station, the mode is chosen by the rock, not the distance. A ground wave doesn't get weaker against 900 m of mountain, it stops, and the far station sits in dead space; the app switches to NVIS, says which ridge and how far, and tells you to keep the wire low.
 - **Antenna selection** — recommends from 9 field-expedient types for the path: inverted-V, dipole, sloper, NVIS variants, EFHW, vertical, longwire, delta loop — each with pros/cons, deployment photos, and step-by-step build instructions.
 - **Wire physics** — 8 wire core types (bare/stranded/insulated copper, CCS, galvanized steel, stainless, iron, speaker wire) × AWG 10–24 plus custom. Velocity factor computed per combination, so the cut lengths match the wire actually in your hands.
 - **Optimal apex height** — computes the support height that puts the antenna's first lobe on your path's takeoff angle, checks it against what an inverted-V's legs can physically reach, and tells you when to just use the buildable maximum.
 
 **Field workflow**
 - **QR handoff** — show any plan as a QR code; another operator scans it phone-to-phone and their app opens pre-filled. No network, no typing grids.
-- **Field truth log** — one tap after a shot (closed / didn't) records the app's prediction beside reality, plus the space weather it was predicted under. The app then offers to send the card back so the model can be corrected against real paths: your grids are rounded to whole degrees by default (the resolution the model works at anyway), nothing is transmitted by the app itself — tapping send opens your own share sheet with the text in it — and DON'T ASK is remembered. **POST TO LOG** instead files the same card as a public report on this repo, where every operator can see what has and hasn't closed — those reports are tallied on the author's dashboard.
+- **Field truth log** — one tap after a shot (closed / didn't) records the app's prediction beside reality, plus the space weather it was predicted under, the antenna you built, where you pointed it, the takeoff angle and the wire. If it didn't close, it asks **why** — one tap on a cause, because a failure with no cause attached cannot tell a wrong prediction from a wrong antenna. Logged offline, held on the device, and offered again when signal returns. The app then offers to send the card back so the model can be corrected against real paths: your grids are rounded to whole degrees by default (the resolution the model works at anyway), nothing is transmitted by the app itself — tapping send opens your own share sheet with the text in it — and DON'T ASK is remembered. **POST TO LOG** instead files the same card as a public report on this repo, where every operator can see what has and hasn't closed — those reports are tallied on the author's dashboard.
 - **Red-light night mode** — a red-on-black theme that preserves dark adaptation.
 - **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator.
 - **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
@@ -103,9 +104,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 43 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 44 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**301 unit tests** pin the physics so it cannot drift. **50 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**309 unit tests** pin the physics so it cannot drift. **50 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -169,7 +170,7 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 301 unit tests over the physics, terrain and coordinate math
+npm test             # 309 unit tests over the physics, terrain and coordinate math
 npm run test:ui      # 50 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```

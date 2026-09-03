@@ -97,6 +97,7 @@
       <div class="tile"><div class="v rate" id="tr">–</div><div class="k">app was right</div></div>
     </div>
     <div id="rlist"></div>
+    <div id="why"></div>
   </div>
 </div>
 <script>
@@ -153,8 +154,14 @@
       didnt = (t.match(/\[DIDN[’']T\]/g) || []).length;
     }
     var h = t.match(/(\d+)\s*hit\s*\/\s*(\d+)\s*miss/);
+    // Why the failures failed — the part that says whether the model was
+    // wrong or the antenna was. Pulled out so it is readable without opening
+    // every card.
+    var why = [];
+    var re = /WHY IT DIDN[’']T:\s*(.+)/g, m2;
+    while ((m2 = re.exec(t)) !== null) why.push(m2[1].trim());
     return { worked: worked, didnt: didnt,
-             hits: h ? +h[1] : 0, misses: h ? +h[2] : 0 };
+             hits: h ? +h[1] : 0, misses: h ? +h[2] : 0, why: why };
   }
 
   function loadReports() {
@@ -165,17 +172,39 @@
           return !i.pull_request
             && String(i.title || '').toLowerCase().indexOf(TITLE_PREFIX) === 0;
         }) : [];
-        var W = 0, D = 0, H = 0, M = 0, out = '';
+        var W = 0, D = 0, H = 0, M = 0, out = '', allWhy = [];
         list.forEach(function (iss) {
           var t = tally(iss.body);
           W += t.worked; D += t.didnt; H += t.hits; M += t.misses;
+          allWhy = allWhy.concat(t.why);
           out += '<details><summary>' + esc(iss.title || ('report #' + iss.number))
               + ' <span style="color:#445a38">· #' + iss.number + ' · '
               + esc((iss.created_at || '').slice(0, 10)) + '</span></summary>'
+              + (t.why.length
+                  ? '<div style="margin-top:8px;font-size:0.7rem;color:#ff9b86">why it didn’t: '
+                    + t.why.map(esc).join(' · ') + '</div>'
+                  : '')
               + '<pre>' + esc(iss.body || '(empty)') + '</pre>'
               + '<a href="' + esc(iss.html_url) + '" target="_blank" rel="noopener"'
               + ' style="font-size:0.66rem">open on GitHub →</a></details>';
         });
+        // Rank the failure causes: if one keeps recurring, that is the thing
+        // to fix — and it says whether it is the model or the field kit.
+        var counts = {};
+        allWhy.forEach(function (w) {
+          var k = w.split('—')[0].trim();
+          counts[k] = (counts[k] || 0) + 1;
+        });
+        var ranked = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+        document.getElementById('why').innerHTML = ranked.length
+          ? '<div class="rhead" style="margin-top:16px"><h2>Why shots failed</h2></div>'
+            + ranked.map(function (k) {
+                return '<div style="display:flex;justify-content:space-between;'
+                  + 'padding:6px 2px;border-bottom:1px solid #16220f;font-size:0.76rem">'
+                  + '<span>' + esc(k) + '</span>'
+                  + '<span style="color:#ff9b86;font-weight:700">' + counts[k] + '</span></div>';
+              }).join('')
+          : '';
         document.getElementById('tw').textContent = W;
         document.getElementById('td').textContent = D;
         document.getElementById('tr').textContent =
