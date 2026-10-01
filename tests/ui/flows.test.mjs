@@ -12,6 +12,7 @@ import {
   browserAvailable, startServer, stopServer, launch, newPage,
   toggleCard, statVal, calculate, readFrequencies, BASE_URL,
 } from './harness.mjs';
+import { AUTO_REPORT_FIELDS } from '../../src/lib/autoReport.js';
 
 const unavailable = browserAvailable();
 const SKIP = unavailable ? `browser tests skipped: ${unavailable}` : false;
@@ -970,6 +971,177 @@ describe('install beacon', { skip: SKIP, concurrency: 1 }, () => {
     await page.waitForSelector('button:has-text("CALCULATE")');
     await page.waitForTimeout(600);
     assert.equal(hits.length, 1, 'a device that already counted itself pinged again');
+    await ctx.close();
+  });
+});
+
+describe('automatic field reports (v1.55)', { skip: SKIP, concurrency: 1 }, () => {
+  // Each logged shot as one spreadsheet row, delivered without a human in the
+  // loop. This is the ONE place the app sends operator-generated data on its
+  // own, so the test pins the line, not just the plumbing: nothing leaves
+  // before opt-in, no grid leaves by default, a delivered row is never sent
+  // twice, and a shot logged with no signal goes when signal returns.
+  // ?autoreport=test points the feature at a same-origin stub this test owns.
+  const id = (name) => 'entry.' + (1000 + AUTO_REPORT_FIELDS.indexOf(name));
+
+  async function armedPage(ctx, posts) {
+    const page = await ctx.newPage();
+    // The harness's newPage() attaches this collector; a page made straight
+    // from the context has none, and page.errors reads undefined — which is
+    // how the first run of these tests failed on their final assertion while
+    // every assertion about the feature itself had already passed. Same
+    // filter as harness.mjs: expected external failures only.
+    const errors = [];
+    page.on('pageerror', e => errors.push(String(e)));
+    page.on('console', m => {
+      if (m.type() !== 'error' && m.type() !== 'warning') return;
+      const t = m.text();
+      if (/ERR_TUNNEL|services\.swpc\.noaa\.gov|__agentproxy/.test(t)) return;
+      if (/Failed to load resource|net::ERR_/.test(t) && !/127\.0\.0\.1|localhost/.test(t)) return;
+      if (/File chooser dialog can only be shown with a user activation/.test(t)) return;
+      errors.push(`${m.type()}: ${t}`);
+    });
+    page.errors = errors;
+    await page.route('**/__autoreport-test', route => {
+      posts.push(new URLSearchParams(route.request().postData() || ''));
+      route.fulfill({ status: 200, body: '' });
+    });
+    await page.goto(BASE_URL + '?autoreport=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    return page;
+  }
+  async function logShot(page, outcome, cause) {
+    await page.evaluate((o) => [...document.querySelectorAll('button')]
+      .find(b => new RegExp(o).test(b.textContent)).click(), outcome === 'worked' ? 'IT CLOSED' : 'IT DIDN');
+    await page.waitForTimeout(200);
+    if (outcome !== 'worked') {
+      await page.evaluate((c) => [...document.querySelectorAll('button')]
+        .find(b => b.textContent.trim() === c).click(), cause);
+      await page.waitForTimeout(200);
+    }
+  }
+
+  test('nothing leaves before opt-in; after it, rows go with no grid', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const posts = [];
+    const page = await armedPage(ctx, posts);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await logShot(page, 'worked');
+    await logShot(page, 'failed', 'Jammed');
+    await page.waitForTimeout(600);
+
+    // The prompt is up, states the line, and NOTHING has been sent yet.
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.match(text, /SHARE RESULTS AUTOMATICALLY\?/);
+    assert.match(text, /What does NOT go:[\s\S]*your grids/i, 'the prompt must say grids stay home');
+    assert.equal(posts.length, 0, 'a row left the device before the operator opted in');
+
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /YES, SHARE/.test(b.textContent)).click());
+    await page.waitForFunction(() => /SHARING ON/.test(document.body.innerText), null, { timeout: 5000 });
+    await page.waitForTimeout(800);
+    assert.equal(posts.length, 2, 'both logged shots should go on opt-in, got ' + posts.length);
+
+    const outcomes = posts.map(b => b.get(id('outcome'))).sort();
+    assert.deepEqual(outcomes, ['failed', 'worked']);
+    const failed = posts.find(b => b.get(id('outcome')) === 'failed');
+    assert.equal(failed.get(id('cause')), 'Jammed', 'the cause must travel with a failure');
+    assert.ok(failed.get(id('freqMHz')), 'frequency must go');
+    assert.ok(failed.get(id('antenna')), 'the antenna built must go');
+    // THE LINE: no grid, a 5-degree band instead, and nothing coordinate-shaped.
+    for (const b of posts) {
+      assert.ok(!b.get(id('fromGrid')) && !b.get(id('toGrid')), 'a grid left the device by default');
+      assert.equal(b.get(id('gridPrecision')), 'none');
+      const band = Number(b.get(id('midGeomagBand')));
+      assert.ok(Number.isInteger(band) && band % 5 === 0, 'band should be a multiple of 5, got ' + band);
+      assert.doesNotMatch(b.toString(), /\d{2}\.\d{3,}/, 'a high-precision number (a coordinate?) is in the row');
+    }
+    const status = await page.evaluate(() => document.body.innerText);
+    assert.match(status, /SHARING ON · 2 shared/);
+    assert.deepEqual(page.errors, []);
+    await ctx.close();
+  });
+
+  test('a delivered row is never sent twice, and the decision survives a reload', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const posts = [];
+    let page = await armedPage(ctx, posts);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await logShot(page, 'worked');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /YES, SHARE/.test(b.textContent)).click());
+    await page.waitForTimeout(800);
+    assert.equal(posts.length, 1);
+
+    // Reload: opt-in and the sent ledger are on the device. One more shot
+    // must produce exactly one more row — not a re-send of the first.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    const t = await page.evaluate(() => document.body.innerText);
+    assert.match(t, /SHARING ON/, 'the opt-in must survive a reload');
+    assert.doesNotMatch(t, /SHARE RESULTS AUTOMATICALLY\?/, 'must not ask again once answered');
+    await logShot(page, 'failed', 'Heavy noise / QRM');
+    await page.waitForTimeout(800);
+    assert.equal(posts.length, 2, 'expected exactly one new row, got ' + (posts.length - 1));
+    assert.deepEqual(page.errors, []);
+    await ctx.close();
+  });
+
+  test('a shot logged with no signal is held, then goes when signal returns', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const posts = [];
+    const page = await armedPage(ctx, posts);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await logShot(page, 'worked');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /YES, SHARE/.test(b.textContent)).click());
+    await page.waitForTimeout(800);
+    assert.equal(posts.length, 1);
+
+    await ctx.setOffline(true);
+    await page.waitForTimeout(200);
+    await logShot(page, 'failed', 'Never heard them');
+    await page.waitForTimeout(800);
+    assert.equal(posts.length, 1, 'a row went out while offline');
+    const held = await page.evaluate(() => document.body.innerText);
+    assert.match(held, /held — no signal/, 'the card must say the row is held');
+
+    await ctx.setOffline(false);
+    await page.waitForFunction(() => /2 shared/.test(document.body.innerText), null, { timeout: 6000 });
+    assert.equal(posts.length, 2, 'the held row must go when signal returns');
+    assert.equal(posts[1].get(id('cause')), 'Never heard them');
+    assert.deepEqual(page.errors, []);
+    await ctx.close();
+  });
+
+  test('NEVER is remembered and the manual routes stay available', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const posts = [];
+    const page = await armedPage(ctx, posts);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await logShot(page, 'worked');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'NEVER').click());
+    await page.waitForTimeout(300);
+    let t = await page.evaluate(() => document.body.innerText);
+    assert.doesNotMatch(t, /SHARE RESULTS AUTOMATICALLY\?/);
+    assert.match(t, /SEND THIS BACK\?/, 'declining auto must fall back to the manual offer');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await logShot(page, 'worked');
+    await page.waitForTimeout(500);
+    t = await page.evaluate(() => document.body.innerText);
+    assert.doesNotMatch(t, /SHARE RESULTS AUTOMATICALLY\?/, 'NEVER must survive a reload');
+    assert.equal(posts.length, 0, 'NEVER means nothing is ever sent');
+    assert.deepEqual(page.errors, []);
     await ctx.close();
   });
 });

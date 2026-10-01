@@ -84,7 +84,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 - **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator.
 - **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
 
-**Privacy** — your coordinates never leave the device. The app stores your last position locally so it is there when you open it cold; an embedded host must be explicitly authorized (`?embed=1` **and** an on-screen operator approval) before it can read even that, and CLEAR SAVED DATA wipes it. The app's complete network footprint, stated in full: the NOAA space-weather fetch, the update check against its own site, and a **one-time anonymous install ping** on first launch — a bare fetch of a file from this repo with nothing attached, so the author can count installs. None of the three carry coordinates or any identifier, and all fail silently offline.
+**Privacy** — your coordinates never leave the device. The app stores your last position locally so it is there when you open it cold; an embedded host must be explicitly authorized (`?embed=1` **and** an on-screen operator approval) before it can read even that, and CLEAR SAVED DATA wipes it. The app's complete network footprint, stated in full: the NOAA space-weather fetch, the update check against its own site, and a **one-time anonymous install ping** on first launch — a bare fetch of a file from this repo with nothing attached, so the author can count installs. None of the three carry coordinates or any identifier, and all fail silently offline. A fourth exists only if you **opt in** from the Field Truth Log once the author's results form is live: one row per logged shot — frequency, distance, bearing, antenna, prediction, space weather, outcome and cause — to a spreadsheet, with **no grids** unless you turn them on; it carries the path's geomagnetic-latitude band in 5° steps, a region rather than a place.
 
 ---
 
@@ -104,9 +104,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 45 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 46 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**314 unit tests** pin the physics so it cannot drift. **50 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**324 unit tests** pin the physics so it cannot drift. **54 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -163,15 +163,15 @@ and the evidence supporting it.
 - React 18 + Vite 5 + Capacitor 6 (Android/iOS) + Tauri 1.6 (Windows) + vite-plugin-pwa
 - **Layout** — `src/physics` (the model, VOACAP-validated), `src/data` (generated tables, never hand-edited), `src/lib` (coordinates, comm cards, space weather), `src/ui` (React), `tests/unit` + `tests/ui`, `scripts/validation/build` (generates the tables) and `scripts/validation/studies` (measures against VOACAP). Each folder has a README.
 - Physical constants live in exactly one place (`src/physics/propagation.js`); the validation studies run through a Python mirror that CI checks against the JavaScript to 1e-9 on every push
-- Everything ships as local assets — no CDNs, no analytics service. The full network footprint is the three fail-silent fetches listed under Privacy above (space weather, update check, one-time install ping)
+- Everything ships as local assets — no CDNs, no analytics service. The full network footprint is the fetches listed under Privacy above (space weather, update check, one-time install ping, and opt-in field reports)
 
 ```bash
 npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 314 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 50 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm test             # 324 unit tests over the physics, terrain and coordinate math
+npm run test:ui      # 54 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 

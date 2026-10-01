@@ -82,7 +82,10 @@ coordinates and a frequency into a complete, buildable antenna solution:
   app's own site, and a one-time anonymous install ping on first launch (a
   bare fetch of a file from the app's own repository, nothing attached).
   None carry coordinates or any identifier; in airplane mode nothing
-  transmits and everything works.
+  transmits and everything works. A fourth, opt-in only: one anonymous row
+  per logged field shot to the author's results spreadsheet, with no grids
+  unless the operator turns them on, so the model can be corrected against
+  real paths.
 - **Field-expedient first.** Models the wire you actually have, not the
   antenna you wish you had.
 - **Teaches while it calculates.** Formulas are exposed, not hidden —

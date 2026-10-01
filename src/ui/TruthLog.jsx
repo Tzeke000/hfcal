@@ -8,13 +8,16 @@
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { T } from './theme.js';
 import { exportText } from './SavedShots.jsx';
 import {
   makeTruthEntry, loadTruth, persistTruth, scoreEntry,
   formatTruthReport, truthFilename, TRUTH_MAX, buildSubmission,
 } from '../lib/truthLog.js';
+import {
+  getAutoReportConfig, isAutoReportConfigured, flushAutoReports, loadAutoSent,
+} from '../lib/autoReport.js';
 
 // Where a card goes when the operator says yes. EMPTY BY DESIGN: with no
 // address set, SEND opens the device's own share sheet and the operator picks
@@ -76,6 +79,17 @@ function markSent(ids) {
   } catch (e) { /* ignore */ }
 }
 
+// Automatic reporting (v1.55): each logged shot goes as one row to the
+// author's results spreadsheet — see src/lib/autoReport.js for the line it
+// draws. '' = not yet asked, 'yes' = opted in, 'never' = declined. One
+// decision per device; the operator can change it from the card any time.
+var AUTO_KEY = 'hfcalc_truth_auto_v1';
+var AUTO_GRIDS_KEY = 'hfcalc_truth_auto_grids_v1';   // 'none' | 'degree' | 'exact'
+function loadAuto() { try { return localStorage.getItem(AUTO_KEY) || ''; } catch (e) { return ''; } }
+function saveAuto(v) { try { localStorage.setItem(AUTO_KEY, v); } catch (e) { /* ignore */ } }
+function loadAutoGrids() { try { return localStorage.getItem(AUTO_GRIDS_KEY) || 'none'; } catch (e) { return 'none'; } }
+function saveAutoGrids(v) { try { localStorage.setItem(AUTO_GRIDS_KEY, v); } catch (e) { /* ignore */ } }
+
 export function TruthLog({ currentShot, appVersion }) {
   var [entries, setEntries] = useState(loadTruth);
   var [open, setOpen] = useState(false);
@@ -86,6 +100,12 @@ export function TruthLog({ currentShot, appVersion }) {
   // '' = never asked, 'never' = declined for good, 'later' = not this session.
   var [askState, setAskState] = useState(loadAsk);
   var [exact, setExact] = useState(false);
+  var autoConfigured = isAutoReportConfigured(getAutoReportConfig());
+  var [auto, setAuto] = useState(loadAuto);
+  var [autoGrids, setAutoGrids] = useState(loadAutoGrids);
+  var [autoSent, setAutoSent] = useState(loadAutoSent);
+  var [autoLater, setAutoLater] = useState(false);   // NOT NOW, this session only
+  var autoTriedRef = useRef('');
   var [sentIds, setSentIds] = useState(loadSentIds);
   var [online, setOnline] = useState(function() {
     try { return typeof navigator === 'undefined' || navigator.onLine !== false; }
@@ -111,6 +131,30 @@ export function TruthLog({ currentShot, appVersion }) {
 
   // Entries the author has not been handed yet.
   var pending = entries.filter(function(e) { return sentIds.indexOf(e.id) === -1; });
+  var autoPending = (autoConfigured && auto === 'yes')
+    ? entries.filter(function(e) { return autoSent.indexOf(e.id) === -1; }) : [];
+  var autoShared = entries.filter(function(e) { return autoSent.indexOf(e.id) !== -1; }).length;
+
+  // Deliver whatever has not gone yet, whenever there is something to deliver
+  // and a way to deliver it: a new shot, signal returning, or opting in.
+  useEffect(function() {
+    var cfg = getAutoReportConfig();
+    if (!isAutoReportConfigured(cfg) || auto !== 'yes' || !online) return;
+    if (!entries.some(function(e) { return autoSent.indexOf(e.id) === -1; })) return;
+    // Try each distinct situation once. navigator.onLine can read true with
+    // nothing reachable (Part 39); without this a failed flush would retry in
+    // a tight loop. A new shot or a real online event changes the key.
+    var key = entries.length + '|' + online + '|' + autoGrids;
+    if (autoTriedRef.current === key) return;
+    autoTriedRef.current = key;
+    var alive = true;
+    flushAutoReports(entries, { cfg: cfg, grids: autoGrids }).then(function(r) {
+      setAutoSent(loadAutoSent());               // the ledger is the truth, always refresh it
+      if (r.failed === 0) autoTriedRef.current = '';
+      if (alive && r.sent) { setFlash(r.sent + ' SHARED'); setTimeout(function() { setFlash(null); }, 1800); }
+    });
+    return function() { alive = false; };
+  }, [entries, online, auto, autoGrids, autoSent]);
 
   function say(msg) { setFlash(msg); setTimeout(function() { setFlash(null); }, 1800); }
 
@@ -241,7 +285,62 @@ export function TruthLog({ currentShot, appVersion }) {
           {/* Asked once, when there is actually something worth sending, and
               never again after an answer. A prompt that reappears on every
               open teaches the operator to dismiss it without reading. */}
-          {pending.length > 0 && askState !== 'never' && askState !== 'later' && (
+          {autoConfigured && auto === '' && !autoLater && entries.length > 0 && (
+            <div style={{ background: T.surfaceHi, border: '1px solid ' + T.borderHi, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px', marginBottom: 12 }}>
+              <div style={{ color: T.accentText, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em', marginBottom: 4 }}>
+                SHARE RESULTS AUTOMATICALLY?
+              </div>
+              <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55 }}>
+                {'Each shot you log — closed or didn’t, and why — goes as one row to a spreadsheet the author of this app, Cpl Angeles-Gonzalez, reads, so it can be fixed where it is wrong. No account, nothing to type, nothing identifying. Real shots are the only thing that can improve the model.'}
+              </div>
+              <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 7 }}>
+                <strong style={{ color: T.textPrim }}>What goes:</strong>{' '}
+                {'frequency, distance and bearing, the antenna, aim and takeoff angle, the MUF/FOT/LUF the app predicted, power, month, hour, the space weather at the time, whether it closed, and — if it didn’t — why.'}
+              </div>
+              <div style={{ color: T.textSec, fontSize: '0.72rem', lineHeight: 1.55, marginTop: 4 }}>
+                <strong style={{ color: T.textPrim }}>What does NOT go:</strong>{' '}
+                {'your grids. The row carries the path’s geomagnetic-latitude band in 5° steps — a region, not a place. You can turn grids on below; the app will not do it for you.'}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 7, cursor: 'pointer' }}>
+                <input type="checkbox" checked={autoGrids !== 'none'}
+                  onChange={function(e) { var v = e.target.checked ? 'degree' : 'none'; saveAutoGrids(v); setAutoGrids(v); }} />
+                <span style={{ color: T.textMute, fontSize: '0.7rem' }}>Include grids, rounded to whole degrees (~60 NM)</span>
+              </label>
+              <div style={{ color: T.textDim, fontSize: '0.64rem', lineHeight: 1.45, marginTop: 6 }}>
+                {'Sent silently when you have signal; held on this device when you don’t. One decision per device — change it from this card any time.'}
+              </div>
+              <div style={{ display: 'flex', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
+                <button onClick={function() { saveAuto('yes'); setAuto('yes'); saveAsk('sent'); setAskState('sent'); }}
+                  style={{ ...btn, flex: 1, minWidth: 120, padding: '10px 0', background: T.accent, color: '#0e1409', border: 'none' }}>
+                  YES, SHARE
+                </button>
+                <button onClick={function() { setAutoLater(true); }}
+                  style={{ ...btn, flex: 1, minWidth: 90, padding: '10px 0', background: T.bg, color: T.textPrim }}>
+                  NOT NOW
+                </button>
+                <button onClick={function() { saveAuto('never'); setAuto('never'); }}
+                  style={{ ...btn, flex: 1, minWidth: 90, padding: '10px 0', background: T.bg, color: T.textDim }}>
+                  NEVER
+                </button>
+              </div>
+            </div>
+          )}
+
+          {autoConfigured && auto === 'yes' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '7px 10px', marginBottom: 10 }}>
+              <span style={{ color: T.textMute, fontSize: '0.68rem' }}>
+                {'SHARING ON · ' + autoShared + ' shared'
+                  + (autoPending.length ? ' · ' + autoPending.length + (online ? ' sending…' : ' held — no signal') : '')
+                  + (autoGrids !== 'none' ? ' · grids ' + autoGrids : ' · no grids')}
+              </span>
+              <button onClick={function() { saveAuto(''); setAuto(''); setAutoLater(false); }}
+                style={{ ...btn, background: 'transparent', color: T.textDim, borderColor: T.border, padding: '4px 9px', fontSize: '0.62rem' }}>
+                CHANGE
+              </button>
+            </div>
+          )}
+
+          {!(autoConfigured && auto === 'yes') && pending.length > 0 && askState !== 'never' && askState !== 'later' && (
             <div style={{ background: T.surfaceHi, border: '1px solid ' + T.borderHi, borderLeft: '3px solid ' + T.accent, borderRadius: 6, padding: '11px 13px', marginBottom: 12 }}>
               <div style={{ color: T.accentText, fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.06em', marginBottom: 4 }}>
                 SEND THIS BACK?

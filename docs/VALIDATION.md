@@ -3256,6 +3256,75 @@ is guessing rather than letting them assume it is not.
 314 unit tests, 50 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 46 — The truth log stops needing a human to carry it (v1.55.0)
+
+The operator asked the right question: *"Why do they have to send it to an
+email address? It can't get sent to a spreadsheet, then you or I look at it
+and graph where the app needs to be better. We don't need to know who it's
+from, just what the problem was."*
+
+He was right, and the email design was wrong in a way worth naming. It had
+been chosen to protect the app's "nothing transmitted by the app" promise,
+and in doing so it made a human the transport: an operator tapping SEND got
+a share sheet or a blank mail draft and had to know an address nobody had
+given them. A card with no destination is a card that never arrives. The
+field data this whole feature exists for was being lost at the last step.
+
+**What replaces it.** Each logged shot goes as one row to a Google Form the
+author owns; responses land in the linked Sheet, where they can be charted
+and — through the Drive connector — read back by the author's assistant
+directly. No account on the operator's side, no address, no typing. Offline
+shots queue on the device and go when signal returns, the same hold-don't-
+lose pattern as the space-weather cache, with a per-device ledger so a
+delivered row is never sent twice.
+
+**The line it draws, and why it is drawn there.** This is the one place the
+app sends operator-generated data without a human pressing send, on a USMC
+field tool. So:
+
+- **Opt-in, once per device.** Nothing leaves until the operator says yes.
+  NEVER is remembered, and the manual SEND / POST TO LOG routes stay
+  available to anyone who declines.
+- **No grids go by default.** "Who" and "where" are different things — the
+  operator waived the first, not the second, and a grid rounded to a degree
+  still says where a unit was operating. What goes instead is distance,
+  bearing and the great-circle midpoint's **geomagnetic-latitude band in 5°
+  steps**: enough for the model's latitude dependence to be checked, and a
+  region rather than a place. Grids are a toggle the operator turns on; the
+  app will not.
+- **Disclosed.** The About screen's network-footprint statement names the
+  fourth fetch — but only once the Form is live, because the statement says
+  "in full" and an inert feature is not a fetch. The README and capability
+  brief name it as opt-in.
+
+**Pinned by test.** The browser suite drives the real card against a stubbed
+same-origin endpoint (`?autoreport=test`): nothing leaves before opt-in;
+after it, rows go with the cause attached and **no grid field populated**,
+the latitude band a multiple of five, and nothing coordinate-shaped in the
+body; a delivered row is never re-sent across a reload; a shot logged
+offline is reported as held and goes the moment signal returns; NEVER
+survives a reload and the manual offer reappears. Unit tests pin the row
+itself, the oldest-first queue, the stop-on-first-failure retry, and that
+the production endpoint must be https.
+
+**Two test defects found on the way, recorded because they are the kind
+this document is for.** (1) A storage stub torn down in `finally` the
+instant an async callback returned its promise, so the queue under test ran
+against no storage and the ledger read back empty — the code was right, the
+harness was wrong; now awaited. (2) The https-only guard, correct for
+production, refused the suite's http stub, so the card quietly fell back to
+the manual prompt and all four new tests failed together; admitted now only
+by an explicit marker the URL flag sets, with a unit test asserting plain
+http is still refused.
+
+**Status.** Shipped inert: the Form does not exist yet, so nothing is sent
+and nothing is disclosed as sent. Activation is the Form's action URL and
+its field ids in `src/lib/autoReport.js` — a two-line change behind a test
+suite that already proves the rest.
+
+324 unit tests, 54 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
