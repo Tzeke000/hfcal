@@ -78,6 +78,17 @@ export default defineConfig({
         // app silently falls back to the less accurate model when offline,
         // which is exactly when it matters most.
         globPatterns: ['**/*.{js,css,html,png,jpg,svg,ico,woff2,wasm,gz,traineddata,bin}'],
+        // Fine terrain (v1.57): the Americas chunks are precached with the app
+        // so they work with no signal. The rest of the world is NOT — shipping
+        // every continent to every phone would multiply the install size for
+        // terrain most operators never touch. Those chunks are cached the
+        // first time a calculation fetches them and kept from then on.
+        globIgnores: ['terrain/world/**'],
+        runtimeCaching: [{
+          urlPattern: /\/terrain\/world\/[A-Z0-9]+\.bin$/,
+          handler: 'CacheFirst',
+          options: { cacheName: 'hfcalc-terrain-world', expiration: { maxEntries: 600 } },
+        }],
       },
     }),
   ],

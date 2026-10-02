@@ -1171,6 +1171,21 @@ describe('real terrain (v1.56)', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  test('in the Americas the detailed (~4 km) terrain is fetched and used', async () => {
+    // The fine chunk for the station's area must be requested, and the card
+    // must say the answer was made at ~4 km, not the coarse grid's ~28.
+    const page = await newPage(browser);
+    const text = await shot(page, '38.0000, -98.0000', '38.0000, -97.5000');
+    await page.waitForFunction(() => performance.getEntriesByType('resource')
+      .some(r => /terrain\/americas\/N30W100\.bin/.test(r.name)), null, { timeout: 10000 });
+    await page.waitForTimeout(700);
+    const after = await page.evaluate(() => document.body.innerText);
+    assert.match(after, /data resolution ~4 km/, 'the answer must come from the fine chunk');
+    void text;
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
   test('a short shot from MCAS Yuma across the Gila ridge goes NVIS on real terrain', async () => {
     const page = await newPage(browser);
     const text = await shot(page, '32.6566, -114.6060', '32.6200, -114.0500');

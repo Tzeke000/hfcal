@@ -3408,6 +3408,67 @@ only err high, the safe side for a clearance. Ice sheets fall back to boxes.
 339 unit tests, 56 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 48 — Detailed terrain: ~3.7 km, the Americas carried, the world in chunks (v1.57.0)
+
+The operator looked at the terrain and said what the numbers already showed:
+*"the map you're marking is pretty coarse — let's make it pretty detailed ...
+definitely good for all of North America and South America, take the world
+in chunks."* The ~28 km grid of Part 47 ended the hand-drawn box defects, but
+its cells were wider than the ridges that decide a short shot, and the
+horizon scan stepped every 4 km across cells seven times that size.
+
+**The layer.** `build_terrain_chunks.py` cuts the world into 10×10-degree
+chunks at 2 arc-minutes (~3.7 km — matched to the scan's 4 km step), from the
+same AWS Terrain Tiles source at zoom 8 (~0.6 km pixels) so a cell's MAX is a
+real crest. Two layers per cell (land MEAN, cell MAX), the same byte encoding
+as the world grid. Chunks with no land, or wholly on an ice sheet, are not
+written. **369 chunks, 27.2 MB.**
+
+- **All of North and South America — 136 chunks, 8.7 MB — ship inside the
+  app** and work with no signal: Alaska to Tierra del Fuego, Central America,
+  the Caribbean, Hawaii. A test walks every 10-degree block west of 30° W and
+  fails if any holding land lacks a precached chunk.
+- **The rest of the world (233 chunks)** is fetched the first time a
+  calculation needs it and kept on the phone after (service-worker
+  CacheFirst). Not precached: shipping every continent to every phone would
+  triple the install for terrain most operators never touch. The ~28 km world
+  grid stays underneath everywhere, so nothing is ever without terrain.
+- **Detail decides heights; the coarse grid still decides KIND.** "Is this a
+  mountain range" is regional, and a 3.7 km cell is too small to answer it;
+  ridge heights, station heights and the horizon scan use the finest layer
+  loaded.
+- **The app fetches what the path needs** — both ends' 200 km horizons and the
+  path samples, a handful of chunks even for a 12,000 km shot — and
+  recomputes the open result when they land. The card states the resolution
+  its answer was made at (~4 km or ~28 km).
+
+**What the detail changed, measured.** Station heights: MCAGCC Twentynine
+Palms mainside 920 → 640 m (real ~610), Camp Pendleton mainside 250 → 70 m —
+the coarse grid had averaged bases in with the mountains beside them. The
+Gila ridge, shot northeast from MCAS Yuma: "720 m up at 12 km" on the coarse
+grid (the nearest edge of the cell holding the crest, as Part 47 stated) →
+the terrain the beam actually crosses on the fine data. And the 16-site audit
+got more *right*, not only finer: Kaneohe Bay, flagged "broken ground" at
+28 km because the Ko'olau cliffs shared its cell, now correctly reads CLEAR
+for a shot east over open water — the cliffs are behind it, to the west.
+
+**The gates, again doing their job.** Summits read 95–99% of published
+heights (Whitney 4,340 / 4,421 m, Aconcagua 6,800 / 6,961, Orizaba 5,480 /
+5,636, Everest 8,540 / 8,849); Okinawa's Yanbaru 480 / 503 m; Seoraksan
+1,700 / 1,708. The first Americas run refused to write its manifest: the Gila
+ridge read 860 m against a floor of 880. The floor was a guess; narrow
+ridgelines read ~85–90% at 0.6 km source pixels where broad massifs read
+95%+, and that shortfall sits inside the +2° safety margin the clearance
+adds. The floor was moved with that reason written beside it — the data was
+not.
+
+**Costs, stated.** A fresh install downloads ~18 MB instead of ~9, nearly all
+of it the Americas terrain, once. The repository grows by ~27 MB of
+generated binaries, which regenerate byte-identically from the script.
+
+347 unit tests, 57 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

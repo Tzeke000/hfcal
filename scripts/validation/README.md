@@ -41,7 +41,9 @@ elevation dataset.
 **Done (v1.56):** `build/build_elevation_grid.py` builds `public/elevation-grid.bin`
 from AWS Terrain Tiles (SRTM / GMTED2010 / ETOPO1 and others; attribution in
 `docs/validation/ELEVATION-ATTRIBUTION.md`), the way `build_land_mask.py`
-replaced the hand-drawn ocean boxes (VALIDATION Part 35). The boxes in
+replaced the hand-drawn ocean boxes (VALIDATION Part 35), and
+`build/build_terrain_chunks.py` adds the ~3.7 km detail layer in 10-degree
+chunks under `public/terrain/` (Part 48). The boxes in
 `src/physics/terrain.js` now only NAME ranges and serve as the offline
 fallback; real terrain gates every one of them. For finer local work the
 sources below still apply. Sources, best first:

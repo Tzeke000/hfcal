@@ -18,9 +18,20 @@
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
 
+import { CHUNKS, CHUNK_DEG, CHUNK_CELLS } from './terrainChunks.js';
+
 const GRID_URL = 'elevation-grid.bin';
 
 var MEAN = null, MAX = null, META = null;
+
+// ── FINE LAYER (v1.57) ────────────────────────────────────────────────────────
+// 2-arc-minute (~3.7 km) chunks, 10x10 degrees each, built by
+// scripts/validation/build/build_terrain_chunks.py. The coarse grid above is
+// ~28 km — coarser than the ridges that decide a short shot. Where a fine chunk
+// is loaded it answers; everywhere else the coarse grid does. Americas chunks
+// ship inside the app; the rest arrive the first time a calculation needs them.
+var FINE = {};              // chunk id -> { lat0, lon0, mean, max }
+var FINE_PENDING = {};      // chunk id -> Promise
 
 // Byte -> metres. Keep in step with encode_elev() in the build script.
 export function decodeElev(v) {
@@ -82,8 +93,17 @@ export function loadElevationGrid(base) {
     .catch(function() { return false; });
 }
 
-// Cell index for a point; longitude wraps, latitude clamps.
+// Identity of the cell answering for a point — a fine key where a chunk is
+// loaded, the coarse index otherwise, -1 with no data. Only ever compared for
+// equality ("is this sample in the station's own cell?").
 export function elevCell(lat, lon) {
+  var f = fineCell(lat, lon);
+  if (f) return f.key;
+  return coarseCell(lat, lon);
+}
+
+// Coarse cell index; longitude wraps, latitude clamps.
+function coarseCell(lat, lon) {
   if (!META || typeof lat !== 'number' || typeof lon !== 'number'
       || !isFinite(lat) || !isFinite(lon)) return -1;
   var r = Math.floor((lat - META.lat0) / META.step);
@@ -109,14 +129,117 @@ export function onIceSheet(lat, lon) {
   return false;
 }
 
-// Metres, or null when the grid is not loaded or has no trustworthy value.
-export function elevMean(lat, lon) {
-  var i = elevCell(lat, lon);
+// ── the coarse grid alone ─────────────────────────────────────────────────────
+// What KIND of ground a place is (a range, a plateau, a plain) is a regional
+// question, and the terrain classifier keeps asking it of the ~28 km grid even
+// where fine data exists — a 3.7 km cell is too small to say "mountain range".
+export function coarseMean(lat, lon) {
+  var i = coarseCell(lat, lon);
   if (i < 0 || onIceSheet(lat, lon)) return null;
   return decodeElev(MEAN[i]);
 }
-export function elevMax(lat, lon) {
-  var i = elevCell(lat, lon);
+export function coarseMax(lat, lon) {
+  var i = coarseCell(lat, lon);
   if (i < 0 || onIceSheet(lat, lon)) return null;
   return decodeElev(MAX[i]);
+}
+
+// ── fine chunks ───────────────────────────────────────────────────────────────
+export function chunkIdFor(lat, lon) {
+  if (typeof lat !== 'number' || typeof lon !== 'number' || !isFinite(lat) || !isFinite(lon)) return null;
+  lon = ((((lon + 180) % 360) + 360) % 360) - 180;
+  var lat0 = Math.floor(lat / CHUNK_DEG) * CHUNK_DEG;
+  var lon0 = Math.floor(lon / CHUNK_DEG) * CHUNK_DEG;
+  var pad = function(v, n) { v = String(Math.abs(v)); while (v.length < n) v = '0' + v; return v; };
+  return (lat0 >= 0 ? 'N' : 'S') + pad(lat0, 2) + (lon0 >= 0 ? 'E' : 'W') + pad(lon0, 3);
+}
+
+export function chunkRegion(id) { return CHUNKS[id] || null; }
+
+// Header: 'HFC1', int16 lat0, int16 lon0, uint16 nLat, uint16 nLon, float32
+// step; then two layers, each uint32 length + zero-run-length body.
+export function parseChunk(buffer) {
+  try {
+    var dv = new DataView(buffer);
+    if (dv.getUint8(0) !== 0x48 || dv.getUint8(1) !== 0x46
+        || dv.getUint8(2) !== 0x43 || dv.getUint8(3) !== 0x31) return null;
+    var lat0 = dv.getInt16(4, true), lon0 = dv.getInt16(6, true);
+    var nLat = dv.getUint16(8, true), nLon = dv.getUint16(10, true);
+    var o = 16, n = nLat * nLon;
+    var lenA = dv.getUint32(o, true); o += 4;
+    var mean = unRle(new Uint8Array(buffer, o, lenA), n); o += lenA;
+    var lenB = dv.getUint32(o, true); o += 4;
+    var max = unRle(new Uint8Array(buffer, o, lenB), n); o += lenB;
+    if (!mean || !max || o !== buffer.byteLength || nLat !== CHUNK_CELLS || nLon !== CHUNK_CELLS) return null;
+    return { lat0: lat0, lon0: lon0, mean: mean, max: max };
+  } catch (e) { return null; }
+}
+
+export function installChunk(id, parsed) {
+  if (!parsed) return false;
+  FINE[id] = parsed;
+  return true;
+}
+export function uninstallChunks() { FINE = {}; FINE_PENDING = {}; }
+export function chunkLoaded(id) { return !!FINE[id]; }
+
+// Load every listed chunk the given points fall in. Resolves to the number of
+// chunks NEWLY installed (0 when everything was already there, or offline).
+export function ensureChunks(points, base) {
+  var ids = {};
+  for (var i = 0; i < points.length; i++) {
+    var id = chunkIdFor(points[i][0], points[i][1]);
+    if (id && CHUNKS[id] && !FINE[id]) ids[id] = true;
+  }
+  var list = Object.keys(ids);
+  if (!list.length) return Promise.resolve(0);
+  return Promise.all(list.map(function(id) {
+    if (!FINE_PENDING[id]) {
+      FINE_PENDING[id] = fetch((base || '') + 'terrain/' + CHUNKS[id] + '/' + id + '.bin')
+        .then(function(r) { return r.ok ? r.arrayBuffer() : null; })
+        .then(function(buf) { return buf ? installChunk(id, parseChunk(buf)) : false; })
+        .catch(function() { return false; })
+        .then(function(ok) { if (!ok) delete FINE_PENDING[id]; return ok; });
+    }
+    return FINE_PENDING[id];
+  })).then(function(r) { return r.filter(Boolean).length; });
+}
+
+function fineCell(lat, lon) {
+  var id = chunkIdFor(lat, lon);
+  var ch = id && FINE[id];
+  if (!ch) return null;
+  lon = ((((lon + 180) % 360) + 360) % 360) - 180;
+  var step = CHUNK_DEG / CHUNK_CELLS;
+  var r = Math.floor((lat - ch.lat0) / step), c = Math.floor((lon - ch.lon0) / step);
+  if (r < 0) r = 0; else if (r > CHUNK_CELLS - 1) r = CHUNK_CELLS - 1;
+  if (c < 0) c = 0; else if (c > CHUNK_CELLS - 1) c = CHUNK_CELLS - 1;
+  return { ch: ch, i: r * CHUNK_CELLS + c, key: id + ':' + (r * CHUNK_CELLS + c) };
+}
+
+// Which layer answers here: 'fine' (~3.7 km), 'coarse' (~28 km), or null.
+export function elevResolution(lat, lon) {
+  if (onIceSheet(lat, lon)) return null;
+  if (fineCell(lat, lon)) return 'fine';
+  return MEAN ? 'coarse' : null;
+}
+export function elevResolutionKm(lat, lon) {
+  var r = elevResolution(lat, lon);
+  return r === 'fine' ? 4 : r === 'coarse' ? 28 : null;
+}
+
+// Metres, or null when there is no grid or no trustworthy value. FINE FIRST.
+export function elevMean(lat, lon) {
+  if (onIceSheet(lat, lon)) return null;
+  var f = fineCell(lat, lon);
+  if (f) return decodeElev(f.ch.mean[f.i]);
+  var i = coarseCell(lat, lon);
+  return i < 0 ? null : decodeElev(MEAN[i]);
+}
+export function elevMax(lat, lon) {
+  if (onIceSheet(lat, lon)) return null;
+  var f = fineCell(lat, lon);
+  if (f) return decodeElev(f.ch.max[f.i]);
+  var i = coarseCell(lat, lon);
+  return i < 0 ? null : decodeElev(MAX[i]);
 }

@@ -24,7 +24,7 @@
 
 
 import { isLand } from '../data/landMask.js';
-import { elevationGridReady, elevMean, elevMax, elevCell } from '../data/elevationGrid.js';
+import { elevationGridReady, elevMean, elevMax, elevCell, coarseMean, coarseMax, elevResolutionKm } from '../data/elevationGrid.js';
 export const TERRAIN_DB = [
   // ── OCEANS & MAJOR SEAS ────────────────────────────────────────────────────
   // Open NW/central Pacific east of Japan and the Philippine Sea to the
@@ -223,8 +223,12 @@ export function classifyPoint(lat, lon) {
   // ground it should not — Las Vegas as the Rockies, the whole East Coast as
   // the Appalachians. With this gate that class of error cannot recur: a
   // rectangle can name a range, but it can no longer invent one.
-  var cellMean = elevationGridReady() ? elevMean(lat, lon) : null;
-  var cellMax = elevationGridReady() ? elevMax(lat, lon) : null;
+  // KIND of ground from the coarse grid (a range is regional); HEIGHT from the
+  // finest layer loaded (fine chunk where present).
+  var cellMean = elevationGridReady() ? coarseMean(lat, lon) : null;
+  var cellMax = elevationGridReady() ? coarseMax(lat, lon) : null;
+  var hMean = elevationGridReady() ? elevMean(lat, lon) : null;
+  var hMax = elevationGridReady() ? elevMax(lat, lon) : null;
   // Per POINT, not per app: the grid declines to answer on the ice sheets,
   // and there the box model carries on as before.
   var dem = cellMean !== null && cellMax !== null;
@@ -249,7 +253,7 @@ export function classifyPoint(lat, lon) {
     // cell's mean (where a station stands). The box's single figure — one
     // peak height smeared across a whole range — is only the fallback.
     var bElev = best.elev || 0;
-    if (dem) bElev = (best.t === 'mountain' || best.t === 'highland') ? cellMax : cellMean;
+    if (dem) bElev = (best.t === 'mountain' || best.t === 'highland') ? hMax : hMean;
     return { type: best.t, name: best.n, elev: bElev, cond: TERRAIN_COND[best.t] };
   }
   // Rugged ground no box names is still rugged ground. Classified from the
@@ -258,13 +262,13 @@ export function classifyPoint(lat, lon) {
   // at Pohang, Okinawa or Iwakuni).
   if (dem && !water) {
     var demType = demTerrainType(cellMean, cellMax);
-    if (demType === 'mountain') return { type: 'mountain', name: 'high ground', elev: cellMax, cond: TERRAIN_COND.mountain };
-    if (demType === 'highland') return { type: 'highland', name: 'high plateau', elev: cellMax, cond: TERRAIN_COND.highland };
+    if (demType === 'mountain') return { type: 'mountain', name: 'high ground', elev: hMax, cond: TERRAIN_COND.mountain };
+    if (demType === 'highland') return { type: 'highland', name: 'high plateau', elev: hMax, cond: TERRAIN_COND.highland };
   }
   // Ocean vs land comes from a real 1-degree coastline bitmask, not from
   // hand-drawn ocean boxes (whose maintenance was a bug factory — the western
   // North Pacific was silently land for months, VALIDATION Parts 33/35).
-  if (!water) return { type: 'land', name: null, elev: dem ? cellMean : 0, cond: TERRAIN_COND.land };
+  if (!water) return { type: 'land', name: null, elev: dem ? hMean : 0, cond: TERRAIN_COND.land };
   return { type: 'ocean', name: 'Ocean', elev: 0, cond: TERRAIN_COND.ocean };
 }
 
@@ -332,6 +336,34 @@ export function samplePath(lat1, lon1, lat2, lon2, n) {
   return pts;
 }
 
+// ── WHERE THE FINE TERRAIN IS NEEDED ──────────────────────────────────────────
+// The points whose fine chunks a calculation should have loaded: both ends'
+// 200 km horizon (scanned at 4 km — this is where detail decides the answer)
+// and the path samples the terrain summary classifies. A 10-degree chunk is
+// ~1,100 km across, so this is a handful of chunks even for a long shot.
+export function terrainPointsForPath(lat1, lon1, lat2, lon2) {
+  var pts = [[lat1, lon1], [lat2, lon2]];
+  samplePath(lat1, lon1, lat2, lon2, 32).forEach(function(p) { pts.push([p.lat, p.lon]); });
+  var D2R = Math.PI / 180, R2D = 180 / Math.PI, R = 6371;
+  function along(a, b, c, d) {
+    var la1 = a * D2R, lo1 = b * D2R, la2 = c * D2R, lo2 = d * D2R;
+    var dd = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin((la2 - la1) / 2), 2)
+      + Math.cos(la1) * Math.cos(la2) * Math.pow(Math.sin((lo2 - lo1) / 2), 2)));
+    if (!isFinite(dd) || dd < 1e-9) return;
+    for (var km = 25; km <= Math.min(NEAR_FIELD_KM, dd * R); km += 25) {
+      var f = km / (dd * R);
+      var A = Math.sin((1 - f) * dd) / Math.sin(dd), B = Math.sin(f * dd) / Math.sin(dd);
+      var x = A * Math.cos(la1) * Math.cos(lo1) + B * Math.cos(la2) * Math.cos(lo2);
+      var y = A * Math.cos(la1) * Math.sin(lo1) + B * Math.cos(la2) * Math.sin(lo2);
+      var z = A * Math.sin(la1) + B * Math.sin(la2);
+      pts.push([Math.atan2(z, Math.sqrt(x * x + y * y)) * R2D, Math.atan2(y, x) * R2D]);
+    }
+  }
+  along(lat1, lon1, lat2, lon2);
+  along(lat2, lon2, lat1, lon1);
+  return pts;
+}
+
 // ── NEAR-FIELD HORIZON ────────────────────────────────────────────────────────
 // What the operator actually has to shoot OVER, scanned at its own resolution.
 //
@@ -382,6 +414,9 @@ export function nearFieldSurvey(lat1, lon1, lat2, lon2) {
     return {
       status: ob ? 'blocked' : (rugged ? 'local_relief' : 'clear'),
       obstacle: ob,
+      // The resolution the answer was made at, so the screen can say how
+      // small a hill could hide in it: ~4 km on a fine chunk, ~28 km coarse.
+      resolutionKm: elevResolutionKm(lat1, lon1),
       txInRange: t0.type === 'mountain' || t0.type === 'highland',
       txTerrain: t0.name || t0.type,
       dem: true,
