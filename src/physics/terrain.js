@@ -24,6 +24,7 @@
 
 
 import { isLand } from '../data/landMask.js';
+import { elevationGridReady, elevMean, elevMax, elevCell } from '../data/elevationGrid.js';
 export const TERRAIN_DB = [
   // ── OCEANS & MAJOR SEAS ────────────────────────────────────────────────────
   // Open NW/central Pacific east of Japan and the Philippine Sea to the
@@ -80,7 +81,12 @@ export const TERRAIN_DB = [
   { t:'mountain', n:'Southern Appalachians',        latMin: 34.0, latMax: 39.0, lonMin: -84.5, lonMax: -79.5, elev: 2037 },
   { t:'mountain', n:'Central Appalachians',         latMin: 39.0, latMax: 43.0, lonMin: -80.5, lonMax: -75.5, elev: 1200 },
   { t:'mountain', n:'Northern Appalachians',        latMin: 43.0, latMax: 47.0, lonMin: -75.0, lonMax: -70.0, elev: 1917 },
-  { t:'mountain', n:'Atlas Mountains',              latMin: 29, latMax: 37, lonMin:  -9, lonMax:   9,  elev: 3200 },
+  // Split (v1.56): as one box to 37N it swept in southern Spain, and real
+  // terrain then labelled the Betic ranges seen from NAVSTA Rota as "Atlas
+  // Mountains" — a range on the wrong continent. The Moroccan coast is south
+  // of 35.9N; Spain's coast east of 1W is north of 37N.
+  { t:'mountain', n:'Atlas Mountains (Morocco)',    latMin: 29, latMax: 35.9, lonMin:  -9, lonMax:  -1,  elev: 4167 },
+  { t:'mountain', n:'Atlas Mountains (Algeria/Tunisia)', latMin: 32, latMax: 37, lonMin: -1, lonMax:   9,  elev: 2328 },
   { t:'mountain', n:'Ethiopian Highlands',          latMin:  6, latMax: 15, lonMin:  35, lonMax:  42,  elev: 3500 },
   { t:'mountain', n:'Drakensberg',                  latMin:-31, latMax:-27, lonMin:  27, lonMax:  31,  elev: 3400 },
   { t:'mountain', n:'Ural Mountains',               latMin: 50, latMax: 67, lonMin:  58, lonMax:  62,  elev: 1700 },
@@ -211,12 +217,24 @@ export function classifyPoint(lat, lon) {
   // silently gave MCAGCC Twentynine Palms the Mojave's 900 m regional average
   // instead of its own 700 m, purely because the general box was listed first.
   // Ordering-dependent geography is the same trap as Parts 35/38/41.
+  // REAL DATA GATES THE RECTANGLES (v1.56). With the elevation grid loaded,
+  // a mountain or highland box only applies where the ground under it actually
+  // rises. Four releases running (Parts 42-45) fixed a box that swept in
+  // ground it should not — Las Vegas as the Rockies, the whole East Coast as
+  // the Appalachians. With this gate that class of error cannot recur: a
+  // rectangle can name a range, but it can no longer invent one.
+  var cellMean = elevationGridReady() ? elevMean(lat, lon) : null;
+  var cellMax = elevationGridReady() ? elevMax(lat, lon) : null;
+  // Per POINT, not per app: the grid declines to answer on the ice sheets,
+  // and there the box model carries on as before.
+  var dem = cellMean !== null && cellMax !== null;
   var best = null;
   var bestPri = -1;
   var bestArea = Infinity;
   for (var i = 0; i < TERRAIN_DB.length; i++) {
     var e = TERRAIN_DB[i];
     if (lat >= e.latMin && lat <= e.latMax && lon >= e.lonMin && lon <= e.lonMax) {
+      if (dem && !demSupports(e.t, cellMean, cellMax)) continue;
       var pri = TERRAIN_PRIORITY[e.t] || 0;
       var area = (e.latMax - e.latMin) * (e.lonMax - e.lonMin);
       if (pri > bestPri || (pri === bestPri && area < bestArea)) {
@@ -226,13 +244,60 @@ export function classifyPoint(lat, lon) {
   }
   var water = !isLand(lat, lon);
   if (best && !(water && (best.t === 'desert' || best.t === 'highland' || best.t === 'irrigated'))) {
-    return { type: best.t, name: best.n, elev: best.elev || 0, cond: TERRAIN_COND[best.t] };
+    // Elevation from the data when it is loaded: a mountain reports the
+    // highest point in its cell (what a ray must clear), anything else the
+    // cell's mean (where a station stands). The box's single figure — one
+    // peak height smeared across a whole range — is only the fallback.
+    var bElev = best.elev || 0;
+    if (dem) bElev = (best.t === 'mountain' || best.t === 'highland') ? cellMax : cellMean;
+    return { type: best.t, name: best.n, elev: bElev, cond: TERRAIN_COND[best.t] };
+  }
+  // Rugged ground no box names is still rugged ground. Classified from the
+  // data so mountains are found the same way everywhere, not only where
+  // someone drew a rectangle (Part 45's audit: a ridge seen at Yuma, nothing
+  // at Pohang, Okinawa or Iwakuni).
+  if (dem && !water) {
+    var demType = demTerrainType(cellMean, cellMax);
+    if (demType === 'mountain') return { type: 'mountain', name: 'high ground', elev: cellMax, cond: TERRAIN_COND.mountain };
+    if (demType === 'highland') return { type: 'highland', name: 'high plateau', elev: cellMax, cond: TERRAIN_COND.highland };
   }
   // Ocean vs land comes from a real 1-degree coastline bitmask, not from
   // hand-drawn ocean boxes (whose maintenance was a bug factory — the western
   // North Pacific was silently land for months, VALIDATION Parts 33/35).
-  if (!water) return { type: 'land', name: null, elev: 0, cond: TERRAIN_COND.land };
+  if (!water) return { type: 'land', name: null, elev: dem ? cellMean : 0, cond: TERRAIN_COND.land };
   return { type: 'ocean', name: 'Ocean', elev: 0, cond: TERRAIN_COND.ocean };
+}
+
+// ── What the data says the ground is ──────────────────────────────────────────
+// Thresholds on the 0.25-degree grid. MOUNTAIN is relief, not height: a cell
+// whose highest point stands well above its own average is broken, steep
+// ground — the thing that scatters a signal and blocks a low ray. HIGHLAND is
+// height without that relief: a plateau (Tibet, the Altiplano, the Iranian
+// plateau). Coastal plains and basins are neither, however a rectangle drawn
+// around them says otherwise.
+export const DEM_MOUNTAIN_RELIEF_M = 500;
+export const DEM_MOUNTAIN_MIN_MAX_M = 900;
+export const DEM_HIGHLAND_MEAN_M = 1500;
+// A named box needs less than an unnamed cell — the box is independent
+// evidence the range is there; the data only has to agree the ground rises.
+export const DEM_BOX_MOUNTAIN_RELIEF_M = 200;
+export const DEM_BOX_HIGHLAND_MEAN_M = 600;
+
+export function demTerrainType(mean, max) {
+  if (mean == null || max == null) return null;
+  if (max >= DEM_MOUNTAIN_MIN_MAX_M && max - mean >= DEM_MOUNTAIN_RELIEF_M) return 'mountain';
+  if (mean >= DEM_HIGHLAND_MEAN_M) return 'highland';
+  return null;
+}
+
+// Does the ground under a box support what the box claims? Only mountain and
+// highland are gated — deserts, lakes and irrigated valleys are about ground
+// cover and water, which elevation cannot confirm or deny.
+function demSupports(t, mean, max) {
+  if (t === 'mountain') return max != null && mean != null
+    && (max - mean >= DEM_BOX_MOUNTAIN_RELIEF_M || mean >= DEM_BOX_HIGHLAND_MEAN_M * 2);
+  if (t === 'highland') return mean != null && mean >= DEM_BOX_HIGHLAND_MEAN_M;
+  return true;
 }
 
 // ── GREAT-CIRCLE PATH SAMPLER ─────────────────────────────────────────────────
@@ -301,6 +366,27 @@ export const NEAR_FIELD_MIN_RELIEF_M = 300;
 // Saying "clear" when the truth is "unmapped" is the kind of confident wrong
 // answer this project keeps finding, so the model does not say it.
 export function nearFieldSurvey(lat1, lon1, lat2, lon2) {
+  if (elevationGridReady() && elevMean(lat1, lon1) !== null) {
+    // With real data the question changes from "is anything MAPPED above
+    // me" to "does the ground rise above me", which has a real answer
+    // everywhere. Two states remain honest about the grid's ~25 km cells:
+    //   'blocked'      — something rises 300 m+ above the station within 200 km.
+    //   'local_relief' — the station's OWN cell is broken ground (its high
+    //                    point 300 m+ above its average), so a ridge closer
+    //                    than the cell size may be there and cannot be resolved.
+    //   'clear'        — the data shows nothing rising above the station.
+    var ob = nearFieldObstacle(lat1, lon1, lat2, lon2);
+    var m = elevMean(lat1, lon1), x = elevMax(lat1, lon1);
+    var rugged = (x - m) >= NEAR_FIELD_MIN_RELIEF_M;
+    var t0 = classifyPoint(lat1, lon1);
+    return {
+      status: ob ? 'blocked' : (rugged ? 'local_relief' : 'clear'),
+      obstacle: ob,
+      txInRange: t0.type === 'mountain' || t0.type === 'highland',
+      txTerrain: t0.name || t0.type,
+      dem: true,
+    };
+  }
   var txTer = classifyPoint(lat1, lon1);
   var txInRange = txTer.type === 'mountain' || txTer.type === 'highland';
   var obstacle = nearFieldObstacle(lat1, lon1, lat2, lon2);
@@ -320,7 +406,12 @@ export function nearFieldObstacle(lat1, lon1, lat2, lon2) {
     Math.cos(la1) * Math.cos(la2) * Math.pow(Math.sin((lo2 - lo1) / 2), 2)));
   if (!isFinite(d) || d < 1e-9) return null;
   var totalKm = d * R;
-  var txElev = classifyPoint(lat1, lon1).elev || 0;
+  var txMean = elevationGridReady() ? elevMean(lat1, lon1) : null;
+  // Where the station stands: the cell MEAN with real data (a station is not
+  // on the highest point of its cell), the box figure without — or on an ice
+  // sheet, where the grid declines to answer.
+  var txElev = txMean !== null ? txMean : (classifyPoint(lat1, lon1).elev || 0);
+  var txCell = txMean !== null ? elevCell(lat1, lon1) : -1;
   var reach = Math.min(NEAR_FIELD_KM, totalKm);
   var best = null;
   for (var km = NEAR_FIELD_STEP_KM; km <= reach; km += NEAR_FIELD_STEP_KM) {
@@ -332,13 +423,37 @@ export function nearFieldObstacle(lat1, lon1, lat2, lon2) {
     var z = A * Math.sin(la1) + B * Math.sin(la2);
     var lat = Math.atan2(z, Math.sqrt(x * x + y * y)) * R2D;
     var lon = Math.atan2(y, x) * R2D;
-    var ter = classifyPoint(lat, lon);
-    if (ter.type !== 'mountain' && ter.type !== 'highland') continue;
-    var relief = (ter.elev || 0) - txElev;
+    var ter, crest;
+    var sampleMax = txMean !== null ? elevMax(lat, lon) : null;
+    if (sampleMax !== null) {
+      // Any ground, named or not: a ridge blocks a ray whether or not anyone
+      // drew a box around it. The station's own cell is skipped — its high
+      // point could be under the station's feet; nearFieldSurvey reports that
+      // case separately as 'local_relief' instead of guessing.
+      if (elevCell(lat, lon) === txCell) continue;
+      crest = sampleMax;
+      ter = null;
+    } else {
+      ter = classifyPoint(lat, lon);
+      if (ter.type !== 'mountain' && ter.type !== 'highland') continue;
+      crest = ter.elev || 0;
+    }
+    var relief = crest - txElev;
     if (relief < NEAR_FIELD_MIN_RELIEF_M) continue;
     var deg = Math.atan2(relief / 1000, km) * R2D;
     if (!best || deg > best.subtendedDeg) {
-      best = { name: ter.name, elev: ter.elev, distKm: km,
+      if (!ter) ter = classifyPoint(lat, lon);
+      // Only a RANGE lends its name to a ridge. The first cut took whatever
+      // box the sample sat in, and reported the Gila foothills east of MCAS
+      // Yuma as "Yuma Valley — 720 m up": an irrigated-valley box naming a
+      // mountain. Anything else is honestly "high ground".
+      var rangeName = (ter.type === 'mountain' || ter.type === 'highland') && ter.name
+        ? ter.name : 'high ground';
+      // Distance is quantised by the grid: a cell's highest point could be
+      // anywhere in it, so the crest is placed at the NEAREST point of the
+      // first cell that carries it. That can only overstate the angle — the
+      // safe side for a clearance — never understate it.
+      best = { name: rangeName, elev: crest, distKm: km,
                reliefM: relief, subtendedDeg: deg };
     }
   }
@@ -401,11 +516,20 @@ export function pathTerrainAnalysis(lat1, lon1, lat2, lon2, n) {
     // ...and WHY there is no obstacle, when there is none. See nearFieldSurvey:
     // "nothing mapped" is not "clear", and the app must not imply otherwise.
     nearSurvey:    nearFieldSurvey(lat1, lon1, lat2, lon2),
+    // The FAR end's horizon, scanned the same way from the other station.
+    // The ray arrives at the far antenna at (by reciprocity) the same low
+    // angle it left at — so a ridge beside the far station blocks the path
+    // exactly as one beside you does. Only the transmitter's side used to be
+    // checked (v1.56).
+    farObstacle:   nearFieldObstacle(lat2, lon2, lat1, lon1),
     // Ground elevation at the transmitter, so clearance can be computed as
     // relief ABOVE THE STATION rather than above sea level. A 962 m ridge is
     // 900 m of obstacle from Yuma at 65 m, and almost nothing from a station
     // already at 900 m in the Mojave.
-    txElevM:       (pts[0] && pts[0].terrain) ? (pts[0].terrain.elev || 0) : 0,
+    txElevM:       (elevationGridReady() && elevMean(lat1, lon1) !== null) ? elevMean(lat1, lon1)
+                   : ((pts[0] && pts[0].terrain) ? (pts[0].terrain.elev || 0) : 0),
+    rxElevM:       elevationGridReady() ? elevMean(lat2, lon2) : null,
+    elevationData: elevationGridReady(),
     condMSm:       condMSm,
     maxElev:       maxElev,
     keyObstacle:   keyObstacle,

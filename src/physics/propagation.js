@@ -139,16 +139,29 @@ export const NVIS_MAX_KM = 500;
 // NVIS to be the answer (there the ridge is cleared by raising the angle —
 // see calcTakeoffAngle).
 export function terrainMaskAdvice(distKm, terrain) {
-  if (!terrain || !terrain.nearObstacle) return null;
+  if (!terrain || (!terrain.nearObstacle && !terrain.farObstacle)) return null;
   if (!(distKm > 0) || distKm > NVIS_MAX_KM) return null;
-  var o = terrain.nearObstacle;
-  // Only call it masking when the obstacle is actually BETWEEN the stations.
-  if (o.distKm >= distKm) return null;
+  // Either end. Relief is measured above the station it is scanned FROM, so
+  // a far station down in a valley under a ridge is masked even when the
+  // ridge is no higher than you are — which the near-end scan alone cannot
+  // see (v1.56).
+  var cands = [];
+  if (terrain.nearObstacle) cands.push({ o: terrain.nearObstacle, end: 'near' });
+  if (terrain.farObstacle) cands.push({ o: terrain.farObstacle, end: 'far' });
+  var best = null;
+  for (var i = 0; i < cands.length; i++) {
+    var c = cands[i];
+    // Only call it masking when the obstacle is actually BETWEEN the stations.
+    if (c.o.distKm >= distKm) continue;
+    if (!best || c.o.subtendedDeg > best.o.subtendedDeg) best = c;
+  }
+  if (!best) return null;
   return {
-    name: o.name,
-    reliefM: o.reliefM,
-    distKm: o.distKm,
-    subtendedDeg: o.subtendedDeg,
+    name: best.o.name,
+    reliefM: best.o.reliefM,
+    distKm: best.o.distKm,
+    subtendedDeg: best.o.subtendedDeg,
+    end: best.end,
     recommend: 'nvis',
   };
 }
@@ -239,6 +252,26 @@ export function calcTakeoffAngle(hopDistKm, freqMHz, layerKm, terrain, opts) {
         note: blocker.name + ' (' + blocker.reliefM.toFixed(0) + ' m above you, '
           + blocker.distKm.toFixed(0) + ' km out) blocks the low angle — raised to clear the ridgeline'
       });
+    }
+  }
+  // THE FAR END (v1.56). By reciprocity the ray arrives at the far antenna at
+  // the same low angle it leaves yours, so a ridge beside the far station
+  // blocks the path exactly as one beside you does. Only the transmitting end
+  // used to be checked: a shot into a station tucked under a mountain was
+  // told the low angle was fine. Raising the angle here is advice for BOTH
+  // antennas — the far operator needs the same elevation to hear you.
+  var far = terrain ? terrain.farObstacle : null;
+  if (far) {
+    var farClear = far.subtendedDeg + 2;
+    if (farClear > finalDeg) {
+      adjustments.push({
+        type: 'far_end_clearance',
+        delta: +(farClear - finalDeg).toFixed(1),
+        note: far.name + ' rises ' + far.reliefM.toFixed(0) + ' m above the FAR station, '
+          + far.distKm.toFixed(0) + ' km from it, on this path — the signal has to arrive '
+          + 'over it, so the angle is raised for both ends'
+      });
+      finalDeg = farClear;
     }
   }
   // INDEPENDENT of the clearance above: the local horizon and the scatter loss

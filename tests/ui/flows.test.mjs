@@ -1146,6 +1146,41 @@ describe('automatic field reports (v1.55)', { skip: SKIP, concurrency: 1 }, () =
   });
 });
 
+describe('real terrain (v1.56)', { skip: SKIP, concurrency: 1 }, () => {
+  // The elevation grid is a precached asset loaded after start-up, and terrain
+  // is baked into a result when it is calculated — so the risk is a result
+  // computed on the box model and never refreshed. These pin that the app
+  // fetches the grid, recomputes onto it, and that what reaches the screen is
+  // the real-data answer. The box model and the grid word their "no ridge"
+  // differently, which is what makes the two distinguishable from outside.
+  async function shot(page, from, to) {
+    await page.waitForFunction(() => performance.getEntriesByType('resource')
+      .some(r => /elevation-grid\.bin/.test(r.name)), null, { timeout: 15000 });
+    await calculate(page, from, to);
+    await page.waitForTimeout(700);     // let the grid-arrival recompute land
+    return page.evaluate(() => document.body.innerText);
+  }
+
+  test('the grid is fetched, and a plain is called CLEAR from real data', async () => {
+    const page = await newPage(browser);
+    const text = await shot(page, '38.0000, -98.0000', '38.0000, -97.5000');   // 44 km across Kansas
+    assert.match(text, /Elevation data shows nothing rising/,
+      'expected the real-data wording; the box model’s "nothing mapped" means the grid never took over');
+    assert.doesNotMatch(text, /nothing mapped rises above you/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a short shot from MCAS Yuma across the Gila ridge goes NVIS on real terrain', async () => {
+    const page = await newPage(browser);
+    const text = await shot(page, '32.6566, -114.6060', '32.6200, -114.0500');
+    assert.match(text, /CHOSEN BECAUSE OF THE TERRAIN/, 'the ridge must decide the mode');
+    assert.doesNotMatch(text, /Yuma Valley rises/, 'a valley box must never name a ridge');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('offline (the core claim)', { skip: SKIP, concurrency: 1 }, () => {
   // Nothing tested the one promise the whole product rests on: install once,
   // then work with no network. This registers the service worker, cuts the

@@ -53,3 +53,4 @@ __pycache__/
 # numbers this project's claims rest on — stays in the repo.
 docs/validation/fof2-grid.json
 docs/validation/mfactor-rows.json
+/.elevation-cache/

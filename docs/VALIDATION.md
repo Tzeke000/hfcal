@@ -3325,6 +3325,89 @@ suite that already proves the rest.
 324 unit tests, 54 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 47 — Real terrain, and the far end's horizon (v1.56.0)
+
+**The defect class, ended rather than patched.** Parts 42–45 fixed the same
+error four times: a hand-drawn rectangle sweeping in ground it should not
+(the Mediterranean as desert, Las Vegas as a 3,500 m peak, the whole US East
+Coast as mountains) or missing ground it should have (a ridge beside MCAS
+Yuma, nothing at Pohang or Iwakuni). Each fix was one range. This replaces the
+geometry with data.
+
+`scripts/validation/build/build_elevation_grid.py` builds
+`public/elevation-grid.bin` from AWS Terrain Tiles — a public mosaic of SRTM,
+GMTED2010, ETOPO1 and other public-domain or openly licensed sets
+(`docs/validation/ELEVATION-ATTRIBUTION.md`). A 0.25° global grid, two layers:
+the cell's land MEAN (where a station stands) and its MAX (what a ray must
+clear — a ridgeline is a maximum, not an average). 709 KB, loaded like the
+foF2 table: precached, async, box model until it arrives, and the open
+result is recomputed when it lands.
+
+**What the data now decides.**
+
+- **Boxes can name a range but no longer invent one.** A mountain or highland
+  box only applies where the ground under it actually rises. Pinned by laying
+  a deliberately false 4,000 m "range" over the plains — Wichita, Omaha and
+  Tulsa must refuse it.
+- **Rugged ground no box names is still rugged.** Unboxed cells with real
+  relief classify as mountain ("high ground"), so ranges are found the same
+  way everywhere.
+- **The horizon scan reads terrain, not types.** Any ground 300 m+ above the
+  station counts, named or not; station height is the cell mean; the
+  station's own cell is never treated as an obstacle (its high point may be
+  underfoot) and is reported instead as `local_relief`. With real data the
+  model can finally say `clear` where the box model could only say "nothing
+  mapped".
+
+**The 16-site audit, re-run on real data.** Camp Pendleton now sees the high
+ground 16 km inland (920 m of relief); Kaneohe Bay is flagged as broken local
+ground — the Ko'olau cliffs stand directly behind it; Daegu sees the Taebaek
+at 16 km; Bardufoss sees 910 m at 12 km; Lejeune, Darwin and Djibouti are
+correctly clear.
+
+**The far end (#2).** The scan only ever ran from the transmitting station.
+By reciprocity the ray arrives at the far antenna at the angle it left, so a
+ridge beside the far station blocks the path as surely as one beside you —
+and relief is measured from the station it is scanned from, so a far station
+down in a valley is masked even by a ridge no higher than you are. The far
+end is now scanned the same way; it raises the angle for both antennas
+(`far_end_clearance`) and can trigger the dead-space → NVIS switch, and the
+card names which end.
+
+**What the build's own sanity gates caught — all of it before anything
+shipped.** The gates assert, and refused to write the grid three times:
+
+1. *Okinawa read 0 m.* The first cut skipped tiles touching no land in the
+   app's 1° coastline mask, to save bandwidth — and Okinawa is smaller than a
+   1° cell. Tile selection now comes from the elevation data itself.
+2. *Zoom 6 shaved ridge crests.* ~2.4 km pixels put the Gila crest at 590 m
+   against ~1,000 m and big summits 10–15% low. A ridge detector that
+   under-reads crests calls a blocking ridge clear — the wrong direction to
+   err. Rebuilt at zoom 7: Gila 820 m, Mont Blanc 4,700 m (98%), Everest
+   8,300 m.
+3. *Greenland and Antarctica read near sea level.* The mosaic carries
+   bedrock, not ice surface, there (Greenland's ~3,200 m summit reads ~240 m).
+   The grid declines to answer on the ice sheets and the box model carries on,
+   stated in the loader and the attribution file. Using a number known to be
+   wrong because it came from "real data" would be the worst confident answer
+   of all.
+
+**And what real data exposed in the boxes that remain.** Two naming errors,
+both now pinned: a ridge east of MCAS Yuma reported as "Yuma Valley — 720 m
+up" (a ridge took the name of the irrigated-valley box its sample sat in; only
+a range may now lend its name), and NAVSTA Rota's Spanish ranges labelled
+"Atlas Mountains" (that box reached 37° N into Andalusia; split at the Strait).
+The gate means an oversized box can now only mislabel, never invent — but a
+wrong label on an operator's screen is still wrong.
+
+**Stated limits.** ~25 km cells: a hill closer than that will not show, which
+the `clear` message says on screen. A crest's position inside its cell is
+unknown, so it is placed at the cell's nearest point — the reported angle can
+only err high, the safe side for a clearance. Ice sheets fall back to boxes.
+
+339 unit tests, 56 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

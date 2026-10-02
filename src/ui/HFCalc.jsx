@@ -17,6 +17,7 @@ import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAU
          FOF2_SIGMA_TABLE, MFACTOR_ACCURACY_PCT,
          cosZenith, solarDeclination } from "../physics/freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "../data/fof2Table.js";
+import { loadElevationGrid, elevationGridReady } from "../data/elevationGrid.js";
 import { dtg } from "../lib/commCard.js";
 import { parseCoords, looksLikeMGRS } from "../lib/coords.js";
 import { declination, magneticLatitude, modip, trueToMagnetic,
@@ -208,7 +209,16 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
   var survey = terrain && terrain.nearSurvey;
   var coverageNote = '';
   if (!terrainMask && survey) {
-    if (survey.status === 'in_range') {
+    if (survey.status === 'local_relief') {
+      coverageNote = ' TERRAIN CHECK: the ground right around you is broken — the'
+        + ' elevation data shows high points well above your area\u2019s average'
+        + ' within a few km. That is closer than the data can resolve (~25 km'
+        + ' cells), so walk the ground and site by eye.';
+    } else if (survey.status === 'clear') {
+      coverageNote = ' Elevation data shows nothing rising more than 300 m above'
+        + ' you on this path (data resolution ~25 km — a small hill closer than'
+        + ' that will not show).';
+    } else if (survey.status === 'in_range') {
       coverageNote = ' TERRAIN CHECK: you are inside ' + survey.txTerrain
         + '. The model carries one elevation for a whole range, so it cannot'
         + ' resolve your local horizon — walk the ground and site by eye.';
@@ -241,7 +251,9 @@ function antennaDirective(distKm, freqMHz, bearing, terrain, hopResults) {
     whyAngle = terrainMask
       ? 'NVIS \u2014 CHOSEN BECAUSE OF THE TERRAIN, not the distance. '
         + terrainMask.name + ' rises ' + terrainMask.reliefM.toFixed(0)
-        + ' m above you ' + terrainMask.distKm.toFixed(0) + ' km along this path. '
+        + (terrainMask.end === 'far'
+            ? ' m above the FAR station, ' + terrainMask.distKm.toFixed(0) + ' km from it on this path. '
+            : ' m above you ' + terrainMask.distKm.toFixed(0) + ' km along this path. ')
         + 'A ground wave does not get weaker against that \u2014 it stops, and the '
         + 'far station sits in dead space behind it. NVIS goes nearly straight '
         + 'up and comes nearly straight down, so the ridge stops mattering. '
@@ -2048,7 +2060,7 @@ function AboutBanner() {
               {feat('Back azimuth', 'the bearing the distant station aims back at you.', 'f2', 'offline')}
               {feat('Compass', 'phone magnetometer with your target bearing marked on the dial and a turn-left / turn-right cue. Opens without a calculation so it works as a standalone compass — an aid to a lensatic, not a replacement.', 'f2b', 'offline')}
               {feat('Propagation mode', 'ground wave, NVIS, single-hop or multi-hop DX, chosen from the path length.', 'f3', 'offline')}
-              {feat('Terrain-aware takeoff angle', 'raised to clear a ridgeline near your position, flattened over ocean, adjusted for desert — land vs sea decided by a real 1° coastline map carried in the app, not hand-drawn regions.', 'f4', 'offline')}
+              {feat('Terrain-aware takeoff angle', 'raised to clear a ridgeline near your position OR near the far station, flattened over ocean, adjusted for desert. Ground height comes from real elevation data (SRTM and other public sets, ~25 km cells) carried in the app — every ridge on Earth is found the same way, not only ones someone drew a box around. Land vs sea from a real 1° coastline map.', 'f4', 'offline')}
               {feat('Hop analysis', 'which layer, how many hops, where the bounce points fall.', 'f5', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 12, marginBottom: 8 }}>Antenna build</div>
@@ -2106,7 +2118,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  324 automated tests pin every formula so the physics cannot drift as the app changes, plus 54 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  339 automated tests pin every formula so the physics cannot drift as the app changes, plus 56 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3019,6 +3031,21 @@ export default function HFCalc() {
     return function() { alive = false; };
   }, [tableReady]);
 
+  // Real terrain (v1.56), loaded the same way: a precached asset, the box model
+  // until it arrives. Unlike the foF2 table, terrain is baked into a result at
+  // calculation time — so buildResults reads elevReady, which makes the live-
+  // recompute effect redo the open calculation the moment the data lands
+  // instead of leaving a box-model answer on screen.
+  var [elevReady, setElevReady] = useState(elevationGridReady());
+  useEffect(function() {
+    if (elevReady) return;
+    var alive = true;
+    loadElevationGrid(import.meta.env.BASE_URL).then(function(ok) {
+      if (alive && ok) setElevReady(true);
+    });
+    return function() { alive = false; };
+  }, [elevReady]);
+
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
   var effectiveGauge = customGauge.trim() !== '' ? customGauge.trim() : wireGauge;
 
@@ -3241,9 +3268,13 @@ export default function HFCalc() {
       geo: geo, lengths: lengths, antennaData: antennaData,
       freq: fMHz, wireType: wireType,
       wireCore: wireCore, wireGauge: effectiveGauge, vf: vf,
-      p1: p1, p2: p2, terrain: terrain, directive: directive
+      p1: p1, p2: p2, terrain: terrain, directive: directive,
+      // Which terrain model produced this result — the real elevation grid or
+      // the box fallback. Also what makes this callback change identity when
+      // the grid loads, so an open result is recomputed on real data.
+      elevationData: elevReady,
     };
-  }, [wireType, wireCore, effectiveGauge]);
+  }, [wireType, wireCore, effectiveGauge, elevReady]);
 
   var calculate = useCallback(function() {
     var errs = { loc1: '', loc2: '', freq: '' };
