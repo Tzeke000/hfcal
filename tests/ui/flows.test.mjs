@@ -1171,6 +1171,80 @@ describe('real terrain (v1.56)', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  test('EVERY terrain chunk on Earth is in the offline cache', async () => {
+    // The operator's requirement (v1.58): "It all has to be on the app for
+    // the whole world, not just the Americas." v1.57 precached only the
+    // Americas and fetched the rest on first use, so a Marine landing in
+    // Okinawa with no history there got only the ~28 km grid. This reads the
+    // service worker the build actually produced and fails if any chunk in
+    // the manifest is missing from it.
+    const { readFileSync } = await import('node:fs');
+    const sw = readFileSync(new URL('../../dist/sw.js', import.meta.url), 'utf8');
+    const { CHUNKS } = await import('../../src/data/terrainChunks.js');
+    const ids = Object.keys(CHUNKS);
+    assert.ok(ids.length > 300, 'expected the whole world, got ' + ids.length + ' chunks');
+    const missing = ids.filter(id => sw.indexOf('terrain/' + CHUNKS[id] + '/' + id + '.bin') === -1);
+    assert.deepEqual(missing, [], 'chunks NOT available offline: ' + missing.slice(0, 10).join(', '));
+    assert.ok(sw.indexOf('elevation-grid.bin') !== -1, 'the world grid must be precached too');
+  });
+
+  test('outside the Americas, detailed terrain loads with NO signal', async () => {
+    // The real-world case behind the requirement: the phone has never been
+    // to Okinawa, and there is no signal. Install online, cut the network,
+    // then calculate a shot from Camp Hansen — the fine chunk must still load.
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    // Wait until the service worker controls the page AND the Okinawa chunk
+    // is physically in its cache. Polled from here rather than with a page
+    // predicate: the first cut used an async waitForFunction that bailed in
+    // 0.3 s, so the network was cut before the app had installed at all.
+    const hasChunk = () => page.evaluate(async () => {
+      if (!('caches' in self)) return false;
+      for (const k of await caches.keys()) {
+        const reqs = await (await caches.open(k)).keys();
+        if (reqs.some(r => /terrain\/world\/N20E120\.bin/.test(r.url))) return true;
+      }
+      return false;
+    });
+    let cached = false;
+    for (let i = 0; i < 90 && !cached; i++) {
+      cached = await hasChunk();
+      if (!cached) await page.waitForTimeout(1000);
+    }
+    assert.ok(cached, 'the Okinawa chunk never reached the offline cache');
+    // A chunk can land in the cache while the worker is still INSTALLING —
+    // with the whole world to store, install finishes after it. Wait for the
+    // worker to be fully activated, then reload so it controls the page.
+    let active = false;
+    for (let i = 0; i < 120 && !active; i++) {
+      active = await page.evaluate(async () => {
+        const r = await navigator.serviceWorker.getRegistration();
+        return !!(r && r.active && r.active.state === 'activated');
+      });
+      if (!active) await page.waitForTimeout(1000);
+    }
+    assert.ok(active, 'the service worker never finished installing the offline app');
+    if (!(await page.evaluate(() => !!navigator.serviceWorker.controller))) {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 });
+    }
+    await ctx.setOffline(true);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 15000 });
+    await calculate(page, '26.4600, 127.9200', '26.4600, 128.3000');   // Camp Hansen, ~38 km
+    await page.waitForFunction(() => /data resolution ~4 km|CHOSEN BECAUSE OF THE TERRAIN|TERRAIN CHECK/.test(document.body.innerText),
+      null, { timeout: 15000 }).catch(() => {});
+    const text = await page.evaluate(() => document.body.innerText);
+    // Positive proof, not just the absence of "~28 km": the card must say the
+    // answer was made at ~4 km, which only the fine chunk can produce.
+    assert.match(text, /data resolution ~4 km/, 'offline in Okinawa the fine chunk did not answer');
+    assert.doesNotMatch(text, /data resolution ~28 km/, 'offline in Okinawa fell back to the coarse grid');
+    await ctx.setOffline(false);
+    await ctx.close();
+  });
+
   test('in the Americas the detailed (~4 km) terrain is fetched and used', async () => {
     // The fine chunk for the station's area must be requested, and the card
     // must say the answer was made at ~4 km, not the coarse grid's ~28.

@@ -3469,6 +3469,37 @@ generated binaries, which regenerate byte-identically from the script.
 347 unit tests, 57 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 49 — The whole world, offline (v1.58.0)
+
+v1.57 precached only the Americas and fetched every other chunk on first use.
+Asked directly, the honest answer was that a Marine landing in Okinawa who had
+never calculated there with signal got only the ~28 km grid. The operator's
+call: *"It all has to be on the app for the whole world, not just the
+Americas."* All 369 chunks are now precached; a fresh install is ~37 MB
+instead of ~18, once. Chunks are still read into MEMORY only when a
+calculation needs them — the whole world is on the device, not decoded at
+start-up.
+
+**Pinned two ways, and both proven able to fail.** One test reads the
+service worker the build actually produced and fails if any chunk in the
+manifest is missing from it. The other is the real field case: install with
+signal, cut the network, calculate a shot from Camp Hansen, Okinawa — a place
+the phone has never calculated — and require the card to say its answer was
+made at ~4 km. Requiring the positive "~4 km", not merely the absence of
+"~28 km", matters: the first wording would also have passed on a card that
+stated no resolution at all. With v1.57's Americas-only setting put back
+temporarily, both tests went red; restored, both pass.
+
+**Two test defects on the way, both in the test's waiting, not the app.** An
+async page predicate bailed in 0.3 s, so the network was cut before the app
+had installed at all; then, with 37 MB to store, a chunk could land in the
+cache while the worker was still installing, and the reload came too early.
+The test now polls the cache, then waits for the worker to be fully
+activated, before going offline.
+
+347 unit tests, 59 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

@@ -29,7 +29,8 @@ var MEAN = null, MAX = null, META = null;
 // scripts/validation/build/build_terrain_chunks.py. The coarse grid above is
 // ~28 km — coarser than the ridges that decide a short shot. Where a fine chunk
 // is loaded it answers; everywhere else the coarse grid does. Americas chunks
-// ship inside the app; the rest arrive the first time a calculation needs them.
+// and every other chunk ship inside the app (v1.58); a chunk is only read into
+// memory when a calculation needs it.
 var FINE = {};              // chunk id -> { lat0, lon0, mean, max }
 var FINE_PENDING = {};      // chunk id -> Promise
 

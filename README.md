@@ -58,7 +58,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 
 **Path and geometry**
 - **Coordinate input** — MGRS grid straight off a DAGR (or scan the DAGR screen with the camera), DMS, or decimal degrees. Remembers your last known-good pair so it opens cold with something useful.
-- **Path analysis** — distance, true and magnetic bearing (the number you dial into a lensatic), back azimuth, and the terrain under the whole great-circle path: ocean, land, mountain, desert, irrigated valley, and what that ground is worth to your signal. Land and sea come from a real 1° coastline mask, and **ground height from real elevation data** (SRTM, GMTED2010, ETOPO1 and other public sets): **~4 km detail for all of North and South America, carried in the app and working with no signal**; ~4 km for the rest of the world, fetched the first time a calculation needs it and kept on the phone after; and a ~28 km world grid underneath — so a ridge is found wherever it is, beside you or beside the far station, not only where someone drew a box around a range. Named ranges remain as labels and as the offline fallback, but they can no longer invent a mountain: real terrain has to agree.
+- **Path analysis** — distance, true and magnetic bearing (the number you dial into a lensatic), back azimuth, and the terrain under the whole great-circle path: ocean, land, mountain, desert, irrigated valley, and what that ground is worth to your signal. Land and sea come from a real 1° coastline mask, and **ground height from real elevation data** (SRTM, GMTED2010, ETOPO1 and other public sets): **~4 km detail for the whole world, carried in the app and working with no signal from the first launch**, over a ~28 km world grid — so a ridge is found wherever it is, beside you or beside the far station, not only where someone drew a box around a range. Named ranges remain as labels and as the offline fallback, but they can no longer invent a mountain: real terrain has to agree.
 - **Live compass** — uses the phone's magnetometer, corrected by the World Magnetic Model carried on the device, to walk you onto the antenna bearing.
 
 **The frequency answer**
@@ -104,9 +104,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 48 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 49 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**347 unit tests** pin the physics so it cannot drift. **57 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**347 unit tests** pin the physics so it cannot drift. **59 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -171,7 +171,7 @@ npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
 npm test             # 347 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 57 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm run test:ui      # 59 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 
