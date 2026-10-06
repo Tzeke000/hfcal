@@ -27,6 +27,7 @@ test('CLEAR SAVED DATA wipes every hfcalc_* store and nothing else', function() 
     ['hfcalc_shots_v1', 'x'], ['hfcalc_locs_v1', 'x'], ['hfcalc_spacewx_v1', 'x'],
     ['hfcalc_truth_v1', 'x'], ['hfcalc_soi_v1', 'x'], ['hfcalc_night_v1', '1'],
     ['hfcalc_store_added_in_some_future_version', 'x'],
+    ['hfcalc_beacon_v1', '1'],
     ['somebody_elses_key', 'keep me'],
   ]);
   global.localStorage = {
@@ -43,8 +44,8 @@ test('CLEAR SAVED DATA wipes every hfcalc_* store and nothing else', function() 
     delete global.localStorage;
     if (hadWindow) global.window = oldWindow; else delete global.window;
   }
-  assert.deepEqual(Array.from(store.keys()), ['somebody_elses_key'],
-    'every hfcalc_* key must go; foreign keys must survive');
+  assert.deepEqual(Array.from(store.keys()).sort(), ['hfcalc_beacon_v1', 'somebody_elses_key'],
+    'every hfcalc_* data key must go; foreign keys and the install-counted flag must survive');
 });
 
 test('catches a render throw and shows recovery instead of blank', function() {

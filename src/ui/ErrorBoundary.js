@@ -17,6 +17,12 @@
 
 import React from 'react';
 
+// Kept through the recovery wipe. These are bookkeeping, not data a render
+// reads — they cannot be the cause of a crash, and wiping them has a cost:
+// hfcalc_beacon_v1 is the "this device was already counted" flag, and losing
+// it made a device that ever hit this screen count as a second install.
+export var KEEP_ON_RECOVERY = ['hfcalc_beacon_v1'];
+
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -44,7 +50,7 @@ export class ErrorBoundary extends React.Component {
       var doomed = [];
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (k && k.indexOf('hfcalc_') === 0) doomed.push(k);
+        if (k && k.indexOf('hfcalc_') === 0 && KEEP_ON_RECOVERY.indexOf(k) === -1) doomed.push(k);
       }
       for (var j = 0; j < doomed.length; j++) {
         try { localStorage.removeItem(doomed[j]); } catch (e) { /* keep going */ }

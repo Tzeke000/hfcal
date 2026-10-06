@@ -3500,6 +3500,28 @@ activated, before going offline.
 347 unit tests, 59 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 50 — An update never counts twice; a recovery no longer does either (v1.58.1)
+
+Asked whether an update re-counts the same device as a new install. It does
+not: the first-launch beacon (Part 40) sets `hfcalc_beacon_v1` in local
+storage and only fires while that flag is absent, and updates — automatic or
+UPDATE NOW, which clears caches and service-worker registrations — never touch
+local storage. Checking that answer against the code found the one path that
+DID re-count: the crash-recovery screen's CLEAR SAVED DATA, which since Iris
+round 2 (C2) wipes every `hfcal_` key by prefix, flag included. A device that
+ever hit that screen counted as a second install. The flag is now on a short
+keep-list (`KEEP_ON_RECOVERY`) — it is bookkeeping a render never reads, so it
+cannot be what crashed — and the recovery test pins that it survives while
+every data key still goes.
+
+Remaining ways one person counts twice, stated rather than "fixed", because
+fixing them would mean tracking the person: deleting and reinstalling the app
+or clearing browser data, and on iPhone the Safari tab and the home-screen app
+counting separately (iOS gives them separate storage).
+
+347 unit tests, 59 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
