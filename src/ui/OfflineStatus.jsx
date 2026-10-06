@@ -20,7 +20,11 @@ import { CHUNKS } from '../data/terrainChunks.js';
 
 var TOTAL = Object.keys(CHUNKS).length;
 
-export function OfflineStatus() {
+// variant 'strip': the one-line status in the header (saving / not finished /
+// ready) — present on every tab without crowding any of them. variant 'card':
+// renders ONLY for the serious case, an install the phone refused, because
+// "will not open without signal" must not be a line someone can miss.
+export function OfflineStatus({ variant }) {
   var [st, setSt] = useState(null);
   var [failed, setFailed] = useState(false);
 
@@ -58,6 +62,27 @@ export function OfflineStatus() {
   }, [failed]);
 
   if (!st || st.state === 'unsupported') return null;
+
+  if (variant === 'card' && st.state !== 'failed') return null;
+  if (variant === 'strip') {
+    if (st.state === 'failed') return null;          // the card handles it
+    var line = st.state === 'ready'
+      ? '✓ Offline ready · all ' + st.total + ' terrain regions saved'
+      : st.state === 'installing'
+        ? 'Saving for offline use: ' + st.cached + ' / ' + st.total + ' regions — stay on Wi-Fi'
+        : 'Offline save not finished: ' + st.cached + ' / ' + st.total + ' — reopen on Wi-Fi';
+    return (
+      <div style={{ margin: '6px 0 0', fontSize: '0.62rem', letterSpacing: '0.04em',
+        color: st.state === 'ready' ? T.textMute : T.accentText }}>
+        {line}
+        {st.state === 'installing' && st.total > 0 && (
+          <div style={{ height: 3, background: T.bg, borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+            <div style={{ width: Math.min(100, Math.round(100 * st.cached / st.total)) + '%', height: '100%', background: T.accent }} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (st.state === 'ready') {
     return (

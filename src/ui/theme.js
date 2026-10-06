@@ -43,6 +43,9 @@ const USMC_CSS = [
   "@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('" + FONT_BASE + "inter-latin-600-normal.woff2') format('woff2');}",
   "@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('" + FONT_BASE + "inter-latin-700-normal.woff2') format('woff2');}",
   "*, *::before, *::after { box-sizing: border-box; }",
+  // Tabs (v1.60) are hidden, not unmounted; make "hidden" mean hidden even
+  // where a card sets its own display.
+  "[hidden] { display: none !important; }",
   "html { -webkit-text-size-adjust: 100%; }",
   "body { background: #080c07 !important; margin: 0; color: #c8d4c0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }",
 

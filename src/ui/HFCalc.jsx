@@ -2119,7 +2119,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  354 automated tests pin every formula so the physics cannot drift as the app changes, plus 61 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  355 automated tests pin every formula so the physics cannot drift as the app changes, plus 65 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3203,6 +3203,30 @@ export default function HFCalc() {
   // A cross-origin host asking to read data over the postMessage bridge —
   // origin string while a request is pending operator approval (Iris B2).
   var [embedAsk, setEmbedAsk] = useState(null);
+  // ── TABS (v1.60) ──────────────────────────────────────────────────────────
+  // The operator's reorganisation: everything used to be one page with ten
+  // cards ABOVE the grid inputs, and things were hard to find. PLAN is the job
+  // (made-by card, COMSEC, your station, target, antenna settings, CALCULATE,
+  // the answer); TOOLS is what you use with a plan; HELP is DAGR and a map of
+  // where everything lives. Every tab stays mounted — hidden, not unmounted —
+  // so a tool's state (an open compass, the truth log's offline queue) is not
+  // lost by looking at another tab. Always opens on PLAN.
+  var [tab, setTab] = useState('plan');
+  // Jump to a tab and bring a card's heading into view — the NEXT buttons under
+  // an answer and the WHERE IS EVERYTHING list both use it.
+  function goTo(t, heading) {
+    setTab(t);
+    if (!heading) { try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } return; }
+    setTimeout(function() {
+      try {
+        var box = document.querySelector('[data-tab="' + t + '"]');
+        var el = box && Array.prototype.find.call(box.querySelectorAll('div'), function(d) {
+          return d.children.length === 0 && d.textContent.trim() === heading;
+        });
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) { /* ignore */ }
+    }, 60);
+  }
   // Night (red-light) mode — persisted, applied to <html> so the CSS veil in
   // theme.js covers the whole app. Off by default.
   var [night, setNight] = useState(function() {
@@ -3855,6 +3879,23 @@ export default function HFCalc() {
             </div>
           </div>
         </div>
+        {/* One line, every tab: is it safe to lose signal? The refused-install
+            case is a full card below instead — it must not be missable. */}
+        <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}><OfflineStatus variant="strip" /></div>
+          {!pwa.isInstalled && (
+              <button data-install-chip onClick={function() {
+                  // Native prompt where the browser offers one; otherwise the
+                  // full step-by-step card on HELP (iPhone has no prompt).
+                  if (pwa.deferredPrompt) pwa.install(); else goTo('help');
+                }}
+                aria-label="Install this app"
+                style={{ background: T.accent, color: '#0e1409', border: 'none', borderRadius: 8,
+                         padding: '5px 9px', fontSize: '0.64rem', fontWeight: 800, cursor: 'pointer', lineHeight: 1 }}>
+                📲 INSTALL
+              </button>
+            )}
+        </div>
       </div>
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 16px 0 16px' }}>
@@ -3890,15 +3931,11 @@ export default function HFCalc() {
           </div>
         )}
         <UpdateBanner />
-        <OfflineStatus />
-        <InstallBanner pwa={pwa} />
-        <AboutBanner />
-        <DAGRInstructions />
-        <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
-        <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} cachedKp={cachedKp} />
-        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
-        <TruthLog currentShot={currentShot} appVersion={APP_VERSION} />
+        <OfflineStatus variant="card" />
 
+        {/* ── PLAN: the one job the app exists for, in the operator's order ── */}
+        <div data-tab="plan" hidden={tab !== 'plan'}>
+        <AboutBanner />
         <div style={{ background: '#2a1410', border: '1px solid #7a3428', borderLeft: '4px solid #c4442e', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
           <div style={{ color: '#ff9b86', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.12em', marginBottom: 5 }}>
             ⚠ COMSEC WARNING
@@ -3933,11 +3970,6 @@ export default function HFCalc() {
           />
         </div>
 
-        <CompassCard
-          selfLat={parsed1 && !isNaN(parsed1.lat) ? parsed1.lat : null}
-          selfLon={parsed1 && !isNaN(parsed1.lon) ? parsed1.lon : null}
-          targetBearingTrue={results ? results.geo.bearing : null}
-        />
 
         <div className="usmc-card" style={{ marginBottom: 16 }}>
           <div className="usmc-section-label">ANTENNA SETTINGS</div>
@@ -4124,6 +4156,25 @@ export default function HFCalc() {
 
 
 
+            {/* NEXT, right under the headline answer — at the bottom it sat
+                nine screens down, under every build guide, where nobody finds it. */}
+          <div className="usmc-card" style={{ marginBottom: 14 }}>
+            <div className="usmc-section-label">NEXT</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {[['🧭 Point it — compass', 'Compass'],
+                ['💾 Save / share QR', 'Saved Shots & Export'],
+                ['✓ Log the result', 'Field Truth Log'],
+                ['🕑 24-hr forecast', '24-Hour Frequency Forecast'],
+                ['📻 Rank SOI freqs', 'SOI — Assigned Frequencies']].map(function(j) {
+                return (
+                  <button key={j[1]} onClick={function() { goTo('tools', j[1]); }}
+                    style={{ background: T.surfaceHi, color: T.textPrim, border: '1px solid ' + T.borderHi, borderRadius: 6, padding: '10px 8px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}>
+                    {j[0]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
             <div className="usmc-card" style={{ marginBottom: 14, borderLeft: '3px solid ' + T.warn }}>
               <div className="usmc-section-label" style={{ color: T.warn }}>Propagation Mode</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -4168,6 +4219,52 @@ export default function HFCalc() {
           </div>
         )}
 
+        </div>
+
+        {/* ── TOOLS: everything you use with a plan once you have one ── */}
+        <div data-tab="tools" hidden={tab !== 'tools'}>
+        <div style={{ color: T.textMute, fontSize: '0.72rem', margin: '0 2px 12px', lineHeight: 1.5 }}>
+          Tools for the plan on the PLAN tab: point the antenna, see the day ahead, rank your assigned frequencies, save or share a plan, and log whether it closed.
+        </div>
+        <CompassCard
+          selfLat={parsed1 && !isNaN(parsed1.lat) ? parsed1.lat : null}
+          selfLon={parsed1 && !isNaN(parsed1.lon) ? parsed1.lon : null}
+          targetBearingTrue={results ? results.geo.bearing : null}
+        />
+        <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
+        <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} cachedKp={cachedKp} />
+        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
+        <TruthLog currentShot={currentShot} appVersion={APP_VERSION} />
+        </div>
+
+        {/* ── HELP: getting grids, and where everything lives ── */}
+        <div data-tab="help" hidden={tab !== 'help'}>
+        <InstallBanner pwa={pwa} />
+        <DAGRInstructions />
+        <div className="usmc-card" style={{ marginBottom: 16 }}>
+          <div className="usmc-section-label">WHERE IS EVERYTHING</div>
+          {[['PLAN', 'Your grid, the target, frequency and wire, CALCULATE — and the answer: will it close, what to build, where to point it.', 'plan', null],
+            ['PLAN', 'COMSEC warning and the About / made-by card.', 'plan', null],
+            ['TOOLS', 'Compass — walk onto the bearing.', 'tools', 'Compass'],
+            ['TOOLS', '24-hour forecast — when the path opens and closes.', 'tools', '24-Hour Frequency Forecast'],
+            ['TOOLS', 'SOI — rank your assigned frequencies for this path.', 'tools', 'SOI — Assigned Frequencies'],
+            ['TOOLS', 'Saved shots, comm cards and the QR handoff.', 'tools', 'Saved Shots & Export'],
+            ['TOOLS', 'Field truth log — did it close, and why not.', 'tools', 'Field Truth Log'],
+            ['HELP', 'Pulling grids off a DAGR, or scanning its screen.', 'help', 'Get Coords From Your DAGR'],
+            ['HELP', 'Installing the app on your phone or computer (also the 📲 INSTALL button up top).', 'help', null],
+            ['TOP', 'Night mode (red light): the NIGHT button in the header, on every tab.', null, null]].map(function(r, i) {
+            return (
+              <button key={i} onClick={function() { if (r[2]) goTo(r[2], r[3]); }}
+                style={{ display: 'flex', gap: 10, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.border, padding: '9px 2px', cursor: r[2] ? 'pointer' : 'default' }}>
+                <span style={{ color: T.accentText, fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.08em', minWidth: 46 }}>{r[0]}</span>
+                <span style={{ color: T.textBody, fontSize: '0.74rem', lineHeight: 1.45 }}>{r[1]}</span>
+              </button>
+            );
+          })}
+        </div>
+        </div>
+
+
       </div>
 
       {/* Persistent footer attribution — visible whether or not results are shown */}
@@ -4185,6 +4282,27 @@ export default function HFCalc() {
           {'v' + APP_VERSION}
         </div>
       </div>
+
+      {/* Bottom tab bar. Safe-area padding keeps it clear of the iPhone home bar. */}
+      <div style={{ height: 76 }} />
+      <nav aria-label="Sections" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 120,
+        background: '#080c07', borderTop: '1px solid #1f2e17',
+        paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+          {[['plan', '📡', 'PLAN'], ['tools', '🧰', 'TOOLS'], ['help', '❓', 'HELP']].map(function(b) {
+            var on = tab === b[0];
+            return (
+              <button key={b[0]} data-tab-btn={b[0]} aria-current={on ? 'page' : undefined}
+                onClick={function() { setTab(b[0]); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } }}
+                style={{ background: 'transparent', border: 'none', borderTop: '3px solid ' + (on ? T.accent : 'transparent'),
+                  color: on ? T.accentText : T.textMute, padding: '8px 0 10px', cursor: 'pointer' }}>
+                <div style={{ fontSize: '1.15rem', lineHeight: 1 }}>{b[1]}</div>
+                <div style={{ fontSize: '0.64rem', fontWeight: 800, letterSpacing: '0.12em', marginTop: 4 }}>{b[2]}</div>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

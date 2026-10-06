@@ -215,6 +215,19 @@ export async function newPage(browser) {
 // the app follows the same shape — a heading and a toggle in one flex row — so
 // walking up from the heading text finds the right button unambiguously.
 export async function toggleCard(page, heading, want /* 'OPEN' | 'CLOSE' */) {
+  // Since v1.60 the app has PLAN / TOOLS / HELP tabs. A card on a hidden tab
+  // is still in the DOM, so switch to its tab first — the way an operator
+  // would — or everything read off the page afterwards would miss it.
+  await page.evaluate((heading) => {
+    const head = [...document.querySelectorAll('div')]
+      .find(e => e.children.length === 0 && e.textContent.trim() === heading);
+    const box = head && head.closest('[data-tab]');
+    if (box && box.hidden) {
+      const btn = document.querySelector('[data-tab-btn="' + box.getAttribute('data-tab') + '"]');
+      if (btn) btn.click();
+    }
+  }, heading);
+  await page.waitForTimeout(80);
   const result = await page.evaluate(({ heading, want }) => {
     const head = [...document.querySelectorAll('div')]
       .find(e => e.children.length === 0 && e.textContent.trim() === heading);
@@ -251,6 +264,8 @@ export function statVal(page, label) {
 
 // Fill both location fields and run the calculation.
 export async function calculate(page, from, to) {
+  // The inputs live on the PLAN tab.
+  await page.evaluate(() => { const b = document.querySelector('[data-tab-btn="plan"]'); if (b) b.click(); });
   const inputs = page.locator('input[placeholder*="15T XG"]');
   if (await inputs.count() < 2) throw new Error('expected two location inputs');
   await inputs.nth(0).fill(from);

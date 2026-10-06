@@ -44,3 +44,11 @@ test('nothing but full coverage is ever called ready', function() {
       cached + ' of 369 must not read as ready');
   }
 });
+
+test('a first visit before the worker registers is SAVING, not "incomplete — reopen"', function() {
+  // The first cut told every brand-new user "only 0 of 369 saved — reopen on
+  // Wi-Fi" in the moment before the offline worker had even registered.
+  assert.equal(offlineState({ supported: true, registered: false, active: false, cached: 0, total: 369 }).state, 'installing');
+  // But a registered worker that is neither active nor installing is stuck.
+  assert.equal(offlineState({ supported: true, registered: true, active: false, cached: 0, total: 369 }).state, 'incomplete');
+});

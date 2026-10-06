@@ -3555,6 +3555,43 @@ warning's own wording.
 354 unit tests, 61 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 52 — Tabs, and the plan first (v1.60.0)
+
+Measured before moving anything: a Marine had to scroll past TEN cards —
+update, offline, install, About, DAGR help, forecast, SOI, saved shots, truth
+log, COMSEC — before reaching YOUR STATION. Features had been added one card
+at a time around the job, and the operator's complaint was that things were
+hard to find.
+
+His layout, built as specified: a bottom tab bar. **PLAN** in his order —
+made-by card, COMSEC warning, your station, target station, antenna
+settings, CALCULATE — then the answer. **TOOLS**: compass, forecast, SOI,
+saved shots / QR, truth log. **HELP**: install steps, DAGR instructions, and
+a WHERE IS EVERYTHING list whose every line jumps to what it names. Tabs are
+hidden, never unmounted, so a tool's state (an open card, the truth log's
+offline queue) survives looking elsewhere. Always opens on PLAN.
+
+**Screenshots changed the first cut three times** before it shipped, each
+caught by looking rather than by a test: the install and offline cards still
+sat above the made-by card (moved into the header as one line — only a
+REFUSED offline install remains a full card, because "will not open without
+signal" must not be missable); a first visit was told its offline save was
+"not finished" before it had begun (a worker not yet registered is now
+SAVING); and the NEXT shortcuts sat nine phone-screens down beneath every
+build guide (moved directly under the first answer card).
+
+**Tests.** Four new browser tests pin the PLAN order (read from the PLAN tab
+itself, so the header's made-by line cannot stand in for the card), each
+tab's contents and state surviving a tab switch, and that NEXT and WHERE IS
+EVERYTHING land where they say. The harness now switches to a card's tab
+before opening it, as an operator would. Two embed-security tests used the
+app itself as the attacker page and appended a button the new fixed tab bar
+covered — the test button is now pinned above everything; the security
+behaviour under test did not change.
+
+355 unit tests, 65 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

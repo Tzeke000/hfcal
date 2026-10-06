@@ -839,6 +839,10 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
     await attacker.evaluate((target) => {
       const b = document.createElement('button');
       b.id = '__pop'; b.textContent = 'pop';
+      // Pinned above everything: the attacker page here is the app itself,
+      // whose fixed tab bar (v1.60) would otherwise sit on top of a button
+      // appended at the bottom and swallow the real click window.open needs.
+      b.style.cssText = 'position:fixed;top:0;left:0;z-index:2147483647;padding:20px';
       b.onclick = () => { window.__w = window.open(target); };
       document.body.appendChild(b);
     }, BASE_URL + '?embed=1');
@@ -885,6 +889,10 @@ describe('postMessage bridge', { skip: SKIP, concurrency: 1 }, () => {
     await attacker.evaluate((target) => {
       const b = document.createElement('button');
       b.id = '__pop2'; b.textContent = 'pop';
+      // Pinned above everything: the attacker page here is the app itself,
+      // whose fixed tab bar (v1.60) would otherwise sit on top of a button
+      // appended at the bottom and swallow the real click window.open needs.
+      b.style.cssText = 'position:fixed;top:0;left:0;z-index:2147483647;padding:20px';
       b.onclick = () => { window.__w = window.open(target); };
       document.body.appendChild(b);
     }, BASE_URL + '?embed=1');
@@ -1284,12 +1292,14 @@ describe('offline readiness card (v1.59)', { skip: SKIP, concurrency: 1 }, () =>
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('button:has-text("CALCULATE")');
     const first = await page.evaluate(() => document.body.innerText);
-    assert.match(first, /SAVING FOR OFFLINE USE|OFFLINE SAVE NOT FINISHED|Offline ready/,
-      'the card must appear on a fresh install');
+    assert.match(first, /Saving for offline use|Offline ready/,
+      'the header strip must appear on a fresh install');
+    assert.doesNotMatch(first, /not finished/i,
+      'a brand-new visit must not be told its save is unfinished before it has started');
     await page.waitForFunction(() => /✓ Offline ready/.test(document.body.innerText), null,
       { timeout: 120000, polling: 1000 });
     const text = await page.evaluate(() => document.body.innerText);
-    const m = text.match(/all (\d+) terrain regions are saved/);
+    const m = text.match(/all (\d+) terrain regions saved/);
     assert.ok(m, 'the ready line must state the count');
     const { CHUNKS } = await import('../../src/data/terrainChunks.js');
     assert.equal(Number(m[1]), Object.keys(CHUNKS).length, 'it must count every region the app ships');
@@ -1336,6 +1346,82 @@ describe('offline readiness card (v1.59)', { skip: SKIP, concurrency: 1 }, () =>
     assert.match(text, /will NOT open without signal/);
     assert.match(text, /Free up some storage/);
     await ctx.close();
+  });
+});
+
+describe('tabs (v1.60)', { skip: SKIP, concurrency: 1 }, () => {
+  // The operator's reorganisation: ten cards used to sit ABOVE the grid
+  // inputs, and things were hard to find. Pinned here: the order he asked for
+  // on PLAN, one home per tool, and shortcuts that land where they say.
+  const visibleText = (page) => page.evaluate(() => document.body.innerText);
+
+  test('PLAN is in the operator’s order: made-by, COMSEC, your station, target, antenna, CALCULATE', async () => {
+    const page = await newPage(browser);
+    const t = await visibleText(page);
+    // Read the PLAN tab's own content, so the header's made-by line cannot
+    // stand in for the made-by CARD.
+    const plan = await page.evaluate(() => document.querySelector('[data-tab="plan"]').innerText);
+    const order = ['MADE BY CPL ANGELES-GONZALEZ', 'COMSEC WARNING', 'YOUR STATION', 'TARGET STATION',
+                   'ANTENNA SETTINGS', 'CALCULATE'];
+    assert.ok(plan.indexOf(order[0]) < 200, 'the made-by card must be the first thing on PLAN');
+    let at = -1;
+    for (const label of order) {
+      const i = plan.indexOf(label, at + 1);
+      assert.ok(i > at, label + ' is out of order (or missing) on PLAN');
+      at = i;
+    }
+    // The tools do not crowd the plan any more.
+    for (const away of ['24-Hour Frequency Forecast', 'Field Truth Log', 'SOI — Assigned Frequencies', 'Get Coords From Your DAGR'])
+      assert.ok(t.indexOf(away) === -1, away + ' should not be on PLAN');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('each tab holds its tools, and switching keeps them alive', async () => {
+    const page = await newPage(browser);
+    await page.click('[data-tab-btn="tools"]');
+    let t = await visibleText(page);
+    for (const h of ['Compass', '24-Hour Frequency Forecast', 'SOI — Assigned Frequencies', 'Saved Shots & Export', 'Field Truth Log'])
+      assert.ok(t.indexOf(h) !== -1, h + ' missing from TOOLS');
+    assert.ok(t.indexOf('YOUR STATION') === -1, 'PLAN inputs must not show on TOOLS');
+    await page.click('[data-tab-btn="help"]');
+    t = await visibleText(page);
+    assert.match(t, /Get Coords From Your DAGR/);
+    assert.match(t, /WHERE IS EVERYTHING/);
+    // Tool state survives a trip to another tab: hidden, not unmounted.
+    await toggleCard(page, 'Field Truth Log', 'OPEN');
+    await page.click('[data-tab-btn="plan"]');
+    await page.click('[data-tab-btn="tools"]');
+    t = await visibleText(page);
+    assert.match(t, /After a shot: did it close\?|Run a calculation first/, 'the truth log should still be open');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('after CALCULATE the NEXT shortcuts land on the right tool', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const plan = await visibleText(page);
+    assert.match(plan, /NEXT/);
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /Log the result/.test(b.textContent)).click());
+    await page.waitForTimeout(300);
+    const t = await visibleText(page);
+    assert.match(t, /Field Truth Log/, 'the shortcut should open TOOLS with the truth log on screen');
+    assert.equal(await page.evaluate(() => document.querySelector('[data-tab="tools"]').hidden), false);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('WHERE IS EVERYTHING jumps to the tool it names', async () => {
+    const page = await newPage(browser);
+    await page.click('[data-tab-btn="help"]');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => /SOI — rank your assigned/.test(b.textContent)).click());
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => document.querySelector('[data-tab="tools"]').hidden), false);
+    assert.match(await visibleText(page), /SOI — Assigned Frequencies/);
+    await page.context().close();
   });
 });
 

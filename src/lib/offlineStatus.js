@@ -30,6 +30,11 @@ export function offlineState(s) {
   if (!s.supported) return out('unsupported');
   if (s.failed) return out('failed');
   if (s.installing) return out('installing');
+  // No worker registered yet: on a first visit the app registers its offline
+  // worker a moment AFTER the page loads. That is the download about to
+  // start — calling it "incomplete, reopen on Wi-Fi" (as the first cut did)
+  // told every brand-new user something alarming and false.
+  if (!s.active && s.registered === false) return out('installing');
   if (!s.active) return out('incomplete');
   // An older version can be active with an older, smaller cache — a phone
   // that has not taken the update yet has the Americas but not the world.
@@ -71,6 +76,7 @@ export function readOfflineState(total, failed) {
     return countCachedChunks().then(function(cached) {
       return offlineState({
         supported: true,
+        registered: !!reg,
         active: !!(reg && reg.active),
         installing: !!(reg && reg.installing),
         failed: !!failed,
@@ -79,6 +85,6 @@ export function readOfflineState(total, failed) {
       });
     });
   }).catch(function() {
-    return offlineState({ supported: true, failed: !!failed, total: total });
+    return offlineState({ supported: true, failed: !!failed, registered: false, total: total });
   });
 }
