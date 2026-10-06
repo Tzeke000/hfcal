@@ -519,7 +519,10 @@ describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
     if (await btn.count()) {
       await btn.first().click();
       await page.waitForTimeout(400);
-      const warned = await page.evaluate(() => /offline/i.test(document.body.innerText));
+      // The update banner's own warning, not merely the word "offline": since
+      // v1.59 the offline-readiness card also says "offline" on every page,
+      // which would have let this pass with the warning gone.
+      const warned = await page.evaluate(() => /reach the update server/i.test(document.body.innerText));
       assert.ok(warned, 'offline update should warn, not silently proceed');
     }
     assert.equal(swCleared, false, 'the app cleared its service worker while offline');
@@ -556,7 +559,7 @@ describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
 
     await btn.first().click();
     await page.waitForTimeout(600);
-    const warned = await page.evaluate(() => /reach the update server|offline/i.test(document.body.innerText));
+    const warned = await page.evaluate(() => /reach the update server/i.test(document.body.innerText));
     assert.ok(warned, 'unreachable-server update should warn, not silently proceed');
     assert.equal(swCleared, false, 'the app cleared its service worker with the server unreachable');
     // The page must not have navigated away — the app keeps serving.
@@ -593,7 +596,7 @@ describe('safety fixes (v1.40)', { skip: SKIP, concurrency: 1 }, () => {
 
     await btn.first().click();
     await page.waitForTimeout(600);
-    const warned = await page.evaluate(() => /reach the update server|offline/i.test(document.body.innerText));
+    const warned = await page.evaluate(() => /reach the update server/i.test(document.body.innerText));
     assert.ok(warned, 'a portal 200 must be treated as unreachable, not as the update server');
     assert.equal(swCleared, false, 'the app wiped its service worker on a captive-portal 200');
     assert.ok(await page.locator('button:has-text("CALCULATE")').count(), 'app must remain usable');
@@ -1267,6 +1270,72 @@ describe('real terrain (v1.56)', { skip: SKIP, concurrency: 1 }, () => {
     assert.doesNotMatch(text, /Yuma Valley rises/, 'a valley box must never name a ridge');
     assert.deepEqual(page.errors, []);
     await page.context().close();
+  });
+});
+
+describe('offline readiness card (v1.59)', { skip: SKIP, concurrency: 1 }, () => {
+  // iPhone stays on the web app (no TestFlight), and the offline install is
+  // all or nothing at ~36 MB — so the app must SAY whether it is safe to lose
+  // signal. Drives a fresh install and watches the card go from saving to
+  // ready, then checks the reported count matches what is really cached.
+  test('a fresh install shows SAVING, then READY with every region stored', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    const first = await page.evaluate(() => document.body.innerText);
+    assert.match(first, /SAVING FOR OFFLINE USE|OFFLINE SAVE NOT FINISHED|Offline ready/,
+      'the card must appear on a fresh install');
+    await page.waitForFunction(() => /✓ Offline ready/.test(document.body.innerText), null,
+      { timeout: 120000, polling: 1000 });
+    const text = await page.evaluate(() => document.body.innerText);
+    const m = text.match(/all (\d+) terrain regions are saved/);
+    assert.ok(m, 'the ready line must state the count');
+    const { CHUNKS } = await import('../../src/data/terrainChunks.js');
+    assert.equal(Number(m[1]), Object.keys(CHUNKS).length, 'it must count every region the app ships');
+    // The claim is checked, not trusted: every chunk really is in the cache.
+    const cached = await page.evaluate(async () => {
+      const seen = new Set();
+      for (const k of await caches.keys())
+        for (const r of await (await caches.open(k)).keys()) {
+          const mm = r.url.match(/\/terrain\/(?:americas|world)\/[A-Z0-9]+\.bin/);
+          if (mm) seen.add(mm[0]);
+        }
+      return seen.size;
+    });
+    assert.equal(cached, Object.keys(CHUNKS).length);
+    assert.doesNotMatch(text, /NOT SAVED FOR OFFLINE USE/);
+    await ctx.close();
+  });
+
+  test('a refused install is reported in words, not left silent', async () => {
+    // Storage-full cannot be produced on demand in a test browser, so the
+    // refusal is simulated where the app reads it: the registration reports
+    // an install that went 'redundant'. The card must say the app will NOT
+    // open without signal.
+    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      const fakeWorker = new EventTarget();
+      fakeWorker.state = 'installing';
+      const fakeReg = new EventTarget();
+      fakeReg.installing = fakeWorker; fakeReg.active = null; fakeReg.waiting = null;
+      const sw = navigator.serviceWorker;
+      Object.defineProperty(sw, 'getRegistration', { value: () => Promise.resolve(fakeReg) });
+      Object.defineProperty(sw, 'register', { value: () => Promise.resolve(fakeReg) });
+      setTimeout(() => {
+        fakeWorker.state = 'redundant';
+        fakeWorker.dispatchEvent(new Event('statechange'));
+      }, 1500);
+    });
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForFunction(() => /NOT SAVED FOR OFFLINE USE/.test(document.body.innerText), null,
+      { timeout: 15000 });
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.match(text, /will NOT open without signal/);
+    assert.match(text, /Free up some storage/);
+    await ctx.close();
   });
 });
 

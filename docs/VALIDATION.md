@@ -3522,6 +3522,39 @@ counting separately (iOS gives them separate storage).
 347 unit tests, 59 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 51 — Saying whether it is safe to lose signal (v1.59.0)
+
+iPhone stays on the web app — TestFlight needs the paid Apple Developer
+Program, and the operator's call was not to pay for it. That makes one risk
+from v1.58 the iPhone question that matters: the browser's offline install is
+ALL OR NOTHING, and since the whole world's terrain went in it is ~36 MB. An
+older phone that runs out of space partway does not lose the terrain — it
+loses the offline app entirely, and nobody finds out until there is no
+signal.
+
+A readiness card now says which is true: SAVING (with "120 of 369 regions"),
+READY (one line, "✓ Offline ready — the app and all 369 terrain regions are
+saved"), INCOMPLETE (an older version active, or a partial save — the Americas
+but not the world), or NOT SAVED — the refused install, detected as a worker
+that went `redundant` while installing — in words: *"It works now, but will
+NOT open without signal. Free up some storage, then reopen on Wi-Fi."* Nothing
+at all on a browser that cannot install offline. The decision is a pure
+function, unit-tested so that no partial count is ever called ready.
+
+Browser tests drive a fresh install from SAVING to READY and then check the
+claim instead of trusting it — the stated count must equal the chunks really
+in the cache. Storage-full cannot be produced on demand in a test browser, so
+the refusal is simulated at the point the app reads it.
+
+**A test weakness found and fixed on the way.** Three existing update-safety
+tests (Parts 38–39) checked only that the word "offline" appeared on the
+page. The new card says "offline" on every page, so all three would have kept
+passing with the update warning they guard deleted. They now require the
+warning's own wording.
+
+354 unit tests, 61 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
