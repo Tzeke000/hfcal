@@ -56,7 +56,7 @@ The PWA install (above) is much easier on iPhone. The IPA route requires re-sign
 
 ## What it does
 
-Three tabs along the bottom. **PLAN** is the job, in order: the made-by card, the COMSEC warning, your station, the target, antenna settings, CALCULATE — and the answer right under it, with a NEXT row that jumps to the tool you need. **TOOLS** holds the compass, 24-hour forecast, SOI ranking, saved shots / QR and the field truth log. **HELP** holds DAGR instructions, install steps, and a *where is everything* list. Offline status and INSTALL sit in the header on every tab.
+Three tabs along the bottom. **PLAN** is the job, in order: the made-by card, the COMSEC warning, your station, the target, antenna settings, CALCULATE — and the answer right under it, with a NEXT row that jumps to the tool you need. **TOOLS** holds the compass, 24-hour forecast, SOI ranking, saved shots / QR and the field truth log. **HELP** holds DAGR instructions, install steps, a *where is everything* list, and **What's New** — the last five updates, what each changed, and the date each one reached this device. Offline status and INSTALL sit in the header on every tab.
 
 **Path and geometry**
 - **Coordinate input** — MGRS grid straight off a DAGR (or scan the DAGR screen with the camera), DMS, or decimal degrees. Remembers your last known-good pair so it opens cold with something useful.
@@ -107,9 +107,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 52 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 53 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**355 unit tests** pin the physics so it cannot drift. **65 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**359 unit tests** pin the physics so it cannot drift. **66 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -173,8 +173,8 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 355 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 65 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm test             # 359 unit tests over the physics, terrain and coordinate math
+npm run test:ui      # 66 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 

@@ -28,6 +28,8 @@ import { version as APP_VERSION } from "../../package.json";
 import { T, USMCStyleInjector } from "./theme.js";
 import { pathTerrainAnalysis, terrainPointsForPath } from "../physics/terrain.js";
 import { CompassCard } from "./CompassCard.jsx";
+import { WhatsNew } from './WhatsNew.jsx';
+import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
@@ -2119,7 +2121,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  355 automated tests pin every formula so the physics cannot drift as the app changes, plus 65 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  359 automated tests pin every formula so the physics cannot drift as the app changes, plus 66 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -3212,6 +3214,8 @@ export default function HFCalc() {
   // so a tool's state (an open compass, the truth log's offline queue) is not
   // lost by looking at another tab. Always opens on PLAN.
   var [tab, setTab] = useState('plan');
+  // WHAT'S NEW needs to know when each version first opened on this device.
+  useEffect(function() { recordVersionSeen(APP_VERSION); }, []);
   // Jump to a tab and bring a card's heading into view — the NEXT buttons under
   // an answer and the WHERE IS EVERYTHING list both use it.
   function goTo(t, heading) {
@@ -4252,6 +4256,7 @@ export default function HFCalc() {
             ['TOOLS', 'Field truth log — did it close, and why not.', 'tools', 'Field Truth Log'],
             ['HELP', 'Pulling grids off a DAGR, or scanning its screen.', 'help', 'Get Coords From Your DAGR'],
             ['HELP', 'Installing the app on your phone or computer (also the 📲 INSTALL button up top).', 'help', null],
+            ['HELP', 'What\u2019s new — the last few updates and when each reached this phone.', 'help', 'What\u2019s New'],
             ['TOP', 'Night mode (red light): the NIGHT button in the header, on every tab.', null, null]].map(function(r, i) {
             return (
               <button key={i} onClick={function() { if (r[2]) goTo(r[2], r[3]); }}
@@ -4262,6 +4267,7 @@ export default function HFCalc() {
             );
           })}
         </div>
+        <WhatsNew appVersion={APP_VERSION} />
         </div>
 
 

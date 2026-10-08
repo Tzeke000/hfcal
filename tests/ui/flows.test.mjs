@@ -1425,6 +1425,25 @@ describe('tabs (v1.60)', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('what’s new (v1.61)', { skip: SKIP, concurrency: 1 }, () => {
+  test('HELP shows the last five updates, and when the current one reached this device', async () => {
+    const page = await newPage(browser);
+    await toggleCard(page, 'What’s New', 'OPEN');
+    const rows = await page.evaluate(() => [...document.querySelectorAll('[data-changelog-version]')]
+      .map(e => ({ v: e.getAttribute('data-changelog-version'), t: e.innerText })));
+    assert.equal(rows.length, 5, 'five updates');
+    const ver = await page.evaluate(() => window.HFCalc.version);
+    assert.equal(rows[0].v, ver, 'the newest entry is the version running');
+    assert.match(rows[0].t, /CURRENT/);
+    assert.match(rows[0].t, /installed on this device [A-Z][a-z]{2} \d+, \d{4}/,
+      'the running version must show the date it first opened here');
+    // A fresh device never saw the older versions — say so, do not invent a date.
+    assert.match(rows[1].t, /before this device started keeping track/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('offline (the core claim)', { skip: SKIP, concurrency: 1 }, () => {
   // Nothing tested the one promise the whole product rests on: install once,
   // then work with no network. This registers the service worker, cuts the

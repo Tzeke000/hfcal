@@ -21,7 +21,8 @@ import React from 'react';
 // reads — they cannot be the cause of a crash, and wiping them has a cost:
 // hfcalc_beacon_v1 is the "this device was already counted" flag, and losing
 // it made a device that ever hit this screen count as a second install.
-export var KEEP_ON_RECOVERY = ['hfcalc_beacon_v1'];
+// hfcalc_versions_seen_v1 is the install history WHAT'S NEW shows.
+export var KEEP_ON_RECOVERY = ['hfcalc_beacon_v1', 'hfcalc_versions_seen_v1'];
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {

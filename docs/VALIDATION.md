@@ -3592,6 +3592,35 @@ behaviour under test did not change.
 355 unit tests, 65 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 53 — What's new, and when it reached this phone (v1.61.0)
+
+Asked for: a place in HELP that says what the last few updates were about
+and when each was installed. An update arrives silently — the service worker
+swaps the app on the next launch — so an operator had no way to tell whether
+the phone in his hand had the fix he was told about.
+
+**WHAT'S NEW** (HELP tab, also on the WHERE IS EVERYTHING list) shows the five
+newest releases from `src/data/changelog.js`, newest first: version, a
+one-line title, the release date, a few plain-language notes, and a CURRENT
+badge on the running version. The install date is this device's own record:
+on each launch the app writes the running version's first-open time to
+`hfcalc_versions_seen_v1` — once per version, never overwritten, capped at 40
+entries, never sent anywhere. Versions released before this record existed
+say so ("before this device started keeping track") rather than inventing a
+date. The record is exempt from the crash-recovery wipe alongside the install
+beacon, for the same reason: it is bookkeeping no render reads, and losing it
+would quietly rewrite history.
+
+**Tests.** Unit: the newest changelog entry must equal package.json's version
+(so a release cannot ship without its note), entries are newest-first, unique,
+dated and titled, and the seen-record writes once, never overwrites, survives
+junk in storage and stays capped. Browser: HELP shows five rows, the first is
+the running version marked CURRENT with today's install date, and an older
+row honestly says it predates the record.
+
+359 unit tests, 66 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
