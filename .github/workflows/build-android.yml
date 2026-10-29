@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, master, 'claude/auto-apex-height-calc-W0kPD']  # TEMP: verify the fix before main
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
