@@ -242,6 +242,69 @@ describe('recalculate a saved shot (v1.62)', { skip: SKIP, concurrency: 1 }, () 
   });
 });
 
+describe('installed Android app (v1.63)', { skip: SKIP, concurrency: 1 }, () => {
+  // Inside the APK the page is https://localhost/ with every file on the
+  // phone, and Capacitor's bridge defines window.Capacitor. Pretend to be that.
+  async function asAndroidApp(page, remoteVersion) {
+    await page.context().addInitScript(() => {
+      window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
+    });
+    await page.context().route('https://tzeke000.github.io/hfcal/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ version: remoteVersion }) }));
+    // The first load ran as a website and registered the offline worker —
+    // exactly what an APK built before this release did.
+    await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then(r => !!(r && r.active)), null, { timeout: 60000 });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+  }
+
+  test('no offline worker, no install prompt, and the header says it is installed', async () => {
+    const page = await newPage(browser);
+    await asAndroidApp(page, '1.0.0');
+    await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then(r => !r), null, { timeout: 10000 });
+    const left = await page.evaluate(async () => {
+      for (let i = 0; i < 40 && (await caches.keys()).length; i++) await new Promise(r => setTimeout(r, 250));
+      return caches.keys();
+    });
+    assert.deepEqual(left, [], 'the APK kept a second copy of itself in the browser cache');
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.match(text, /Installed app · works offline · all \d+ terrain regions built in/);
+    assert.doesNotMatch(text, /Saving for offline use|Offline save not finished/);
+    assert.equal(await page.locator('[data-install-chip]').count(), 0, 'INSTALL offered inside the installed app');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('a newer version on the website sends the operator to the new APK', async () => {
+    const page = await newPage(browser);
+    await asAndroidApp(page, '99.0.0');
+    const link = page.locator('a', { hasText: 'GET THE NEW APK' });
+    await link.waitFor({ timeout: 10000 });
+    assert.equal(await link.getAttribute('href'), 'https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml');
+    assert.equal(await page.locator('button', { hasText: 'UPDATE NOW' }).count(), 0,
+      'the web update (clear and reload) would only reload the same APK');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('the QR points at the website, not at https://localhost', async () => {
+    const page = await newPage(browser);
+    await asAndroidApp(page, '1.0.0');
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'SHOW QR').click());
+    const url = await page.waitForFunction(() => {
+      const d = [...document.querySelectorAll('div')].find(e => e.children.length === 0 && /^https?:\/\/\S+\?from=/.test(e.textContent.trim()));
+      return d && d.textContent.trim();
+    }, null, { timeout: 5000 }).then(h => h.jsonValue());
+    assert.ok(url.startsWith('https://tzeke000.github.io/hfcal/?from='), 'QR encodes ' + url);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('frequency check', { skip: SKIP, concurrency: 1 }, () => {
   async function openFreqCheck(page) {
     await calculate(page, CHERRY_POINT, OKINAWA);

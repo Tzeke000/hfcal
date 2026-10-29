@@ -17,8 +17,10 @@ import { useState, useEffect } from 'react';
 import { T } from './theme.js';
 import { readOfflineState } from '../lib/offlineStatus.js';
 import { CHUNKS } from '../data/terrainChunks.js';
+import { isNativeApp } from '../lib/platform.js';
 
 var TOTAL = Object.keys(CHUNKS).length;
+var NATIVE = isNativeApp();
 
 // variant 'strip': the one-line status in the header (saving / not finished /
 // ready) — present on every tab without crowding any of them. variant 'card':
@@ -31,7 +33,7 @@ export function OfflineStatus({ variant }) {
   // Watch for an install that the browser rejects. A worker that goes
   // 'redundant' while installing is exactly the storage-full case.
   useEffect(function() {
-    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return;
+    if (NATIVE || typeof navigator === 'undefined' || !navigator.serviceWorker) return;
     var alive = true;
     function watch(w) {
       if (!w) return;
@@ -49,6 +51,8 @@ export function OfflineStatus({ variant }) {
 
   // Poll while anything is in flight; stop once ready or failed.
   useEffect(function() {
+    // The installed Android app has every file in the APK — nothing to save.
+    if (NATIVE) { setSt({ state: 'ready', native: true, cached: TOTAL, total: TOTAL }); return; }
     var alive = true, timer = null;
     function tick() {
       readOfflineState(TOTAL, failed).then(function(s) {
@@ -66,7 +70,9 @@ export function OfflineStatus({ variant }) {
   if (variant === 'card' && st.state !== 'failed') return null;
   if (variant === 'strip') {
     if (st.state === 'failed') return null;          // the card handles it
-    var line = st.state === 'ready'
+    var line = st.native
+      ? '✓ Installed app · works offline · all ' + st.total + ' terrain regions built in'
+      : st.state === 'ready'
       ? '✓ Offline ready · all ' + st.total + ' terrain regions saved'
       : st.state === 'installing'
         ? 'Saving for offline use: ' + st.cached + ' / ' + st.total + ' regions — stay on Wi-Fi'

@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react';
 import { T } from './theme.js';
 import { dtg, formatCommCard, shotLabel, commCardFilename, shareUrl } from '../lib/commCard.js';
 import QRCode from 'qrcode';
+import { shareBase } from '../lib/platform.js';
 
 // ── SAVED SHOTS ───────────────────────────────────────────────────────────────
 // Field workflow: you plan several links in a day. Save each one, export any
@@ -113,10 +114,9 @@ export function SavedShots({ currentShot, onRecalc, onClearStored }) {
   // Keyed on the URL string, not on currentShot: the parent rebuilds that
   // object on every render, so a QR left showing was re-encoded on every
   // keystroke typed on PLAN. The code only has to change when the plan does.
-  var qrUrl = (qrArm && currentShot)
-    ? shareUrl(currentShot, (typeof window !== 'undefined' && window.location)
-      ? window.location.origin + window.location.pathname : undefined)
-    : null;
+  // shareBase(): inside the Android app the page lives at https://localhost/,
+  // which means nothing on the phone that scans it — encode the website.
+  var qrUrl = (qrArm && currentShot) ? shareUrl(currentShot, shareBase()) : null;
   useEffect(function() {
     if (!qrUrl) { setQrData(null); return; }
     var alive = true;

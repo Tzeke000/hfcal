@@ -14,7 +14,16 @@ jobs:
 
   build:
     needs: tests
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to a new image on GitHub's schedule, and this
+    # build depends on the Android SDK that image ships.
+    runs-on: ubuntu-24.04
+    env:
+      # Set when the repo has a signing key (see docs/INSTALL.md, "Android
+      # signing key"). With one, every build is signed with the SAME key, so a
+      # new APK installs over the old one and saved shots survive. Without
+      # one, each build gets a throwaway debug key and the phone refuses the
+      # update until the old app is uninstalled.
+      HAS_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_B64 != '' }}
 
     steps:
       - name: Checkout
@@ -32,8 +41,18 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # android-actions/setup-android@v3 failed on every run from 1 Oct 2026,
+      # when GitHub began forcing Node 20 actions onto Node 24. The runner image
+      # already carries the Android SDK, so use that instead of downloading it.
+      - name: Android SDK (preinstalled on the runner)
+        run: |
+          set -o pipefail
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME" || { echo "::error::No Android SDK at ANDROID_HOME on this runner"; exit 1; }
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKM" || { echo "::error::sdkmanager missing at $SDKM"; exit 1; }
+          yes | "$SDKM" --licenses > /dev/null || true
+          ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools" | tee logs-sdk.txt
 
       - name: Install dependencies
         run: npm ci
@@ -42,17 +61,32 @@ jobs:
         run: npm run build
 
       - name: Add Android platform
-        run: npx cap add android || echo "android platform already added"
+        run: npx cap add android 2>&1 | tee logs-cap-add.txt || echo "android platform already added"
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          set -o pipefail
+          npx cap sync android 2>&1 | tee logs-cap-sync.txt
+
+      # The template ships versionCode 1 / versionName "1.0" forever, so the
+      # phone's app info never showed which version was installed. 1.62.0 ->
+      # versionCode 16200, versionName "1.62.0".
+      - name: Stamp the app version into the APK
+        run: |
+          set -e
+          VER=$(node -p "require('./package.json').version")
+          CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
+          sed -i -E "s/versionCode [0-9]+/versionCode $CODE/; s/versionName \"[^\"]*\"/versionName \"$VER\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build debug APK
         working-directory: ./android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee ../logs-gradle-debug.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -61,16 +95,49 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      - name: Build release APK (unsigned)
+      - name: Build release APK
+        id: release
         working-directory: ./android
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon 2>&1 | tee ../logs-gradle-release.txt
         continue-on-error: true
 
-      - name: Upload release APK artifact
-        if: success()
+      - name: Sign release APK with the repo's key
+        id: sign
+        if: env.HAS_SIGNING_KEY == 'true' && steps.release.outcome == 'success'
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          IN=android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BT/zipalign" -p -f 4 "$IN" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.keystore" --ks-pass env:KS_PASS \
+            --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            --out hf-field-antenna.apk "$RUNNER_TEMP/aligned.apk" 2>&1 | tee logs-sign.txt
+          "$BT/apksigner" verify --print-certs hf-field-antenna.apk | head -3
+          rm -f "$RUNNER_TEMP/release.keystore"
+
+      - name: Upload signed APK
+        if: steps.sign.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: hf-field-antenna-release-apk-unsigned
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
-          retention-days: 30
-        continue-on-error: true
+          name: hf-field-antenna-apk
+          path: hf-field-antenna.apk
+          retention-days: 90
+
+      # The raw logs are not always reachable; put the end of whatever failed
+      # into the run's annotations, where the error can be read at a glance.
+      - name: Report what failed
+        if: failure() || steps.release.outcome == 'failure'
+        run: |
+          for f in logs-*.txt; do
+            [ -f "$f" ] || continue
+            body=$(tail -n 30 "$f" | sed -e 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=$f::$body"
+          done

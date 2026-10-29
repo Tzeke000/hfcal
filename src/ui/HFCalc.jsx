@@ -31,6 +31,7 @@ import { CompassCard } from "./CompassCard.jsx";
 import { WhatsNew } from './WhatsNew.jsx';
 import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
+import { isNativeApp, SITE_URL, ANDROID_DOWNLOAD_URL } from '../lib/platform.js';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
 import { SoiPanel } from "./SoiPanel.jsx";
@@ -926,7 +927,8 @@ function getAntennaRecommendations(distKm, freqMHz, vf, terrain) {
 // ── PWA HOOK ───────────────────────────────────────────────────────────────────
 function usePWA() {
   var [deferredPrompt, setDeferredPrompt] = useState(null);
-  var [isInstalled, setIsInstalled] = useState(false);
+  // The Android app IS the installed app — no install prompt, no INSTALL chip.
+  var [isInstalled, setIsInstalled] = useState(isNativeApp);
   var isIOS = /iphone|ipad|ipod/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '');
   var isAndroid = /android/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '');
 
@@ -1186,6 +1188,8 @@ function loadEmbedAllow() { return loadOriginList(EMBED_ALLOW_KEY); }
 // version baked into this bundle. If the server is ahead, shows an alert at
 // the top with a one-tap update plus DAGR-style manual steps. Offline or
 // same-version → renders nothing; never interferes with field use.
+var NATIVE_APP = isNativeApp();
+
 function UpdateBanner() {
   var [remoteVer, setRemoteVer] = useState(null);
   var [stepsOpen, setStepsOpen] = useState(false);
@@ -1196,7 +1200,9 @@ function UpdateBanner() {
     var cancelled = false;
     function check() {
       try {
-        fetch(import.meta.env.BASE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+        // Inside the Android app the local version.json is the APK's own copy
+        // and can never be newer — ask the website what is current instead.
+        fetch((NATIVE_APP ? SITE_URL : import.meta.env.BASE_URL) + 'version.json?t=' + Date.now(), { cache: 'no-store' })
           .then(function(r) { return r.ok ? r.json() : null; })
           .then(function(j) { if (!cancelled && j && j.version) setRemoteVer(String(j.version)); })
           .catch(function() { /* offline — stay quiet */ });
@@ -1209,6 +1215,26 @@ function UpdateBanner() {
   }, []);
 
   if (!remoteVer || !isNewerVersion(remoteVer, APP_VERSION)) return null;
+
+  // The installed Android app updates by installing the new APK. The web
+  // update (clear the stored copy, reload) would only reload the same APK.
+  if (NATIVE_APP) {
+    return (
+      <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.warn }}>
+        <div style={{ color: T.warn, fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.12em' }}>UPDATE AVAILABLE</div>
+        <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.9rem', marginTop: 3 }}>
+          {'v' + APP_VERSION + ' → v' + remoteVer}
+        </div>
+        <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55, marginTop: 5 }}>
+          {'This Android app updates by installing the new APK over it. The version you have keeps working until you do.'}
+        </div>
+        <a href={ANDROID_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer"
+          style={{ display: 'inline-block', marginTop: 10, background: T.accent, color: '#0e1409', borderRadius: 6, padding: '9px 16px', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em', textDecoration: 'none' }}>
+          GET THE NEW APK
+        </a>
+      </div>
+    );
+  }
 
   function doUpdate() {
     if (busy) return;
