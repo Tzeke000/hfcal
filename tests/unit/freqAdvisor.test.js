@@ -1279,3 +1279,22 @@ test('auroral: an EXTREME storm does reach the mid-latitudes, and says so', func
   assert.ok(extreme.luf < 2.5 * extreme.auroral.lufQuiet,
     'one grazed terminal in four must not read as a total blackout');
 });
+
+test('frequencyForecast: a storm reaches the forecast, not just the Frequency Check', function() {
+  // The forecast built its own parameter list and left Kp out, so during a
+  // storm the Frequency Check said "below the LUF" while every forecast block
+  // said GOOD. Each block must agree with assessFrequency at that hour.
+  const base = {
+    takeoffDeg: 12, layerKm: 360, midLon: 20, latDeg: 70, magLatDeg: 72,
+    ends: [{ lat: 68, lon: 15, magLatDeg: 70 }, { lat: 72, lon: 25, magLatDeg: 74 }],
+    bounces: [{ lat: 70, lon: 20, magLatDeg: 72 }],
+    hops: 1, distKm: 1200, txWatts: 20, month: 1, sfi: 140, freqMHz: 7,
+  };
+  const storm = frequencyForecast({ ...base, kp: 8 });
+  const quiet = frequencyForecast({ ...base, kp: 1 });
+  storm.forEach(function(b, i) {
+    const direct = assessFrequency({ ...base, kp: 8, utcHour: b.midZ });
+    assert.equal(b.luf, direct.luf, 'block ' + b.startZ + 'Z disagrees with the Frequency Check');
+    assert.ok(b.luf > quiet[i].luf, 'the storm did not raise the forecast floor at ' + b.startZ + 'Z');
+  });
+});

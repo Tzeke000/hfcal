@@ -100,7 +100,7 @@ export function exportText(text, filename, onDone) {
   download();
 }
 
-export function SavedShots({ currentShot, onClearStored }) {
+export function SavedShots({ currentShot, onRecalc, onClearStored }) {
   var [shots, setShots] = useState(loadShots);
   var [open, setOpen] = useState(false);
   var [flash, setFlash] = useState(null);
@@ -110,11 +110,17 @@ export function SavedShots({ currentShot, onClearStored }) {
   // Kept separate so the effect never depends on its own output.
   var [qrArm, setQrArm] = useState(null);
   var [qrData, setQrData] = useState(null);
+  // Keyed on the URL string, not on currentShot: the parent rebuilds that
+  // object on every render, so a QR left showing was re-encoded on every
+  // keystroke typed on PLAN. The code only has to change when the plan does.
+  var qrUrl = (qrArm && currentShot)
+    ? shareUrl(currentShot, (typeof window !== 'undefined' && window.location)
+      ? window.location.origin + window.location.pathname : undefined)
+    : null;
   useEffect(function() {
-    if (!qrArm || !currentShot) { setQrData(null); return; }
+    if (!qrUrl) { setQrData(null); return; }
     var alive = true;
-    var url = shareUrl(currentShot, (typeof window !== 'undefined' && window.location)
-      ? window.location.origin + window.location.pathname : undefined);
+    var url = qrUrl;
     // margin is the QUIET ZONE in modules — the decoder spec wants 4; 1 gave
     // ~7 px of breathing room and marginal scans (Iris round 2, C3).
     QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 4, width: 320,
@@ -122,7 +128,7 @@ export function SavedShots({ currentShot, onClearStored }) {
       .then(function(d) { if (alive) setQrData({ src: d, url: url }); },
             function() { if (alive) setQrData({ src: null, url: url }); });
     return function() { alive = false; };
-  }, [qrArm, currentShot]);
+  }, [qrUrl]);
 
   // Persist as a effect of the list changing, never alongside each setState.
   // Writing inside the click handlers meant a handler working from a stale
@@ -150,6 +156,11 @@ export function SavedShots({ currentShot, onClearStored }) {
     });
     setOpen(true);
     note(dropped ? 'SAVED \u2014 OLDEST DROPPED' : 'SAVED');
+  }
+  // Run a saved plan again on today's data. The parent swaps to PLAN and
+  // shows the answer; a shot too old to carry its grids cannot be re-run.
+  function recalc(shot) {
+    if (!onRecalc || !onRecalc(shot)) note('CANNOT RECALC \u2014 SHOT TOO OLD');
   }
   function doExport(shot) {
     exportText(formatCommCard(shot), commCardFilename(shot), note);
@@ -197,14 +208,15 @@ export function SavedShots({ currentShot, onClearStored }) {
             </button>
           </div>
           {qrArm && currentShot && (
-            /* position+zIndex lift this box ABOVE the night-mode red veil
-               (theme.js body::after, z-index 2147483000). Under the red
-               multiply the light modules dropped to ~57/255 luma against ~3 —
-               below decoder contrast spec, so the QR could fail exactly in the
-               nighttime handoff it exists for (Iris round 2, C3). The body's
-               grayscale filter still applies, which is what preserves dark
-               adaptation; only the red veil is bypassed. */
-            <div style={{ position: 'relative', zIndex: 2147483001, background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
+            /* usmc-qr-lift (theme.js) lifts this box ABOVE the night-mode red
+               veil (body::after). Under the red multiply the light modules
+               dropped to ~57/255 luma against ~3 — below decoder contrast spec,
+               so the QR could fail exactly in the nighttime handoff it exists
+               for (Iris round 2, C3). The page's grayscale filter still
+               applies, which is what preserves dark adaptation; only the red
+               veil is bypassed. Night only, and the header and tab bar sit
+               above it, so it scrolls UNDER them like any other card. */
+            <div className="usmc-qr-lift" style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '12px', marginBottom: 12, textAlign: 'center' }}>
               {qrData && qrData.src
                 ? <img src={qrData.src} alt="Scan to load this plan" style={{ width: 220, height: 220, maxWidth: '100%', imageRendering: 'pixelated' }} />
                 : <div style={{ color: T.textMute, fontSize: '0.74rem' }}>Generating…</div>}
@@ -244,13 +256,19 @@ export function SavedShots({ currentShot, onClearStored }) {
 
           {shots.map(function(s) {
             return (
-              <div key={s.id} style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '9px 11px', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: T.textPrim, fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div key={s.id} style={{ background: T.bg, border: '1px solid ' + T.border, borderRadius: 6, padding: '9px 11px', marginBottom: 7, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                {/* Full width, wrapping: on a phone a single line cut the label
+                    to "7.3 MHz ..." once RECALC joined the buttons. */}
+                <div style={{ flex: '1 1 100%', minWidth: 0 }}>
+                  <div style={{ color: T.textPrim, fontSize: '0.78rem', fontWeight: 600, lineHeight: 1.4, overflowWrap: 'anywhere' }}>
                     {shotLabel(s)}
                   </div>
                   <div style={{ color: T.textMute, fontSize: '0.64rem', marginTop: 2 }}>{s.dtg}</div>
                 </div>
+                <div style={{ flex: 1 }} />
+                <button onClick={function() { recalc(s); }}
+                  aria-label={'Recalculate saved shot: ' + shotLabel(s)}
+                  style={{ ...btn, background: T.accent, color: '#0e1409', border: 'none', flexShrink: 0 }}>RECALC</button>
                 <button onClick={function() { doExport(s); }} style={{ ...btn, background: T.surfaceHi, color: T.textPrim, flexShrink: 0 }}>EXPORT</button>
                 <button onClick={function() { remove(s.id); }}
                   title={'Delete ' + shotLabel(s)} aria-label={'Delete saved shot: ' + shotLabel(s)}
@@ -260,7 +278,7 @@ export function SavedShots({ currentShot, onClearStored }) {
           })}
 
           <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
-            Stored on this device only. Export copies the comm card to the clipboard (or downloads a .txt if the clipboard is unavailable).
+            Stored on this device only. RECALC puts a saved plan back into PLAN and runs it again on today's data (same grids, frequency, wire, power and month). Export copies the comm card to the clipboard (or downloads a .txt if the clipboard is unavailable).
           </div>
           <button
             onClick={function() {

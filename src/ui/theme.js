@@ -101,8 +101,21 @@ const USMC_CSS = [
      multiply a red veil over it: white text -> red, black stays black, so the
      result is red-on-black that keeps a Marine\u2019s dark adaptation. Applied
      globally so it needs no change to the T palette every component reads. */
-  "html[data-night] body { filter: grayscale(1) brightness(0.85) contrast(1.05); }",
-  "html[data-night] body::after { content: \"\"; position: fixed; inset: 0; background: #ff1a00; mix-blend-mode: multiply; pointer-events: none; z-index: 2147483000; }"
+  // On <html>, not <body>: a filter on any other element becomes the
+  // containing block for position:fixed children, which un-pinned the bottom
+  // tab bar at night — it sat at the foot of the whole page, ~9,000 px down,
+  // instead of at the bottom of the screen. The root element is exempt.
+  "html[data-night] { filter: grayscale(1) brightness(0.85) contrast(1.05); }",
+  "html[data-night] body::after { content: \"\"; position: fixed; inset: 0; background: #ff1a00; mix-blend-mode: multiply; pointer-events: none; z-index: 2147483000; }",
+  /* The QR box has to sit ABOVE that veil at night (red multiply drops its
+     contrast below what a decoder reads). Lifting only it put it above the
+     sticky header and the bottom tab bar too, so a QR scrolled over the tabs
+     instead of under them. At night the header and tab bar (usmc-chrome) go
+     one step higher still and carry their own copy of the veil; by day nothing
+     is lifted at all. */
+  "html[data-night] .usmc-qr-lift { position: relative; z-index: 2147483001; }",
+  "html[data-night] .usmc-chrome { z-index: 2147483002 !important; }",
+  "html[data-night] .usmc-chrome::after { content: \"\"; position: absolute; inset: 0; background: #ff1a00; mix-blend-mode: multiply; pointer-events: none; }"
 ].join("\n");
 
 // ── STYLE INJECTOR ────────────────────────────────────────────────────────────

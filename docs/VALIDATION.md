@@ -3621,6 +3621,52 @@ row honestly says it predates the record.
 359 unit tests, 66 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 54 — Re-run a saved shot; the QR under the tabs; a storm in the forecast (v1.62.0)
+
+**From use.** Two reports. A QR left open slid OVER the bottom tab bar when
+scrolled, instead of under it. And saved shots could only be exported as text;
+the operator wanted to run a past plan again.
+
+**The QR.** It was lifted above everything (z 2147483001) so the night-mode
+red veil could not wash out its contrast (Part 38's fix). That also put it
+above the header and the tab bar, by day as well, where nothing needed it.
+Now the lift applies only at night, and at night the header and tab bar go one
+step higher still, each carrying its own copy of the red veil, so they stay
+red-on-black. **Found while testing it:** at night the tab bar was not on
+screen at all. The grayscale filter sat on `<body>`, and a filter makes its
+element the containing block for `position: fixed` children, so the "fixed"
+bar was parked at the foot of the whole page (~9,600 px down on a long
+result). The filter moved to `<html>`, the one element exempt from that rule.
+
+**RECALC.** Each saved shot has a RECALC button. It puts the shot's plan back
+into PLAN and runs it on today's data, then scrolls to the answer. It goes
+through the shot's own share URL and the same `applyPlanParams` a scanned QR
+uses — the URL code was moved into that one function — so a recalculated shot
+and a scanned one cannot come back different. It restores the shot's month and
+power as well, since those are part of the plan; both stay editable.
+
+**Audit fixes.** A code audit (12 findings, list kept outside the repo) turned
+up two worth taking now. The 24-hour forecast built its own parameter list and
+left out Kp, so on a high-latitude path at Kp 8 the Frequency Check read LUF
+13.0 MHz while every forecast block read 2.0 MHz and GOOD. And a QR left
+showing was re-encoded on every keystroke typed on PLAN; it is now keyed on the
+share URL, so it is rebuilt only when the plan changes.
+
+**Measured, not changed.** On a 4x-throttled CPU: launch to CALCULATE 0.5 s;
+a keystroke with a result on screen 32 ms median; a first calculation 0.7 s
+(one 205 ms main-thread task); tab switch ~50 ms; zero CPU idle.
+
+**Tests.** Browser: the QR scrolled behind the tab bar and behind the header,
+by day and at night, must lie under both; at night it must still clear the red
+veil, the tab bar must carry its own veil and sit at the bottom of the screen;
+RECALC must restore a saved plan after a different one was calculated, and must
+work on a fresh launch with nothing calculated. Unit: every forecast block
+must match `assessFrequency` at its hour during a storm. Mutation-checked: the
+old QR lift, the old body filter and the missing Kp each turn their test red.
+
+360 unit tests, 70 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

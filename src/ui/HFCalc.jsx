@@ -18,7 +18,7 @@ import { assessFrequency, frequencyForecast, bestBlocks, DEFAULT_TX_WATTS, DEFAU
          cosZenith, solarDeclination } from "../physics/freqAdvisor.js";
 import { loadFoF2Table, foF2TableReady } from "../data/fof2Table.js";
 import { loadElevationGrid, elevationGridReady, ensureChunks, elevResolution } from "../data/elevationGrid.js";
-import { dtg } from "../lib/commCard.js";
+import { dtg, shareUrl } from "../lib/commCard.js";
 import { parseCoords, looksLikeMGRS } from "../lib/coords.js";
 import { declination, magneticLatitude, modip, trueToMagnetic,
          isDeclinationModelCurrent } from "../physics/magnetic.js";
@@ -2121,7 +2121,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  359 automated tests pin every formula so the physics cannot drift as the app changes, plus 66 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  360 automated tests pin every formula so the physics cannot drift as the app changes, plus 70 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2992,6 +2992,75 @@ function AntennaCard({ antenna, freq, wireType, wireLabel, vf, primary, distKm, 
 }
 
 // ── MAIN APP ───────────────────────────────────────────────────────────────────
+// Bring the card whose heading reads exactly `heading` into view on tab t.
+function scrollToHeading(t, heading) {
+  try {
+    var box = document.querySelector('[data-tab="' + t + '"]');
+    var el = box && Array.prototype.find.call(box.querySelectorAll('div'), function(d) {
+      return d.children.length === 0 && d.textContent.trim() === heading;
+    });
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) { /* ignore */ }
+}
+
+// ── PLAN PARAMETERS ───────────────────────────────────────────────────────────
+// Apply a plan's ?from/?to/?freq/... parameters to the calculator's inputs.
+// One function for both ways a plan arrives — a scanned QR / shared link, and
+// RECALC on a saved shot (which goes through the shot's own share URL) — so
+// the two can never restore a plan differently. get(k) returns the string for
+// a parameter or null; s holds the input setters. Returns what was present.
+function applyPlanParams(get, s) {
+  var qFrom = get('from');
+  var qTo = get('to');
+  var qFreq = get('freq');
+  var qWire = get('wire');
+  var didSet = false;
+  if (qFrom) { s.setLoc1(qFrom); didSet = true; }
+  if (qTo) { s.setLoc2(qTo); didSet = true; }
+  if (qFreq) { s.setFreq(qFreq); didSet = true; }
+  if (qWire === 'copper' || qWire === 'steel') {
+    s.setWireType(qWire);
+    if (qWire === 'copper') s.setWireCore('copper_bare');
+    else if (qWire === 'steel') s.setWireCore('galvanized_steel');
+    didSet = true;
+  }
+  var qCore = get('core');
+  if (qCore && WIRE_CORES[qCore]) { s.setWireCore(qCore); didSet = true; }
+  var qGauge = get('gauge');
+  if (qGauge) {
+    if (WIRE_GAUGES[qGauge]) { s.setWireGauge(qGauge); s.setCustomGauge(''); didSet = true; }
+    else if (!isNaN(parseFloat(qGauge))) { s.setCustomGauge(qGauge); didSet = true; }
+  }
+  // ?legend=3 | 3in | 0.5ft | 0.08m — leg end height (bare number = inches)
+  var qLegEnd = get('legend');
+  if (qLegEnd) {
+    var lm = String(qLegEnd).trim().match(/^([\d.]+)\s*(in|ft|m)?$/i);
+    if (lm && !isNaN(parseFloat(lm[1]))) {
+      var lu = (lm[2] || 'in').toLowerCase();
+      if (lu === 'm') { s.setLegEndStr(String(parseFloat(lm[1]) * 3.28084)); s.setLegEndUnit('ft'); }
+      else { s.setLegEndStr(lm[1]); s.setLegEndUnit(lu); }
+      didSet = true;
+    }
+  }
+  // ?watts= and ?month= — the two knobs that move the verdict (power sets
+  // the LUF, month sets the MUF). The QR handoff encodes them so the
+  // receiver's auto-calc reproduces the SENDER's verdict, not a verdict at
+  // this device's defaults (Iris round 2, C1). Same bounds as the AI-layer
+  // setters.
+  var qWatts = get('watts');
+  if (qWatts) {
+    var wv = parseFloat(qWatts);
+    if (!isNaN(wv) && wv > 0 && wv <= 10000) { s.setTxWatts(wv); didSet = true; }
+  }
+  var qMonth = get('month');
+  if (qMonth) {
+    var mv = parseInt(qMonth, 10);
+    if (!isNaN(mv) && mv >= 1 && mv <= 12) { s.setMonth(mv); didSet = true; }
+  }
+  return { from: qFrom, to: qTo, auto: get('auto'),
+           complete: !!(didSet && qFrom && qTo && qFreq) };
+}
+
 export default function HFCalc() {
   var pwa = usePWA();
   var _cachedLocs = loadCachedLocs();
@@ -3221,15 +3290,7 @@ export default function HFCalc() {
   function goTo(t, heading) {
     setTab(t);
     if (!heading) { try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } return; }
-    setTimeout(function() {
-      try {
-        var box = document.querySelector('[data-tab="' + t + '"]');
-        var el = box && Array.prototype.find.call(box.querySelectorAll('div'), function(d) {
-          return d.children.length === 0 && d.textContent.trim() === heading;
-        });
-        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } catch (e) { /* ignore */ }
-    }, 60);
+    setTimeout(function() { scrollToHeading(t, heading); }, 60);
   }
   // Night (red-light) mode — persisted, applied to <html> so the CSS veil in
   // theme.js covers the whole app. Off by default.
@@ -3280,6 +3341,33 @@ export default function HFCalc() {
   var urlAppliedRef = useRef(false);
   // True once a location has been set from the URL rather than typed.
   var urlSuppliedLocsRef = useRef(false);
+
+  // Every input a plan carries, for applyPlanParams. Setters never change
+  // identity, so this object never does either.
+  var planSetters = useMemo(function() {
+    return { setLoc1: setLoc1, setLoc2: setLoc2, setFreq: setFreq, setWireType: setWireType,
+             setWireCore: setWireCore, setWireGauge: setWireGauge, setCustomGauge: setCustomGauge,
+             setLegEndStr: setLegEndStr, setLegEndUnit: setLegEndUnit,
+             setTxWatts: setTxWatts, setMonth: setMonth };
+  }, []);
+  // RECALC on a saved shot: put its plan back into the inputs and run it again
+  // on today's data. It goes through the shot's own share URL — the exact
+  // parameters its QR carries — so a recalculated shot and a scanned one
+  // cannot come back different. recalcTick forces a fresh run even when the
+  // inputs already match the shot (nothing else would change to trigger one).
+  var [recalcTick, setRecalcTick] = useState(0);
+  var showResultRef = useRef(false);
+  function recalcShot(shot) {
+    var q;
+    try { q = new URL(shareUrl(shot, 'https://hfcal.invalid/')).searchParams; } catch (e) { return false; }
+    var applied = applyPlanParams(function(k) { return q.get(k); }, planSetters);
+    if (!applied.complete) return false;
+    hasCalculatedRef.current = true;
+    showResultRef.current = true;
+    setRecalcTick(function(n) { return n + 1; });
+    setTab('plan');
+    return true;
+  }
 
   // Build the full results object from already-validated inputs. Shared by the
   // CALCULATE button and the live auto-recompute effect so both stay in sync.
@@ -3375,7 +3463,15 @@ export default function HFCalc() {
       setResults(buildResults(p1, p2, fMHz));
     }, 250);
     return function() { clearTimeout(t); };
-  }, [loc1, loc2, freq, buildResults]);
+  }, [loc1, loc2, freq, buildResults, recalcTick]);
+
+  // After RECALC, land on the answer rather than the top of PLAN.
+  useEffect(function() {
+    if (!results || !showResultRef.current) return;
+    showResultRef.current = false;
+    var t = setTimeout(function() { scrollToHeading('plan', 'Link Analysis'); }, 60);
+    return function() { clearTimeout(t); };
+  }, [results]);
 
   // ── AI / EXTERNAL INTEGRATION LAYER ─────────────────────────────────────────
   // Lets external agents (Ava, Claude Code, browser-automation tools, or any
@@ -3393,58 +3489,12 @@ export default function HFCalc() {
     if (!urlAppliedRef.current) try {
       urlAppliedRef.current = true;
       var url = new URL(window.location.href);
-      var qFrom = url.searchParams.get('from');
-      var qTo = url.searchParams.get('to');
-      var qFreq = url.searchParams.get('freq');
-      var qWire = url.searchParams.get('wire');
-      var qAuto = url.searchParams.get('auto');
-      var didSet = false;
-      if (qFrom) { setLoc1(qFrom); didSet = true; urlSuppliedLocsRef.current = true; }
-      if (qTo) { setLoc2(qTo); didSet = true; urlSuppliedLocsRef.current = true; }
-      if (qFreq) { setFreq(qFreq); didSet = true; }
-      if (qWire === 'copper' || qWire === 'steel') {
-        setWireType(qWire);
-        if (qWire === 'copper') setWireCore('copper_bare');
-        else if (qWire === 'steel') setWireCore('galvanized_steel');
-        didSet = true;
-      }
-      var qCore = url.searchParams.get('core');
-      if (qCore && WIRE_CORES[qCore]) { setWireCore(qCore); didSet = true; }
-      var qGauge = url.searchParams.get('gauge');
-      if (qGauge) {
-        if (WIRE_GAUGES[qGauge]) { setWireGauge(qGauge); setCustomGauge(''); didSet = true; }
-        else if (!isNaN(parseFloat(qGauge))) { setCustomGauge(qGauge); didSet = true; }
-      }
-      // ?legend=3 | 3in | 0.5ft | 0.08m — leg end height (bare number = inches)
-      var qLegEnd = url.searchParams.get('legend');
-      if (qLegEnd) {
-        var lm = String(qLegEnd).trim().match(/^([\d.]+)\s*(in|ft|m)?$/i);
-        if (lm && !isNaN(parseFloat(lm[1]))) {
-          var lu = (lm[2] || 'in').toLowerCase();
-          if (lu === 'm') { setLegEndStr(String(parseFloat(lm[1]) * 3.28084)); setLegEndUnit('ft'); }
-          else { setLegEndStr(lm[1]); setLegEndUnit(lu); }
-          didSet = true;
-        }
-      }
-      // ?watts= and ?month= — the two knobs that move the verdict (power sets
-      // the LUF, month sets the MUF). The QR handoff encodes them so the
-      // receiver's auto-calc reproduces the SENDER's verdict, not a verdict at
-      // this device's defaults (Iris round 2, C1). Same bounds as the AI-layer
-      // setters.
-      var qWatts = url.searchParams.get('watts');
-      if (qWatts) {
-        var wv = parseFloat(qWatts);
-        if (!isNaN(wv) && wv > 0 && wv <= 10000) { setTxWatts(wv); didSet = true; }
-      }
-      var qMonth = url.searchParams.get('month');
-      if (qMonth) {
-        var mv = parseInt(qMonth, 10);
-        if (!isNaN(mv) && mv >= 1 && mv <= 12) { setMonth(mv); didSet = true; }
-      }
+      var applied = applyPlanParams(function(k) { return url.searchParams.get(k); }, planSetters);
+      if (applied.from || applied.to) urlSuppliedLocsRef.current = true;
       // ?auto=1 (or omitted with both from+to+freq) auto-runs calculate:
       // marking the session as "has calculated" lets the live-recompute effect
       // produce results as soon as the state set above flushes — no DOM poking.
-      if (didSet && qFrom && qTo && qFreq && qAuto !== '0') {
+      if (applied.complete && applied.auto !== '0') {
         hasCalculatedRef.current = true;
       }
     } catch (e) { /* malformed URL, ignore */ }
@@ -3849,13 +3899,13 @@ export default function HFCalc() {
   // and its contents disagreed, so getResults().frequency_check served stale
   // month/power to any external caller until some OTHER listed input changed.
   // The same class as every duplicated-fact bug in docs/VALIDATION.md Part 27.
-  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, pathCtx, legEndHeight, month, txWatts]);
+  }, [loc1, loc2, freq, wireType, wireCore, effectiveGauge, results, pathCtx, legEndHeight, month, txWatts, planSetters]);
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', padding: '0 0 calc(60px + env(safe-area-inset-bottom)) 0' }}>
       <USMCStyleInjector />
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,12,7,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: '1px solid #1f2e17',
+      <div className="usmc-chrome" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,12,7,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: '1px solid #1f2e17',
         // viewport-fit=cover + a black-translucent status bar let the page run
         // under the iOS clock/battery, which printed them on top of the title.
         // Reserve the notch inset (0 on devices that have none).
@@ -4237,7 +4287,7 @@ export default function HFCalc() {
         />
         <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
         <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} cachedKp={cachedKp} />
-        <SavedShots currentShot={currentShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
+        <SavedShots currentShot={currentShot} onRecalc={recalcShot} onClearStored={function() { setLoc1(DEFAULT_LOC1); setLoc2(DEFAULT_LOC2); }} />
         <TruthLog currentShot={currentShot} appVersion={APP_VERSION} />
         </div>
 
@@ -4291,7 +4341,7 @@ export default function HFCalc() {
 
       {/* Bottom tab bar. Safe-area padding keeps it clear of the iPhone home bar. */}
       <div style={{ height: 76 }} />
-      <nav aria-label="Sections" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 120,
+      <nav aria-label="Sections" className="usmc-chrome" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 120,
         background: '#080c07', borderTop: '1px solid #1f2e17',
         paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div style={{ maxWidth: 520, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>

@@ -188,6 +188,60 @@ describe('saved shots', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('recalculate a saved shot (v1.62)', { skip: SKIP, concurrency: 1 }, () => {
+  test('RECALC puts a saved plan back and runs it, even after another calculation', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const firstDist = await statVal(page, 'Distance');
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'SAVE CURRENT').click());
+    await page.waitForTimeout(200);
+
+    // A different plan on screen now: Cherry Point to Camp Lejeune, 14.2 MHz.
+    await page.evaluate(() => { window.HFCalc.setFrequency('14.2'); });
+    await calculate(page, CHERRY_POINT, 'N 34:41:00 W 077:20:00');
+    const otherDist = await statVal(page, 'Distance');
+    assert.notEqual(otherDist, firstDist, 'test needs two different plans');
+
+    await page.evaluate(() => { const b = document.querySelector('[data-tab-btn="tools"]'); b.click(); });
+    await page.getByRole('button', { name: /^Recalculate saved shot/ }).first().click();
+    await page.waitForFunction((d) => {
+      const lbl = [...document.querySelectorAll('.usmc-stat-label')].find(e => e.textContent.trim() === 'Distance');
+      const v = lbl && lbl.parentElement.querySelector('.usmc-stat-val');
+      return v && v.textContent.trim() === d;
+    }, firstDist, { timeout: 5000 });
+
+    const planUp = await page.evaluate(() => !document.querySelector('[data-tab="plan"]').hidden);
+    assert.ok(planUp, 'RECALC did not bring PLAN up');
+    assert.equal(await statVal(page, 'Distance'), firstDist);
+    const inputs = page.locator('input[placeholder*="15T XG"]');
+    assert.match(await inputs.nth(1).inputValue(), /^26\.35\d*,127\.76\d*$/, 'the saved target did not come back');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('RECALC works with nothing calculated this session', async () => {
+    const page = await newPage(browser);
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    const dist = await statVal(page, 'Distance');
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'SAVE CURRENT').click());
+    await page.waitForTimeout(200);
+    // Fresh launch: the shot is in storage, no result is on screen.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.getByRole('button', { name: /^Recalculate saved shot/ }).first().click();
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('.usmc-stat-label')].some(e => e.textContent.trim() === 'Distance'), null, { timeout: 5000 });
+    assert.equal(await statVal(page, 'Distance'), dist);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
 describe('frequency check', { skip: SKIP, concurrency: 1 }, () => {
   async function openFreqCheck(page) {
     await calculate(page, CHERRY_POINT, OKINAWA);
@@ -1491,8 +1545,8 @@ describe('night mode and next-window (v1.43)', { skip: SKIP, concurrency: 1 }, (
     assert.equal(on, '1', 'night mode did not turn on');
     // The veil is a ::after on body — assert the app desaturates (filter set).
     const filtered = await page.evaluate(() =>
-      getComputedStyle(document.body).filter !== 'none');
-    assert.ok(filtered, 'night mode set no filter on the body');
+      getComputedStyle(document.documentElement).filter !== 'none');
+    assert.ok(filtered, 'night mode set no filter on the page');
     // Persists across reload.
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('button:has-text("CALCULATE")');
@@ -1757,6 +1811,80 @@ describe('QR handoff (v1.44)', { skip: SKIP, concurrency: 1 }, () => {
     const src = await page.evaluate(() =>
       ([...document.querySelectorAll('img')].find(i => (i.src || '').startsWith('data:image')) || {}).src || '');
     assert.ok(src.startsWith('data:image/'), 'no QR image rendered');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('QR stays under the header and tabs (v1.62)', { skip: SKIP, concurrency: 1 }, () => {
+  // Reported from use: open a QR, scroll, and it slid OVER the bottom tab bar
+  // instead of under it. The box was lifted above everything so the night
+  // veil could not wash it out; the header and tabs were not.
+  async function qrOverTabs(page, night) {
+    // A short screen, so the QR card is far enough down to scroll behind both.
+    await page.setViewportSize({ width: 420, height: 600 });
+    if (night) {
+      await page.locator('button', { hasText: 'NIGHT' }).first().click();
+      await page.waitForTimeout(150);
+    }
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Saved Shots & Export', 'OPEN');
+    await page.evaluate(() => [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim() === 'SHOW QR').click());
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('img')].some(i => (i.src || '').startsWith('data:image')), null, { timeout: 5000 });
+    // Scroll the QR so it sits right behind the tab bar, then behind the header.
+    const out = {};
+    for (const where of ['tabs', 'header']) {
+      out[where] = await page.evaluate((w) => {
+        const img = [...document.querySelectorAll('img')].find(i => (i.src || '').startsWith('data:image'));
+        const bar = w === 'tabs' ? document.querySelector('nav[aria-label="Sections"]') : document.querySelector('.usmc-chrome');
+        const br = bar.getBoundingClientRect();
+        const ir = img.getBoundingClientRect();
+        const y = br.top + br.height / 2;
+        window.scrollTo({ top: window.scrollY + (ir.top + ir.height / 2) - y, behavior: 'instant' });
+        const r2 = img.getBoundingClientRect();
+        const hit = document.elementFromPoint(r2.left + r2.width / 2, y);
+        return { onTop: bar.contains(hit), overlapped: r2.top < y && r2.bottom > y };
+      }, where);
+    }
+    const lifted = await page.evaluate(() => getComputedStyle(document.querySelector('.usmc-qr-lift')).zIndex);
+    return { out, lifted };
+  }
+
+  test('by day the QR scrolls under the tab bar and the header', async () => {
+    const page = await newPage(browser);
+    const { out, lifted } = await qrOverTabs(page, false);
+    for (const w of ['tabs', 'header']) {
+      assert.ok(out[w].overlapped, 'test did not get the QR behind the ' + w);
+      assert.ok(out[w].onTop, 'the QR drew over the ' + w);
+    }
+    assert.equal(lifted, 'auto', 'the QR is lifted by day, when nothing needs it');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('at night the QR still clears the red veil and still goes under the tabs', async () => {
+    const page = await newPage(browser);
+    const { out, lifted } = await qrOverTabs(page, true);
+    for (const w of ['tabs', 'header']) {
+      assert.ok(out[w].overlapped, 'test did not get the QR behind the ' + w);
+      assert.ok(out[w].onTop, 'the QR drew over the ' + w + ' at night');
+    }
+    // Above the veil (body::after z 2147483000) so its contrast survives.
+    assert.ok(Number(lifted) > 2147483000, 'the night QR is under the red veil again: z=' + lifted);
+    // And the tab bar is still pinned to the bottom of the SCREEN. A filter
+    // on <body> made it the fixed bar's containing block, which parked the
+    // bar at the foot of the whole page at night.
+    const navBottom = await page.evaluate(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return Math.round(document.querySelector('nav[aria-label="Sections"]').getBoundingClientRect().bottom) - innerHeight;
+    });
+    assert.equal(navBottom, 0, 'at night the tab bar is not at the bottom of the screen');
+    // The header and tabs carry their own veil, so they stay red at night.
+    const veiled = await page.evaluate(() =>
+      getComputedStyle(document.querySelector('nav[aria-label="Sections"]'), '::after').mixBlendMode);
+    assert.equal(veiled, 'multiply', 'the lifted tab bar lost its red veil');
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

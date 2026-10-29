@@ -997,6 +997,10 @@ export function frequencyForecast(params) {
       txWatts: params.txWatts,
       hops: params.hops,
       distKm: params.distKm,
+      // Without this the forecast never saw a geomagnetic storm: at Kp 8 on a
+      // high-latitude path the Frequency Check read LUF 13 MHz while every
+      // forecast block read 2 MHz and GOOD.
+      kp: params.kp,
     });
     if (!r) return null;
     var now = params.nowUtcHour;

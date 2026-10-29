@@ -11,6 +11,15 @@
 
 export const CHANGELOG = [
   {
+    version: '1.62.0', date: '2026-10-29', title: 'Re-run a saved shot',
+    notes: [
+      'RECALC on any saved shot puts its plan back into PLAN (grids, frequency, wire, power, month) and runs it again on today’s data.',
+      'The QR code now scrolls under the header and the bottom tabs instead of over them.',
+      'Night mode: the bottom tabs stay at the bottom of the screen (they had dropped to the very end of the page).',
+      'The 24-hour forecast now accounts for geomagnetic storms, the same as the Frequency Check.',
+    ],
+  },
+  {
     version: '1.61.0', date: '2026-10-08', title: 'What’s new',
     notes: [
       'This list: the last few updates, what they changed, and when each reached this device.',
