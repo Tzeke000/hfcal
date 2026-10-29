@@ -3678,7 +3678,8 @@ accepted, on a pinned `ubuntu-24.04` (`ubuntu-latest` moved to a new image on
 (1.63.0 -> 16300 / "1.63.0"; the template had shipped 1 / "1.0" forever), and
 puts the tail of any failing step's log into the run's annotations, because
 the raw logs are not always reachable. Verified on GitHub's runner before the
-change reached main: RESULT_LINE
+change reached main: every step green, debug and release APKs built (run
+40974661352), the first passing Android build since 3 Sep.
 
 **Signing.** Each build signed itself with a fresh throwaway debug key, so
 Android refused every update ("App not installed") until the old app was
