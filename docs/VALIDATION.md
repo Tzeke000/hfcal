@@ -3667,6 +3667,47 @@ old QR lift, the old body filter and the missing Kp each turn their test red.
 360 unit tests, 70 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 55 — The Android app: building again, and knowing it is installed (v1.63.0)
+
+**The build.** Every Android build since 1 Oct 2026 failed at "Setup Android
+SDK" (`android-actions/setup-android@v3`) — the day GitHub began forcing
+Node 20 actions onto Node 24. The runner image already ships the Android SDK,
+so the step was replaced by a check that the SDK is there and its licences are
+accepted, on a pinned `ubuntu-24.04` (`ubuntu-latest` moved to a new image on
+19 Oct). The build now stamps `versionCode`/`versionName` from package.json
+(1.63.0 -> 16300 / "1.63.0"; the template had shipped 1 / "1.0" forever), and
+puts the tail of any failing step's log into the run's annotations, because
+the raw logs are not always reachable. Verified on GitHub's runner before the
+change reached main: RESULT_LINE
+
+**Signing.** Each build signed itself with a fresh throwaway debug key, so
+Android refused every update ("App not installed") until the old app was
+uninstalled — which deletes saved shots and the truth log. The workflow now
+signs the release APK with the repository's own key when the
+`ANDROID_KEYSTORE_B64` secret (and its passwords) are set, producing
+`hf-field-antenna-apk`, which installs over the previous one. The key has to
+be made and stored by the repo owner (docs/INSTALL.md, "Android signing key");
+until then the debug APK is produced exactly as before.
+
+**Inside the APK.** The page is served from `https://localhost/` with every
+file already on the phone. Code written for the website did four wrong things
+there, each now pinned by a browser test that impersonates the app
+(`window.Capacitor`):
+- the QR encoded `https://localhost/?from=…`, which opens nothing on the phone
+  that scans it — it now encodes the website;
+- the offline worker copied the 36 MB the APK already holds, and would keep
+  serving an old copy after the APK was updated — no worker in the app, and any
+  worker an earlier APK registered is unregistered and its caches cleared;
+- the update banner asked the APK's own `version.json` whether it was out of
+  date (never) — it now asks the website, and offers GET THE NEW APK instead of
+  a web reload that would only reload the same APK;
+- the header offered INSTALL and "saving for offline use" — it now reads
+  "Installed app · works offline".
+Mutation-checked: with the detection switched off, all three tests fail.
+
+360 unit tests, 73 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

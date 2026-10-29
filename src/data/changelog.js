@@ -11,6 +11,15 @@
 
 export const CHANGELOG = [
   {
+    version: '1.63.0', date: '2026-10-29', title: 'Android app fixes',
+    notes: [
+      'The Android app builds again (it had stopped on 1 Oct when GitHub changed its build machines).',
+      'Inside the Android app the QR now opens the plan on any phone — it had encoded a link that only worked on the phone that made it.',
+      'The Android app says it is installed and works offline, stops offering INSTALL, and when a newer version is out points you to the new APK.',
+      'Android Settings → Apps now shows the real version number.',
+    ],
+  },
+  {
     version: '1.62.0', date: '2026-10-29', title: 'Re-run a saved shot',
     notes: [
       'RECALC on any saved shot puts its plan back into PLAN (grids, frequency, wire, power, month) and runs it again on today’s data.',

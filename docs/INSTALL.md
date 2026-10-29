@@ -90,7 +90,12 @@ Pick whichever is easiest:
 
 ### Updating later
 
-Uninstall the old version first (long-press icon → Uninstall), then install the new APK. Android refuses to overlay debug builds with different signatures.
+When a newer version is out, the app shows **UPDATE AVAILABLE → GET THE NEW APK** (it checks the website whenever it has signal). Download the new APK the same way as above.
+
+- **If the run also has `hf-field-antenna-apk`** (the signed build — see *Android signing key* below), download that one. It installs straight over the old app and **keeps your saved shots and truth log**.
+- **If there is only `hf-field-antenna-debug-apk`**, every build is signed with a different throwaway key and Android refuses to install it over the old one (*"App not installed"*). You have to uninstall the old app first — and **uninstalling deletes saved shots and the truth log**. Export the shots you need (Saved Shots → EXPORT) before you uninstall.
+
+To check which version is installed: Settings → Apps → HF Field Antenna (the version number matches the app's footer from v1.63 on).
 
 ---
 
@@ -176,7 +181,7 @@ The bundle is 1.7 MB — first load needs internet and may take 5-10 seconds on 
 
 ### Android APK: "App not installed"
 
-You probably already have the old version installed. Uninstall it first.
+The installed app was signed with a different key (every debug build has its own). Export any saved shots you need, uninstall the old app, then install. Once the repo has a signing key, use `hf-field-antenna-apk` and this stops happening — see *Android signing key*.
 
 ### Android APK: phone says the file is harmful
 
@@ -196,6 +201,28 @@ Settings → General → VPN & Device Management → tap your Apple ID profile �
 ### iPhone: app stopped working after a week
 
 That's the free Apple ID expiration. Re-run Sideloadly. Or switch to the PWA (no expiration). Or upgrade to AltStore for auto-renewal.
+
+---
+
+## 🔑 Android signing key (repo owner only, one time)
+
+Without this, every Android build is signed with a new throwaway key, so an update can only be installed after uninstalling the old app (which deletes its saved data). With it, every build is signed with the **same** key and updates install over the top.
+
+1. On any computer with Java installed, make the key (keep the passwords — you will need them in step 3):
+   ```
+   keytool -genkeypair -v -keystore hfcal-release.keystore -alias hfcal -keyalg RSA -keysize 4096 -validity 10000
+   ```
+2. Turn it into text: `base64 -w0 hfcal-release.keystore > keystore.txt` (Mac: `base64 -i hfcal-release.keystore -o keystore.txt`).
+3. GitHub → this repo → **Settings → Secrets and variables → Actions → New repository secret**, four times:
+   - `ANDROID_KEYSTORE_B64` — the contents of `keystore.txt`
+   - `ANDROID_KEYSTORE_PASSWORD` — the keystore password
+   - `ANDROID_KEY_ALIAS` — `hfcal`
+   - `ANDROID_KEY_PASSWORD` — the key password (same as the keystore password unless you chose another)
+4. Push anything (or re-run *Build Android APK*). The run now also produces **`hf-field-antenna-apk`** — the one to hand out.
+
+**Back up `hfcal-release.keystore` and its passwords somewhere safe and private.** If it is lost, the next key is a different key, and every phone has to uninstall once more. Never commit it to the repo: anyone holding it can make an "update" a phone will accept.
+
+The first switch to the signed build still needs one uninstall (the old app was signed with a throwaway key). After that, never again.
 
 ---
 

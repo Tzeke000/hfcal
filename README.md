@@ -43,8 +43,9 @@ If you'd rather have a real `.exe` installer instead of a PWA install:
 
 1. Go to the [latest Android build](https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml)
 2. Click the most recent successful run
-3. Scroll to the bottom → download `hf-field-antenna-debug-apk` from Artifacts
+3. Scroll to the bottom → download `hf-field-antenna-apk` from Artifacts (the signed build — updates install over it and keep your saved shots). If the run only has `hf-field-antenna-debug-apk`, take that, but updating it means uninstalling first, which deletes saved data.
 4. Unzip → transfer the APK to your phone → tap to install (allow "unknown sources" when asked)
+5. The app tells you when a newer version is out (**GET THE NEW APK**) whenever it has signal.
 
 📖 [Detailed Android instructions](docs/INSTALL.md#android-apk)
 
@@ -107,9 +108,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 54 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 55 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**360 unit tests** pin the physics so it cannot drift. **70 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**360 unit tests** pin the physics so it cannot drift. **73 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -174,7 +175,7 @@ npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
 npm test             # 360 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 70 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm run test:ui      # 73 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
 
