@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, 'claude/auto-apex-height-calc-W0kPD']  # TEMP: emulator bring-up
   workflow_dispatch:
 
 # contents: write lets the build publish the signed APK as a release.
@@ -21,6 +21,8 @@ jobs:
     # Pinned: ubuntu-latest moves to a new image on GitHub's schedule, and this
     # build depends on the Android SDK that image ships.
     runs-on: ubuntu-24.04
+    outputs:
+      signed: ${{ steps.sign.outcome == 'success' }}
     env:
       # Set when the repo has a signing key (see docs/INSTALL.md, "Android
       # signing key"). With one, every build is signed with the SAME key, so a
@@ -73,13 +75,16 @@ jobs:
           npx cap sync android 2>&1 | tee logs-cap-sync.txt
 
       # The template ships versionCode 1 / versionName "1.0" forever, so the
-      # phone's app info never showed which version was installed. 1.62.0 ->
-      # versionCode 16200, versionName "1.62.0".
+      # phone's app info never showed which version was installed.
+      # versionCode = major*1000000 + minor*1000 + patch: 1.65.0 -> 1065000.
+      # (v1.63-1.64 used major*10000 + minor*100 + patch, which would have run
+      # into the next minor at 1.100; every new code is larger than those, so
+      # updates still go forward.)
       - name: Stamp the app version into the APK
         run: |
           set -e
           VER=$(node -p "require('./package.json').version")
-          CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
+          CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*1000000+b*1000+c")
           sed -i -E "s/versionCode [0-9]+/versionCode $CODE/; s/versionName \"[^\"]*\"/versionName \"$VER\"/" android/app/build.gradle
           grep -E "versionCode|versionName" android/app/build.gradle
 
@@ -101,6 +106,15 @@ jobs:
           name: hf-field-antenna-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+      # For the emulator job only: the debug build is the one whose WebView a
+      # test can attach to. Short-lived and named so nobody installs it.
+      - name: Hand the debug APK to the device test
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-device-test-debug-apk-do-not-install
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 3
 
       - name: Build release APK
         id: release
@@ -139,36 +153,6 @@ jobs:
           path: hf-field-antenna.apk
           retention-days: 90
 
-      # A run's artifacts need a GitHub login to download and expire. The
-      # release does neither: one fixed public link, always the newest APK —
-      # https://github.com/<repo>/releases/tag/android. Only from main.
-      - name: Publish the signed APK (public download page)
-        if: steps.sign.outcome == 'success' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          VER=$(node -p "require('./package.json').version")
-          cat > notes.md <<EOF
-          ## HF Field Antenna — Android app v${VER}
-
-          **iPhone and web-app users: nothing to do here — ignore this page.** This is only for the Android app installed from an APK file.
-
-          **New install:** download **hf-field-antenna.apk** below on your Android phone → open it → **Install** (allow "install from this source" if asked).
-
-          ### Already have an older Android APK? One time only
-          Older APKs were signed with a throwaway key, so Android will say *"App not installed"* until the old one is removed:
-          1. In the old app: **TOOLS → Saved Shots → EXPORT** any shots you want to keep. Uninstalling deletes saved shots and the field truth log.
-          2. Uninstall the old app (long-press its icon → Uninstall).
-          3. Install **hf-field-antenna.apk** from this page.
-
-          After this one switch, every update installs straight over the top and keeps your data. The app tells you when a new version is out.
-          EOF
-          gh release delete android --cleanup-tag -y >/dev/null 2>&1 || true
-          gh release create android hf-field-antenna.apk --target "$GITHUB_SHA" \
-            --title "Android app v${VER}" --notes-file notes.md --latest
-          echo "Published: https://github.com/${GITHUB_REPOSITORY}/releases/tag/android" >> "$GITHUB_STEP_SUMMARY"
-
       # The raw logs are not always reachable; put the end of whatever failed
       # into the run's annotations, where the error can be read at a glance.
       - name: Report what failed
@@ -179,3 +163,134 @@ jobs:
             body=$(tail -n 30 "$f" | sed -e 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
             echo "::error title=$f::$body"
           done
+
+  # The app on a real Android system (an emulator on GitHub's machine): does
+  # the update install over the version people have, and does the app do what
+  # the desktop tests can only pretend to check? scripts/android/device-test.mjs
+  device-test:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies (Playwright drives the app's WebView)
+        run: npm ci
+
+      - name: Get the APKs this build made
+        uses: actions/download-artifact@v4
+        with:
+          path: apks
+
+      - name: Start an Android emulator
+        run: |
+          set -eo pipefail
+          # Hardware acceleration for the emulator on GitHub's Linux machines.
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+          SDK="$ANDROID_HOME"; BIN="$SDK/cmdline-tools/latest/bin"
+          IMG="system-images;android-34;google_apis;x86_64"
+          yes | "$BIN/sdkmanager" --licenses > /dev/null || true
+          "$BIN/sdkmanager" --install emulator platform-tools "$IMG" > logs-sdk.txt 2>&1 || { tail -20 logs-sdk.txt; exit 1; }
+          echo no | "$BIN/avdmanager" create avd -n hfcal -k "$IMG" -d pixel_6 --force
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"; export PATH="$SDK/platform-tools:$PATH"
+          nohup "$SDK/emulator/emulator" -avd hfcal -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -camera-back none -camera-front none > logs-emulator.txt 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 120); do
+            [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
+            sleep 5
+          done
+          [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ] || { echo "::error::emulator did not boot"; tail -40 logs-emulator.txt; exit 1; }
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell input keyevent 82 || true
+          echo "booted: Android $(adb shell getprop ro.build.version.release | tr -d '\r')"
+
+      # The promise of the signing key: a new APK installs OVER the one people
+      # already have, without uninstalling, and keeps its data.
+      - name: The update installs over the published APK
+        if: needs.build.outputs.signed == 'true'
+        run: |
+          set -e
+          PKG=com.tzeke000.hffieldantenna
+          NEW=apks/hf-field-antenna-apk/hf-field-antenna.apk
+          if curl -fsSL -o prev.apk "https://github.com/${GITHUB_REPOSITORY}/releases/download/android/hf-field-antenna.apk"; then
+            adb install prev.apk
+            PREV=$(adb shell dumpsys package $PKG | grep -m1 versionName | tr -d '\r ')
+            adb install -r "$NEW" 2>&1 | tee logs-update.txt
+            grep -q Success logs-update.txt || { echo "::error title=Update did not install over the published APK::$(tail -3 logs-update.txt)"; exit 1; }
+            NOW=$(adb shell dumpsys package $PKG | grep -m1 versionName | tr -d '\r ')
+            echo "::notice title=PASS update installs over the published APK::$PREV -> $NOW"
+          else
+            echo "::notice title=No published APK yet::nothing to update from"
+            adb install "$NEW"
+          fi
+          adb shell am start -W -n $PKG/.MainActivity | tail -2
+          sleep 8
+          adb shell pidof $PKG > /dev/null || { echo "::error title=Signed APK does not stay running::"; exit 1; }
+          echo "::notice title=PASS signed APK launches::"
+          adb uninstall $PKG
+
+      - name: Check the app on the phone
+        run: |
+          adb install apks/ci-device-test-debug-apk-do-not-install/app-debug.apk
+          node scripts/android/device-test.mjs
+
+      - name: Keep what the phone showed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-report
+          path: |
+            device-report.json
+            device-final.png
+            logs-*.txt
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # Publish only what was built AND passed on the phone. A run's artifacts
+  # need a GitHub login to download and expire; the release does neither —
+  # one fixed public link, always the newest APK.
+  publish:
+    needs: [build, device-test]
+    if: needs.build.outputs.signed == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hf-field-antenna-apk
+
+      - name: Publish the signed APK (public download page)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          VER=$(node -p "require('./package.json').version")
+          sed "s/{{VERSION}}/${VER}/g" scripts/android/release-notes.md > notes.md
+          R="$GITHUB_REPOSITORY"
+          if gh release view android > /dev/null 2>&1; then
+            # Swap the file without a gap: upload under a temporary name, then
+            # remove the old one and rename. (Deleting and re-creating the
+            # release left the link dead for anyone downloading at that moment.)
+            cp hf-field-antenna.apk hf-field-antenna.next.apk
+            gh release upload android hf-field-antenna.next.apk --clobber
+            OLD=$(gh api "repos/$R/releases/tags/android" --jq '.assets[] | select(.name=="hf-field-antenna.apk") | .id')
+            NEW=$(gh api "repos/$R/releases/tags/android" --jq '.assets[] | select(.name=="hf-field-antenna.next.apk") | .id')
+            [ -n "$OLD" ] && gh api -X DELETE "repos/$R/releases/assets/$OLD"
+            gh api -X PATCH "repos/$R/releases/assets/$NEW" -f name=hf-field-antenna.apk > /dev/null
+            gh release edit android --title "Android app v${VER}" --notes-file notes.md
+          else
+            gh release create android hf-field-antenna.apk --target "$GITHUB_SHA" \
+              --title "Android app v${VER}" --notes-file notes.md --latest
+          fi
+          gh api "repos/$R/releases/tags/android" --jq '.assets[] | .name + " " + (.size|tostring)'
+          echo "Published v${VER}: https://github.com/${R}/releases/tag/android" >> "$GITHUB_STEP_SUMMARY"
