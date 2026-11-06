@@ -170,7 +170,7 @@ jobs:
   device-test:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -195,18 +195,26 @@ jobs:
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
           SDK="$ANDROID_HOME"; BIN="$SDK/cmdline-tools/latest/bin"
           IMG="system-images;android-34;google_apis;x86_64"
-          yes | "$BIN/sdkmanager" --licenses > /dev/null || true
-          "$BIN/sdkmanager" --install emulator platform-tools "$IMG" > logs-sdk.txt 2>&1 || { tail -20 logs-sdk.txt; exit 1; }
+          # One folder for the virtual phone, named for both tools: avdmanager
+          # and the emulator otherwise look in different places ("Unknown AVD
+          # name" and a boot wait that never ends).
+          export ANDROID_AVD_HOME="$HOME/.android/avd"; mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          (yes || true) | "$BIN/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "$BIN/sdkmanager" --install emulator platform-tools "$IMG" > logs-sdk.txt 2>&1 || { tail -c 2000 logs-sdk.txt; exit 1; }
           echo no | "$BIN/avdmanager" create avd -n hfcal -k "$IMG" -d pixel_6 --force
+          "$SDK/emulator/emulator" -list-avds
           echo "$SDK/platform-tools" >> "$GITHUB_PATH"; export PATH="$SDK/platform-tools:$PATH"
           nohup "$SDK/emulator/emulator" -avd hfcal -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -camera-back none -camera-front none > logs-emulator.txt 2>&1 &
-          adb wait-for-device
+          EMU=$!
+          booted=""
           for i in $(seq 1 120); do
-            [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
+            kill -0 $EMU 2>/dev/null || { echo "::error title=Emulator exited::$(tail -5 logs-emulator.txt | tr '\n' ' ')"; exit 1; }
+            if [ "$(timeout 10 adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then booted=1; break; fi
             sleep 5
           done
-          [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ] || { echo "::error::emulator did not boot"; tail -40 logs-emulator.txt; exit 1; }
+          [ -n "$booted" ] || { echo "::error title=Emulator did not boot in 10 min::$(tail -5 logs-emulator.txt | tr '\n' ' ')"; exit 1; }
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
