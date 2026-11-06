@@ -14,6 +14,10 @@ on:
       - '.github/workflows/build-windows.yml'
   workflow_dispatch:
 
+# contents: write lets the build publish the installer as a release.
+permissions:
+  contents: write
+
 jobs:
   # An installer built from a commit that fails its own tests is a defect
   # shipped with a version number. The Pages deploy has required this since
@@ -86,3 +90,30 @@ jobs:
           name: hf-field-antenna-windows-installer-msi
           path: ${{ steps.locate.outputs.msi_path }}
           retention-days: 90
+
+  # The installer used to exist only as a build artifact (GitHub login to
+  # download, gone after 90 days), while the app's "DOWNLOAD .EXE" button
+  # pointed at /releases/latest, where nothing was published. Publish it to a
+  # fixed public page; it is also "latest", so that old link lands on it.
+  publish-windows:
+    needs: build-windows
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hf-field-antenna-windows-installer-exe
+          path: exe
+
+      - name: Publish the installer (public download page)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          VER=$(node -p "require('./package.json').version")
+          EXE=$(ls exe/*.exe | head -1)
+          sed "s/{{VERSION}}/${VER}/g" scripts/release/windows-notes.md > notes.md
+          bash scripts/release/publish-asset.sh windows "$EXE" HF-Field-Antenna-Setup-x64.exe \
+            "Windows app v${VER}" notes.md true

@@ -275,22 +275,7 @@ jobs:
         run: |
           set -e
           VER=$(node -p "require('./package.json').version")
-          sed "s/{{VERSION}}/${VER}/g" scripts/android/release-notes.md > notes.md
-          R="$GITHUB_REPOSITORY"
-          if gh release view android > /dev/null 2>&1; then
-            # Swap the file without a gap: upload under a temporary name, then
-            # remove the old one and rename. (Deleting and re-creating the
-            # release left the link dead for anyone downloading at that moment.)
-            cp hf-field-antenna.apk hf-field-antenna.next.apk
-            gh release upload android hf-field-antenna.next.apk --clobber
-            OLD=$(gh api "repos/$R/releases/tags/android" --jq '.assets[] | select(.name=="hf-field-antenna.apk") | .id')
-            NEW=$(gh api "repos/$R/releases/tags/android" --jq '.assets[] | select(.name=="hf-field-antenna.next.apk") | .id')
-            [ -n "$OLD" ] && gh api -X DELETE "repos/$R/releases/assets/$OLD"
-            gh api -X PATCH "repos/$R/releases/assets/$NEW" -f name=hf-field-antenna.apk > /dev/null
-            gh release edit android --title "Android app v${VER}" --notes-file notes.md
-          else
-            gh release create android hf-field-antenna.apk --target "$GITHUB_SHA" \
-              --title "Android app v${VER}" --notes-file notes.md --latest
-          fi
-          gh api "repos/$R/releases/tags/android" --jq '.assets[] | .name + " " + (.size|tostring)'
-          echo "Published v${VER}: https://github.com/${R}/releases/tag/android" >> "$GITHUB_STEP_SUMMARY"
+          sed "s/{{VERSION}}/${VER}/g" scripts/release/android-notes.md > notes.md
+          # Not "latest": /releases/latest is where the Windows installer lives.
+          bash scripts/release/publish-asset.sh android hf-field-antenna.apk hf-field-antenna.apk \
+            "Android app v${VER}" notes.md false
