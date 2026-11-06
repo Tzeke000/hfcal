@@ -32,7 +32,7 @@ import { WhatsNew } from './WhatsNew.jsx';
 import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
 import { AndroidSwitchNotice } from './AndroidSwitchNotice.jsx';
-import { isNativeApp, SITE_URL, ANDROID_DOWNLOAD_URL } from '../lib/platform.js';
+import { isInstalledApp, isDesktopApp, SITE_URL, appDownloadUrl, WINDOWS_DOWNLOAD_URL } from '../lib/platform.js';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
 import { SoiPanel } from "./SoiPanel.jsx";
@@ -928,8 +928,8 @@ function getAntennaRecommendations(distKm, freqMHz, vf, terrain) {
 // ── PWA HOOK ───────────────────────────────────────────────────────────────────
 function usePWA() {
   var [deferredPrompt, setDeferredPrompt] = useState(null);
-  // The Android app IS the installed app — no install prompt, no INSTALL chip.
-  var [isInstalled, setIsInstalled] = useState(isNativeApp);
+  // The Android and Windows apps ARE installed — no install prompt, no INSTALL chip.
+  var [isInstalled, setIsInstalled] = useState(isInstalledApp);
   var isIOS = /iphone|ipad|ipod/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '');
   var isAndroid = /android/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '');
 
@@ -1107,7 +1107,7 @@ function InstallBanner({ pwa }) {
               <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.5, marginBottom: 8 }}>
                 Get a real <code style={{ background: '#000', padding: '1px 5px', borderRadius: 3, fontFamily: 'monospace', fontSize: '0.75rem' }}>.exe</code> installer that installs HF Field Antenna as a standalone Windows app. No browser needed after install.
               </div>
-              <a href="https://github.com/Tzeke000/hfcal/releases/latest" target="_blank" rel="noopener" style={{ display: 'inline-block', background: T.accent, color: '#fff', textDecoration: 'none', padding: '8px 14px', borderRadius: 5, fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em' }}>
+              <a href={WINDOWS_DOWNLOAD_URL} target="_blank" rel="noopener" style={{ display: 'inline-block', background: T.accent, color: '#fff', textDecoration: 'none', padding: '8px 14px', borderRadius: 5, fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em' }}>
                 DOWNLOAD .EXE FROM GITHUB
               </a>
               <div style={{ color: T.textMute, fontSize: '0.66rem', marginTop: 8, fontStyle: 'italic' }}>
@@ -1189,7 +1189,7 @@ function loadEmbedAllow() { return loadOriginList(EMBED_ALLOW_KEY); }
 // version baked into this bundle. If the server is ahead, shows an alert at
 // the top with a one-tap update plus DAGR-style manual steps. Offline or
 // same-version → renders nothing; never interferes with field use.
-var NATIVE_APP = isNativeApp();
+var NATIVE_APP = isInstalledApp();
 
 function UpdateBanner() {
   var [remoteVer, setRemoteVer] = useState(null);
@@ -1217,8 +1217,9 @@ function UpdateBanner() {
 
   if (!remoteVer || !isNewerVersion(remoteVer, APP_VERSION)) return null;
 
-  // The installed Android app updates by installing the new APK. The web
-  // update (clear the stored copy, reload) would only reload the same APK.
+  // An installed app (Android APK, Windows .exe) updates by installing the
+  // new version. The web update (clear the stored copy, reload) would only
+  // reload the same installed files.
   if (NATIVE_APP) {
     return (
       <div className="usmc-card" style={{ marginBottom: 16, borderLeft: '3px solid ' + T.warn }}>
@@ -1227,11 +1228,13 @@ function UpdateBanner() {
           {'v' + APP_VERSION + ' → v' + remoteVer}
         </div>
         <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55, marginTop: 5 }}>
-          {'This Android app updates by installing the new APK over it. The version you have keeps working until you do.'}
+          {isDesktopApp()
+            ? 'This Windows app updates by running the new installer over it. The version you have keeps working until you do.'
+            : 'This Android app updates by installing the new APK over it. The version you have keeps working until you do.'}
         </div>
-        <a href={ANDROID_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer"
+        <a href={appDownloadUrl()} target="_blank" rel="noopener noreferrer"
           style={{ display: 'inline-block', marginTop: 10, background: T.accent, color: '#0e1409', borderRadius: 6, padding: '9px 16px', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.06em', textDecoration: 'none' }}>
-          GET THE NEW APK
+          {isDesktopApp() ? 'GET THE NEW INSTALLER' : 'GET THE NEW APK'}
         </a>
       </div>
     );

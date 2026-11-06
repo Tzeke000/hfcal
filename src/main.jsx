@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
-import { isNativeApp } from './lib/platform.js';
+import { isInstalledApp } from './lib/platform.js';
 import HFCalc from './ui/HFCalc.jsx';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
 
@@ -9,10 +9,10 @@ import { ErrorBoundary } from './ui/ErrorBoundary.js';
 // Auto-update strategy: when a new version is deployed, fetch it in the
 // background and reload on next launch.
 //
-// Not inside the installed Android app: every file is already in the APK, and
+// Not inside an installed app (Android, Windows): every file is already in it, and
 // a worker there only made a second 36 MB copy — and kept serving the OLD
 // copy after the APK was updated. Clear any worker an earlier APK registered.
-if (typeof window !== 'undefined' && isNativeApp()) {
+if (typeof window !== 'undefined' && isInstalledApp()) {
   // Unregister first, THEN clear: a worker still installing would otherwise
   // write its cache straight back.
   var clearCaches = function() {

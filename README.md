@@ -33,9 +33,9 @@ After installing it works **fully offline** — the ionospheric tables, antenna 
 
 If you'd rather have a real `.exe` installer instead of a PWA install:
 
-1. Go to [the latest release](https://github.com/Tzeke000/hfcal/releases/latest) — or, if no release is published yet, the [Windows build artifacts](https://github.com/Tzeke000/hfcal/actions/workflows/build-windows.yml)
-2. Download the `HFCalc-Setup-*-x64.exe` installer
-3. Double-click to install
+1. Open **https://github.com/Tzeke000/hfcal/releases/tag/windows** (no GitHub account needed)
+2. Download **HF-Field-Antenna-Setup-x64.exe**
+3. Double-click to install. Updates: the app says when a new version is out (**GET THE NEW INSTALLER**); run the new installer over the old one.
 
 ⚠️ **Heads up:** the installer is **unsigned**. Windows will show *"Windows protected your PC"* the first time you run it. Click **"More info" → "Run anyway"**. (To avoid this we'd need a $200/year code-signing certificate.)
 

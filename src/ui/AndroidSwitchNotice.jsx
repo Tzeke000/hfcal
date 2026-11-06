@@ -15,14 +15,16 @@
 
 import { useState } from 'react';
 import { T } from './theme.js';
-import { isNativeApp, ANDROID_DOWNLOAD_URL } from '../lib/platform.js';
+import { isInstalledApp, ANDROID_DOWNLOAD_URL } from '../lib/platform.js';
 import { ANDROID_SWITCH_KEY, shouldShowAndroidSwitch } from '../lib/androidSwitch.js';
 
 export function AndroidSwitchNotice() {
   var [dismissed, setDismissed] = useState(function() {
     try { return localStorage.getItem(ANDROID_SWITCH_KEY) === '1'; } catch (e) { return false; }
   });
-  if (!shouldShowAndroidSwitch(new Date(), isNativeApp(), dismissed)) return null;
+  // Not inside an installed app: an Android app new enough to show it is
+  // already the signed one, and the Windows app has nothing to switch.
+  if (!shouldShowAndroidSwitch(new Date(), isInstalledApp(), dismissed)) return null;
 
   function dismiss() {
     try { localStorage.setItem(ANDROID_SWITCH_KEY, '1'); } catch (e) { /* hides for this visit */ }

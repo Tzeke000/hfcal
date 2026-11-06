@@ -322,6 +322,47 @@ describe('installed Android app (v1.63)', { skip: SKIP, concurrency: 1 }, () => 
   });
 });
 
+describe('installed Windows app (v1.65)', { skip: SKIP, concurrency: 1 }, () => {
+  // The Windows app (Tauri) serves the page from its own files, like the APK,
+  // and had the same blind spots. Tauri defines __TAURI_IPC__ before any script.
+  async function asWindowsApp(page, remoteVersion) {
+    await page.context().addInitScript(() => { window.__TAURI_IPC__ = function() {}; });
+    await page.context().route('https://tzeke000.github.io/hfcal/version.json*', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ version: remoteVersion }) }));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+  }
+
+  test('installed, no Android notice, and a newer version points to the new installer', async () => {
+    const page = await newPage(browser);
+    await asWindowsApp(page, '99.0.0');
+    const link = page.locator('a', { hasText: 'GET THE NEW INSTALLER' });
+    await link.waitFor({ timeout: 10000 });
+    assert.equal(await link.getAttribute('href'), 'https://github.com/Tzeke000/hfcal/releases/tag/windows');
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.match(text, /This Windows app updates by running the new installer/);
+    assert.match(text, /Installed app · works offline/);
+    assert.equal(await page.locator('[data-android-switch]').count(), 0, 'Android notice shown in the Windows app');
+    assert.equal(await page.locator('[data-install-chip]').count(), 0, 'INSTALL offered inside the installed app');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('the website\'s DOWNLOAD .EXE button goes to the Windows download page', async () => {
+    const page = await newPage(browser);
+    // It sits in the install steps on HELP, which INSTALL opens on a desktop.
+    await page.evaluate(() => document.querySelector('[data-tab-btn="help"]').click());
+    await page.locator('[data-tab="help"]').getByRole('button', { name: 'INSTALL', exact: true }).click();
+    const href = await page.evaluate(() => {
+      const a = [...document.querySelectorAll('a')].find(e => /DOWNLOAD \.EXE/.test(e.textContent));
+      return a ? a.getAttribute('href') : null;
+    });
+    assert.equal(href, 'https://github.com/Tzeke000/hfcal/releases/tag/windows');
+    await page.context().close();
+  });
+});
+
 describe('Android signing-key notice (v1.64)', { skip: SKIP, concurrency: 1 }, () => {
   test('the website says who it is for, and GOT IT makes it stay gone', async () => {
     const page = await newPage(browser);

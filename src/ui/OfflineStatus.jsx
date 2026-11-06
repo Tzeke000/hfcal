@@ -17,10 +17,10 @@ import { useState, useEffect } from 'react';
 import { T } from './theme.js';
 import { readOfflineState } from '../lib/offlineStatus.js';
 import { CHUNKS } from '../data/terrainChunks.js';
-import { isNativeApp } from '../lib/platform.js';
+import { isInstalledApp } from '../lib/platform.js';
 
 var TOTAL = Object.keys(CHUNKS).length;
-var NATIVE = isNativeApp();
+var NATIVE = isInstalledApp();
 
 // One reader for the whole page. The strip and the card each used to run
 // their own, and each re-listed every cached file (~420) every 3 s for as long
