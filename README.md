@@ -45,7 +45,7 @@ If you'd rather have a real `.exe` installer instead of a PWA install:
 2. Download **hf-field-antenna.apk** → open it → **Install** (allow "install from this source" when asked)
 3. Updates install straight over it and keep your saved shots. The app tells you when one is out (**GET THE NEW APK**).
 
-**Had an Android APK from before November 2026?** One time only: export the saved shots you want (TOOLS → Saved Shots → EXPORT), uninstall the old app, then install the new one — older APKs were signed with a throwaway key, so Android refuses to update them in place. **iPhone and web-app users: nothing to do.**
+**Had an Android APK from before November 2026?** One time only: screenshot or write down the saved shots you want (EXPORT does not work in those older Android apps — it says DOWNLOADED but saves nothing), uninstall the old app, then install the new one — older APKs were signed with a throwaway key, so Android refuses to update them in place. **iPhone and web-app users: nothing to do.**
 
 📖 [Detailed Android instructions](docs/INSTALL.md#android-apk)
 

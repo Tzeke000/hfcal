@@ -6,7 +6,7 @@
 
 ### Already have an older Android APK? One time only
 Older APKs were signed with a throwaway key, so Android will say *"App not installed"* until the old one is removed:
-1. In the old app: **TOOLS → Saved Shots → EXPORT** any shots you want to keep. Uninstalling deletes saved shots and the field truth log.
+1. **Screenshot or write down** any saved shots you want to keep — uninstalling deletes saved shots and the field truth log. *EXPORT does not work in the old Android app* (it says "DOWNLOADED" but saves nothing). Tip: tap **RECALC** on a saved shot (if your version has it) to bring its grids up on PLAN, then screenshot.
 2. Uninstall the old app (long-press its icon → Uninstall).
 3. Install **hf-field-antenna.apk** from this page.
 

@@ -82,7 +82,7 @@ On your Android phone, open **https://github.com/Tzeke000/hfcal/releases/tag/and
 
 When a newer version is out, the app shows **UPDATE AVAILABLE → GET THE NEW APK** (it checks the website whenever it has signal). That opens the same page; download and install — it goes straight over the old app and **keeps your saved shots and truth log**.
 
-**Switching from an APK made before November 2026 (one time only).** Those were signed with a throwaway key, so Android refuses to install over them (*"App not installed"*). Export the shots you need (TOOLS → Saved Shots → EXPORT), uninstall the old app — **uninstalling deletes saved shots and the truth log** — then install the new APK. Never again after that.
+**Switching from an APK made before November 2026 (one time only).** Those were signed with a throwaway key, so Android refuses to install over them (*"App not installed"*). Screenshot or write down the saved shots you need — **EXPORT does not work in those older Android apps** (it says DOWNLOADED but saves nothing; tap RECALC on a shot, if your version has it, to show its grids, then screenshot). Uninstall the old app — **uninstalling deletes saved shots and the truth log** — then install the new APK. Never again after that.
 
 To check which version is installed: Settings → Apps → HF Field Antenna (the version number matches the app's footer from v1.63 on).
 
@@ -170,7 +170,7 @@ The bundle is 1.7 MB — first load needs internet and may take 5-10 seconds on 
 
 ### Android APK: "App not installed"
 
-The installed app is an older APK signed with a throwaway key (every build before November 2026 had its own). Export any saved shots you need, uninstall the old app, then install the APK from the release page. This happens once; APKs from the release page all share one key.
+The installed app is an older APK signed with a throwaway key (every build before November 2026 had its own). Screenshot or write down any saved shots you need (EXPORT does not work in those older apps), uninstall the old app, then install the APK from the release page. This happens once; APKs from the release page all share one key.
 
 ### Android APK: phone says the file is harmful
 

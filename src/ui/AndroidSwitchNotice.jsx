@@ -40,7 +40,7 @@ export function AndroidSwitchNotice() {
       <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.55, marginTop: 8 }}>
         If you installed the <strong>Android app from an APK file</strong> before November 2026, it cannot update itself to the new version. One time only:
       </div>
-      <div style={step}>1. In that app: TOOLS → Saved Shots → EXPORT anything you want to keep. Uninstalling deletes saved shots and the truth log.</div>
+      <div style={step}>1. Screenshot or write down any saved shots you want to keep — uninstalling deletes them and the truth log. EXPORT does not work in the old Android app (it says DOWNLOADED but saves nothing). Tip: tap RECALC on a shot, if your version has it, to show its grids, then screenshot.</div>
       <div style={step}>2. Uninstall the old app (long-press its icon → Uninstall).</div>
       <div style={step}>3. Install the new APK from the download page. After this, updates install over the top and keep your data.</div>
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
