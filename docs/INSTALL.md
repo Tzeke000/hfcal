@@ -65,24 +65,14 @@ If you'd prefer a real `.apk` file install. **Note:** This is a debug-signed APK
 
 ### Get the APK
 
-1. Go to: https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml
-2. Click the most recent run with a green ✓ checkmark
-3. Scroll to the bottom of the page
-4. Under **Artifacts** → click `hf-field-antenna-debug-apk` to download the zip
-5. Unzip → you have `app-debug.apk`
+On your Android phone, open **https://github.com/Tzeke000/hfcal/releases/tag/android** and download **hf-field-antenna.apk**. No GitHub account is needed, and the link always has the newest version.
 
-### Get it onto your phone
-
-Pick whichever is easiest:
-
-- **Email it to yourself** → open email on phone → tap attachment → save to Downloads
-- **Google Drive** → upload from PC → open Drive on phone → tap file → Download
-- **USB cable** → plug phone into PC → drag the APK to phone's Downloads folder
+(Builds made before the signing key existed were only on the Actions page as `hf-field-antenna-debug-apk`, which needs a GitHub login and expires after 30 days.)
 
 ### Install it
 
 1. Open your phone's **Files** app
-2. Go to **Downloads** → tap **`app-debug.apk`**
+2. Go to **Downloads** → tap **`hf-field-antenna.apk`**
 3. Android warns: *"For your security…"* → tap **Settings**
 4. Toggle on **Allow from this source** → tap back arrow
 5. Tap **Install**
@@ -90,10 +80,9 @@ Pick whichever is easiest:
 
 ### Updating later
 
-When a newer version is out, the app shows **UPDATE AVAILABLE → GET THE NEW APK** (it checks the website whenever it has signal). Download the new APK the same way as above.
+When a newer version is out, the app shows **UPDATE AVAILABLE → GET THE NEW APK** (it checks the website whenever it has signal). That opens the same page; download and install — it goes straight over the old app and **keeps your saved shots and truth log**.
 
-- **If the run also has `hf-field-antenna-apk`** (the signed build — see *Android signing key* below), download that one. It installs straight over the old app and **keeps your saved shots and truth log**.
-- **If there is only `hf-field-antenna-debug-apk`**, every build is signed with a different throwaway key and Android refuses to install it over the old one (*"App not installed"*). You have to uninstall the old app first — and **uninstalling deletes saved shots and the truth log**. Export the shots you need (Saved Shots → EXPORT) before you uninstall.
+**Switching from an APK made before November 2026 (one time only).** Those were signed with a throwaway key, so Android refuses to install over them (*"App not installed"*). Export the shots you need (TOOLS → Saved Shots → EXPORT), uninstall the old app — **uninstalling deletes saved shots and the truth log** — then install the new APK. Never again after that.
 
 To check which version is installed: Settings → Apps → HF Field Antenna (the version number matches the app's footer from v1.63 on).
 
@@ -181,7 +170,7 @@ The bundle is 1.7 MB — first load needs internet and may take 5-10 seconds on 
 
 ### Android APK: "App not installed"
 
-The installed app was signed with a different key (every debug build has its own). Export any saved shots you need, uninstall the old app, then install. Once the repo has a signing key, use `hf-field-antenna-apk` and this stops happening — see *Android signing key*.
+The installed app is an older APK signed with a throwaway key (every build before November 2026 had its own). Export any saved shots you need, uninstall the old app, then install the APK from the release page. This happens once; APKs from the release page all share one key.
 
 ### Android APK: phone says the file is harmful
 
@@ -218,7 +207,7 @@ Without this, every Android build is signed with a new throwaway key, so an upda
    - `ANDROID_KEYSTORE_PASSWORD` — the keystore password
    - `ANDROID_KEY_ALIAS` — `hfcal`
    - `ANDROID_KEY_PASSWORD` — the key password (same as the keystore password unless you chose another)
-4. Push anything (or re-run *Build Android APK*). The run now also produces **`hf-field-antenna-apk`** — the one to hand out.
+4. Push anything to main (or re-run *Build Android APK*). The run now signs the APK and publishes it at **https://github.com/Tzeke000/hfcal/releases/tag/android** — the one link to hand out. (Done for this repo in November 2026.)
 
 **Back up `hfcal-release.keystore` and its passwords somewhere safe and private.** If it is lost, the next key is a different key, and every phone has to uninstall once more. Never commit it to the repo: anyone holding it can make an "update" a phone will accept.
 

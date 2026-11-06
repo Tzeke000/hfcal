@@ -86,6 +86,23 @@ describe('compass', { skip: SKIP, concurrency: 1 }, () => {
     await page.context().close();
   });
 
+  // v1.64: an open compass kept listening at sensor rate on a hidden tab.
+  test('stops listening on another tab and picks up again on return', async () => {
+    const page = await newPage(browser);
+    await toggleCard(page, 'Compass', 'OPEN');
+    await sendHeading(page, 90);
+    assert.match(await compassSubtitle(page), /270° MAG/);
+    await page.evaluate(() => document.querySelector('[data-tab-btn="plan"]').click());
+    await sendHeading(page, 180);   // nobody is looking: must be ignored
+    await page.evaluate(() => document.querySelector('[data-tab-btn="tools"]').click());
+    await page.waitForTimeout(150);
+    assert.doesNotMatch(await compassSubtitle(page), /MAG/, 'took a reading while hidden, or kept a stale one');
+    await sendHeading(page, 45);    // back on TOOLS: live again, no new prompt
+    assert.match(await compassSubtitle(page), /315° MAG/, 'did not re-attach on return');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
   // It is a compass first: it must not require a calculation to work.
   test('opens with no calculation run', async () => {
     const page = await newPage(browser);
@@ -281,7 +298,7 @@ describe('installed Android app (v1.63)', { skip: SKIP, concurrency: 1 }, () => 
     await asAndroidApp(page, '99.0.0');
     const link = page.locator('a', { hasText: 'GET THE NEW APK' });
     await link.waitFor({ timeout: 10000 });
-    assert.equal(await link.getAttribute('href'), 'https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml');
+    assert.equal(await link.getAttribute('href'), 'https://github.com/Tzeke000/hfcal/releases/tag/android');
     assert.equal(await page.locator('button', { hasText: 'UPDATE NOW' }).count(), 0,
       'the web update (clear and reload) would only reload the same APK');
     assert.deepEqual(page.errors, []);
@@ -300,6 +317,69 @@ describe('installed Android app (v1.63)', { skip: SKIP, concurrency: 1 }, () => 
       return d && d.textContent.trim();
     }, null, { timeout: 5000 }).then(h => h.jsonValue());
     assert.ok(url.startsWith('https://tzeke000.github.io/hfcal/?from='), 'QR encodes ' + url);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('Android signing-key notice (v1.64)', { skip: SKIP, concurrency: 1 }, () => {
+  test('the website says who it is for, and GOT IT makes it stay gone', async () => {
+    const page = await newPage(browser);
+    const card = page.locator('[data-android-switch]');
+    await card.waitFor({ timeout: 5000 });
+    const text = await card.innerText();
+    assert.match(text, /ANDROID APP USERS ONLY/);
+    assert.match(text, /iPhone, or using the app from the website\? Nothing to do/);
+    assert.equal(await card.locator('a').getAttribute('href'), 'https://github.com/Tzeke000/hfcal/releases/tag/android');
+    await card.getByRole('button', { name: 'GOT IT' }).click();
+    assert.equal(await card.count(), 0, 'GOT IT did not hide it');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('[data-android-switch]').count(), 0, 'it came back after GOT IT');
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('not shown inside the Android app', async () => {
+    const page = await newPage(browser);
+    await page.context().addInitScript(() => {
+      window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('[data-android-switch]').count(), 0);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+});
+
+describe('fresh space weather reaches the answer (v1.64)', { skip: SKIP, concurrency: 1 }, () => {
+  // The reading was stored but nothing re-rendered, so Frequency Check kept
+  // grading against the old/default solar flux until an input changed.
+  test('a reading that lands after CALCULATE changes the MUF without touching an input', async () => {
+    const page = await newPage(browser);
+    let release;
+    const gate = new Promise(r => { release = r; });
+    await page.route('https://services.swpc.noaa.gov/products/summary/10cm-flux.json*', async route => {
+      await gate;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ Flux: '300', TimeStamp: '2026-11-06 20:00' }) });
+    });
+    await page.route('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json*', async route => {
+      await gate;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([['time_tag', 'Kp'], ['2026-11-06 18:00', '1']]) });
+    });
+    await calculate(page, CHERRY_POINT, OKINAWA);
+    await toggleCard(page, 'Frequency Check', 'OPEN');
+    const before = (await readFrequencies(page)).MUF;
+    release();
+    await page.waitForFunction(() => {
+      try { return JSON.parse(localStorage.getItem('hfcalc_spacewx_v1') || 'null').sfi === 300; } catch (e) { return false; }
+    }, null, { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const after = (await readFrequencies(page)).MUF;
+    assert.ok(after > before, `MUF did not move when SFI 300 arrived: ${before} -> ${after}`);
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

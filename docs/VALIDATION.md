@@ -3709,6 +3709,60 @@ Mutation-checked: with the detection switched off, all three tests fail.
 360 unit tests, 73 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 56 — One public Android download, and the switch to a real key (v1.64.0)
+
+**The key.** The repo owner added the four signing secrets (docs/INSTALL.md,
+"Android signing key"). From this build on, the release APK is signed with
+one permanent key, so each new APK installs over the last and keeps saved
+shots and the truth log.
+
+**The download.** Until now the APK existed only as a build artifact: it
+needed a GitHub login to download and expired after 30 days, which ruled it
+out for most of the ~46 people using the app. The build now publishes the
+signed APK to a public release page, `releases/tag/android` (no login, always
+the newest), with the switch steps in its notes, and the app's GET THE NEW APK
+links there. Once the key exists the debug APK is no longer handed out, and a
+failed release build fails the run instead of being skipped.
+
+**Telling people.** Every APK before this one was signed with its own
+throwaway key, so none can update in place: those users must export, uninstall
+and reinstall once. Those APKs never contact the website, so no release can
+reach them inside the app, and a "pre-build" without the key would only have
+cost them a second uninstall. What can be done: the website copy of the app —
+where most installs are, iPhone included — shows a one-time notice headed
+ANDROID APP USERS ONLY, whose first line tells iPhone and web-app users they
+have nothing to do. GOT IT dismisses it for good; it never shows inside the
+Android app and stops by itself on 2027-03-01. The rest is word of mouth.
+
+**Bugs from the October audit, fixed.**
+- A new space-weather reading was stored but nothing re-rendered, so Frequency
+  Check, the forecast, SOI and a saved card kept using the old or default solar
+  flux and Kp until an unrelated input changed. Now announced with an event.
+  Test: a reading of SFI 300 that lands after CALCULATE must move the MUF with
+  no input touched (17.9 MHz stayed 17.9 without the fix).
+- An open compass kept taking ~60 sensor events a second on a hidden tab. It
+  now detaches off-screen and re-attaches on return without a new prompt.
+  Test: a heading sent while on PLAN must be ignored, and one sent after
+  returning must show. The magnetic model is also no longer rebuilt per event.
+- Two DAGR photos picked in quick succession ran two OCR jobs and the last to
+  finish (often the older photo) wrote the field. The button is disabled while
+  scanning and only the newest scan may report. (Not browser-tested: it needs
+  two real OCR runs; verified by reading.)
+- Terrain chunks loaded for every keystroke of a half-typed grid; they now
+  wait for typing to pause (250 ms).
+- The offline-status reader ran twice (header and card) and re-listed every
+  cached file every 3 s while an older version waited for UPDATE, possibly all
+  session. One shared reader now: 3 s while downloading, 30 s while waiting on
+  the operator, plus an immediate re-check on a returning tab, a new worker or
+  a controller change.
+- Saved locations were read from storage on every render; now once.
+
+Mutation-checked: without the space-weather event and without the compass's
+tab awareness, their tests fail.
+
+361 unit tests, 77 browser tests (×2 bases in CI), lint clean, Python mirror
+exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

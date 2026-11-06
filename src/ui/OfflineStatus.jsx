@@ -22,48 +22,81 @@ import { isNativeApp } from '../lib/platform.js';
 var TOTAL = Object.keys(CHUNKS).length;
 var NATIVE = isNativeApp();
 
+// One reader for the whole page. The strip and the card each used to run
+// their own, and each re-listed every cached file (~420) every 3 s for as long
+// as the state was 'incomplete' — which, with an older version waiting for the
+// operator to tap UPDATE, can be the whole session.
+var shared = { st: null, failed: false, timer: null, started: false, subs: [] };
+
+function publish(st) {
+  shared.st = st;
+  shared.subs.forEach(function(fn) { fn(st); });
+}
+
+function tick() {
+  shared.timer = null;
+  readOfflineState(TOTAL, shared.failed).then(function(st) {
+    publish(st);
+    // Quick while the world is downloading. Slow while waiting on something
+    // only the operator can do (tap UPDATE, free storage) — a returning tab, a
+    // new worker or a controller change re-checks at once anyway. Stop once
+    // ready or failed.
+    var wait = st.state === 'installing' ? 3000 : st.state === 'incomplete' ? 30000 : 0;
+    if (wait && shared.subs.length && !shared.timer) shared.timer = setTimeout(tick, wait);
+  });
+}
+
+function recheck() {
+  if (shared.timer) { clearTimeout(shared.timer); shared.timer = null; }
+  tick();
+}
+
+function start() {
+  if (shared.started) return;
+  shared.started = true;
+  if (NATIVE) { publish({ state: 'ready', native: true, cached: TOTAL, total: TOTAL }); return; }
+  // Watch for an install that the browser rejects. A worker that goes
+  // 'redundant' while installing is exactly the storage-full case.
+  try {
+    var sw = typeof navigator !== 'undefined' ? navigator.serviceWorker : null;
+    if (sw) {
+      var watch = function(w) {
+        if (!w) return;
+        w.addEventListener('statechange', function() {
+          if (w.state === 'redundant') { shared.failed = true; recheck(); }
+        });
+      };
+      sw.getRegistration().then(function(reg) {
+        if (!reg) return;
+        watch(reg.installing);
+        reg.addEventListener('updatefound', function() { watch(reg.installing); recheck(); });
+      }).catch(function() { /* nothing to watch */ });
+      sw.addEventListener('controllerchange', recheck);
+    }
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible' && shared.subs.length) recheck();
+    });
+  } catch (e) { /* the reader still runs */ }
+  tick();
+}
+
 // variant 'strip': the one-line status in the header (saving / not finished /
 // ready) — present on every tab without crowding any of them. variant 'card':
 // renders ONLY for the serious case, an install the phone refused, because
 // "will not open without signal" must not be a line someone can miss.
 export function OfflineStatus({ variant }) {
-  var [st, setSt] = useState(null);
-  var [failed, setFailed] = useState(false);
-
-  // Watch for an install that the browser rejects. A worker that goes
-  // 'redundant' while installing is exactly the storage-full case.
+  var [st, setSt] = useState(shared.st);
   useEffect(function() {
-    if (NATIVE || typeof navigator === 'undefined' || !navigator.serviceWorker) return;
-    var alive = true;
-    function watch(w) {
-      if (!w) return;
-      w.addEventListener('statechange', function() {
-        if (alive && w.state === 'redundant') setFailed(true);
-      });
-    }
-    navigator.serviceWorker.getRegistration().then(function(reg) {
-      if (!reg || !alive) return;
-      watch(reg.installing);
-      reg.addEventListener('updatefound', function() { watch(reg.installing); });
-    }).catch(function() { /* nothing to watch */ });
-    return function() { alive = false; };
+    shared.subs.push(setSt);
+    if (shared.st) setSt(shared.st);
+    if (!shared.started) start();
+    // A subscriber joining after polling stopped for 'incomplete' restarts it.
+    else if (shared.st && shared.st.state !== 'ready' && shared.st.state !== 'failed' && !shared.timer) recheck();
+    return function() {
+      shared.subs = shared.subs.filter(function(f) { return f !== setSt; });
+      if (!shared.subs.length && shared.timer) { clearTimeout(shared.timer); shared.timer = null; }
+    };
   }, []);
-
-  // Poll while anything is in flight; stop once ready or failed.
-  useEffect(function() {
-    // The installed Android app has every file in the APK — nothing to save.
-    if (NATIVE) { setSt({ state: 'ready', native: true, cached: TOTAL, total: TOTAL }); return; }
-    var alive = true, timer = null;
-    function tick() {
-      readOfflineState(TOTAL, failed).then(function(s) {
-        if (!alive) return;
-        setSt(s);
-        if (s.state === 'installing' || s.state === 'incomplete') timer = setTimeout(tick, 3000);
-      });
-    }
-    tick();
-    return function() { alive = false; if (timer) clearTimeout(timer); };
-  }, [failed]);
 
   if (!st || st.state === 'unsupported') return null;
 

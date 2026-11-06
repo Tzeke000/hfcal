@@ -9,7 +9,7 @@
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { T } from './theme.js';
 import {
   declination, trueToMagnetic, norm360, relativeTurn, formatDeclination,
@@ -25,7 +25,7 @@ import {
 // Deliberately framed as an AID. Phone magnetometers are +/-5-15 deg at best
 // and degrade badly near vehicles, radios, weapons and body armour — which is
 // most of where this gets used. The lensatic compass remains the reference.
-export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
+export function CompassCard({ selfLat, selfLon, targetBearingTrue, active }) {
   var [open, setOpen] = useState(false);
   var [status, setStatus] = useState('idle');   // idle|active|denied|unsupported
   var [headingMag, setHeadingMag] = useState(null);
@@ -44,8 +44,12 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
   var rotRef = useRef(0);
   var prevHeadingRef = useRef(null);
 
-  var decl = (typeof selfLat === 'number' && typeof selfLon === 'number')
-    ? declination(selfLat, selfLon) : null;
+  // Memoised: declination() builds the magnetic model, and this card renders
+  // on every sensor event (~60 a second) while the needle is live.
+  var decl = useMemo(function() {
+    return (typeof selfLat === 'number' && typeof selfLon === 'number')
+      ? declination(selfLat, selfLon) : null;
+  }, [selfLat, selfLon]);
   var hasDecl = typeof decl === 'number';
   // A stale reading is treated as no reading — never draw a needle that is not live.
   var liveHeading = (headingMag !== null && !stale) ? headingMag : null;
@@ -150,20 +154,41 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     }
   }
 
+  // Off-screen (another tab is showing — tabs are hidden, not unmounted):
+  // stop listening. An open compass kept taking ~60 sensor events a second and
+  // re-rendering while the operator typed grids on PLAN — battery and main
+  // thread for a needle nobody could see. Coming back re-attaches without a
+  // new permission prompt.
+  var wasActiveRef = useRef(active !== false);
+  useEffect(function() {
+    var isActive = active !== false;
+    if (isActive === wasActiveRef.current) return;
+    wasActiveRef.current = isActive;
+    if (!open) return;
+    if (!isActive) {
+      detach();
+      setHeadingMag(null);
+      prevHeadingRef.current = null;
+      setStale(false);
+    } else if (grantedRef.current && status !== 'denied' && status !== 'unsupported') {
+      attach();
+    }
+  }, [active, open, status, attach, detach]);
+
   // Watchdog: if the sensor stops feeding while the card is open, say so
   // instead of leaving a dead needle on screen.
   useEffect(function() {
-    if (!open || status !== 'active') return;
+    if (!open || status !== 'active' || active === false) return;
     var id = setInterval(function() {
       setStale(lastFixRef.current > 0 && Date.now() - lastFixRef.current > 3000);
     }, 1000);
     return function() { clearInterval(id); };
-  }, [open, status]);
+  }, [open, status, active]);
 
   // Browsers stop delivering orientation events to a backgrounded tab and do
   // not always resume — re-attach when we come back to the foreground.
   useEffect(function() {
-    if (!open) return;
+    if (!open || active === false) return;
     function onVis() {
       if (document.visibilityState !== 'visible') return;
       if (status === 'denied' || status === 'unsupported') return;
@@ -171,7 +196,7 @@ export function CompassCard({ selfLat, selfLon, targetBearingTrue }) {
     }
     document.addEventListener('visibilitychange', onVis);
     return function() { document.removeEventListener('visibilitychange', onVis); };
-  }, [open, status, attach]);
+  }, [open, status, attach, active]);
 
   // ── dial ──
   var R = 86, CX = 100, CY = 100;

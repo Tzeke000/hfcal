@@ -11,6 +11,15 @@
 
 export const CHANGELOG = [
   {
+    version: '1.64.0', date: '2026-11-06', title: 'Android app: one public download',
+    notes: [
+      'Android APK users only (iPhone and web app: nothing to do): the Android app now has one public download page and a permanent signing key, so future updates install over the top and keep your data. Switching from an older APK needs one uninstall — export your saved shots first.',
+      'New space-weather readings now update the frequency answers straight away.',
+      'The compass stops using the sensor while you are on another tab (saves battery).',
+      'Scanning a DAGR photo twice quickly can no longer fill in the older photo’s grid.',
+    ],
+  },
+  {
     version: '1.63.0', date: '2026-10-29', title: 'Android app fixes',
     notes: [
       'The Android app builds again (it had stopped on 1 Oct when GitHub changed its build machines).',

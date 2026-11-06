@@ -31,6 +31,7 @@ import { CompassCard } from "./CompassCard.jsx";
 import { WhatsNew } from './WhatsNew.jsx';
 import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
+import { AndroidSwitchNotice } from './AndroidSwitchNotice.jsx';
 import { isNativeApp, SITE_URL, ANDROID_DOWNLOAD_URL } from '../lib/platform.js';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
@@ -1828,6 +1829,11 @@ function FreqCheckPanel({ results, freqStr, month, onMonth, pathCtx, txWatts, on
 // been fetched. Advisory only — no core calculation depends on it.
 var SPACEWX_CACHE_KEY = 'hfcalc_spacewx_v1';
 var SPACEWX_FRESH_MS = 30 * 60 * 1000;
+// Fired when a new reading is stored. Everything that grades a frequency reads
+// the reading from storage while it renders, and nothing used to re-render
+// when one arrived — so the verdicts kept using the old (or default) solar
+// flux and Kp until some unrelated input changed. HFCalc listens and re-renders.
+var SPACEWX_EVENT = 'hfcalc-spacewx';
 
 function SpaceWxCard({ freqMHz, zone }) {
   var [wx, setWx] = useState(function() {
@@ -1854,15 +1860,17 @@ function SpaceWxCard({ freqMHz, zone }) {
         var flux = res[0].status === 'fulfilled' ? parseFluxPayload(res[0].value) : null;
         var kidx = res[1].status === 'fulfilled' ? parseKIndexPayload(res[1].value) : null;
         if (!flux && !kidx) return; // offline/blocked — keep whatever we had
-        setWx(function(prev) {
-          var next = {
-            sfi: flux ? flux.sfi : (prev ? prev.sfi : null),
-            kp: kidx ? kidx.kp : (prev ? prev.kp : null),
-            fetchedAt: Date.now(),
-          };
-          try { localStorage.setItem(SPACEWX_CACHE_KEY, JSON.stringify(next)); } catch (e) {}
-          return next;
-        });
+        var prev = null;
+        try { prev = JSON.parse(localStorage.getItem(SPACEWX_CACHE_KEY) || 'null'); } catch (e) { /* none */ }
+        var next = {
+          sfi: flux ? flux.sfi : (prev ? prev.sfi : null),
+          kp: kidx ? kidx.kp : (prev ? prev.kp : null),
+          fetchedAt: Date.now(),
+        };
+        // Store first, then announce: listeners re-read storage when they render.
+        try { localStorage.setItem(SPACEWX_CACHE_KEY, JSON.stringify(next)); } catch (e) { /* card still shows it */ }
+        setWx(next);
+        try { window.dispatchEvent(new Event(SPACEWX_EVENT)); } catch (e) { /* no listeners */ }
       });
     }
     refresh();
@@ -2147,7 +2155,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  360 automated tests pin every formula so the physics cannot drift as the app changes, plus 73 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  361 automated tests pin every formula so the physics cannot drift as the app changes, plus 77 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2318,8 +2326,13 @@ function LocationInput({ label, value, onChange, parsed, error }) {
   // the button said "Scanning..." then reverted with no coordinate and no
   // explanation, which is the worst possible behaviour in the field.
   var [scanMsg, setScanMsg] = useState(null);
+  // Which scan is current. A second photo picked while the first was still
+  // being read started a second OCR run, and whichever finished LAST wrote the
+  // field — often the older photo. Only the newest scan may report.
+  var scanSeqRef = useRef(0);
 
   function handleScan() {
+    if (scanning) return;
     setScanMsg(null);
     if (fileRef.current) fileRef.current.click();
   }
@@ -2327,6 +2340,8 @@ function LocationInput({ label, value, onChange, parsed, error }) {
   function handleFileChange(e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
+    var seq = ++scanSeqRef.current;
+    function current() { return seq === scanSeqRef.current; }
     setScanning(true);
     setScanMsg(null);
     // The OCR engine, its WASM core and the English model are all vendored in
@@ -2356,6 +2371,7 @@ function LocationInput({ label, value, onChange, parsed, error }) {
       return worker.recognize(file);
     }).then(function(result) {
       if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
+      if (!current()) return;
       var text = result && result.data && result.data.text ? result.data.text : '';
       var coord = extractCoordFromOCR(text);
       if (coord) {
@@ -2367,6 +2383,7 @@ function LocationInput({ label, value, onChange, parsed, error }) {
       setScanning(false);
     }).catch(function() {
       if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
+      if (!current()) return;
       setScanMsg({ ok: false, text: 'Could not read that image. Type or paste the grid instead.' });
       setScanning(false);
     });
@@ -2379,7 +2396,7 @@ function LocationInput({ label, value, onChange, parsed, error }) {
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <label style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</label>
-        <button onClick={handleScan} style={{ background: T.oliveDim, color: T.textSec, border: '1px solid #2a3a1a', borderRadius: 3, padding: '3px 10px', fontSize: '0.75rem', cursor: 'pointer' }}>
+        <button onClick={handleScan} disabled={scanning} style={{ background: T.oliveDim, color: T.textSec, border: '1px solid #2a3a1a', borderRadius: 3, padding: '3px 10px', fontSize: '0.75rem', cursor: scanning ? 'default' : 'pointer', opacity: scanning ? 0.7 : 1 }}>
           {scanning ? 'Scanning...' : 'Scan DAGR'}
         </button>
       </div>
@@ -3089,9 +3106,9 @@ function applyPlanParams(get, s) {
 
 export default function HFCalc() {
   var pwa = usePWA();
-  var _cachedLocs = loadCachedLocs();
-  var [loc1, setLoc1] = useState(_cachedLocs.loc1);
-  var [loc2, setLoc2] = useState(_cachedLocs.loc2);
+  // Lazy initialisers: read storage once at start-up, not on every render.
+  var [loc1, setLoc1] = useState(function() { return loadCachedLocs().loc1; });
+  var [loc2, setLoc2] = useState(function() { return loadCachedLocs().loc2; });
   var [freq, setFreq] = useState('7.3');
   // wireType is kept for legacy state shape compatibility, but the source of
   // truth for the new physics is (wireCore, wireGauge).
@@ -3155,9 +3172,15 @@ export default function HFCalc() {
     var a = parseCoords(loc1), b = parseCoords(loc2);
     if (isNaN(a.lat) || isNaN(b.lat)) return;
     var alive = true;
-    ensureChunks(terrainPointsForPath(a.lat, a.lon, b.lat, b.lon), import.meta.env.BASE_URL)
-      .then(function(n) { if (alive && n) setFineTick(function(t) { return t + 1; }); });
-    return function() { alive = false; };
+    // Wait for typing to pause. Every keystroke of a half-typed grid is a
+    // valid-looking coordinate somewhere else on Earth, and each one decoded
+    // terrain for a path nobody asked about (27 chunks to type one Tokyo grid
+    // whose path needs 18). Same 250 ms as the live recompute.
+    var t = setTimeout(function() {
+      ensureChunks(terrainPointsForPath(a.lat, a.lon, b.lat, b.lon), import.meta.env.BASE_URL)
+        .then(function(n) { if (alive && n) setFineTick(function(k) { return k + 1; }); });
+    }, 250);
+    return function() { alive = false; clearTimeout(t); };
   }, [loc1, loc2]);
 
   // The gauge actually used: customGauge if set, otherwise the tab-selected gauge
@@ -3309,6 +3332,13 @@ export default function HFCalc() {
   // so a tool's state (an open compass, the truth log's offline queue) is not
   // lost by looking at another tab. Always opens on PLAN.
   var [tab, setTab] = useState('plan');
+  // A new space-weather reading re-renders the app so every verdict uses it.
+  var [, setWxTick] = useState(0);
+  useEffect(function() {
+    function onWx() { setWxTick(function(n) { return n + 1; }); }
+    window.addEventListener(SPACEWX_EVENT, onWx);
+    return function() { window.removeEventListener(SPACEWX_EVENT, onWx); };
+  }, []);
   // WHAT'S NEW needs to know when each version first opened on this device.
   useEffect(function() { recordVersionSeen(APP_VERSION); }, []);
   // Jump to a tab and bring a card's heading into view — the NEXT buttons under
@@ -4011,6 +4041,7 @@ export default function HFCalc() {
           </div>
         )}
         <UpdateBanner />
+        <AndroidSwitchNotice />
         <OfflineStatus variant="card" />
 
         {/* ── PLAN: the one job the app exists for, in the operator's order ── */}
@@ -4310,6 +4341,7 @@ export default function HFCalc() {
           selfLat={parsed1 && !isNaN(parsed1.lat) ? parsed1.lat : null}
           selfLon={parsed1 && !isNaN(parsed1.lon) ? parsed1.lon : null}
           targetBearingTrue={results ? results.geo.bearing : null}
+          active={tab === 'tools'}
         />
         <FreqForecastCard results={results} freqStr={freq} month={month} onMonth={setMonth} pathCtx={pathCtx} txWatts={txWatts} onWatts={setTxWatts} />
         <SoiPanel results={results} pathCtx={pathCtx} month={month} txWatts={txWatts} cachedSFI={cachedSFI} cachedKp={cachedKp} />

@@ -13,8 +13,9 @@
 
 // The public website — what a shared link or QR must point at.
 export var SITE_URL = 'https://tzeke000.github.io/hfcal/';
-// Where the Android app is downloaded (README "Android APK").
-export var ANDROID_DOWNLOAD_URL = 'https://github.com/Tzeke000/hfcal/actions/workflows/build-android.yml';
+// Where the Android app is downloaded: the public release page the build
+// publishes (no GitHub login, never expires — README "Android APK").
+export var ANDROID_DOWNLOAD_URL = 'https://github.com/Tzeke000/hfcal/releases/tag/android';
 
 // True inside the installed Android/iOS app. Capacitor's bridge defines
 // window.Capacitor before any page script runs; a browser never has it.

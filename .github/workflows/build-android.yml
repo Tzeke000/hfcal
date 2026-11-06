@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# contents: write lets the build publish the signed APK as a release.
+permissions:
+  contents: write
+
 jobs:
   # An installer built from a commit that fails its own tests is a defect
   # shipped with a version number. The Pages deploy has required this since
@@ -88,7 +92,10 @@ jobs:
           set -o pipefail
           ./gradlew assembleDebug --no-daemon 2>&1 | tee ../logs-gradle-debug.txt
 
-      - name: Upload APK artifact
+      # Only without a signing key. Once the key exists, a debug APK handed
+      # out by mistake is one more phone stuck on a throwaway key.
+      - name: Upload debug APK (no signing key configured)
+        if: env.HAS_SIGNING_KEY != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: hf-field-antenna-debug-apk
@@ -101,7 +108,8 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew assembleRelease --no-daemon 2>&1 | tee ../logs-gradle-release.txt
-        continue-on-error: true
+        # With a key, the release APK IS the product — a failure must fail.
+        continue-on-error: ${{ env.HAS_SIGNING_KEY != 'true' }}
 
       - name: Sign release APK with the repo's key
         id: sign
@@ -130,6 +138,36 @@ jobs:
           name: hf-field-antenna-apk
           path: hf-field-antenna.apk
           retention-days: 90
+
+      # A run's artifacts need a GitHub login to download and expire. The
+      # release does neither: one fixed public link, always the newest APK —
+      # https://github.com/<repo>/releases/tag/android. Only from main.
+      - name: Publish the signed APK (public download page)
+        if: steps.sign.outcome == 'success' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          VER=$(node -p "require('./package.json').version")
+          cat > notes.md <<EOF
+          ## HF Field Antenna — Android app v${VER}
+
+          **iPhone and web-app users: nothing to do here — ignore this page.** This is only for the Android app installed from an APK file.
+
+          **New install:** download **hf-field-antenna.apk** below on your Android phone → open it → **Install** (allow "install from this source" if asked).
+
+          ### Already have an older Android APK? One time only
+          Older APKs were signed with a throwaway key, so Android will say *"App not installed"* until the old one is removed:
+          1. In the old app: **TOOLS → Saved Shots → EXPORT** any shots you want to keep. Uninstalling deletes saved shots and the field truth log.
+          2. Uninstall the old app (long-press its icon → Uninstall).
+          3. Install **hf-field-antenna.apk** from this page.
+
+          After this one switch, every update installs straight over the top and keeps your data. The app tells you when a new version is out.
+          EOF
+          gh release delete android --cleanup-tag -y >/dev/null 2>&1 || true
+          gh release create android hf-field-antenna.apk --target "$GITHUB_SHA" \
+            --title "Android app v${VER}" --notes-file notes.md --latest
+          echo "Published: https://github.com/${GITHUB_REPOSITORY}/releases/tag/android" >> "$GITHUB_STEP_SUMMARY"
 
       # The raw logs are not always reachable; put the end of whatever failed
       # into the run's annotations, where the error can be read at a glance.
