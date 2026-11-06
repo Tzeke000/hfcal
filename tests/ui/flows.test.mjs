@@ -264,7 +264,7 @@ describe('installed Android app (v1.63)', { skip: SKIP, concurrency: 1 }, () => 
   // phone, and Capacitor's bridge defines window.Capacitor. Pretend to be that.
   async function asAndroidApp(page, remoteVersion) {
     await page.context().addInitScript(() => {
-      window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
+      window.androidBridge = { postMessage: function() {} }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
     });
     await page.context().route('https://tzeke000.github.io/hfcal/version.json*', route =>
       route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
@@ -385,7 +385,7 @@ describe('Android signing-key notice (v1.64)', { skip: SKIP, concurrency: 1 }, (
   test('not shown inside the Android app', async () => {
     const page = await newPage(browser);
     await page.context().addInitScript(() => {
-      window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
+      window.androidBridge = { postMessage: function() {} }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('button:has-text("CALCULATE")');

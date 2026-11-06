@@ -13,7 +13,9 @@ import { useState, useEffect } from 'react';
 import { T } from './theme.js';
 import { dtg, formatCommCard, shotLabel, commCardFilename, shareUrl } from '../lib/commCard.js';
 import QRCode from 'qrcode';
-import { shareBase } from '../lib/platform.js';
+import { Share } from '@capacitor/share';
+import { Clipboard } from '@capacitor/clipboard';
+import { shareBase, isNativeApp } from '../lib/platform.js';
 
 // ── SAVED SHOTS ───────────────────────────────────────────────────────────────
 // Field workflow: you plan several links in a day. Save each one, export any
@@ -78,9 +80,42 @@ function persistShots(list) {
   } catch (e) { return false; }
 }
 
+// Last resort: put the text on screen so it can be selected and copied by
+// hand (ExportTextBox listens for this event).
+export var EXPORT_TEXT_EVENT = 'hfcalc-export-text';
+function showTextOnScreen(text, filename) {
+  try { window.dispatchEvent(new CustomEvent(EXPORT_TEXT_EVENT, { detail: { text: text, title: filename } })); return true; }
+  catch (e) { return false; }
+}
+
 // Copy text to the clipboard, falling back to a .txt download when the
 // clipboard API is missing or blocked (common in webviews / non-HTTPS).
+//
+// Inside the Android app NEITHER works (measured on an Android 14 emulator,
+// v1.65): the WebView refuses the web clipboard and silently drops the
+// download, so EXPORT said "DOWNLOADED" and saved nothing — the one step the
+// key-switch instructions told people to rely on before uninstalling. In the
+// app, EXPORT opens Android's share sheet instead (Messages, Gmail, Drive,
+// Notes, Copy…), falls back to the native clipboard, and finally shows the
+// text on screen. It never claims a save it cannot see.
 export function exportText(text, filename, onDone) {
+  if (isNativeApp()) {
+    var copyNative = function() {
+      Clipboard.write({ string: text }).then(function() { onDone('COPIED'); }, function() {
+        onDone(showTextOnScreen(text, filename) ? 'SHOWN ON SCREEN' : 'EXPORT FAILED');
+      });
+    };
+    try {
+      Share.share({ title: filename, text: text, dialogTitle: 'Send ' + filename }).then(
+        function() { onDone('SENT'); },
+        function(err) {
+          var msg = String((err && err.message) || err || '');
+          if (/cancel/i.test(msg)) onDone('NOT SENT');   // the operator backed out
+          else copyNative();
+        });
+    } catch (e) { copyNative(); }
+    return;
+  }
   function download() {
     try {
       var blob = new Blob([text], { type: 'text/plain' });
@@ -90,7 +125,7 @@ export function exportText(text, filename, onDone) {
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
       onDone('DOWNLOADED');
-    } catch (e) { onDone('EXPORT FAILED'); }
+    } catch (e) { onDone(showTextOnScreen(text, filename) ? 'SHOWN ON SCREEN' : 'EXPORT FAILED'); }
   }
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -99,6 +134,31 @@ export function exportText(text, filename, onDone) {
     }
   } catch (e) { /* fall through */ }
   download();
+}
+
+// The on-screen fallback: the exported text in a box, ready to select.
+export function ExportTextBox() {
+  var [box, setBox] = useState(null);
+  useEffect(function() {
+    function on(e) { setBox(e.detail || null); }
+    window.addEventListener(EXPORT_TEXT_EVENT, on);
+    return function() { window.removeEventListener(EXPORT_TEXT_EVENT, on); };
+  }, []);
+  if (!box) return null;
+  return (
+    <div data-export-box style={{ position: 'fixed', inset: 0, zIndex: 2147483003, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="usmc-card" style={{ width: '100%', maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: T.textPrim, fontWeight: 700, fontSize: '0.84rem' }}>Copy this by hand</div>
+        <div style={{ color: T.textMute, fontSize: '0.72rem', margin: '4px 0 8px' }}>This phone would not copy or share it automatically. Press and hold the text → Select all → Copy.</div>
+        <textarea readOnly value={box.text} onFocus={function(e) { e.target.select(); }}
+          style={{ flex: 1, minHeight: 220, fontFamily: 'monospace', fontSize: '0.72rem', background: T.bg, color: T.textPrim, border: '1px solid ' + T.border, borderRadius: 6, padding: 8 }} />
+        <button onClick={function() { setBox(null); }}
+          style={{ marginTop: 10, background: T.accent, color: '#0e1409', border: 'none', borderRadius: 6, padding: '10px 0', fontWeight: 700, fontSize: '0.74rem', letterSpacing: '0.06em', cursor: 'pointer' }}>
+          DONE
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function SavedShots({ currentShot, onRecalc, onClearStored }) {
@@ -278,7 +338,7 @@ export function SavedShots({ currentShot, onRecalc, onClearStored }) {
           })}
 
           <div style={{ color: T.textDim, fontSize: '0.62rem', marginTop: 8, lineHeight: 1.45 }}>
-            Stored on this device only. RECALC puts a saved plan back into PLAN and runs it again on today's data (same grids, frequency, wire, power and month). Export copies the comm card to the clipboard (or downloads a .txt if the clipboard is unavailable).
+            Stored on this device only. RECALC puts a saved plan back into PLAN and runs it again on today's data (same grids, frequency, wire, power and month). {isNativeApp() ? 'Export opens Android\u2019s share menu \u2014 send the comm card to yourself (Messages, Gmail, Notes, Drive) or Copy it.' : 'Export copies the comm card to the clipboard (or downloads a .txt if the clipboard is unavailable).'}
           </div>
           <button
             onClick={function() {

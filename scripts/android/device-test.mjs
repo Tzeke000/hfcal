@@ -41,6 +41,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ── the device (or a desktop stand-in) ───────────────────────────────────────
 let device = null, browser = null, page = null;
+const consoleLog = [];
+function listen(p) {
+  p.on('console', m => consoleLog.push(m.type() + ': ' + m.text().slice(0, 200)));
+  p.on('pageerror', e => consoleLog.push('pageerror: ' + String(e).slice(0, 200)));
+}
 
 async function shell(cmd) {
   if (!device) return '';
@@ -52,7 +57,7 @@ async function openApp() {
     const { chromium } = await import('playwright-core');
     browser = browser || await chromium.launch({ executablePath: process.env.HFCALC_CHROMIUM || '/opt/pw-browsers/chromium' });
     const ctx = await browser.newContext({ viewport: { width: 400, height: 860 }, permissions: ['clipboard-read', 'clipboard-write'] });
-    await ctx.addInitScript(() => { window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }; });
+    await ctx.addInitScript(() => { window.androidBridge = { postMessage: function() {} }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }; });
     page = await ctx.newPage();
     await page.goto(LOCAL, { waitUntil: 'domcontentloaded' });
   } else {
@@ -61,6 +66,7 @@ async function openApp() {
     const wv = await device.webView({ pkg: PKG }, { timeout: 90000 });
     page = await wv.page();
   }
+  listen(page);
   page.setDefaultTimeout(20000);
   await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 60000 });
   return page;
@@ -176,39 +182,57 @@ async function run() {
     return { ok: url.startsWith(SITE_URL + '?from='), detail: url.slice(0, 90) };
   });
 
-  // The one the switch instructions depend on: does EXPORT actually put the
-  // comm card somewhere the operator can get it back?
-  await check('EXPORT CURRENT really saves the comm card', 'INFO', async () => {
-    await openCard('Saved Shots & Export');
-    const before = LOCAL ? '' : await shell('ls /sdcard/Download 2>/dev/null');
-    await clickButton('EXPORT CURRENT');
-    await sleep(1200);
-    const flash = await page.evaluate(() => {
-      const s = [...document.querySelectorAll('span')].find(e => /^(COPIED|DOWNLOADED|EXPORT FAILED|SAVED|SHARED)/.test(e.textContent.trim()));
+  // The one the switch instructions depend on: does EXPORT actually get the
+  // comm card somewhere the operator can get it back? (v1.64 and earlier: the
+  // app said "DOWNLOADED" and nothing was saved anywhere.)
+  async function pasteFromClipboard() {
+    if (LOCAL) return page.evaluate(() => navigator.clipboard.readText().catch(e => 'readText failed: ' + e));
+    await page.evaluate(() => {
+      const t = document.createElement('textarea'); t.id = '__pastebox';
+      t.style.cssText = 'position:fixed;top:0;left:0;width:200px;height:60px;z-index:2147483647';
+      document.body.appendChild(t); t.focus();
+    });
+    await sleep(300);
+    await shell('input keyevent 279');   // KEYCODE_PASTE
+    await sleep(800);
+    return page.evaluate(() => { const t = document.getElementById('__pastebox'); const v = t ? t.value : ''; if (t) t.remove(); return v; });
+  }
+  function flashText() {
+    return page.evaluate(() => {
+      const s = [...document.querySelectorAll('span')].find(e => /^(COPIED|DOWNLOADED|EXPORT FAILED|SENT|NOT SENT|SHOWN ON SCREEN)$/.test(e.textContent.trim()));
       return s ? s.textContent.trim() : '(no message)';
     });
-    // Paste whatever is on the clipboard into a scratch box, the way a person would.
-    let pasted = '';
-    if (LOCAL) {
-      pasted = await page.evaluate(() => navigator.clipboard.readText().catch(e => 'readText failed: ' + e));
-    } else {
-      await page.evaluate(() => {
-        const t = document.createElement('textarea'); t.id = '__pastebox';
-        t.style.cssText = 'position:fixed;top:0;left:0;width:200px;height:60px;z-index:2147483647';
-        document.body.appendChild(t); t.focus();
-      });
-      await sleep(300);
-      await shell('input keyevent 279');   // KEYCODE_PASTE
-      await sleep(800);
-      pasted = await page.evaluate(() => { const t = document.getElementById('__pastebox'); const v = t ? t.value : ''; if (t) t.remove(); return v; });
-    }
-    const after = LOCAL ? '' : await shell('ls /sdcard/Download 2>/dev/null');
-    const onClipboard = /HFCALC/.test(pasted);
-    const newFile = after !== before;
-    return {
-      ok: onClipboard || newFile,
-      detail: `app said "${flash}"; clipboard ${onClipboard ? 'HAS the comm card' : 'does NOT have it (' + JSON.stringify(pasted.slice(0, 60)) + ')'}; Downloads ${newFile ? 'gained a file: ' + after : 'unchanged'}`,
-    };
+  }
+
+  if (!LOCAL) await check('EXPORT opens Android\'s share menu with the comm card', 'REQUIRED', async () => {
+    await openCard('Saved Shots & Export');
+    await clickButton('EXPORT CURRENT');
+    await sleep(3000);
+    const top = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
+    const sheet = /Chooser|intentresolver|ResolverActivity/i.test(top);
+    await shell('input keyevent 4');   // BACK: close the menu without sending
+    await sleep(1500);
+    const after = await flashText();
+    const back = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
+    return { ok: sheet && back.includes(PKG), detail: `share menu ${sheet ? 'opened' : 'did NOT open'} (${top.replace(/.*ActivityRecord\{\S+ \S+ /, '').slice(0, 80)}); after BACK the app said "${after}" and is ${back.includes(PKG) ? 'back on screen' : 'NOT back'}` };
+  });
+
+  if (!LOCAL) await check('the app\'s native copy really reaches the clipboard', 'REQUIRED', async () => {
+    const r = await page.evaluate(async () => {
+      const C = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Clipboard;
+      if (!C) return 'no Clipboard plugin';
+      try { await C.write({ string: 'HFCALC clipboard check' }); return 'ok'; } catch (e) { return 'write failed: ' + e; }
+    });
+    const pasted = r === 'ok' ? await pasteFromClipboard() : '';
+    return { ok: pasted.includes('HFCALC clipboard check'), detail: `plugin: ${r}; pasted back: ${JSON.stringify(pasted.slice(0, 40))}` };
+  });
+
+  if (LOCAL) await check('EXPORT CURRENT really saves the comm card', 'INFO', async () => {
+    await openCard('Saved Shots & Export');
+    await clickButton('EXPORT CURRENT');
+    await sleep(1200);
+    const pasted = await pasteFromClipboard();
+    return { ok: /HFCALC/.test(pasted), detail: `app said "${await flashText()}"; clipboard ${/HFCALC/.test(pasted) ? 'has it' : 'does not'}` };
   });
 
   await check('the update check can reach the website', 'REQUIRED', async () => {
@@ -245,7 +269,33 @@ async function run() {
     return { ok: /MAG/.test(sub), detail: sub };
   });
 
+  await check('the photo scanner\'s files load inside a background worker', 'INFO', async () => {
+    const r = await page.evaluate(async () => {
+      const base = new URL('ocr/', location.href).href;
+      const files = ['worker.min.js', 'tesseract-core-lstm.wasm.js', 'eng.traineddata.gz'];
+      const main = {};
+      for (const f of files) {
+        try { const res = await fetch(base + f); main[f] = res.status + ' ' + (await res.arrayBuffer()).byteLength; }
+        catch (e) { main[f] = 'ERR ' + e; }
+      }
+      const src = 'onmessage = async (e) => { const out = {}; for (const u of e.data) { try { const r = await fetch(u); out[u.split("/").pop()] = r.status + " " + (await r.arrayBuffer()).byteLength; } catch (err) { out[u.split("/").pop()] = "ERR " + err; } } try { importScripts(e.data[0]); out.importScripts = "ok"; } catch (err) { out.importScripts = "ERR " + err; } postMessage(out); };';
+      let w;
+      try { w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))); }
+      catch (e) { return { main, worker: 'cannot start: ' + e }; }
+      const worker = await new Promise(res => {
+        w.onmessage = e => res(e.data); w.onerror = e => res({ error: e.message || 'error' });
+        setTimeout(() => res({ timeout: true }), 30000);
+        w.postMessage(files.map(f => base + f));
+      });
+      w.terminate();
+      return { main, worker };
+    });
+    const ok = r.worker && Object.values(r.worker).every(v => v === 'ok' || /^200 /.test(v));
+    return { ok, detail: JSON.stringify(r) };
+  });
+
   await check('DAGR photo scan reads a grid (OCR, offline engine)', 'INFO', async () => {
+    consoleLog.length = 0;
     await goTab('plan');
     const t0 = Date.now();
     await page.evaluate(async () => {
@@ -262,7 +312,7 @@ async function run() {
     const msg = await page.waitForFunction(() => {
       const d = [...document.querySelectorAll('div')].find(e => e.children.length === 0 && /Read from image|No grid found|Could not read that image/.test(e.textContent));
       return d && d.textContent.trim();
-    }, null, { timeout: 120000 }).then(h => h.jsonValue());
+    }, null, { timeout: 90000 }).then(h => h.jsonValue()).catch(e => { throw new Error('no result in 90 s; console: ' + consoleLog.slice(-12).join(' || ')); });
     const val = await page.locator('input[placeholder*="15T XG"]').nth(1).inputValue();
     return { ok: /Read from image/.test(msg), detail: `${Math.round((Date.now() - t0) / 1000)} s; "${msg.slice(0, 70)}"; field now "${val}"` };
   });
@@ -293,11 +343,14 @@ try { if (device) device.close(); } catch (e) { /* ignore */ }
 const failed = results.filter(r => r.level === 'REQUIRED' && !r.ok);
 fs.writeFileSync('device-report.json', JSON.stringify(results, null, 2));
 if (process.env.GITHUB_ACTIONS) {
-  for (const r of results) {
-    const kind = r.ok ? 'notice' : (r.level === 'REQUIRED' ? 'error' : 'warning');
+  // GitHub shows at most 10 notices per step, so: every problem, then one
+  // line for everything that passed. The full table is in the job summary.
+  for (const r of results.filter(x => !x.ok)) {
+    const kind = r.level === 'REQUIRED' ? 'error' : 'warning';
     const msg = (r.detail || '').replace(/%/g, '%25').replace(/\r?\n/g, '%0A');
-    console.log(`::${kind} title=${(r.ok ? 'PASS ' : 'NOT OK ') + r.name.replace(/[:,]/g, ' ')}::${msg}`);
+    console.log(`::${kind} title=NOT OK ${r.name.replace(/[:,]/g, ' ')}::${msg}`);
   }
+  console.log(`::notice title=Device checks passed::${results.filter(x => x.ok).map(x => x.name.replace(/[:,]/g, ' ')).join(' / ')}`);
   if (process.env.GITHUB_STEP_SUMMARY) {
     const lines = ['## Android device checks', '', '| | Check | Level | Detail |', '|---|---|---|---|']
       .concat(results.map(r => `| ${r.ok ? '✅' : (r.level === 'REQUIRED' ? '❌' : '⚠️')} | ${r.name} | ${r.level} | ${(r.detail || '').replace(/\|/g, '\\|')} |`));

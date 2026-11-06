@@ -37,7 +37,7 @@ import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
 import { SoiPanel } from "./SoiPanel.jsx";
 import {
-  SavedShots, DEFAULT_LOC1, DEFAULT_LOC2,
+  SavedShots, ExportTextBox, DEFAULT_LOC1, DEFAULT_LOC2,
   loadCachedLocs, saveCachedLocs, clearCachedLocs,
 } from "./SavedShots.jsx";
 
@@ -4045,6 +4045,7 @@ export default function HFCalc() {
         )}
         <UpdateBanner />
         <AndroidSwitchNotice />
+        <ExportTextBox />
         <OfflineStatus variant="card" />
 
         {/* ── PLAN: the one job the app exists for, in the operator's order ── */}
