@@ -29,12 +29,34 @@ function record(name, level, ok, detail) {
   results.push({ name, level, ok, detail: String(detail == null ? '' : detail).slice(0, 600) });
   console.log(`${ok ? 'PASS' : (level === 'REQUIRED' ? 'FAIL' : 'NOTE')} [${level}] ${name} — ${detail}`);
 }
+// The app's process id: a change between two checks means the app died and
+// Android restarted it — a crash, not a test problem.
+async function appPid() { return LOCAL ? 'local' : (await shell(`pidof ${PKG}`)) || 'not running'; }
+
 async function check(name, level, fn) {
+  const pid0 = await appPid().catch(() => '?');
   try {
     const r = await fn();
     record(name, level, !!r.ok, r.detail);
   } catch (e) {
-    record(name, level, false, 'threw: ' + (e && e.message ? e.message.split('\n')[0] : e));
+    const msg = e && e.message ? e.message.split('\n')[0] : String(e);
+    if (!LOCAL && /has been closed|Target closed/i.test(msg)) {
+      // The connection to the page dropped. Say whether the APP survived,
+      // reattach to the running app without restarting it, and try once more.
+      const pid1 = await appPid().catch(() => '?');
+      try {
+        const wv = await device.webView({ pkg: PKG }, { timeout: 60000 });
+        page = await wv.page(); listen(page); page.setDefaultTimeout(20000);
+        await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 30000 });
+        const r = await fn();
+        record(name, level, !!r.ok, `${r.detail} [retried: page connection dropped; app pid ${pid0} -> ${pid1}]`);
+        return;
+      } catch (e2) {
+        record(name, level, false, `threw: ${msg} [retry failed: ${String(e2 && e2.message || e2).split('\n')[0]}; app pid ${pid0} -> ${pid1}]`);
+        return;
+      }
+    }
+    record(name, level, false, 'threw: ' + msg);
   }
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -333,8 +355,14 @@ async function run() {
 
 let fatal = null;
 try { await run(); } catch (e) { fatal = e; record('harness', 'REQUIRED', false, e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)); }
-if (!LOCAL && device && page) {
+if (!LOCAL && device) {
   try { fs.writeFileSync('device-final.png', await device.screenshot()); } catch (e) { /* best effort */ }
+  // Android's own log: crashes, WebView renderer deaths, Capacitor plugin errors.
+  try {
+    const log = await shell('logcat -d -v time -t 4000');
+    const keep = log.split('\n').filter(l => /AndroidRuntime|FATAL|crash|Crash|chromium|Capacitor|libc|DEBUG|ActivityManager.*hffieldantenna|ActivityTaskManager.*hffieldantenna|died|Renderer/i.test(l));
+    fs.writeFileSync('logs-logcat.txt', keep.slice(-1500).join('\n'));
+  } catch (e) { /* best effort */ }
 }
 try { if (browser) await browser.close(); } catch (e) { /* ignore */ }
 try { if (device) device.close(); } catch (e) { /* ignore */ }
