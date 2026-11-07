@@ -219,6 +219,18 @@ async function run() {
     await sleep(800);
     return page.evaluate(() => { const t = document.getElementById('__pastebox'); const v = t ? t.value : ''; if (t) t.remove(); return v; });
   }
+  // Wait (up to 15 s) for the app to be the screen in front again; press BACK
+  // once more if the share menu is still up. Android closes it on its own time.
+  async function backToApp() {
+    for (let i = 0; i < 30; i++) {
+      const top = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
+      if (top.includes(PKG)) return true;
+      if (i === 10) await shell('input keyevent 4');
+      if (i === 20) await shell(`am start -n ${PKG}/.MainActivity`);
+      await sleep(500);
+    }
+    return false;
+  }
   function flashText() {
     return page.evaluate(() => {
       const s = [...document.querySelectorAll('span')].find(e => /^(COPIED|DOWNLOADED|EXPORT FAILED|SENT|NOT SENT|SHOWN ON SCREEN)$/.test(e.textContent.trim()));
@@ -233,13 +245,14 @@ async function run() {
     const top = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
     const sheet = /Chooser|intentresolver|ResolverActivity/i.test(top);
     await shell('input keyevent 4');   // BACK: close the menu without sending
-    await sleep(1500);
-    const after = await flashText();
-    const back = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
-    return { ok: sheet && back.includes(PKG), detail: `share menu ${sheet ? 'opened' : 'did NOT open'} (${top.replace(/.*ActivityRecord\{\S+ \S+ /, '').slice(0, 80)}); after BACK the app said "${after}" and is ${back.includes(PKG) ? 'back on screen' : 'NOT back'}` };
+    const back = await backToApp();
+    let after = '(no message)';
+    for (let i = 0; i < 10 && after === '(no message)'; i++) { await sleep(300); after = await flashText(); }
+    return { ok: sheet && back, detail: `share menu ${sheet ? 'opened' : 'did NOT open'} (${top.replace(/.*ActivityRecord\{\S+ \S+ /, '').replace(/\s+/g, ' ').slice(0, 60)}); after BACK the app said "${after}" and is ${back ? 'back on screen' : 'NOT back'}` };
   });
 
   if (!LOCAL) await check('the app\'s native copy really reaches the clipboard', 'REQUIRED', async () => {
+    await backToApp();
     const r = await page.evaluate(async () => {
       const C = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Clipboard;
       if (!C) return 'no Clipboard plugin';
