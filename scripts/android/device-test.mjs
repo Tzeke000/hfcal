@@ -79,7 +79,7 @@ async function openApp() {
     const { chromium } = await import('playwright-core');
     browser = browser || await chromium.launch({ executablePath: process.env.HFCALC_CHROMIUM || '/opt/pw-browsers/chromium' });
     const ctx = await browser.newContext({ viewport: { width: 400, height: 860 }, permissions: ['clipboard-read', 'clipboard-write'] });
-    await ctx.addInitScript(() => { window.androidBridge = { postMessage: function() {} }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }; });
+    await ctx.addInitScript(() => { window.androidBridge = { postMessage: function() {}, __test: true }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }; });
     page = await ctx.newPage();
     await page.goto(LOCAL, { waitUntil: 'domcontentloaded' });
   } else {
@@ -294,7 +294,9 @@ async function run() {
   await check('the photo scanner\'s files load inside a background worker', 'INFO', async () => {
     const r = await page.evaluate(async () => {
       const base = new URL('ocr/', location.href).href;
-      const files = ['worker.min.js', 'tesseract-core-lstm.wasm.js', 'eng.traineddata.gz'];
+      // Android's packager unzips .gz assets and drops the extension.
+      const native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.androidBridge && !window.androidBridge.__test);
+      const files = ['worker.min.js', 'tesseract-core-lstm.wasm.js', native ? 'eng.traineddata' : 'eng.traineddata.gz'];
       const main = {};
       for (const f of files) {
         try { const res = await fetch(base + f); main[f] = res.status + ' ' + (await res.arrayBuffer()).byteLength; }
@@ -316,7 +318,7 @@ async function run() {
     return { ok, detail: JSON.stringify(r) };
   });
 
-  await check('DAGR photo scan reads a grid (OCR, offline engine)', 'INFO', async () => {
+  await check('DAGR photo scan reads a grid (OCR, offline engine)', LOCAL ? 'INFO' : 'REQUIRED', async () => {
     consoleLog.length = 0;
     await goTab('plan');
     const t0 = Date.now();

@@ -32,7 +32,7 @@ import { WhatsNew } from './WhatsNew.jsx';
 import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
 import { AndroidSwitchNotice } from './AndroidSwitchNotice.jsx';
-import { isInstalledApp, isDesktopApp, SITE_URL, appDownloadUrl, WINDOWS_DOWNLOAD_URL } from '../lib/platform.js';
+import { isNativeApp, isInstalledApp, isDesktopApp, SITE_URL, appDownloadUrl, WINDOWS_DOWNLOAD_URL } from '../lib/platform.js';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
 import { SoiPanel } from "./SoiPanel.jsx";
@@ -2347,6 +2347,16 @@ function LocationInput({ label, value, onChange, parsed, error }) {
     function current() { return seq === scanSeqRef.current; }
     setScanning(true);
     setScanMsg(null);
+    // The OCR engine does not always reject when it fails to load (a missing
+    // language file left Android on "Scanning..." forever). A scan that has
+    // not answered in 60 s is over: say so, and ignore anything it says later.
+    var giveUp = setTimeout(function() {
+      if (!current()) return;
+      scanSeqRef.current += 1;
+      if (_worker) { try { _worker.terminate(); } catch (err) { /* already gone */ } _worker = null; }
+      setScanMsg({ ok: false, text: 'The scan did not finish. Type or paste the grid instead.' });
+      setScanning(false);
+    }, 60000);
     // The OCR engine, its WASM core and the English model are all vendored in
     // public/ocr/ and precached by the service worker, so scanning works with
     // no network — same as every other feature. (It used to be pulled from a
@@ -2366,13 +2376,18 @@ function LocationInput({ label, value, onChange, parsed, error }) {
         // file that runs on any device.
         corePath: ocrBase + 'tesseract-core-lstm.wasm.js',
         langPath: ocrBase,
-        gzip: true,
+        // Android's packager unzips .gz assets and drops the extension, so
+        // inside the APK the language file is ocr/eng.traineddata and asking
+        // for eng.traineddata.gz was a 404 — the DAGR scan hung forever on
+        // Android (found on the emulator, v1.65). The website keeps the .gz.
+        gzip: !isNativeApp(),
         logger: function() {},
       });
     }).then(function(worker) {
       _worker = worker;
       return worker.recognize(file);
     }).then(function(result) {
+      clearTimeout(giveUp);
       if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
       if (!current()) return;
       var text = result && result.data && result.data.text ? result.data.text : '';
@@ -2385,6 +2400,7 @@ function LocationInput({ label, value, onChange, parsed, error }) {
       }
       setScanning(false);
     }).catch(function() {
+      clearTimeout(giveUp);
       if (_worker) { try { _worker.terminate(); } catch (e) {} _worker = null; }
       if (!current()) return;
       setScanMsg({ ok: false, text: 'Could not read that image. Type or paste the grid instead.' });
