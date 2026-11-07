@@ -3763,6 +3763,77 @@ tab awareness, their tests fail.
 361 unit tests, 77 browser tests (×2 bases in CI), lint clean, Python mirror
 exact.
 
+## Part 57 — The Android app on an Android phone (v1.65.0)
+
+Until now every Android check ran in desktop Chromium pretending to be the
+installed app. Asked what remained uncertain, the honest answer was: all of
+it had never run on Android. So the Android build now boots an Android 14
+emulator (Pixel 6 image, WebView 113) on GitHub's machine and drives the REAL
+app: Playwright attaches to the app's WebView over adb
+(scripts/android/device-test.mjs). The signed APK must also install over the
+published one and launch. The public download page is only updated if every
+required check passes. Results come back as annotations, a job summary, a
+JSON report, a screenshot and a filtered logcat.
+
+**What the phone found that the desktop could not.**
+- **EXPORT saved nothing.** In the app the WebView refuses the web clipboard
+  and silently drops a file download, so EXPORT said "DOWNLOADED" with nothing
+  on the clipboard and nothing in Downloads. Measured: paste-back empty,
+  /sdcard/Download unchanged. That was the step the key-switch instructions
+  told people to rely on before uninstalling. Fix: in the app, EXPORT opens
+  Android's share menu (Capacitor Share), falls back to the native clipboard
+  (Capacitor Clipboard), and finally to an on-screen box; it reports SENT /
+  NOT SENT / COPIED / SHOWN ON SCREEN and never claims a save it cannot see.
+  The same function serves the truth log. Verified on the phone: the share
+  menu opens with the comm card, BACK returns to the app with "NOT SENT", and
+  a native copy pastes back intact. **Old APKs cannot be fixed**, so the
+  switch instructions (download page, in-app notice, README, INSTALL) now say
+  to screenshot or write down saved shots instead of EXPORT.
+- **The DAGR photo scan hung forever.** Android's packager unzips .gz assets
+  and drops the extension: the APK holds ocr/eng.traineddata, the app asked
+  for eng.traineddata.gz, got a 404, and the OCR engine never rejected — the
+  button sat on "Scanning..." indefinitely. Found by a probe that fetched each
+  OCR file from the page and from a worker. Fix: request the unzipped name in
+  the app (the website keeps the .gz), and give up with a message after 60 s
+  whatever the cause. Verified on the phone: a drawn DAGR grid reads back as
+  N 39:11:24.3 W 077:30:15.0.
+
+**What the phone confirmed.** The app detects that it is installed; no
+offline worker or cache copy; header reads "Installed app · works offline";
+a Cherry Point → Okinawa calculation; the QR encodes the website; the update
+check reaches the website from https://localhost; a website link opens in
+Chrome, outside the app; the compass gets a heading from the emulator's
+sensors; and in airplane mode, from a cold start, the same calculation gives
+the same 12727.1 km. The signed APK installs over the published v1.64 APK.
+
+**Bring-up problems, kept honest:** the emulator first hung 45 minutes
+because avdmanager and the emulator looked for the virtual phone in different
+folders (now pinned, and the boot wait gives up after 10 minutes with the
+emulator log); the test script was missing from the first run because the
+`.gitignore` rule for Capacitor's generated `android/` folder matched any
+folder named android (now root-only); one run lost its connection to the page
+mid-calculation and did not repeat it (the test now reattaches, retries once
+and records the app's process id so a real crash cannot hide as a retry); and
+one run looked for the app before Android had closed the share menu (the test
+now waits for the app to return).
+
+**Also in this release.**
+- **Windows.** The Windows app (Tauri) serves its own files like the APK and
+  had the same blind spots — its update check asked its own version.json, it
+  kept a second offline copy, offered INSTALL and showed the Android notice.
+  It is now treated as an installed app, with GET THE NEW INSTALLER. Its
+  installer is published to a public page, releases/tag/windows; the app's
+  DOWNLOAD .EXE button had pointed at /releases/latest, which held nothing (and
+  briefly, after v1.64, the Android release).
+- **Publishing without a gap.** Each publish deleted and re-created the release,
+  so a download at that moment failed. Files are now uploaded under a temporary
+  name and swapped in (scripts/release/publish-asset.sh, used by both builds).
+- **Android version codes** are now major×1,000,000 + minor×1,000 + patch, so
+  they keep increasing past 1.99; every new code is above the v1.63–1.64 ones.
+
+361 unit tests, 79 browser tests (×2 bases in CI), the Android device checks
+on every Android build, lint clean, Python mirror exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the
