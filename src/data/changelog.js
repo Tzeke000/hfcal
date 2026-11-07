@@ -11,6 +11,16 @@
 
 export const CHANGELOG = [
   {
+    version: '1.65.0', date: '2026-11-07', title: 'Tested on a real Android phone',
+    notes: [
+      'Android app: EXPORT now opens the share menu, so you can send a comm card or the truth log to Messages, Gmail, Notes or Drive. It used to say DOWNLOADED and save nothing.',
+      'Android app: the DAGR photo scan works. It used to hang on "Scanning…" forever. Any scan that fails now says so within a minute.',
+      'Switching from an old Android APK? EXPORT does not work in those, so screenshot or write down the saved shots you want before uninstalling.',
+      'Windows app: it now tells you when an update is out, and the installer has its own download page.',
+      'Every update is now checked on an Android phone (an emulator) before it is published.',
+    ],
+  },
+  {
     version: '1.64.0', date: '2026-11-06', title: 'Android app: one public download',
     notes: [
       'Android APK users only (iPhone and web app: nothing to do): the Android app now has one public download page and a permanent signing key, so future updates install over the top and keep your data. Switching from an older APK needs one uninstall — export your saved shots first.',

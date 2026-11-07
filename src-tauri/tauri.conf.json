@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "HF Field Antenna",
-    "version": "1.64.0"
+    "version": "1.65.0"
   },
   "tauri": {
     "allowlist": {
