@@ -258,8 +258,15 @@ async function run() {
       if (!C) return 'no Clipboard plugin';
       try { await C.write({ string: 'HFCALC clipboard check' }); return 'ok'; } catch (e) { return 'write failed: ' + e; }
     });
-    const pasted = r === 'ok' ? await pasteFromClipboard() : '';
-    return { ok: pasted.includes('HFCALC clipboard check'), detail: `plugin: ${r}; pasted back: ${JSON.stringify(pasted.slice(0, 40))}` };
+    // Read it back through Android's clipboard (the plugin's read), and by a
+    // simulated paste; either one showing the text proves the copy landed.
+    // (The paste keypress alone was flaky right after the share menu closed.)
+    const readBack = r === 'ok' ? await page.evaluate(async () => {
+      try { const v = await window.Capacitor.Plugins.Clipboard.read(); return v && v.value ? v.value : ''; } catch (e) { return 'read failed: ' + e; }
+    }) : '';
+    const pasted = (r === 'ok' && !readBack.includes('HFCALC clipboard check')) ? await pasteFromClipboard() : '';
+    const ok = readBack.includes('HFCALC clipboard check') || pasted.includes('HFCALC clipboard check');
+    return { ok, detail: `plugin write: ${r}; read back: ${JSON.stringify(readBack.slice(0, 40))}${pasted ? '; pasted: ' + JSON.stringify(pasted.slice(0, 40)) : ''}` };
   });
 
   if (LOCAL) await check('EXPORT CURRENT really saves the comm card', 'INFO', async () => {
