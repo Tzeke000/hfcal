@@ -29,6 +29,8 @@ function record(name, level, ok, detail) {
   results.push({ name, level, ok, detail: String(detail == null ? '' : detail).slice(0, 600) });
   console.log(`${ok ? 'PASS' : (level === 'REQUIRED' ? 'FAIL' : 'NOTE')} [${level}] ${name} — ${detail}`);
 }
+let drops = 0;
+let dist = null;   // the online calculation's distance, once known
 // The app's process id: a change between two checks means the app died and
 // Android restarted it — a crash, not a test problem.
 async function appPid() { return LOCAL ? 'local' : (await shell(`pidof ${PKG}`)) || 'not running'; }
@@ -47,14 +49,18 @@ async function check(name, level, fn) {
       // again. Either way try once more and say so: a real crash would crash
       // again and still fail.
       const pid1 = await appPid().catch(() => '?');
+      // Keep Android's log from the moment of the drop: a WebView renderer
+      // crash would show here, and must not be mistaken for a test hiccup.
+      try { fs.writeFileSync(`logs-logcat-drop-${++drops}.txt`, await shell('logcat -d -v time -t 3000')); } catch (e2) { /* best effort */ }
       try {
-        if (pid1 === 'not running') {
-          await openApp();
-        } else {
-          const wv = await device.webView({ pkg: PKG }, { timeout: 60000 });
-          page = await wv.page(); listen(page); page.setDefaultTimeout(20000);
-        }
-        await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 30000 });
+        // A fresh connection to the phone — the old one remembers the dead
+        // page — and a fresh start of the app, then redo the calculation the
+        // later checks depend on.
+        try { device.close(); } catch (e2) { /* already gone */ }
+        const { _android } = await import('playwright-core');
+        device = (await _android.devices({ omitDriverInstall: true }))[0];
+        await openApp();
+        if (dist) await calculate(CHERRY_POINT, OKINAWA);
         const r = await fn();
         record(name, level, !!r.ok, `${r.detail} [retried: page connection dropped; app pid ${pid0} -> ${pid1}]`);
         return;
@@ -206,7 +212,6 @@ async function run() {
     return { ok: r.virtual === true && !r.counted && r.skipped === 'virtual device', detail: JSON.stringify(r) };
   });
 
-  let dist = null;
   await check('a calculation runs (Cherry Point → Okinawa)', 'REQUIRED', async () => {
     dist = await calculate(CHERRY_POINT, OKINAWA);
     return { ok: !!dist, detail: 'Distance ' + dist };

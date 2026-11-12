@@ -249,6 +249,7 @@ jobs:
       - name: Check the app on the phone
         run: |
           adb install apks/ci-device-test-debug-apk-do-not-install/app-debug.apk
+          adb logcat -G 16M || true   # keep enough history to see a crash
           adb logcat -c || true
           node scripts/android/device-test.mjs
 
