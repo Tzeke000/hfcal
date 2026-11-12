@@ -3871,6 +3871,26 @@ the typed values once and never asks again; SKIP sticks and HELP reopens it;
 offline entry waits and goes when signal returns. Device: the emulator is
 virtual and is not counted.
 
+**Keeping the device test honest under emulator flakiness.** Getting v1.66
+through the phone check took five runs, and none of the failures was the app:
+- Android closed the app to free memory on the 2 GB virtual phone, with Chrome
+  still open from the link check. Now the virtual phone has 4 GB and Chrome is
+  closed after that check.
+- Reading the clipboard back failed with "no data" while the write succeeded.
+  It now runs before the share menu and retries with a focus tap. It is
+  report-only, because the share menu (EXPORT's main path) is the required
+  check.
+- Twice the debug connection to the page was cut with the app still running.
+  The test now reconnects from scratch, restarts the app, redoes the
+  calculation, and records the retry and the app's process id in the report.
+- Once Google Play services died on the emulator, and Android killed every app
+  using its font provider, this one included. The logcat captured at the
+  moment of the drop says so ("depends on provider ...FontsProvider in dying
+  proc com.google.android.gms.persistent").
+
+A real crash would repeat on the retry and still fail, and the logcat of every
+drop is kept in the run's report.
+
 367 unit tests, 85 browser tests (×2 bases in CI), the Android device checks,
 lint clean, Python mirror exact.
 
