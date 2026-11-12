@@ -458,6 +458,37 @@ describe('optional user list (v1.66)', { skip: SKIP, concurrency: 1 }, () => {
   });
 });
 
+describe('count.html — who is using it (v1.67)', { skip: SKIP, concurrency: 1 }, () => {
+  async function countPage(csv) {
+    const page = await newPage(browser);
+    await page.route('**/api.github.com/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await page.route('**/__summary-test.csv*', r => r.fulfill({ status: 200, contentType: 'text/csv', body: csv }));
+    await page.goto(BASE_URL + 'count.html?summarytest=1', { waitUntil: 'domcontentloaded' });
+    return page;
+  }
+
+  test('shows totals by unit, MOS and kind of app, and the private-list button', async () => {
+    const csv = 'Unit,People,,MOS,People,,Kind of app,People\n'
+      + '8TH COMM BN,3,,0621,4,,Android app,3\n'
+      + '"1ST BN, 2D MAR",2,,2631,1,,iPhone/iPad (web),2\n'
+      + ',1,,,1,,,\n';
+    const page = await countPage(csv);
+    await page.waitForFunction(() => document.getElementById('wn').textContent === '6', null, { timeout: 5000 });
+    const t = await page.locator('#wcols').innerText();
+    for (const s of ['8TH COMM BN', '1ST BN, 2D MAR', '0621', '2631', 'Android app', '(not given)']) assert.ok(t.includes(s), 'missing ' + s);
+    assert.match(await page.locator('#wlist').getAttribute('href'), /^https:\/\/docs\.google\.com\/spreadsheets\/d\//);
+    await page.context().close();
+  });
+
+  test('refuses a published link that carries names', async () => {
+    const page = await countPage('Timestamp,Name,Rank,Unit,MOS,Platform\n2026-11-12,Smith,Cpl,8th Comm,0621,Android app\n');
+    await page.waitForFunction(() => /includes names/.test(document.getElementById('wnote').textContent), null, { timeout: 5000 });
+    const body = await page.evaluate(() => document.body.innerText);
+    assert.ok(!body.includes('Smith'), 'a name reached the public page');
+    await page.context().close();
+  });
+});
+
 describe('install count stays clean (v1.66)', { skip: SKIP, concurrency: 1 }, () => {
   // Installed apps now count, so the tests that impersonate them must never
   // ping the real counter from a developer's machine or CI.

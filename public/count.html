@@ -73,6 +73,14 @@
     font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
   }
   .err { color: #ff9b86; font-size: 0.78rem; margin-top: 10px; display: none; }
+  .who { margin-top: 18px; }
+  .cols { display: flex; gap: 10px; flex-wrap: wrap; }
+  .col { flex: 1 1 160px; background: #0e1510; border: 1px solid #2e4422; border-radius: 8px; padding: 10px 12px; }
+  .col h3 { margin: 0 0 6px; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8fa284; }
+  .row { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid #16220f; font-size: 0.76rem; }
+  .row b { color: #7dc86b; font-variant-numeric: tabular-nums; }
+  a.btn { display: inline-block; margin-top: 12px; background: #5a9e4b; color: #0e1409; text-decoration: none;
+    border-radius: 6px; padding: 10px 18px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; }
 </style>
 </head>
 <body>
@@ -84,6 +92,22 @@
     <div class="err" id="err"></div>
     <button id="r">REFRESH</button>
     <div class="meta" id="meta">HFCALC-AG-EZK-USMC-v1</div>
+  </div>
+
+  <!-- Who's using it (v1.67). Totals only — never names. The people
+       themselves are in the author's private Sheet, opened by the button. -->
+  <div class="who">
+    <div class="rhead">
+      <h2>Who's using it</h2>
+      <span style="color:#445a38;font-size:0.62rem" id="wmeta"></span>
+    </div>
+    <div class="tally">
+      <div class="tile"><div class="v rate" id="wn">–</div><div class="k">on the user list</div></div>
+    </div>
+    <div class="cols" id="wcols"></div>
+    <div id="wnote" class="empty" style="margin-top:8px"></div>
+    <a class="btn" id="wlist" target="_blank" rel="noopener">OPEN MY USER LIST (PRIVATE) →</a>
+    <div class="empty" style="margin-top:6px">Names, ranks, units and MOS — opens your Google Sheet; only your Google account can see it.</div>
   </div>
 
   <div class="reports">
@@ -226,7 +250,90 @@
       });
   }
 
-  function loadAll() { load(); loadReports(); }
+  // ── Who's using it ───────────────────────────────────────────────────────
+  // The optional user list (src/lib/roster.js) lands in the author's PRIVATE
+  // Google Sheet. This page is public, so it reads only a separately
+  // published "Summary" tab of that Sheet: counts per unit, per MOS and per
+  // kind of app — never a name. If the published link ever carries more than
+  // that (the whole sheet published by mistake), the page refuses to show it.
+  var USER_SHEET = 'https://docs.google.com/spreadsheets/d/1vTDOsnDQRsjQ6Vu6nKUitFhfNLqTsj1eEdln6q-G2X4/edit';
+  var SUMMARY_CSV = '';   // the published Summary tab, output=csv
+  // The browser suite feeds a stub (?summarytest=1); a real visit never has it.
+  if (/[?&]summarytest=1/.test(location.search)) SUMMARY_CSV = location.origin + '/__summary-test.csv';
+
+  function parseCsv(text) {
+    var rows = [], row = [], cell = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (c === '"') q = false;
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+
+  // Summary tab layout: three QUERY tables side by side, each a label column
+  // and a "People" column — Unit | People | · | MOS | People | · | Kind of app | People.
+  function readSummary(rows) {
+    var head = (rows[0] || []).map(function (h) { return String(h).trim().toLowerCase(); });
+    if (head.some(function (h) { return /^(name|timestamp|rank)$/.test(h); })) {
+      return { refused: true };
+    }
+    var groups = [];
+    head.forEach(function (h, i) {
+      if (h && h !== 'people' && head[i + 1] === 'people') groups.push({ title: rows[0][i].trim(), col: i, items: [] });
+    });
+    groups.forEach(function (g) {
+      for (var r = 1; r < rows.length; r++) {
+        var label = (rows[r][g.col] || '').trim(), n = parseInt(rows[r][g.col + 1], 10);
+        if (!isFinite(n)) continue;
+        g.items.push({ label: label || '(not given)', n: n });
+      }
+    });
+    return { groups: groups };
+  }
+
+  function loadWho() {
+    document.getElementById('wlist').href = USER_SHEET;
+    var note = document.getElementById('wnote');
+    if (!SUMMARY_CSV) {
+      note.textContent = 'Totals appear here once the Sheet\u2019s Summary tab is published (counts only, no names).';
+      return;
+    }
+    fetch(SUMMARY_CSV + (SUMMARY_CSV.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('Google answered ' + r.status); return r.text(); })
+      .then(function (text) {
+        var s = readSummary(parseCsv(text));
+        if (s.refused) {
+          document.getElementById('wcols').innerHTML = '';
+          note.innerHTML = '<span style="color:#ff9b86">The published link includes names. Not shown here. '
+            + 'In the Sheet: File \u2192 Share \u2192 Publish to web \u2192 Stop publishing, then publish only the Summary tab.</span>';
+          return;
+        }
+        var total = 0;
+        if (s.groups[0]) s.groups[0].items.forEach(function (it) { total += it.n; });
+        document.getElementById('wn').textContent = total;
+        document.getElementById('wcols').innerHTML = s.groups.map(function (g) {
+          return '<div class="col"><h3>' + esc(g.title) + '</h3>'
+            + (g.items.length ? g.items.map(function (it) {
+                return '<div class="row"><span>' + esc(it.label) + '</span><b>' + it.n + '</b></div>';
+              }).join('') : '<div class="empty">none yet</div>') + '</div>';
+        }).join('');
+        note.textContent = '';
+        document.getElementById('wmeta').textContent = 'from your Sheet\u2019s Summary tab · ' + new Date().toLocaleTimeString();
+      })
+      .catch(function (e) { note.textContent = 'Could not load totals: ' + e.message; });
+  }
+
+  function loadAll() { load(); loadReports(); loadWho(); }
   document.getElementById('r').addEventListener('click', loadAll);
   loadAll();
   setInterval(loadAll, 5 * 60 * 1000);   // gentle: 60 unauthenticated req/hr limit

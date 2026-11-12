@@ -110,7 +110,7 @@ The LUF's absorption law, daylight response and path-length dependence are measu
 
 **The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 59 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**368 unit tests** pin the physics so it cannot drift. **85 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. **The Android app is checked on an Android emulator** before each release is published — launch, offline, EXPORT, the DAGR scan, the QR, the update check, and that the new APK installs over the old one. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**368 unit tests** pin the physics so it cannot drift. **87 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. **The Android app is checked on an Android emulator** before each release is published — launch, offline, EXPORT, the DAGR scan, the QR, the update check, and that the new APK installs over the old one. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -175,7 +175,7 @@ npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
 npm test             # 368 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 85 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm run test:ui      # 87 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run test:android # on-phone checks of the installed Android app (needs an emulator/phone on adb; CI runs it)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```

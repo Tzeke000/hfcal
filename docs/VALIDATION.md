@@ -3914,8 +3914,20 @@ test makes that REQUIRED: on first open the card shows, SKIP closes it, the
 choice is remembered, and no request goes to Google Forms. Relaunches during
 the test dismiss it with SKIP, never SEND.
 
+**On the author's dashboard (count.html).** The author asked to see the
+people, units and MOSs on count.html. That page is public (unlisted, but
+open to anyone with the link, and its source is in a public repo), and the
+card tells people their answers go to a private spreadsheet. So the page
+never shows names. It shows totals by unit, MOS and kind of app, read from a
+separately published Summary tab of the Sheet that holds only QUERY counts,
+plus a button that opens the private Sheet itself, which only the author's
+Google account can open. If the published link ever carries a Name,
+Timestamp or Rank column (the whole sheet published by mistake), the page
+refuses to show it and says how to unpublish. Tested both ways, including
+that a name in such a link never reaches the page text.
+
 368 unit tests (the live form is https and receives exactly its five fields),
-85 browser tests (×2 bases in CI), the Android device checks, lint clean,
+87 browser tests (×2 bases in CI), the Android device checks, lint clean,
 Python mirror exact.
 
 ## Limitations
