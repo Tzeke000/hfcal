@@ -3894,6 +3894,30 @@ drop is kept in the run's report.
 367 unit tests, 85 browser tests (×2 bases in CI), the Android device checks,
 lint clean, Python mirror exact.
 
+## Part 59 — The user list goes live (v1.67.0)
+
+The author created the Google Form (five short-answer questions: Name, Rank,
+Unit, MOS, Platform) and sent its pre-filled link; the five entry ids are in
+`src/lib/roster.js`. Before anything shipped, a server-side test post was made
+the way the app posts. **The first attempt was refused, 401**: the form was
+unpublished and demanded a Google sign-in. A no-cors post cannot see that
+refusal, so shipping then would have lost every entry while the app reported
+it sent. After the author published the form to "anyone with the link", the
+same post returned "Your response has been recorded". One row, labeled for
+deletion, was left in the author's Sheet.
+
+Test machines never see the card. On 127.0.0.1, or on localhost outside an
+installed app, the form is treated as unconfigured. That keeps the card from
+covering the browser tests and keeps them from posting to the real Sheet.
+The installed Android app is on localhost too and does see it. The device
+test makes that REQUIRED: on first open the card shows, SKIP closes it, the
+choice is remembered, and no request goes to Google Forms. Relaunches during
+the test dismiss it with SKIP, never SEND.
+
+368 unit tests (the live form is https and receives exactly its five fields),
+85 browser tests (×2 bases in CI), the Android device checks, lint clean,
+Python mirror exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

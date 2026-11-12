@@ -11,6 +11,13 @@
 
 export const CHANGELOG = [
   {
+    version: '1.67.0', date: '2026-11-12', title: 'Optional user list',
+    notes: [
+      'On first open: \u201cWho\u2019s using the app?\u201d \u2014 name, rank, unit and MOS, every box optional, sent once so the author can see which units and MOSs use it.',
+      'SKIP \u2014 STAY ANONYMOUS sends nothing and does not ask again. Skipped and changed your mind? HELP \u2192 User List.',
+    ],
+  },
+  {
     version: '1.66.0', date: '2026-11-12', title: 'Android installs count',
     notes: [
       'The install count now includes the Android and Windows apps. Before, it only saw the website.',
