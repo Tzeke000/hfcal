@@ -104,7 +104,20 @@ async function openApp() {
   listen(page);
   page.setDefaultTimeout(20000);
   await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 60000 });
+  // The optional user-list card (v1.67) sits over the app on first open. The
+  // first check below looks at it; after that, any relaunch dismisses it with
+  // SKIP — never SEND, so a test phone never adds a row to the real Sheet.
+  if (rosterSeen) await skipRosterCard();
   return page;
+}
+
+let rosterSeen = false;
+async function skipRosterCard() {
+  return page.evaluate(() => {
+    const b = [...document.querySelectorAll('[data-roster-prompt] button')].find(x => /^SKIP/.test(x.textContent.trim()));
+    if (b) { b.click(); return true; }
+    return false;
+  });
 }
 
 async function goTab(t) {
@@ -172,6 +185,21 @@ async function run() {
     return { ok: true, detail: 'CALCULATE visible' };
   });
   if (!page) return;
+
+  if (!LOCAL) await check('the optional user-list card shows on first open, and SKIP sends nothing', 'REQUIRED', async () => {
+    rosterSeen = true;
+    const shown = await page.waitForSelector('[data-roster-prompt]', { timeout: 10000 }).then(() => true, () => false);
+    const posts = [];
+    page.on('request', r => { if (/docs\.google\.com\/forms/.test(r.url())) posts.push(r.url()); });
+    const clicked = await skipRosterCard();
+    await sleep(1500);
+    const r = await page.evaluate(() => ({
+      gone: !document.querySelector('[data-roster-prompt]'),
+      stored: (JSON.parse(localStorage.getItem('hfcalc_roster_v1') || 'null') || {}).state,
+    }));
+    return { ok: shown && clicked && r.gone && r.stored === 'skipped' && posts.length === 0,
+      detail: `card ${shown ? 'shown' : 'NOT shown'}; SKIP ${clicked ? 'tapped' : 'missing'}; card ${r.gone ? 'closed' : 'still up'}; remembered as ${r.stored}; form posts: ${posts.length}` };
+  });
 
   await check('the app knows it is the installed Android app', 'REQUIRED', async () => {
     const r = await page.evaluate(() => ({

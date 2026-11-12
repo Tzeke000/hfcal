@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ROSTER_FIELDS, ROSTER_KEY, cleanEntry, isEmptyEntry, encodeRoster, sendRoster, skipRoster,
+  ROSTER_CONFIG, ROSTER_FIELDS, ROSTER_KEY, cleanEntry, isEmptyEntry, encodeRoster, sendRoster, skipRoster,
   flushRoster, loadRoster, shouldAskRoster, isRosterConfigured,
 } from '../../src/lib/roster.js';
 
@@ -86,4 +86,12 @@ test('roster: unreadable storage is treated as "not answered", never a crash', a
     store.set(ROSTER_KEY, JSON.stringify({ state: 'weird' }));
     assert.equal(loadRoster(), null);
   });
+});
+
+test('roster: the live form is https and gets exactly its five questions', function() {
+  assert.ok(isRosterConfigured(ROSTER_CONFIG));
+  assert.match(ROSTER_CONFIG.formAction, /^https:\/\/docs\.google\.com\/forms\/d\/e\/[\w-]+\/formResponse$/);
+  const body = encodeRoster({ name: 'Smith', rank: 'Cpl', unit: '8th Comm Bn', mos: '0621' }, META, ROSTER_CONFIG);
+  assert.deepEqual([...body.keys()].length, 5, 'the form has five questions: Name, Rank, Unit, MOS, Platform');
+  assert.equal(body.get(ROSTER_CONFIG.fields.platform), 'Android app');
 });

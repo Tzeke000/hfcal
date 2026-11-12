@@ -376,7 +376,7 @@ describe('optional user list (v1.66)', { skip: SKIP, concurrency: 1 }, () => {
     await page.waitForSelector('button:has-text("CALCULATE")');
   }
 
-  test('not asked at all while the author\'s Form is not set up', async () => {
+  test('never shown on a test machine unless the test arms it (it would cover every test and post to the real Sheet)', async () => {
     const page = await newPage(browser);
     await page.waitForTimeout(500);
     assert.equal(await page.locator('[data-roster-prompt]').count(), 0);

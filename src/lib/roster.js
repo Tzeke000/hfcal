@@ -21,14 +21,25 @@
 // Part of the original work of Cpl Angeles-Gonzalez, Ezekiel S., USMC.
 // Project signature: HFCALC-AG-EZK-USMC-v1
 
+import { isInstalledApp } from './platform.js';
+
 // ── CONFIGURATION ─────────────────────────────────────────────────────────────
 // To configure: create a Google Form with one short-answer question per name
 // in ROSTER_FIELDS (in that order), link it to a Sheet, use "Get pre-filled
 // link", and copy each entry.NNNN id into `fields`. formAction is the form's
 // .../formResponse address.
+// The author's form, set up 2026-11-12 with five questions: Name, Rank,
+// Unit, MOS, Platform. (appVersion and firstOpened have no question, so they
+// are simply not sent.)
 export var ROSTER_CONFIG = {
-  formAction: '',          // https://docs.google.com/forms/d/e/<ID>/formResponse
-  fields: {},              // { name: 'entry.123', rank: 'entry.456', ... }
+  formAction: 'https://docs.google.com/forms/d/e/1FAIpQLSdF1Y1piEvC03deEz_1OTrZv2Yzy0H4GJJofiTDl2gV1Z2kJQ/formResponse',
+  fields: {
+    name: 'entry.1662943421',
+    rank: 'entry.965611597',
+    unit: 'entry.1490053423',
+    mos: 'entry.1721362995',
+    platform: 'entry.352488216',
+  },
 };
 
 export var ROSTER_FIELDS = ['name', 'rank', 'unit', 'mos', 'platform', 'appVersion', 'firstOpened'];
@@ -54,6 +65,14 @@ export function getRosterConfig() {
       var f = {};
       ROSTER_FIELDS.forEach(function(k, i) { f[k] = 'entry.' + (2000 + i); });
       return { formAction: window.location.origin + '/__roster-test', fields: f, test: true };
+    }
+    // The browser-test harness and dev servers never see the card (it would
+    // sit over every test) and never post a row to the real Sheet — the same
+    // guard as the install counter. The installed Android app is served from
+    // localhost too, and does see it.
+    if (typeof window !== 'undefined' && window.location) {
+      var h = window.location.hostname;
+      if (h === '127.0.0.1' || (h === 'localhost' && !isInstalledApp())) return { formAction: '', fields: {} };
     }
   } catch (e) { /* fall through */ }
   return ROSTER_CONFIG;
