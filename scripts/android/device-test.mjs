@@ -41,12 +41,19 @@ async function check(name, level, fn) {
   } catch (e) {
     const msg = e && e.message ? e.message.split('\n')[0] : String(e);
     if (!LOCAL && /has been closed|Target closed/i.test(msg)) {
-      // The connection to the page dropped. Say whether the APP survived,
-      // reattach to the running app without restarting it, and try once more.
+      // The connection to the page dropped. Say whether the APP survived. If
+      // it is still running, reattach; if Android shut it down (a small
+      // virtual phone frees memory by closing background apps), start it
+      // again. Either way try once more and say so: a real crash would crash
+      // again and still fail.
       const pid1 = await appPid().catch(() => '?');
       try {
-        const wv = await device.webView({ pkg: PKG }, { timeout: 60000 });
-        page = await wv.page(); listen(page); page.setDefaultTimeout(20000);
+        if (pid1 === 'not running') {
+          await openApp();
+        } else {
+          const wv = await device.webView({ pkg: PKG }, { timeout: 60000 });
+          page = await wv.page(); listen(page); page.setDefaultTimeout(20000);
+        }
         await page.waitForSelector('button:has-text("CALCULATE")', { timeout: 30000 });
         const r = await fn();
         record(name, level, !!r.ok, `${r.detail} [retried: page connection dropped; app pid ${pid0} -> ${pid1}]`);
@@ -305,6 +312,7 @@ async function run() {
     await sleep(4000);
     const top = await shell('dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity"');
     const outside = top && !top.includes(PKG);
+    await shell('am force-stop com.android.chrome');   // free its memory for the checks after this
     await openApp();
     return { ok: outside, detail: top || '(no resumed activity line)' };
   });
@@ -394,7 +402,7 @@ if (!LOCAL && device) {
   // Android's own log: crashes, WebView renderer deaths, Capacitor plugin errors.
   try {
     const log = await shell('logcat -d -v time -t 4000');
-    const keep = log.split('\n').filter(l => /AndroidRuntime|FATAL|crash|Crash|chromium|Capacitor|libc|DEBUG|ActivityManager.*hffieldantenna|ActivityTaskManager.*hffieldantenna|died|Renderer/i.test(l));
+    const keep = log.split('\n').filter(l => /AndroidRuntime|FATAL|crash|Crash|chromium|Capacitor|libc|DEBUG|hffieldantenna|died|Renderer|lowmemorykiller|lmkd|Killing|kill/i.test(l));
     fs.writeFileSync('logs-logcat.txt', keep.slice(-1500).join('\n'));
   } catch (e) { /* best effort */ }
 }

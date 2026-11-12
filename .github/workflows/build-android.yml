@@ -205,7 +205,7 @@ jobs:
           echo no | "$BIN/avdmanager" create avd -n hfcal -k "$IMG" -d pixel_6 --force
           "$SDK/emulator/emulator" -list-avds
           echo "$SDK/platform-tools" >> "$GITHUB_PATH"; export PATH="$SDK/platform-tools:$PATH"
-          nohup "$SDK/emulator/emulator" -avd hfcal -no-window -no-audio -no-boot-anim -no-snapshot \
+          nohup "$SDK/emulator/emulator" -avd hfcal -memory 4096 -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -camera-back none -camera-front none > logs-emulator.txt 2>&1 &
           EMU=$!
           booted=""
