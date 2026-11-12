@@ -257,6 +257,31 @@ async function run() {
     });
   }
 
+  if (!LOCAL) await check('the app\'s native copy really reaches the clipboard', 'REQUIRED', async () => {
+    await backToApp();
+    const r = await page.evaluate(async () => {
+      const C = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Clipboard;
+      if (!C) return 'no Clipboard plugin';
+      try { await C.write({ string: 'HFCALC clipboard check' }); return 'ok'; } catch (e) { return 'write failed: ' + e; }
+    });
+    // Read it back through Android's clipboard (the plugin's read), and by a
+    // simulated paste; either one showing the text proves the copy landed.
+    // (The paste keypress alone was flaky right after the share menu closed.)
+    // Android only lets the FOCUSED app read the clipboard; tap the app's own
+    // title bar (harmless) so it has focus, and give it three tries.
+    let readBack = '';
+    for (let i = 0; r === 'ok' && i < 3 && !readBack.includes('HFCALC clipboard check'); i++) {
+      await shell('input tap 300 200');
+      await sleep(700);
+      readBack = await page.evaluate(async () => {
+        try { const v = await window.Capacitor.Plugins.Clipboard.read(); return v && v.value ? v.value : ''; } catch (e) { return 'read failed: ' + e; }
+      });
+    }
+    const pasted = (r === 'ok' && !readBack.includes('HFCALC clipboard check')) ? await pasteFromClipboard() : '';
+    const ok = readBack.includes('HFCALC clipboard check') || pasted.includes('HFCALC clipboard check');
+    return { ok, detail: `plugin write: ${r}; read back: ${JSON.stringify(readBack.slice(0, 40))}${pasted ? '; pasted: ' + JSON.stringify(pasted.slice(0, 40)) : ''}` };
+  });
+
   if (!LOCAL) await check('EXPORT opens Android\'s share menu with the comm card', 'REQUIRED', async () => {
     await openCard('Saved Shots & Export');
     await clickButton('EXPORT CURRENT');
@@ -268,24 +293,6 @@ async function run() {
     let after = '(no message)';
     for (let i = 0; i < 10 && after === '(no message)'; i++) { await sleep(300); after = await flashText(); }
     return { ok: sheet && back, detail: `share menu ${sheet ? 'opened' : 'did NOT open'} (${top.replace(/.*ActivityRecord\{\S+ \S+ /, '').replace(/\s+/g, ' ').slice(0, 60)}); after BACK the app said "${after}" and is ${back ? 'back on screen' : 'NOT back'}` };
-  });
-
-  if (!LOCAL) await check('the app\'s native copy really reaches the clipboard', 'REQUIRED', async () => {
-    await backToApp();
-    const r = await page.evaluate(async () => {
-      const C = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Clipboard;
-      if (!C) return 'no Clipboard plugin';
-      try { await C.write({ string: 'HFCALC clipboard check' }); return 'ok'; } catch (e) { return 'write failed: ' + e; }
-    });
-    // Read it back through Android's clipboard (the plugin's read), and by a
-    // simulated paste; either one showing the text proves the copy landed.
-    // (The paste keypress alone was flaky right after the share menu closed.)
-    const readBack = r === 'ok' ? await page.evaluate(async () => {
-      try { const v = await window.Capacitor.Plugins.Clipboard.read(); return v && v.value ? v.value : ''; } catch (e) { return 'read failed: ' + e; }
-    }) : '';
-    const pasted = (r === 'ok' && !readBack.includes('HFCALC clipboard check')) ? await pasteFromClipboard() : '';
-    const ok = readBack.includes('HFCALC clipboard check') || pasted.includes('HFCALC clipboard check');
-    return { ok, detail: `plugin write: ${r}; read back: ${JSON.stringify(readBack.slice(0, 40))}${pasted ? '; pasted: ' + JSON.stringify(pasted.slice(0, 40)) : ''}` };
   });
 
   if (LOCAL) await check('EXPORT CURRENT really saves the comm card', 'INFO', async () => {
