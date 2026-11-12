@@ -3834,6 +3834,46 @@ now waits for the app to return).
 361 unit tests, 79 browser tests (×2 bases in CI), the Android device checks
 on every Android build, lint clean, Python mirror exact.
 
+## Part 58 — Every install counted, and an optional user list (v1.66.0)
+
+**The count.** The install counter (a one-time fetch of a file from the
+repo's own release, counted by GitHub) skipped any page served from
+`localhost`, so the browser-test harness would not inflate it. The Android
+app is served from `https://localhost/`, so every APK install was skipped:
+the count (57 at the time) only ever saw the website. Now an installed app
+counts (Android, and the Mac build of the desktop app, which is also served
+from localhost), with two guards so the count stays real. `127.0.0.1` is
+never counted, even when a test page impersonates an installed app; browser
+tests posing as the Android and Windows apps prove no ping is made. A
+VIRTUAL Android device is never counted: the build's emulator check installs
+a fresh app on every update and would add a fake install each time.
+Capacitor's Device plugin reports `isVirtual`, and the device test makes
+this REQUIRED: the emulator must report virtual and must not have counted.
+
+**The user list.** The author asked to see which units and MOSs use the
+app, maybe with names, while anyone can stay anonymous. On first open a card
+asks for name, rank, unit and MOS. Every box is optional and SKIP is a full
+width button. Only what was typed goes, plus the kind of app (website, iPhone,
+Android app, Windows app), the app version and the first-open date. It goes
+once, as one row to a Google Form the author owns, landing in a Sheet where
+the author sees the table and counts by unit and MOS. Never a location, no
+device identifier. SKIP sends nothing and is remembered; an all-empty SEND is
+a SKIP. With no signal the entry waits on the device and goes when signal
+returns. HELP has a card to add yourself later. It is disclosed on the card,
+in About and in the README, and it is inert, with no prompt at all, until the
+Form is configured in `src/lib/roster.js`.
+
+**Tests.** Unit: cleaning, the exact row (seven fields, no more), nothing
+asked unconfigured or over plain http, SKIP and empty-SEND send nothing,
+no-signal queues and sends exactly once, corrupt storage reads as
+unanswered. Browser: no prompt unconfigured; first open asks and SEND posts
+the typed values once and never asks again; SKIP sticks and HELP reopens it;
+offline entry waits and goes when signal returns. Device: the emulator is
+virtual and is not counted.
+
+367 unit tests, 85 browser tests (×2 bases in CI), the Android device checks,
+lint clean, Python mirror exact.
+
 ## Limitations
 
 - **Accuracy figures before Part 14 were measured on sets overlapping the

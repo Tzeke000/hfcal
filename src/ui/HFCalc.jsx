@@ -32,7 +32,10 @@ import { WhatsNew } from './WhatsNew.jsx';
 import { recordVersionSeen } from '../lib/versionsSeen.js';
 import { OfflineStatus } from './OfflineStatus.jsx';
 import { AndroidSwitchNotice } from './AndroidSwitchNotice.jsx';
+import { RosterPrompt, RosterHelpCard } from './Roster.jsx';
+import { isRosterConfigured } from '../lib/roster.js';
 import { isNativeApp, isInstalledApp, isDesktopApp, SITE_URL, appDownloadUrl, WINDOWS_DOWNLOAD_URL } from '../lib/platform.js';
+import { Device } from '@capacitor/device';
 import { TruthLog } from "./TruthLog.jsx";
 import { isAutoReportConfigured, getAutoReportConfig } from '../lib/autoReport.js';
 import { SoiPanel } from "./SoiPanel.jsx";
@@ -1154,6 +1157,8 @@ function isNewerVersion(remote, local) {
 // footprint statement adds the fourth fetch ONLY when it can actually happen
 // — the statement is "in full", and an inert feature is not a fetch.
 var AUTO_REPORTS_LIVE = isAutoReportConfigured(getAutoReportConfig());
+// The optional user list (v1.66) — disclosed only once it is live.
+var ROSTER_LIVE = isRosterConfigured();
 
 // ── EMBED-HOST ALLOWLIST ──────────────────────────────────────────────────────
 // Origins the OPERATOR has approved to read data over the postMessage bridge.
@@ -2126,7 +2131,7 @@ function AboutBanner() {
               {feat('QR handoff', 'show any plan as a QR code; another operator scans it and their app opens pre-filled — grids, frequency, wire, power and month all carried. No typing under a poncho. (On iPhone the scan opens Safari, so the receiver needs a connection or one prior visit in Safari; an installed Android app opens it offline.)', 'f14b', 'offline')}
               {feat('Field truth log', 'one tap after a shot — it closed, or it didn’t — records the app’s prediction beside what actually happened, plus a note. Export the card and send it back: your real paths become the validation data no lab study can produce.', 'f14c', 'offline')}
               {feat('Red-light night mode', 'the NIGHT button up top turns the whole app red-on-black to preserve dark adaptation. The QR stays scannable — it deliberately sits above the red veil.', 'f14d', 'offline')}
-              {feat('The app itself', 'installs to the home screen and runs with no account and no connection — fonts and the text recogniser are carried locally. Its complete network footprint, stated in full: the NOAA space-weather refresh, the update check against its own site, and a one-time anonymous install ping on first launch (a bare fetch of a file from the app’s own GitHub, nothing attached, so the author can count installs)' + (AUTO_REPORTS_LIVE ? ' — and, only if you opt in from the Field Truth Log, one row per logged shot to the author’s results spreadsheet, with no grids unless you turn them on' : '') + '. All of them fail silently offline; none carry coordinates or any identifier unless you choose to include grids.', 'f15', 'offline')}
+              {feat('The app itself', 'installs to the home screen and runs with no account and no connection — fonts and the text recogniser are carried locally. Its complete network footprint, stated in full: the NOAA space-weather refresh, the update check against its own site, and a one-time anonymous install ping on first launch (a bare fetch of a file from the app’s own GitHub, nothing attached, so the author can count installs)' + (AUTO_REPORTS_LIVE ? ' — and, only if you opt in from the Field Truth Log, one row per logged shot to the author’s results spreadsheet, with no grids unless you turn them on' : '') + (ROSTER_LIVE ? '; and, only if you fill it in rather than SKIP, a one-time user-list entry (the name, rank, unit and MOS you typed, the kind of app, its version and the date — never a location) to the author’s spreadsheet' : '') + '. All of them fail silently offline; none carry coordinates or any identifier unless you choose to include grids.', 'f15', 'offline')}
 
               <div style={{ ...boxLabel, marginTop: 14, marginBottom: 8, color: T.accentText, fontSize: '0.64rem' }}>Where the math comes from</div>
               <div style={{ color: T.textBody, fontSize: '0.76rem', lineHeight: 1.6, marginBottom: 9 }}>
@@ -2158,7 +2163,7 @@ function AboutBanner() {
                     <div style={{ marginTop: 4 }}>{'▸  Long shots are checked at EVERY ionospheric bounce, not just the middle — the weakest bounce caps the path, and on a 10,000 km shot that can be a different hemisphere in the opposite season.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Arctic paths measured, not assumed — a latitude sweep to 80° plus five real transpolar circuits, through polar day AND polar night. That measurement found a real fault: a safety check meant to catch a corrupted file was instead overruling good polar data with a rougher estimate, and every time it fired the answer came out 46% low. Fixed — error above 60° went from 7.9% to 5.5%, and through polar night from 15.3% to 5.9%, with no change at mid-latitude.'}</div>
                     <div style={{ marginTop: 4 }}>{'▸  Known weak spots, stated up front: paths near the magnetic equator are the least accurate, above 80° is the next weakest and runs slightly high, auroral absorption is now modelled from NOAA’s Kp but its severity rests on a single literature anchor rather than a measurement — VOACAP has no storm term to check it against, so treat a storm warning as “expect trouble” rather than a number; your coordinates never leave the device \u2014 the app stores your last position locally so it is there when you open it cold, and since v1.29 an embedded host has to be explicitly authorised before it can read even that; CLEAR SAVED DATA wipes it. And the LUF (lowest usable frequency) has its shape measured but not its scale — treat it as the softest number here. The PATH CLOSED warning was checked against VOACAP over 6,912 cases and never fired falsely, but it only asks whether the ionosphere leaves a window open; it does not check whether your power and antenna can fill it. Measuring it found that the app had been charging a 2,500 km shot the same absorption as a shot across the valley; on long daytime paths the floor it used to quote was far too low.'}</div>
-                    <div style={{ marginTop: 4 }}>{'▸  361 automated tests pin every formula so the physics cannot drift as the app changes, plus 79 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
+                    <div style={{ marginTop: 4 }}>{'▸  367 automated tests pin every formula so the physics cannot drift as the app changes, plus 85 more that build the app and drive it in a browser — run twice, once against the exact build that deploys — because every bug ever reported from actual use was in the screen, not the math, so the screen is tested too. That suite was proved by putting real reported bugs back in and confirming it caught them.'}</div>
                   </div>
                   The full study, the raw comparison data, and the scripts to re-run the whole thing are published with the source. <strong style={{ color: T.accentText }}>Don't take my word for it — run it yourself.</strong>
                 </div>
@@ -2204,7 +2209,7 @@ function AboutBanner() {
               {feat('Point of need', 'the only one of these that works at the antenna site: phone, offline, grids to cut lengths in under a minute.', 'w1', 'none')}
               {feat('Field-expedient wire', 'velocity factor for salvage iron, galvanized fence wire, speaker wire, by core and gauge. Planning tools assume catalog antennas.', 'w2', 'none')}
               {feat('Buildability check', 'it does not just give the radiation-optimal height \u2014 it checks whether your legs can reach it, and tells you the buildable maximum and what you lose.', 'w3', 'none')}
-              {feat('EMCON-clean', 'no account, no server of its own, no third-party CDN, no analytics service; the OCR engine and fonts are bundled, not fetched. Its entire network footprint is ' + (AUTO_REPORTS_LIVE ? 'four' : 'three') + ' fail-silent fetches — NOAA space weather, the update check, a one-time anonymous install count on first launch' + (AUTO_REPORTS_LIVE ? ', and opt-in field reports with no grids by default' : '') + ' — none of which carry any data about you unless you opt in and choose to. In airplane mode nothing transmits and everything works.', 'w4', 'none')}
+              {feat('EMCON-clean', 'no account, no server of its own, no third-party CDN, no analytics service; the OCR engine and fonts are bundled, not fetched. Its entire network footprint is ' + ['three', 'four', 'five'][(AUTO_REPORTS_LIVE ? 1 : 0) + (ROSTER_LIVE ? 1 : 0)] + ' fail-silent fetches — NOAA space weather, the update check, a one-time anonymous install count on first launch' + (AUTO_REPORTS_LIVE ? ', opt-in field reports with no grids by default' : '') + (ROSTER_LIVE ? ', and an optional one-time user-list entry (SKIP sends nothing)' : '') + ' — none of which carry any data about you unless you opt in and choose to. In airplane mode nothing transmits and everything works.', 'w4', 'none')}
               {feat('It teaches', 'formulas are shown, not hidden \u2014 the same tool trains and fields.', 'w5', 'none')}
 
               <div style={{ color: T.textMute, fontSize: '0.7rem', lineHeight: 1.55, marginTop: 10, fontStyle: 'italic' }}>
@@ -3396,17 +3401,40 @@ export default function HFCalc() {
   // polluting the real count (a single local test run opens ~30 fresh
   // profiles); ?beacontest=1 lets the test suite exercise the ping against a
   // stubbed route.
+  //
+  // v1.66: the installed apps count too. The Android app runs at
+  // https://localhost/, so the guard above used to skip every APK install —
+  // the counter only ever saw the website. A host of 127.0.0.1 is still never
+  // counted (that is the test harness, even when it is impersonating an
+  // installed app). And a VIRTUAL Android device is never counted: the build's
+  // emulator check installs a fresh copy of the app on every update, which
+  // would otherwise add a fake install each time. Capacitor's Device plugin
+  // says which it is.
   useEffect(function() {
     try {
       if (localStorage.getItem('hfcalc_beacon_v1')) return;
       var host = window.location.hostname;
       var testArm = new URLSearchParams(window.location.search).has('beacontest');
-      if ((host === 'localhost' || host === '127.0.0.1') && !testArm) return;
+      var devHost = host === '127.0.0.1' || (host === 'localhost' && !isInstalledApp());
+      if (devHost && !testArm) return;
       if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
-      fetch('https://github.com/Tzeke000/hfcal/releases/download/install-beacon/beacon.txt',
-        { mode: 'no-cors', cache: 'no-store' })
-        .then(function() { try { localStorage.setItem('hfcalc_beacon_v1', '1'); } catch (e) { /* ignore */ } },
-              function() { /* offline or blocked — try again next launch */ });
+      var ping = function() {
+        fetch('https://github.com/Tzeke000/hfcal/releases/download/install-beacon/beacon.txt',
+          { mode: 'no-cors', cache: 'no-store' })
+          .then(function() { try { localStorage.setItem('hfcalc_beacon_v1', '1'); } catch (e) { /* ignore */ } },
+                function() { /* offline or blocked — try again next launch */ });
+      };
+      if (isNativeApp() && !testArm) {
+        Device.getInfo().then(function(info) {
+          if (info && info.isVirtual) {
+            try { localStorage.setItem('hfcalc_beacon_skipped_v1', 'virtual device'); } catch (e) { /* ignore */ }
+            return;
+          }
+          ping();
+        }, function() { /* cannot tell — do not count rather than miscount */ });
+      } else {
+        ping();
+      }
     } catch (e) { /* counting must never break the app */ }
   }, []);
   var readyAnnouncedRef = useRef(false);   // hfcalc:ready must fire once, not per keystroke
@@ -4062,6 +4090,7 @@ export default function HFCalc() {
         <UpdateBanner />
         <AndroidSwitchNotice />
         <ExportTextBox />
+        <RosterPrompt appVersion={APP_VERSION} />
         <OfflineStatus variant="card" />
 
         {/* ── PLAN: the one job the app exists for, in the operator's order ── */}
@@ -4396,6 +4425,7 @@ export default function HFCalc() {
           })}
         </div>
         <WhatsNew appVersion={APP_VERSION} />
+        <RosterHelpCard />
         </div>
 
 

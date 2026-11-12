@@ -11,6 +11,13 @@
 
 export const CHANGELOG = [
   {
+    version: '1.66.0', date: '2026-11-12', title: 'Android installs count',
+    notes: [
+      'The install count now includes the Android and Windows apps. Before, it only saw the website.',
+      'Ready to switch on: an optional "Who\u2019s using the app?" card (name, rank, unit, MOS, every box optional) with a clear SKIP. It appears once the author\u2019s form is set up.',
+    ],
+  },
+  {
     version: '1.65.0', date: '2026-11-07', title: 'Tested on a real Android phone',
     notes: [
       'Android app: EXPORT now opens the share menu, so you can send a comm card or the truth log to Messages, Gmail, Notes or Drive. It used to say DOWNLOADED and save nothing.',

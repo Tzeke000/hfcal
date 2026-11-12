@@ -363,6 +363,123 @@ describe('installed Windows app (v1.65)', { skip: SKIP, concurrency: 1 }, () => 
   });
 });
 
+describe('optional user list (v1.66)', { skip: SKIP, concurrency: 1 }, () => {
+  async function armed(page, posts, net) {
+    await page.route('**/__roster-test', route => {
+      // A routed request never touches the network, so "no signal" has to be
+      // played here: refuse it the way a dead link would.
+      if (net && net.down) return route.abort('internetdisconnected');
+      posts.push(new URLSearchParams(route.request().postData() || ''));
+      route.fulfill({ status: 200, body: '' });
+    });
+    await page.goto(BASE_URL + '?roster=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+  }
+
+  test('not asked at all while the author\'s Form is not set up', async () => {
+    const page = await newPage(browser);
+    await page.waitForTimeout(500);
+    assert.equal(await page.locator('[data-roster-prompt]').count(), 0);
+    assert.equal(await page.locator('[data-roster-help]').count(), 0);
+    await page.context().close();
+  });
+
+  test('first open asks; SEND posts what was typed once, and it does not ask again', async () => {
+    const page = await newPage(browser);
+    const posts = [];
+    await armed(page, posts);
+    const card = page.locator('[data-roster-prompt]');
+    await card.waitFor({ timeout: 5000 });
+    assert.match(await card.innerText(), /SKIP — STAY ANONYMOUS/);
+    await page.fill('#roster-name', 'Smith');
+    await page.fill('#roster-rank', 'Cpl');
+    await page.fill('#roster-unit', '8th Comm Bn');
+    await page.fill('#roster-mos', '0621');
+    await card.getByRole('button', { name: 'SEND', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('[data-roster-prompt]'), null, { timeout: 5000 });
+    assert.equal(posts.length, 1, 'expected exactly one row');
+    const row = Object.fromEntries([...posts[0].entries()]);
+    assert.equal(row['entry.2000'], 'Smith');
+    assert.equal(row['entry.2001'], 'Cpl');
+    assert.equal(row['entry.2002'], '8th Comm Bn');
+    assert.equal(row['entry.2003'], '0621');
+    assert.equal(row['entry.2004'], 'Computer (web)');
+    assert.match(row['entry.2005'], /^\d+\.\d+\.\d+$/);
+    assert.equal(Object.keys(row).length, 7, 'sent something it should not: ' + Object.keys(row).join(','));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(500);
+    assert.equal(await page.locator('[data-roster-prompt]').count(), 0, 'asked again after sending');
+    assert.equal(posts.length, 1, 'sent twice');
+    assert.match(await page.locator('[data-roster-help]').innerText(), /You are on the list/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('SKIP sends nothing, sticks, and HELP can bring it back', async () => {
+    const page = await newPage(browser);
+    const posts = [];
+    await armed(page, posts);
+    const card = page.locator('[data-roster-prompt]');
+    await card.waitFor({ timeout: 5000 });
+    await card.getByRole('button', { name: 'SKIP — STAY ANONYMOUS' }).click();
+    assert.equal(await card.count(), 0);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('button:has-text("CALCULATE")');
+    await page.waitForTimeout(500);
+    assert.equal(await page.locator('[data-roster-prompt]').count(), 0, 'asked again after SKIP');
+    assert.equal(posts.length, 0, 'SKIP sent something');
+    await page.evaluate(() => document.querySelector('[data-tab-btn="help"]').click());
+    await page.locator('[data-roster-help]').getByRole('button', { name: 'ADD MYSELF' }).click();
+    await page.locator('[data-roster-prompt]').waitFor({ timeout: 3000 });
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test('no signal: the entry waits on the phone and goes when signal returns', async () => {
+    const page = await newPage(browser);
+    const posts = [];
+    const net = { down: false };
+    await armed(page, posts, net);
+    await page.locator('[data-roster-prompt]').waitFor({ timeout: 5000 });
+    await page.fill('#roster-mos', '0621');
+    net.down = true;
+    await page.context().setOffline(true);
+    await page.locator('[data-roster-prompt]').getByRole('button', { name: 'SEND', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('[data-roster-prompt]'), null, { timeout: 5000 });
+    const st = await page.evaluate(() => JSON.parse(localStorage.getItem('hfcalc_roster_v1')).state);
+    assert.equal(st, 'pending');
+    assert.equal(posts.length, 0);
+    net.down = false;
+    await page.context().setOffline(false);
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('hfcalc_roster_v1')).state === 'sent', null, { timeout: 10000 });
+    assert.equal(posts.length, 1);
+    await page.context().close();
+  });
+});
+
+describe('install count stays clean (v1.66)', { skip: SKIP, concurrency: 1 }, () => {
+  // Installed apps now count, so the tests that impersonate them must never
+  // ping the real counter from a developer's machine or CI.
+  for (const [kind, shim] of [
+    ['Android app', () => { window.androidBridge = { postMessage: function() {}, __test: true }; window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }; }],
+    ['Windows app', () => { window.__TAURI_IPC__ = function() {}; }],
+  ]) {
+    test(`a test page posing as the ${kind} never pings the install counter`, async () => {
+      const page = await newPage(browser);
+      let hits = 0;
+      await page.context().route('**/install-beacon/beacon.txt', route => { hits += 1; route.fulfill({ status: 200, body: '' }); });
+      await page.context().addInitScript(shim);
+      await page.evaluate(() => localStorage.removeItem('hfcalc_beacon_v1'));
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('button:has-text("CALCULATE")');
+      await page.waitForTimeout(1500);
+      assert.equal(hits, 0);
+      await page.context().close();
+    });
+  }
+});
+
 describe('Android signing-key notice (v1.64)', { skip: SKIP, concurrency: 1 }, () => {
   test('the website says who it is for, and GOT IT makes it stay gone', async () => {
     const page = await newPage(browser);

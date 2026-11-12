@@ -57,3 +57,17 @@ export function shareBase() {
     return l.origin + l.pathname;
   } catch (e) { return SITE_URL; }
 }
+
+// What kind of app this is, in words, for the optional user list (v1.66).
+// Only the kind — nothing that identifies the device.
+export function platformLabel() {
+  try {
+    if (isNativeApp()) return 'Android app';
+    if (isDesktopApp()) return 'Windows app';
+    var ua = navigator.userAgent || '';
+    var ipad = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+    if (/iphone|ipad|ipod/i.test(ua) || ipad) return 'iPhone/iPad (web)';
+    if (/android/i.test(ua)) return 'Android (web)';
+    return 'Computer (web)';
+  } catch (e) { return 'unknown'; }
+}

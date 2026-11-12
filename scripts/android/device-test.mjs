@@ -187,6 +187,18 @@ async function run() {
     return { ok: !!m && install === 0, detail: (m ? m[0] : 'no "Installed app" line') + `; INSTALL chips: ${install}` };
   });
 
+  // v1.66: a real phone counts as an install; this emulator must not, or
+  // every update's test run would add a fake install to the count.
+  if (!LOCAL) await check('the test phone is not counted as an install', 'REQUIRED', async () => {
+    await sleep(3000);
+    const r = await page.evaluate(async () => {
+      let virtual = null;
+      try { virtual = (await window.Capacitor.Plugins.Device.getInfo()).isVirtual; } catch (e) { virtual = 'error: ' + e; }
+      return { virtual, counted: localStorage.getItem('hfcalc_beacon_v1'), skipped: localStorage.getItem('hfcalc_beacon_skipped_v1') };
+    });
+    return { ok: r.virtual === true && !r.counted && r.skipped === 'virtual device', detail: JSON.stringify(r) };
+  });
+
   let dist = null;
   await check('a calculation runs (Cherry Point → Okinawa)', 'REQUIRED', async () => {
     dist = await calculate(CHERRY_POINT, OKINAWA);

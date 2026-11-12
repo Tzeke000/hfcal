@@ -88,7 +88,7 @@ Three tabs along the bottom. **PLAN** is the job, in order: the made-by card, th
 - **Saved shots & comm cards** — save any plan, export it as a plain-text comm card (DTG, grids, distance, bearings, wire cut, frequency window, the power and month behind the numbers) to hand to another operator, or press **RECALC** to put it back into PLAN and run it again on today's data.
 - **DAGR help** — the button sequence to pull coordinates off an AN/PSN-13, or skip it and scan the screen.
 
-**Privacy** — your coordinates never leave the device. The app stores your last position locally so it is there when you open it cold; an embedded host must be explicitly authorized (`?embed=1` **and** an on-screen operator approval) before it can read even that, and CLEAR SAVED DATA wipes it. The app's complete network footprint, stated in full: the NOAA space-weather fetch, the update check against its own site, and a **one-time anonymous install ping** on first launch — a bare fetch of a file from this repo with nothing attached, so the author can count installs. None of the three carry coordinates or any identifier, and all fail silently offline. A fourth exists only if you **opt in** from the Field Truth Log once the author's results form is live: one row per logged shot — frequency, distance, bearing, antenna, prediction, space weather, outcome and cause — to a spreadsheet, with **no grids** unless you turn them on; it carries the path's geomagnetic-latitude band in 5° steps, a region rather than a place.
+**Privacy** — your coordinates never leave the device. The app stores your last position locally so it is there when you open it cold; an embedded host must be explicitly authorized (`?embed=1` **and** an on-screen operator approval) before it can read even that, and CLEAR SAVED DATA wipes it. The app's complete network footprint, stated in full: the NOAA space-weather fetch, the update check against its own site, and a **one-time anonymous install ping** on first launch — a bare fetch of a file from this repo with nothing attached, so the author can count installs. None of the three carry coordinates or any identifier, and all fail silently offline. A fourth exists only if you **opt in** from the Field Truth Log once the author's results form is live: one row per logged shot — frequency, distance, bearing, antenna, prediction, space weather, outcome and cause — to a spreadsheet, with **no grids** unless you turn them on; it carries the path's geomagnetic-latitude band in 5° steps, a region rather than a place. A fifth exists only once the author's user-list form is live, and only if you fill it in rather than tap **SKIP**: on first open the app asks — every box optional — for name, rank, unit and MOS, and sends what you typed once, with the kind of app (website, iPhone, Android app, Windows app), its version and the date. Never a location. SKIP sends nothing and is remembered; HELP → User List lets you add yourself later. The install count includes the Android and Windows apps (except virtual test phones, so the build's emulator check never inflates it).
 
 ---
 
@@ -108,9 +108,9 @@ Measured against **VOACAP** — the U.S. government's own HF prediction engine, 
 
 The LUF's absorption law, daylight response and path-length dependence are measured against VOACAP's own loss curves; its absolute level rests on a stated anchor rather than a measurement, and the app says so. Where the model is weak, the app tells the operator on screen rather than hiding it.
 
-**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 57 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
+**The whole study is reproducible.** [`docs/VALIDATION.md`](docs/VALIDATION.md) is the complete record — 58 parts, including the mistakes, the corrections, and the scripts to re-run every measurement. Don't take my word for it — run it yourself.
 
-**361 unit tests** pin the physics so it cannot drift. **79 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. **The Android app is checked on an Android emulator** before each release is published — launch, offline, EXPORT, the DAGR scan, the QR, the update check, and that the new APK installs over the old one. All of it runs in CI on every push, and nothing deploys ahead of its tests.
+**367 unit tests** pin the physics so it cannot drift. **85 browser tests** build the app and drive it in Chromium by clicking — every bug ever reported from real use was in the screen, not the math, so the screen is tested too; that suite was proven by re-introducing those bugs and watching it catch them. A hooks lint makes React stale-closure bugs a build failure. **The Android app is checked on an Android emulator** before each release is published — launch, offline, EXPORT, the DAGR scan, the QR, the update check, and that the new APK installs over the old one. All of it runs in CI on every push, and nothing deploys ahead of its tests.
 
 ---
 
@@ -174,8 +174,8 @@ npm install
 npm run dev          # local dev server at http://localhost:5173
 npm run build        # production web build to dist/
 npm run lint         # hooks-only lint: dependency-array bugs are build failures
-npm test             # 361 unit tests over the physics, terrain and coordinate math
-npm run test:ui      # 79 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
+npm test             # 367 unit tests over the physics, terrain and coordinate math
+npm run test:ui      # 85 browser tests: builds dist/, drives it in Chromium (run twice in CI: at / and at /hfcal/)
 npm run test:android # on-phone checks of the installed Android app (needs an emulator/phone on adb; CI runs it)
 npm run tauri:build  # build Windows .exe (requires Rust toolchain)
 ```
